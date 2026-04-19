@@ -3127,6 +3127,8 @@
     },
     "details": {
       "togglePanel": "Toggle details panel",
+      "showDetails": "Show details",
+      "hideDetails": "Hide details",
       "assetDetails": "Asset Details",
       "generationDetails": "Generation Details",
       "name": "Name",
