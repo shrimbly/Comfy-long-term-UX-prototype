@@ -56,7 +56,7 @@ function getExtendedWindow(): WindowWithExtensions {
   return window as unknown as WindowWithExtensions
 }
 
-function isElectron(): boolean {
+export function isElectron(): boolean {
   return !!getExtendedWindow().electronAPI
 }
 
