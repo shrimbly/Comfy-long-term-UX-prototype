@@ -1,7 +1,7 @@
 <template>
   <WidgetLayoutField :widget="layoutWidget">
     <div class="flex w-full flex-col gap-2">
-      <div class="relative w-full">
+      <div ref="anchorRef" class="relative w-full">
         <div
           :class="
             cn(
@@ -23,60 +23,13 @@
             :aria-label="widget.name"
             :readonly="isReadOnly"
             class="min-w-0 flex-1 border-none bg-transparent p-0 outline-none placeholder:text-muted-foreground"
-            @focus="isFocused = true"
+            @focus="onFocus"
             @blur="onBlur"
             @keydown.enter.prevent="onEnter"
             @keydown.escape.prevent="closeDropdown"
             @keydown.backspace="onBackspace"
             @pointerdown.stop
           />
-        </div>
-        <div
-          v-if="dropdownVisible"
-          class="absolute inset-x-0 top-full z-1200 mt-1 max-h-72 overflow-y-auto rounded-lg border border-border-default bg-base-background p-1 shadow-lg"
-          @mousedown.prevent
-        >
-          <button
-            v-for="suggestion in filteredSuggestions"
-            :key="suggestion.name"
-            type="button"
-            class="flex w-full cursor-pointer items-center gap-2 rounded-sm border-none bg-transparent px-2 py-1.5 text-left text-sm transition-colors hover:bg-secondary-background-hover"
-            @click="addTag(suggestion.name)"
-          >
-            <span
-              class="inline-flex shrink-0 items-center rounded-sm bg-modal-card-tag-background px-1.5 py-px font-mono text-2xs text-modal-card-tag-foreground"
-            >
-              {{ suggestion.name }}
-            </span>
-            <span class="truncate text-xs text-muted-foreground">
-              {{
-                t(
-                  'mediaAsset.tags.assetCount',
-                  { count: suggestion.count },
-                  suggestion.count
-                )
-              }}
-            </span>
-          </button>
-          <button
-            v-if="canCreateTyped"
-            type="button"
-            class="flex w-full cursor-pointer items-center gap-2 rounded-sm border-none bg-transparent px-2 py-1.5 text-left text-sm transition-colors hover:bg-secondary-background-hover"
-            @click="addTag(typedQuery)"
-          >
-            <i
-              class="icon-[lucide--plus] size-3.5 shrink-0 text-muted-foreground"
-            />
-            <span class="truncate text-xs">
-              {{ t('mediaAsset.tags.createTag', { name: typedQuery }) }}
-            </span>
-          </button>
-          <div
-            v-if="filteredSuggestions.length === 0 && !canCreateTyped"
-            class="px-2 py-1.5 text-xs text-muted-foreground"
-          >
-            {{ t('mediaAsset.tags.noMatches') }}
-          </div>
         </div>
       </div>
 
@@ -100,10 +53,65 @@
         </span>
       </div>
     </div>
+
+    <Teleport to="body">
+      <div
+        v-if="dropdownVisible && dropdownStyle"
+        class="fixed z-1200 max-h-72 overflow-y-auto rounded-lg border border-border-default bg-base-background p-1 shadow-lg"
+        :style="dropdownStyle"
+        data-capture-wheel="true"
+        @mousedown.prevent
+        @pointerdown.stop
+      >
+        <button
+          v-for="suggestion in filteredSuggestions"
+          :key="suggestion.name"
+          type="button"
+          class="flex w-full cursor-pointer items-center gap-2 rounded-sm border-none bg-transparent px-2 py-1.5 text-left text-sm transition-colors hover:bg-secondary-background-hover"
+          @mousedown.prevent="addTag(suggestion.name)"
+        >
+          <span
+            class="inline-flex shrink-0 items-center rounded-sm bg-modal-card-tag-background px-1.5 py-px font-mono text-2xs text-modal-card-tag-foreground"
+          >
+            {{ suggestion.name }}
+          </span>
+          <span class="truncate text-xs text-muted-foreground">
+            {{
+              t(
+                'mediaAsset.tags.assetCount',
+                { count: suggestion.count },
+                suggestion.count
+              )
+            }}
+          </span>
+        </button>
+        <button
+          v-if="canCreateTyped"
+          type="button"
+          class="flex w-full cursor-pointer items-center gap-2 rounded-sm border-none bg-transparent px-2 py-1.5 text-left text-sm transition-colors hover:bg-secondary-background-hover"
+          @mousedown.prevent="addTag(typedQuery)"
+        >
+          <i
+            class="icon-[lucide--plus] size-3.5 shrink-0 text-muted-foreground"
+          />
+          <span class="truncate text-xs">
+            {{ t('mediaAsset.tags.createTag', { name: typedQuery }) }}
+          </span>
+        </button>
+        <div
+          v-if="filteredSuggestions.length === 0 && !canCreateTyped"
+          class="px-2 py-1.5 text-xs text-muted-foreground"
+        >
+          {{ t('mediaAsset.tags.noMatches') }}
+        </div>
+      </div>
+    </Teleport>
   </WidgetLayoutField>
 </template>
 
 <script setup lang="ts">
+import { useElementBounding } from '@vueuse/core'
+import type { CSSProperties } from 'vue'
 import { computed, ref, useTemplateRef } from 'vue'
 import { useI18n } from 'vue-i18n'
 
@@ -130,6 +138,8 @@ const { allTags } = useAssetTags()
 const isFocused = ref(false)
 const typedQuery = ref('')
 const inputEl = useTemplateRef<HTMLInputElement>('inputEl')
+const anchorRef = useTemplateRef<HTMLElement>('anchorRef')
+const { left, bottom, width } = useElementBounding(anchorRef)
 
 const tags = computed<string[]>(() => modelValue.value ?? [])
 
@@ -153,6 +163,15 @@ const canCreateTyped = computed(() => {
 })
 
 const dropdownVisible = computed(() => isFocused.value && !isReadOnly.value)
+
+const dropdownStyle = computed<CSSProperties | null>(() => {
+  if (!dropdownVisible.value || width.value === 0) return null
+  return {
+    left: `${left.value}px`,
+    top: `${bottom.value + 4}px`,
+    width: `${width.value}px`
+  }
+})
 
 const layoutWidget = computed(() => ({
   name: widget.name,
@@ -190,6 +209,10 @@ function onBackspace() {
   if (typedQuery.value.length > 0) return
   if (tags.value.length === 0) return
   removeTag(tags.value[tags.value.length - 1])
+}
+
+function onFocus() {
+  isFocused.value = true
 }
 
 function onBlur() {
