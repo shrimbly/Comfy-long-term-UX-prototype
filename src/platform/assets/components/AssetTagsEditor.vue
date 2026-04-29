@@ -76,21 +76,13 @@
     </div>
 
     <div v-if="editorTags.length > 0" class="flex flex-wrap gap-1">
-      <span
+      <TagChip
         v-for="tag in editorTags"
         :key="tag"
-        class="flex h-6 items-center gap-1 rounded-sm bg-modal-card-tag-background py-1 pr-1 pl-2 text-sm text-modal-card-tag-foreground"
-      >
-        <span class="truncate">{{ tag }}</span>
-        <button
-          type="button"
-          class="flex size-4 cursor-pointer items-center justify-center rounded-sm border-none bg-transparent p-0 text-modal-card-tag-foreground opacity-70 transition-opacity hover:opacity-100"
-          :aria-label="t('mediaAsset.tags.removeTag', { name: tag })"
-          @click="removeEditorTag(tag)"
-        >
-          <i class="icon-[lucide--x] size-3" />
-        </button>
-      </span>
+        :name="tag"
+        removable
+        @remove="removeEditorTag(tag)"
+      />
     </div>
   </div>
 </template>
@@ -105,6 +97,7 @@ import type { AssetItem } from '@/platform/assets/schemas/assetSchema'
 import { cn } from '@/utils/tailwindUtil'
 
 import { isUserTag, useAssetTags } from '../composables/useAssetTags'
+import TagChip from './TagChip.vue'
 
 defineOptions({ inheritAttrs: false })
 

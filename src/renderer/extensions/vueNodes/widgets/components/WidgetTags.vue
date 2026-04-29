@@ -37,23 +37,14 @@
     </WidgetLayoutField>
 
     <div v-if="tags.length > 0" class="col-start-2 flex flex-wrap gap-1 px-1">
-      <span
+      <TagChip
         v-for="tag in tags"
         :key="tag"
-        class="flex h-6 items-center gap-1 rounded-sm bg-modal-card-tag-background py-1 pr-1 pl-2 text-xs text-modal-card-tag-foreground"
-      >
-        <span class="truncate">{{ tag }}</span>
-        <button
-          type="button"
-          class="flex size-4 cursor-pointer items-center justify-center rounded-sm border-none bg-transparent p-0 text-modal-card-tag-foreground opacity-70 transition-opacity hover:opacity-100"
-          :aria-label="t('mediaAsset.tags.removeTag', { name: tag })"
-          :disabled="isReadOnly"
-          @click="removeTag(tag)"
-          @pointerdown.stop
-        >
-          <i class="icon-[lucide--x] size-3" />
-        </button>
-      </span>
+        :name="tag"
+        removable
+        :disabled="isReadOnly"
+        @remove="removeTag(tag)"
+      />
     </div>
 
     <Teleport to="body">
@@ -122,6 +113,7 @@ import type { CSSProperties } from 'vue'
 import { computed, ref, useTemplateRef, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 
+import TagChip from '@/platform/assets/components/TagChip.vue'
 import {
   isUserTag,
   useAssetTags
