@@ -1,6 +1,6 @@
 <template>
-  <WidgetLayoutField :widget="layoutWidget">
-    <div class="flex w-full flex-col gap-2">
+  <div class="col-span-2 grid grid-cols-subgrid gap-y-1">
+    <WidgetLayoutField :widget="layoutWidget" root-class="col-span-2">
       <div ref="anchorRef" class="relative w-full">
         <div
           :class="
@@ -34,26 +34,26 @@
           />
         </div>
       </div>
+    </WidgetLayoutField>
 
-      <div v-if="tags.length > 0" class="flex flex-wrap gap-1">
-        <span
-          v-for="tag in tags"
-          :key="tag"
-          class="flex h-6 items-center gap-1 rounded-sm bg-modal-card-tag-background py-1 pr-1 pl-2 text-xs text-modal-card-tag-foreground"
+    <div v-if="tags.length > 0" class="col-start-2 flex flex-wrap gap-1 px-1">
+      <span
+        v-for="tag in tags"
+        :key="tag"
+        class="flex h-6 items-center gap-1 rounded-sm bg-modal-card-tag-background py-1 pr-1 pl-2 text-xs text-modal-card-tag-foreground"
+      >
+        <span class="truncate">{{ tag }}</span>
+        <button
+          type="button"
+          class="flex size-4 cursor-pointer items-center justify-center rounded-sm border-none bg-transparent p-0 text-modal-card-tag-foreground opacity-70 transition-opacity hover:opacity-100"
+          :aria-label="t('mediaAsset.tags.removeTag', { name: tag })"
+          :disabled="isReadOnly"
+          @click="removeTag(tag)"
+          @pointerdown.stop
         >
-          <span class="truncate">{{ tag }}</span>
-          <button
-            type="button"
-            class="flex size-4 cursor-pointer items-center justify-center rounded-sm border-none bg-transparent p-0 text-modal-card-tag-foreground opacity-70 transition-opacity hover:opacity-100"
-            :aria-label="t('mediaAsset.tags.removeTag', { name: tag })"
-            :disabled="isReadOnly"
-            @click="removeTag(tag)"
-            @pointerdown.stop
-          >
-            <i class="icon-[lucide--x] size-3" />
-          </button>
-        </span>
-      </div>
+          <i class="icon-[lucide--x] size-3" />
+        </button>
+      </span>
     </div>
 
     <Teleport to="body">
@@ -113,7 +113,7 @@
         </div>
       </div>
     </Teleport>
-  </WidgetLayoutField>
+  </div>
 </template>
 
 <script setup lang="ts">
