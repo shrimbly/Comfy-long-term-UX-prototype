@@ -4,6 +4,7 @@ import Fuse from 'fuse.js'
 import { computed, ref } from 'vue'
 import type { Ref } from 'vue'
 
+import { useAssetTags } from '@/platform/assets/composables/useAssetTags'
 import type { AssetItem } from '@/platform/assets/schemas/assetSchema'
 import type {
   DatePreset,
@@ -87,6 +88,8 @@ export function useMediaAssetFiltering(
     includeScore: true
   }
 
+  const { getTags } = useAssetTags()
+
   const metadataFiltered = computed(() => {
     if (metadataFilters.value.length === 0) return assets.value
 
@@ -102,9 +105,8 @@ export function useMediaAssetFiltering(
         }
 
         if (filter.field === 'tag') {
-          return asset.tags?.some((t) =>
-            t.toLowerCase().includes(filter.value.toLowerCase())
-          )
+          const needle = filter.value.toLowerCase()
+          return getTags(asset).some((t) => t.toLowerCase() === needle)
         }
 
         if (filter.field === 'type') {

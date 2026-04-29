@@ -3,6 +3,7 @@ import { nextTick, ref } from 'vue'
 
 import type { AssetItem } from '@/platform/assets/schemas/assetSchema'
 
+import { useAssetTags } from './useAssetTags'
 import type { MetadataExtractor } from './useMediaAssetFiltering'
 import { useMediaAssetFiltering } from './useMediaAssetFiltering'
 
@@ -99,43 +100,64 @@ describe('useMediaAssetFiltering - date filter', () => {
 })
 
 describe('useMediaAssetFiltering - tag filter', () => {
-  it('filters assets by tag', async () => {
-    const outputAsset = makeAsset({
+  it('filters assets by user tag', async () => {
+    const tagged = makeAsset({
       id: '1',
-      name: 'out.png',
-      tags: ['output', 'favorite']
+      name: 'tag-filter-1.png',
+      tags: ['output']
     })
-    const inputAsset = makeAsset({
+    const untagged = makeAsset({
       id: '2',
-      name: 'in.png',
-      tags: ['input']
+      name: 'tag-filter-2.png',
+      tags: ['output']
     })
-    const assets = ref([outputAsset, inputAsset])
+    useAssetTags().setTags(tagged, ['hero'])
+    const assets = ref([tagged, untagged])
 
     const { metadataFilters, filteredAssets } = useMediaAssetFiltering(assets)
-    metadataFilters.value = [{ field: 'tag', value: 'favorite' }]
+    metadataFilters.value = [{ field: 'tag', value: 'hero' }]
     await nextTick()
 
     expect(filteredAssets.value.map((a) => a.id)).toEqual(['1'])
   })
 
-  it('matches tags case-insensitively', async () => {
+  it('matches user tags case-insensitively', async () => {
     const asset = makeAsset({
       id: '1',
-      name: 'out.png',
-      tags: ['Output']
+      name: 'tag-case.png',
+      tags: ['output']
+    })
+    useAssetTags().setTags(asset, ['Cinematic'])
+    const assets = ref([asset])
+
+    const { metadataFilters, filteredAssets } = useMediaAssetFiltering(assets)
+    metadataFilters.value = [{ field: 'tag', value: 'cinematic' }]
+    await nextTick()
+
+    expect(filteredAssets.value.map((a) => a.id)).toEqual(['1'])
+  })
+
+  it('excludes assets with no user tags', async () => {
+    const asset = makeAsset({
+      id: '1',
+      name: 'tag-empty.png',
+      tags: ['output']
     })
     const assets = ref([asset])
 
     const { metadataFilters, filteredAssets } = useMediaAssetFiltering(assets)
-    metadataFilters.value = [{ field: 'tag', value: 'output' }]
+    metadataFilters.value = [{ field: 'tag', value: 'never-set' }]
     await nextTick()
 
-    expect(filteredAssets.value.map((a) => a.id)).toEqual(['1'])
+    expect(filteredAssets.value).toEqual([])
   })
 
-  it('excludes assets with no tags', async () => {
-    const asset = makeAsset({ id: '1', name: 'out.png', tags: [] })
+  it('does not match system tags like input/output', async () => {
+    const asset = makeAsset({
+      id: '1',
+      name: 'tag-system.png',
+      tags: ['output']
+    })
     const assets = ref([asset])
 
     const { metadataFilters, filteredAssets } = useMediaAssetFiltering(assets)
@@ -276,6 +298,7 @@ describe('useMediaAssetFiltering - combined filters', () => {
   })
 
   it('combines date and tag filters with AND logic', async () => {
+    localStorage.clear()
     const asset1 = makeAsset({
       id: '1',
       name: 'a.png',
@@ -294,12 +317,14 @@ describe('useMediaAssetFiltering - combined filters', () => {
       tags: ['output'],
       created_at: new Date(2025, 2, 11, 10, 0, 0).toISOString()
     })
+    useAssetTags().setTags(asset1, ['hero'])
+    useAssetTags().setTags(asset3, ['hero'])
     const assets = ref([asset1, asset2, asset3])
 
     const { metadataFilters, filteredAssets } = useMediaAssetFiltering(assets)
     metadataFilters.value = [
       { field: 'date', value: 'today' },
-      { field: 'tag', value: 'output' }
+      { field: 'tag', value: 'hero' }
     ]
     await nextTick()
 
