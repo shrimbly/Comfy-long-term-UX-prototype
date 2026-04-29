@@ -73,21 +73,34 @@
             </h2>
           </div>
           <div class="flex min-h-0 flex-1">
-            <RecentsFoldersSidebar
+            <AssetsSidebar
               v-if="showRecentsSidebar"
-              :output-tree="outputFolderTree"
-              :input-tree="inputFolderTree"
-              :selected-path="recentsSidebarSelectedPath"
-              :pinned-paths="pinnedDirs"
-              :recents-active="!showAllAssets && !favoritesActive"
-              :favorites-active="favoritesActive"
+              :selected-tag="selectedTag"
+              :available-tags="availableUserTags"
+              :recents-active="
+                !showAllAssets && !favoritesActive && !selectedTag
+              "
+              :favorites-active="favoritesActive && !selectedTag"
+              :generated-active="
+                showAllAssets &&
+                !favoritesActive &&
+                !selectedTag &&
+                singleActiveSource === 'output'
+              "
+              :imported-active="
+                showAllAssets &&
+                !favoritesActive &&
+                !selectedTag &&
+                singleActiveSource === 'input'
+              "
               :favorite-color-filter="favoriteColorFilter"
-              @select="handleRecentsSidebarSelect"
-              @select-recents="handleRecentsSidebarRecents"
-              @select-favorites="handleRecentsSidebarFavorites"
-              @select-favorite-color="handleRecentsSidebarFavoriteColor"
-              @update:pinned-paths="pinnedDirs = $event"
-              @asset-drop-on-folder="handleAssetDropOnFolder"
+              @select-recents="handleSelectRecents"
+              @select-favorites="handleSelectFavorites"
+              @select-favorite-color="handleSelectFavoriteColor"
+              @select-generated="handleSelectGenerated"
+              @select-imported="handleSelectImported"
+              @select-tag="handleSelectTag"
+              @rename-tag="handleRenameTag"
             />
           </div>
           <!-- Resize handle -->
@@ -129,108 +142,20 @@
           </div>
           <!-- Active metadata filter chips -->
           <MediaAssetFilterChipsBar v-model="metadataFilters" />
-          <!-- Detail panel toggle (default view) -->
+          <!-- Active filter + Show Details toggle -->
           <div
             v-if="
-              !showAllAssets &&
               !isInFolderView &&
-              selectionStore.lastSelectedAssetId
+              (activeFilterLabel || selectionStore.lastSelectedAssetId)
             "
-            class="sticky top-0 z-10 flex items-center justify-end border-b border-comfy-input bg-base-background px-2 py-1"
+            class="sticky top-0 z-10 flex items-center gap-2 border-b border-comfy-input bg-base-background px-2 py-1.5 text-xs"
           >
-            <Button
-              variant="secondary"
-              size="sm"
-              @click="showDetailPanel = !showDetailPanel"
+            <span
+              v-if="activeFilterLabel"
+              class="truncate font-medium text-text-primary"
             >
-              {{
-                showDetailPanel
-                  ? t('mediaAsset.details.hideDetails')
-                  : t('mediaAsset.details.showDetails')
-              }}
-            </Button>
-          </div>
-          <!-- Breadcrumb navigation (shown when the recents sidebar collapses) -->
-          <div
-            v-if="
-              showAllAssets &&
-              !isInFolderView &&
-              !showRecentsSidebar &&
-              singleActiveSource &&
-              metadataFilters.length === 0
-            "
-            class="sticky top-0 z-10 flex items-center gap-0.5 border-b border-comfy-input bg-base-background px-2 py-1.5 text-xs"
-          >
-            <button
-              :class="[
-                'truncate rounded-sm border-none px-1 py-0.5 transition-colors',
-                breadcrumbSegments.length > 0
-                  ? 'cursor-pointer bg-transparent text-muted-foreground hover:bg-secondary-background-hover hover:text-text-primary'
-                  : 'bg-transparent font-medium text-text-primary'
-              ]"
-              :disabled="breadcrumbSegments.length === 0"
-              @click="handleBreadcrumbNavigate(-1)"
-            >
-              {{ breadcrumbRootLabel }}
-            </button>
-            <!-- Truncated breadcrumb: root > ... > last -->
-            <template v-if="breadcrumbSegments.length > 1">
-              <i
-                class="icon-[lucide--chevron-right] size-3 shrink-0 text-muted-foreground/50"
-                aria-hidden="true"
-              />
-              <Popover :show-arrow="false">
-                <template #button>
-                  <button
-                    class="cursor-pointer rounded-sm border-none bg-transparent px-1 py-0.5 text-muted-foreground transition-colors hover:bg-secondary-background-hover hover:text-text-primary"
-                  >
-                    &hellip;
-                  </button>
-                </template>
-                <template #default="{ close }">
-                  <div class="flex flex-col">
-                    <button
-                      v-for="(segment, index) in breadcrumbSegments.slice(
-                        0,
-                        -1
-                      )"
-                      :key="index"
-                      class="cursor-pointer rounded-sm border-none bg-transparent px-3 py-1.5 text-left text-xs text-muted-foreground transition-colors hover:bg-secondary-background-hover hover:text-text-primary"
-                      @click="handleBreadcrumbItemClick(index, close)"
-                    >
-                      {{ sentenceCase(segment) }}
-                    </button>
-                  </div>
-                </template>
-              </Popover>
-              <i
-                class="icon-[lucide--chevron-right] size-3 shrink-0 text-muted-foreground/50"
-                aria-hidden="true"
-              />
-              <button
-                class="truncate rounded-sm border-none bg-transparent px-1 py-0.5 font-medium text-text-primary transition-colors"
-                disabled
-              >
-                {{
-                  sentenceCase(
-                    breadcrumbSegments[breadcrumbSegments.length - 1]
-                  )
-                }}
-              </button>
-            </template>
-            <!-- Single segment: root > segment -->
-            <template v-else-if="breadcrumbSegments.length === 1">
-              <i
-                class="icon-[lucide--chevron-right] size-3 shrink-0 text-muted-foreground/50"
-                aria-hidden="true"
-              />
-              <button
-                class="truncate rounded-sm border-none bg-transparent px-1 py-0.5 font-medium text-text-primary transition-colors"
-                disabled
-              >
-                {{ sentenceCase(breadcrumbSegments[0]) }}
-              </button>
-            </template>
+              {{ activeFilterLabel }}
+            </span>
             <Button
               v-if="selectionStore.lastSelectedAssetId"
               variant="secondary"
@@ -277,17 +202,10 @@
               :is-stack-expanded="isListViewStackExpanded"
               :toggle-stack="toggleListViewStack"
               :restrict-stack-favorites="showRecentsSidebar"
-              v-bind="
-                showAllAssets && !showRecentsSidebar
-                  ? { folders: currentFolders }
-                  : {}
-              "
               @select-asset="handleAssetSelect"
               @preview-asset="handleZoomClick"
               @context-menu="handleAssetContextMenu"
               @approach-end="handleApproachEnd"
-              @folder-click="handleFolderClick"
-              @folder-context-menu="handleFolderContextMenu"
             />
             <AssetsSidebarGridView
               v-else
@@ -297,14 +215,7 @@
               :get-output-count="getOutputCount"
               :grid-size="gridSize"
               :restrict-stack-favorites="showRecentsSidebar"
-              v-bind="
-                showAllAssets && !showRecentsSidebar
-                  ? { folders: currentFolders }
-                  : {}
-              "
               @select-asset="handleAssetSelect"
-              @folder-click="handleFolderClick"
-              @folder-context-menu="handleFolderContextMenu"
               @context-menu="handleAssetContextMenu"
               @approach-end="handleApproachEnd"
               @zoom="handleZoomClick"
@@ -472,12 +383,10 @@
     :show-delete-button="shouldShowDeleteButton"
     :selected-assets="selectedAssets"
     :is-bulk-mode="isBulkMode"
-    :allow-move-actions="showAllAssets"
-    :show-directory-view-action="!showAllAssets"
+    :allow-move-actions="false"
     @zoom="handleZoomClick(contextMenuAsset)"
     @hide="handleContextMenuHide"
     @asset-deleted="refreshAssets"
-    @show-in-directory-view="handleShowInDirectoryView"
     @bulk-download="handleBulkDownload"
     @bulk-move="handleBulkMove"
     @bulk-delete="handleBulkDelete"
@@ -485,15 +394,6 @@
     @bulk-open-workflow="handleBulkOpenWorkflow"
     @bulk-export-workflow="handleBulkExportWorkflow"
     @bulk-compare="handleBulkCompare"
-  />
-  <FolderContextMenu
-    v-if="contextMenuFolder"
-    ref="folderContextMenuRef"
-    :allow-move-actions="showAllAssets"
-    @hide="handleFolderContextMenuHide"
-    @open-in-finder="handleFolderOpenInFinder"
-    @export-all="handleFolderExportAll"
-    @move-to="handleFolderMoveTo"
   />
   <Teleport to="body">
     <div
@@ -539,14 +439,12 @@ import SidebarTabTemplate from '@/components/sidebar/tabs/SidebarTabTemplate.vue
 import Skeleton from '@/components/ui/skeleton/Skeleton.vue'
 import MediaLightbox from '@/components/sidebar/tabs/queue/MediaLightbox.vue'
 import Button from '@/components/ui/button/Button.vue'
-import Popover from '@/components/ui/Popover.vue'
 import AssetDetailPanel from '@/platform/assets/components/AssetDetailPanel.vue'
-import FolderContextMenu from '@/platform/assets/components/FolderContextMenu.vue'
 import MediaAssetContextMenu from '@/platform/assets/components/MediaAssetContextMenu.vue'
 import MediaAssetFilterBar from '@/platform/assets/components/MediaAssetFilterBar.vue'
 import MediaAssetFilterChipsBar from '@/platform/assets/components/MediaAssetFilterChipsBar.vue'
-import RecentsFoldersSidebar from '@/platform/assets/components/RecentsFoldersSidebar.vue'
-import { buildOutputFolderTree } from '@/platform/assets/utils/buildOutputFolderTree'
+import AssetsSidebar from '@/platform/assets/components/AssetsSidebar.vue'
+import { useAssetTags } from '@/platform/assets/composables/useAssetTags'
 import type { ViewMode } from '@/platform/assets/components/MediaAssetFilterBar.vue'
 import { getAssetType } from '@/platform/assets/composables/media/assetMappers'
 import { useMediaAssets } from '@/platform/assets/composables/media/useMediaAssets'
@@ -570,10 +468,8 @@ import type { MetadataFilter } from '@/platform/assets/types/metadataFilter'
 import type { PromptMetadata } from '@/platform/assets/utils/promptMetadataParser'
 import type { MediaKind } from '@/platform/assets/schemas/mediaAssetSchema'
 import { resolveOutputAssetItems } from '@/platform/assets/utils/outputAssetUtil'
-import type { FolderItem } from '@/utils/directoryPickerUtil'
 import { isCloud } from '@/platform/distribution/types'
 import { useAssetsStore } from '@/stores/assetsStore'
-import { electronAPI } from '@/utils/envUtil'
 import { useDialogStore } from '@/stores/dialogStore'
 import { ResultItemImpl } from '@/stores/queueStore'
 import {
@@ -667,7 +563,8 @@ function startSidebarResize(event: MouseEvent) {
   window.addEventListener('mousemove', onMove)
   window.addEventListener('mouseup', onUp)
 }
-const pinnedDirs = useStorage<string[]>('Comfy.Assets.FolderSidebarPins.v2', [])
+const selectedTag = useStorage<string | null>('Comfy.Assets.SelectedTag', null)
+const userTags = useAssetTags()
 // True while the user is composing a filter in the search input (field picked,
 // dropdown open, etc.). We collapse the folders sidebar in that window so it
 // doesn't reappear between picking a field and typing its value.
@@ -685,9 +582,6 @@ const gridSize = computed<'sm' | 'md' | 'lg'>(() => {
 
 const contextMenuRef = ref<InstanceType<typeof MediaAssetContextMenu>>()
 const contextMenuAsset = ref<AssetItem | null>(null)
-
-const folderContextMenuRef = ref<InstanceType<typeof FolderContextMenu>>()
-const contextMenuFolder = ref<FolderItem | null>(null)
 
 // Hide delete button when only input is active in non-cloud mode
 const shouldShowDeleteButton = computed(() => {
@@ -731,31 +625,6 @@ const outputJobsAssets = useOutputJobsAssets()
 const activeOutputSource = computed(() =>
   showAllAssets.value ? outputAssets : outputJobsAssets
 )
-
-// Apply pending folder navigation set before component remount.
-// Changing showAllAssets changes the splitter key which destroys and recreates
-// this component tree, so the handler stores the target in localStorage.
-const PENDING_NAV_KEY = 'Comfy.Assets.PendingNav'
-const pendingNavStr = localStorage.getItem(PENDING_NAV_KEY)
-if (pendingNavStr) {
-  localStorage.removeItem(PENDING_NAV_KEY)
-  try {
-    const { source, path } = JSON.parse(pendingNavStr) as {
-      source: string
-      path: string
-    }
-    const assets = source === 'output' ? outputAssets : inputAssets
-    if (path) {
-      assets.navigateInto({
-        name: path.split('/').pop() || path,
-        path,
-        type: 'folder'
-      })
-    }
-  } catch {
-    // Ignore malformed pending navigation
-  }
-}
 
 // Date range filtering
 const dateRangeFilter = useStorage<[Date, Date] | null>(
@@ -812,12 +681,6 @@ const totalOutputCount = computed(() => {
 const searchQuery = ref('')
 const metadataFilters = ref<MetadataFilter[]>([])
 const mediaTypeFilters = ref<string[]>([])
-const isSearchActive = computed(
-  () =>
-    searchQuery.value.trim() !== '' ||
-    metadataFilters.value.length > 0 ||
-    mediaTypeFilters.value.length > 0
-)
 
 // --- Merged assets from all active sources ---
 function collectAssets(useAll: boolean): AssetItem[] {
@@ -879,9 +742,12 @@ const {
 
 const favorites = useAssetFavorites()
 
-// Base assets before search filtering
-// When searching in directory mode, use all assets across all subdirectories
+// Base assets before search filtering. Reflects the current sidebar
+// selection so search/metadata filters narrow that subset, not the global pool.
 const baseAssets = computed(() => {
+  if (selectedTag.value) {
+    return userTags.assetsWithTag(allMergedAssets.value, selectedTag.value)
+  }
   if (favoritesActive.value) {
     const seen = new Set<string>()
     const unique: AssetItem[] = []
@@ -901,23 +767,13 @@ const baseAssets = computed(() => {
   if (isInFolderView.value) {
     return folderAssets.value
   }
-  if (showAllAssets.value && isSearchActive.value) {
+  if (showAllAssets.value) {
     return allMergedAssets.value
   }
   return mergedAssets.value
 })
 
-const availableTags = computed(() => {
-  const tagSet = new Set<string>()
-  for (const asset of baseAssets.value) {
-    if (asset.tags) {
-      for (const tag of asset.tags) {
-        tagSet.add(tag)
-      }
-    }
-  }
-  return [...tagSet].sort()
-})
+const availableTags = computed(() => userTags.allTags.value.map((t) => t.name))
 
 // Prompt metadata extraction for @-filter search
 const metadataExtractor = useAssetPromptMetadata()
@@ -972,6 +828,25 @@ watch(
 // Apply date filtering using useAssetFilters
 const assetFilters = useAssetFilters(filteredAssets)
 
+// Any navigation/filter action drops the "show details" intent so the panel
+// doesn't reappear when the user clicks an asset in the new context.
+watch(
+  [
+    selectedTag,
+    favoritesActive,
+    favoriteColorFilter,
+    activeSources,
+    showAllAssets,
+    searchQuery,
+    metadataFilters,
+    mediaTypeFilters,
+    () => assetFilters.dateRange.value
+  ],
+  () => {
+    showDetailPanel.value = false
+  }
+)
+
 // Sync persisted date range with filter composable
 watch(
   dateRangeFilter,
@@ -988,16 +863,11 @@ watch(
   }
 )
 
-const mockHiddenAssetIds = ref<Set<string>>(new Set())
-
-const displayAssets = computed(() => {
-  // Date filtering is already applied in assetFilters.filteredByDate
-  const base = assetFilters.hasActiveFilters.value
+const displayAssets = computed(() =>
+  assetFilters.hasActiveFilters.value
     ? assetFilters.filteredByDate.value
     : filteredAssets.value
-  if (mockHiddenAssetIds.value.size === 0) return base
-  return base.filter((a) => !mockHiddenAssetIds.value.has(a.id))
-})
+)
 
 const dragPreviewWrapperRef = ref<HTMLElement | null>(null)
 const {
@@ -1014,24 +884,6 @@ watch(
   },
   { immediate: true }
 )
-
-function handleAssetDropOnFolder(folderPath: string, assetIds: string[]) {
-  if (assetIds.length === 0) return
-  const next = new Set(mockHiddenAssetIds.value)
-  for (const id of assetIds) next.add(id)
-  mockHiddenAssetIds.value = next
-  clearSelection()
-  const folderName = folderPath.split('/').pop() || folderPath
-  toast.add({
-    severity: 'info',
-    summary: t('mediaAsset.moveTo.dialogTitle'),
-    detail: t('mediaAsset.dragMove.mockToast', {
-      count: assetIds.length,
-      folder: folderName
-    }),
-    life: 3000
-  })
-}
 
 const {
   assetItems: listViewAssetItems,
@@ -1070,10 +922,7 @@ const showLoadingState = computed(
 
 const showEmptyState = computed(
   () =>
-    !loading.value &&
-    !isFolderLoading.value &&
-    displayAssets.value.length === 0 &&
-    (!currentFolders.value || currentFolders.value.length === 0)
+    !loading.value && !isFolderLoading.value && displayAssets.value.length === 0
 )
 
 const emptyStateTitle = computed(() => {
@@ -1189,7 +1038,6 @@ watch(activeSources, (newSources, oldSources) => {
   }
 
   clearSelection()
-  mockHiddenAssetIds.value = new Set()
   if (isInFolderView.value) exitFolderView()
 })
 
@@ -1251,86 +1099,7 @@ function handleContextMenuHide() {
   scheduleCleanup()
 }
 
-const { start: scheduleFolderCleanup, stop: cancelFolderCleanup } =
-  useTimeoutFn(
-    () => {
-      contextMenuFolder.value = null
-    },
-    0,
-    { immediate: false }
-  )
-
-function handleFolderContextMenu(event: MouseEvent, folder: FolderItem) {
-  cancelFolderCleanup()
-  contextMenuFolder.value = folder
-  void nextTick(() => {
-    folderContextMenuRef.value?.show(event)
-  })
-}
-
-function handleFolderContextMenuHide() {
-  scheduleFolderCleanup()
-}
-
-function handleFolderOpenInFinder() {
-  const source = singleActiveSource.value
-  if (source === 'output') {
-    electronAPI().openOutputsFolder()
-  } else {
-    electronAPI().openInputsFolder()
-  }
-}
-
 const assetsStore = useAssetsStore()
-
-function getAssetsInFolder(folder: FolderItem): AssetItem[] {
-  const prefix = folder.path + '/'
-  const source = singleActiveSource.value
-  const allAssets =
-    source === 'input' ? assetsStore.inputAssets : assetsStore.historyAssets
-  return allAssets.filter((asset) => asset.name.startsWith(prefix))
-}
-
-function handleFolderExportAll() {
-  if (!contextMenuFolder.value) return
-  const assets = getAssetsInFolder(contextMenuFolder.value)
-  if (assets.length > 0) {
-    downloadMultipleAssets(assets)
-  }
-}
-
-async function handleFolderMoveTo() {
-  if (!contextMenuFolder.value) return
-  const assets = getAssetsInFolder(contextMenuFolder.value)
-  if (assets.length > 0) {
-    await moveAssets(assets)
-  }
-}
-
-function handleShowInDirectoryView() {
-  if (!contextMenuAsset.value) return
-
-  const asset = contextMenuAsset.value
-  const assetName = asset.name
-  const lastSlash = assetName.lastIndexOf('/')
-  // Jobs view stores subfolder in user_metadata; file view embeds it in name
-  const folderPath =
-    lastSlash > 0
-      ? assetName.substring(0, lastSlash)
-      : (asset.user_metadata?.subfolder as string) || ''
-  const source = contextMenuAssetType.value
-
-  // Store navigation target before toggling showAllAssets.
-  // Changing showAllAssets changes panelStateKeySuffix which changes the
-  // splitter key, destroying and recreating this entire component tree.
-  // The new instance reads this in setup and navigates.
-  localStorage.setItem(
-    PENDING_NAV_KEY,
-    JSON.stringify({ source, path: folderPath })
-  )
-  showAllAssets.value = true
-  activeSources.value = [source]
-}
 
 const handleBulkDownload = (assets: AssetItem[]) => {
   downloadMultipleAssets(assets)
@@ -1517,93 +1286,88 @@ const handleApproachEnd = useDebounceFn(async () => {
   }
 }, 300)
 
-// --- Folders sidebar (advanced view, folders layout) ---
-const OUTPUT_ROOT_PATH = 'output'
-const INPUT_ROOT_PATH = 'input'
-
-const outputFolderTree = computed(() =>
-  buildOutputFolderTree(
-    assetsStore.historyAssets.map((a) => a.name),
-    {
-      name: t('sideToolbar.mediaAssets.foldersSidebar.outputRoot'),
-      path: OUTPUT_ROOT_PATH
-    }
-  )
-)
-
-const inputFolderTree = computed(() =>
-  buildOutputFolderTree(
-    assetsStore.inputAssets.map((a) => a.name),
-    {
-      name: t('sideToolbar.mediaAssets.foldersSidebar.inputRoot'),
-      path: INPUT_ROOT_PATH
-    }
-  )
-)
+// --- Sidebar (tag-based filtering) ---
 
 const showRecentsSidebar = computed(
   () =>
     !hideRecentsSidebar.value &&
     !isInFolderView.value &&
-    !isSearchActive.value &&
     !filterBarComposing.value
 )
 
 const hasLeftSidebar = showRecentsSidebar
 
-const recentsSidebarSelectedPath = computed(() => {
-  if (favoritesActive.value) return ''
-  if (!showAllAssets.value) return ''
-  const source = singleActiveSource.value
-  if (source === 'output') {
-    const rel = outputAssets.currentPath.value
-    return rel ? `${OUTPUT_ROOT_PATH}/${rel}` : OUTPUT_ROOT_PATH
+const availableUserTags = computed(() => userTags.allTags.value)
+
+const activeFilterLabel = computed(() => {
+  if (selectedTag.value) {
+    return t('sideToolbar.mediaAssets.tagFilterLabel', {
+      tag: selectedTag.value
+    })
   }
-  if (source === 'input') {
-    const rel = inputAssets.currentPath.value
-    return rel ? `${INPUT_ROOT_PATH}/${rel}` : INPUT_ROOT_PATH
+  if (favoritesActive.value) {
+    return t('sideToolbar.mediaAssets.foldersSidebar.favorites')
+  }
+  if (showAllAssets.value) {
+    if (singleActiveSource.value === 'input') {
+      return t('sideToolbar.mediaAssets.foldersSidebar.importedHeader')
+    }
+    if (singleActiveSource.value === 'output') {
+      return t('sideToolbar.mediaAssets.foldersSidebar.generatedHeader')
+    }
   }
   return ''
 })
 
-const handleRecentsSidebarRecents = () => {
+function clearTagAndFavorites() {
+  selectedTag.value = null
   favoritesActive.value = false
   favoriteColorFilter.value = null
+}
+
+const handleSelectRecents = () => {
+  clearTagAndFavorites()
   showAllAssets.value = false
 }
 
-const handleRecentsSidebarFavorites = () => {
+const handleSelectFavorites = () => {
+  selectedTag.value = null
   favoritesActive.value = true
   favoriteColorFilter.value = null
 }
 
-const handleRecentsSidebarFavoriteColor = (color: FavoriteColor | null) => {
+const handleSelectFavoriteColor = (color: FavoriteColor | null) => {
   favoriteColorFilter.value = color
 }
 
-const handleRecentsSidebarSelect = (absolutePath: string) => {
-  const isOutput =
-    absolutePath === OUTPUT_ROOT_PATH ||
-    absolutePath.startsWith(`${OUTPUT_ROOT_PATH}/`)
-  const isInput =
-    absolutePath === INPUT_ROOT_PATH ||
-    absolutePath.startsWith(`${INPUT_ROOT_PATH}/`)
-  if (!isOutput && !isInput) return
+const handleSelectGenerated = () => {
+  clearTagAndFavorites()
+  activeSources.value = ['output']
+  showAllAssets.value = true
+}
 
-  const source = isOutput ? 'output' : 'input'
-  const rootPath = isOutput ? OUTPUT_ROOT_PATH : INPUT_ROOT_PATH
-  const rel =
-    absolutePath === rootPath ? '' : absolutePath.slice(rootPath.length + 1)
+const handleSelectImported = () => {
+  clearTagAndFavorites()
+  activeSources.value = ['input']
+  showAllAssets.value = true
+}
 
-  if (singleActiveSource.value !== source) {
-    activeSources.value = [source]
-  }
+const handleSelectTag = (tag: string | null) => {
   favoritesActive.value = false
   favoriteColorFilter.value = null
-  showAllAssets.value = true
+  selectedTag.value = tag
+  if (tag) {
+    // Tags transcend sources — show across both Generated and Imported.
+    activeSources.value = ['output', 'input']
+    showAllAssets.value = true
+  }
+}
 
-  if (source === 'output') outputAssets.navigateToPath(rel)
-  else inputAssets.navigateToPath(rel)
+const handleRenameTag = (oldName: string, newName: string) => {
+  const renamed = userTags.renameTag(oldName, newName)
+  if (renamed && selectedTag.value === oldName) {
+    selectedTag.value = renamed
+  }
 }
 
 watch(
@@ -1619,120 +1383,6 @@ watch(
   },
   { immediate: true }
 )
-
-// --- Folder navigation (single-source mode only) ---
-const handleFolderClick = async (folder: FolderItem) => {
-  if (!singleActiveSource.value) return
-
-  if (
-    singleActiveSource.value === 'output' ||
-    singleActiveSource.value === 'input'
-  ) {
-    const assets =
-      singleActiveSource.value === 'output' ? outputAssets : inputAssets
-    assets.navigateInto(folder)
-    return
-  }
-
-  // Custom directory navigation
-  const provider = customDirProviders.get(singleActiveSource.value)
-  if (provider) {
-    try {
-      await provider.navigateInto(folder.name)
-    } catch (err) {
-      toast.add({
-        severity: 'error',
-        summary: t('mediaAsset.folderNavigation.error'),
-        detail: err instanceof Error ? err.message : 'Failed to navigate'
-      })
-    }
-  }
-}
-
-const currentFolders = computed(() => {
-  if (isSearchActive.value) return undefined
-  if (!singleActiveSource.value) return undefined
-  if (singleActiveSource.value === 'output') return outputAssets.folders.value
-  if (singleActiveSource.value === 'input') return inputAssets.folders.value
-  const provider = customDirProviders.get(singleActiveSource.value)
-  return provider?.folders.value
-})
-
-const currentFolderPath = computed(() => {
-  if (!singleActiveSource.value) return ''
-  if (singleActiveSource.value === 'output')
-    return outputAssets.currentPath.value
-  if (singleActiveSource.value === 'input') return inputAssets.currentPath.value
-  // Custom directory: derive subfolder path relative to root
-  const provider = customDirProviders.get(singleActiveSource.value)
-  if (provider) {
-    const { rootPath, currentPath } = provider.navigationState.value
-    if (rootPath && currentPath && currentPath !== rootPath) {
-      // Return only the part after the root, e.g. "sub/folder"
-      return currentPath.startsWith(rootPath + '/')
-        ? currentPath.slice(rootPath.length + 1)
-        : currentPath.split('/').slice(-1)[0] || ''
-    }
-  }
-  return ''
-})
-
-const breadcrumbSegments = computed(() => {
-  if (!currentFolderPath.value) return []
-  return currentFolderPath.value.split('/')
-})
-
-const sentenceCase = (s: string) =>
-  s.charAt(0).toUpperCase() + s.slice(1).toLowerCase()
-
-const breadcrumbRootLabel = computed(() => {
-  if (!singleActiveSource.value) return ''
-  if (singleActiveSource.value === 'output') return 'Output'
-  if (singleActiveSource.value === 'input') return 'Input'
-  // Custom directory: use the saved name
-  const dir = savedCustomDirectories.value.find(
-    (d) => d.id === singleActiveSource.value
-  )
-  return sentenceCase(dir?.name || 'Custom')
-})
-
-const handleBreadcrumbItemClick = (index: number, close: () => void) => {
-  handleBreadcrumbNavigate(index)
-  close()
-}
-
-const handleBreadcrumbNavigate = (index: number) => {
-  if (!singleActiveSource.value) return
-
-  if (
-    singleActiveSource.value === 'output' ||
-    singleActiveSource.value === 'input'
-  ) {
-    const assets =
-      singleActiveSource.value === 'output' ? outputAssets : inputAssets
-    if (index === -1) {
-      assets.navigateToRoot()
-    } else {
-      const targetPath = breadcrumbSegments.value.slice(0, index + 1).join('/')
-      assets.navigateInto({
-        name: breadcrumbSegments.value[index],
-        path: targetPath,
-        type: 'folder'
-      })
-    }
-    return
-  }
-
-  // Custom directory breadcrumb navigation
-  const provider = customDirProviders.get(singleActiveSource.value)
-  if (!provider) return
-
-  if (index === -1) {
-    void provider.navigateToRoot()
-  }
-  // Intermediate breadcrumb clicks are not supported for custom dirs
-  // (the last segment is already disabled in the template)
-}
 </script>
 
 <style scoped>

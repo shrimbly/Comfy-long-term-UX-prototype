@@ -853,7 +853,11 @@
         "inputRoot": "input",
         "addFolder": "Add folder",
         "newFolderName": "New folder"
-      }
+      },
+      "tagsHeader": "Tags",
+      "noTagsHint": "Right-click an asset to add tags",
+      "tagFilterLabel": "Tag: {tag}",
+      "renameTag": "Rename tag"
     },
     "backToAssets": "Back to all assets",
     "folderView": {
