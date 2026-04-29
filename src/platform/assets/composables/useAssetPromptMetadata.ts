@@ -7,26 +7,62 @@ import type { PromptMetadata } from '@/platform/assets/utils/promptMetadataParse
 import { parsePromptMetadata } from '@/platform/assets/utils/promptMetadataParser'
 import { useWorkflowStore } from '@/platform/workflow/management/stores/workflowStore'
 
+/**
+ * Each PNG metadata extraction fetches a full image. Without a cap, a batch
+ * of thousands floods the renderer with parallel `fetch()` calls until Chrome
+ * fails them with `ERR_INSUFFICIENT_RESOURCES`, which also starves the
+ * `<img>` thumbnail requests of connection slots. This keeps a few slots free.
+ */
+const MAX_CONCURRENT_METADATA_FETCHES = 3
+
 export function useAssetPromptMetadata() {
   const cache = shallowReactive(new Map<string, PromptMetadata>())
-  const pending = new Set<string>()
+  const inFlight = new Map<string, Promise<PromptMetadata | null>>()
+  const queue: Array<() => void> = []
+  let activeCount = 0
+
+  function acquireSlot(): Promise<void> {
+    if (activeCount < MAX_CONCURRENT_METADATA_FETCHES) {
+      activeCount++
+      return Promise.resolve()
+    }
+    return new Promise<void>((resolve) => {
+      queue.push(() => {
+        activeCount++
+        resolve()
+      })
+    })
+  }
+
+  function releaseSlot(): void {
+    activeCount--
+    const next = queue.shift()
+    if (next) next()
+  }
+
+  function scheduleFetch(asset: AssetItem): Promise<PromptMetadata | null> {
+    const cached = inFlight.get(asset.id)
+    if (cached) return cached
+    const promise = (async () => {
+      await acquireSlot()
+      try {
+        const metadata = await fetchMetadata(asset)
+        if (metadata) cache.set(asset.id, metadata)
+        return metadata
+      } finally {
+        inFlight.delete(asset.id)
+        releaseSlot()
+      }
+    })()
+    inFlight.set(asset.id, promise)
+    return promise
+  }
 
   async function extractMetadata(
     asset: AssetItem
   ): Promise<PromptMetadata | null> {
     if (cache.has(asset.id)) return cache.get(asset.id)!
-    if (pending.has(asset.id)) return null
-
-    pending.add(asset.id)
-    try {
-      const metadata = await fetchMetadata(asset)
-      if (metadata) {
-        cache.set(asset.id, metadata)
-      }
-      return metadata
-    } finally {
-      pending.delete(asset.id)
-    }
+    return scheduleFetch(asset)
   }
 
   function getCached(assetId: string): PromptMetadata | null {
@@ -35,9 +71,8 @@ export function useAssetPromptMetadata() {
 
   function extractBatch(assets: AssetItem[]): void {
     for (const asset of assets) {
-      if (!cache.has(asset.id) && !pending.has(asset.id)) {
-        void extractMetadata(asset)
-      }
+      if (cache.has(asset.id) || inFlight.has(asset.id)) continue
+      void scheduleFetch(asset)
     }
   }
 
