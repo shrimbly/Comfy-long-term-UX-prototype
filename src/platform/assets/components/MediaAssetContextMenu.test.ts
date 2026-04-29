@@ -142,7 +142,6 @@ let capturedRef: MediaAssetContextMenuExposed | null = null
 
 interface MountOptions {
   assetType?: string
-  showDirectoryViewAction?: boolean
   selectedAssets?: AssetItem[]
   isBulkMode?: boolean
   anchor?: AssetItem
@@ -151,13 +150,11 @@ interface MountOptions {
 function mountComponent(options: MountOptions = {}) {
   const {
     assetType = 'output',
-    showDirectoryViewAction = false,
     selectedAssets,
     isBulkMode = false,
     anchor = asset
   } = options
   const onHide = vi.fn()
-  const onShowInDirectoryView = vi.fn()
   const onBulkCompare = vi.fn()
   const { container, unmount } = render(
     defineComponent({
@@ -171,10 +168,8 @@ function mountComponent(options: MountOptions = {}) {
           menuRef,
           anchor,
           onHide,
-          onShowInDirectoryView,
           onBulkCompare,
           assetType,
-          showDirectoryViewAction,
           selectedAssets,
           isBulkMode
         }
@@ -184,11 +179,9 @@ function mountComponent(options: MountOptions = {}) {
         :asset="anchor"
         :asset-type="assetType"
         file-kind="image"
-        :show-directory-view-action="showDirectoryViewAction"
         :selected-assets="selectedAssets"
         :is-bulk-mode="isBulkMode"
         @hide="onHide"
-        @show-in-directory-view="onShowInDirectoryView"
         @bulk-compare="onBulkCompare"
       />`
     }),
@@ -205,7 +198,6 @@ function mountComponent(options: MountOptions = {}) {
     container,
     unmount,
     onHide,
-    onShowInDirectoryView,
     onBulkCompare
   }
 }
@@ -246,49 +238,6 @@ describe('MediaAssetContextMenu', () => {
     expect(onHide).toHaveBeenCalledOnce()
 
     unmount()
-  })
-
-  describe('show in directory view', () => {
-    it('is visible when showDirectoryViewAction prop is true', async () => {
-      const { container, unmount } = mountComponent({
-        showDirectoryViewAction: true
-      })
-      await showMenu(container)
-      // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access
-      const item = container.querySelector(
-        '[data-label="mediaAsset.actions.showInDirectoryView"]'
-      )
-      expect(item).not.toBeNull()
-      unmount()
-    })
-
-    it('is hidden when showDirectoryViewAction prop is false', async () => {
-      const { container, unmount } = mountComponent({
-        showDirectoryViewAction: false
-      })
-      await showMenu(container)
-      // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access
-      const item = container.querySelector(
-        '[data-label="mediaAsset.actions.showInDirectoryView"]'
-      )
-      expect(item).toBeNull()
-      unmount()
-    })
-
-    it('emits show-in-directory-view when clicked', async () => {
-      const { container, unmount, onShowInDirectoryView } = mountComponent({
-        showDirectoryViewAction: true
-      })
-      await showMenu(container)
-      // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access
-      const item = container.querySelector(
-        '[data-label="mediaAsset.actions.showInDirectoryView"]'
-      ) as HTMLElement
-      item.click()
-      await nextTick()
-      expect(onShowInDirectoryView).toHaveBeenCalledOnce()
-      unmount()
-    })
   })
 
   describe('show in file manager', () => {

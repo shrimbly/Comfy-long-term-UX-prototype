@@ -34,6 +34,13 @@
       </div>
     </div>
 
+    <div class="detail-section">
+      <h4 class="detail-section-title">
+        {{ $t('mediaAsset.details.tags') }}
+      </h4>
+      <AssetTagsEditor :assets="assetForTags" />
+    </div>
+
     <div v-if="hasGenerationDetails" class="detail-section">
       <h4 class="detail-section-title">
         {{ $t('mediaAsset.details.generationDetails') }}
@@ -89,6 +96,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 
+import AssetTagsEditor from '@/platform/assets/components/AssetTagsEditor.vue'
 import type { AssetItem } from '@/platform/assets/schemas/assetSchema'
 import { getAssetDisplayName } from '@/platform/assets/utils/assetMetadataUtils'
 import type { PromptMetadata } from '@/platform/assets/utils/promptMetadataParser'
@@ -99,6 +107,7 @@ const { asset, promptMetadata = null } = defineProps<{
   promptMetadata?: PromptMetadata | null
 }>()
 
+const assetForTags = computed(() => [asset])
 const displayName = computed(() => getAssetDisplayName(asset))
 
 const fileType = computed(() => {
