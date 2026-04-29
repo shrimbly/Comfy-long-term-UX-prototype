@@ -30,6 +30,7 @@ import { MultiSelectWidget } from './MultiSelectWidget'
 import { NumberWidget } from './NumberWidget'
 import { SelectButtonWidget } from './SelectButtonWidget'
 import { SliderWidget } from './SliderWidget'
+import { TagsWidget } from './TagsWidget'
 import { TextWidget } from './TextWidget'
 import { TextareaWidget } from './TextareaWidget'
 import { TreeSelectWidget } from './TreeSelectWidget'
@@ -60,6 +61,7 @@ export type WidgetTypeMap = {
   boundingbox: BoundingBoxWidget
   curve: CurveWidget
   painter: PainterWidget
+  tags: TagsWidget
   [key: string]: BaseWidget
 }
 
@@ -140,6 +142,8 @@ export function toConcreteWidget<TWidget extends IWidget | IBaseWidget>(
       return toClass(CurveWidget, narrowedWidget, node)
     case 'painter':
       return toClass(PainterWidget, narrowedWidget, node)
+    case 'tags':
+      return toClass(TagsWidget, narrowedWidget, node)
     default: {
       if (wrapLegacyWidgets) return toClass(LegacyWidget, widget, node)
     }
