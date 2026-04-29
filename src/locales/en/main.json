@@ -3192,6 +3192,15 @@
       "steps": "Steps",
       "seed": "Seed"
     },
+    "tags": {
+      "addPlaceholder": "Add tag...",
+      "popoverTitle": "Tags",
+      "popoverTitleBulk": "Tags ({count} assets)",
+      "noMatches": "No matching tags",
+      "createTag": "Create \"{name}\"",
+      "assetCount": "no assets | {count} asset | {count} assets",
+      "removeTag": "Remove tag {name}"
+    },
     "noJobIdFound": "No job ID found for this asset",
     "unsupportedFileType": "Unsupported file type for loader node",
     "nodeTypeNotFound": "Node type {nodeType} not found",
