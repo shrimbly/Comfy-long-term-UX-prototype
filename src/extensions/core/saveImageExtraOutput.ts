@@ -1,4 +1,6 @@
 import type { LGraphNode } from '@/lib/litegraph/src/LGraphNode'
+import { setTagsForKey } from '@/platform/assets/composables/useAssetTags'
+import type { NodeExecutionOutput } from '@/schemas/apiSchema'
 import type { ComfyNodeDef } from '@/schemas/nodeDefSchema'
 import { applyTextReplacements } from '@/utils/searchAndReplace'
 import { resolveTemplateVariables } from '@/utils/templateVariableResolver'
@@ -22,6 +24,35 @@ const saveNodeTypes = new Set([
 
 const TAGS_WIDGET_NAME = 'asset_tags'
 
+const OUTPUT_RESULT_FIELDS = ['images', 'video', 'audio'] as const
+
+function applyTagsFromWidget(
+  node: LGraphNode,
+  output: NodeExecutionOutput | undefined
+): void {
+  if (!output) return
+  const widget = node.widgets?.find((w) => w.name === TAGS_WIDGET_NAME)
+  const tags = widget?.value
+  if (!Array.isArray(tags) || tags.length === 0) return
+
+  for (const field of OUTPUT_RESULT_FIELDS) {
+    const items = output[field]
+    if (!Array.isArray(items)) continue
+    for (const item of items) {
+      const filename = item?.filename
+      if (!filename) continue
+      const type = item.type === 'output' ? 'output' : 'input'
+      // Recents/jobs view keys assets by bare filename;
+      // directory listing keys by `subfolder/filename`. Write both so
+      // tags appear in either view.
+      setTagsForKey(`${type}:${filename}`, tags)
+      if (item.subfolder) {
+        setTagsForKey(`${type}:${item.subfolder}/${filename}`, tags)
+      }
+    }
+  }
+}
+
 // Use widget values and dates in output filenames
 
 app.registerExtension({
@@ -31,6 +62,12 @@ app.registerExtension({
     nodeData: ComfyNodeDef
   ) {
     if (saveNodeTypes.has(nodeData.name)) {
+      const prevOnExecuted = nodeType.prototype.onExecuted
+      nodeType.prototype.onExecuted = function (output: NodeExecutionOutput) {
+        prevOnExecuted?.call(this, output)
+        applyTagsFromWidget(this as LGraphNode, output)
+      }
+
       const onNodeCreated = nodeType.prototype.onNodeCreated
       nodeType.prototype.onNodeCreated = function () {
         const r = onNodeCreated

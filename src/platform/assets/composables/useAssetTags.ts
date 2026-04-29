@@ -24,6 +24,19 @@ export function assetTagStorageKey(asset: AssetItem): string {
   return `${type}:${asset.name}`
 }
 
+export function setTagsForKey(key: string, tags: readonly string[]): void {
+  const cleaned = Array.from(
+    new Set(tags.map((t) => t.trim()).filter(isUserTag))
+  ).sort()
+  const next: TagsByKey = { ...tagsByKey.value }
+  if (cleaned.length === 0) {
+    delete next[key]
+  } else {
+    next[key] = cleaned
+  }
+  tagsByKey.value = next
+}
+
 export interface TagWithCount {
   name: string
   count: number
