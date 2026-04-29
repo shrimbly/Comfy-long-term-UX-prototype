@@ -139,6 +139,7 @@ export type IWidget =
   | IBoundingBoxWidget
   | ICurveWidget
   | IPainterWidget
+  | ITagsWidget
 
 export interface IBooleanWidget extends IBaseWidget<boolean, 'toggle'> {
   type: 'toggle'
@@ -339,6 +340,12 @@ export interface ICurveWidget extends IBaseWidget<CurveData, 'curve'> {
 export interface IPainterWidget extends IBaseWidget<string, 'painter'> {
   type: 'painter'
   value: string
+}
+
+/** Tags widget for organizing assets with user-defined tags */
+export interface ITagsWidget extends IBaseWidget<string[], 'tags'> {
+  type: 'tags'
+  value: string[]
 }
 
 /**

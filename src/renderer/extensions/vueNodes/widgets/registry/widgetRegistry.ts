@@ -63,6 +63,9 @@ const WidgetCurve = defineAsyncComponent(
 const WidgetPainter = defineAsyncComponent(
   () => import('@/components/painter/WidgetPainter.vue')
 )
+const WidgetTags = defineAsyncComponent(
+  () => import('../components/WidgetTags.vue')
+)
 
 export const FOR_TESTING = {
   WidgetButton,
@@ -195,6 +198,14 @@ const coreWidgetDefinitions: Array<[string, WidgetDefinition]> = [
     {
       component: WidgetPainter,
       aliases: ['PAINTER'],
+      essential: false
+    }
+  ],
+  [
+    'tags',
+    {
+      component: WidgetTags,
+      aliases: ['TAGS'],
       essential: false
     }
   ]
