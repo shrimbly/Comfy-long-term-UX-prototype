@@ -27,6 +27,8 @@
             @blur="onBlur"
             @keydown.enter.prevent="onEnter"
             @keydown.escape.prevent="closeDropdown"
+            @keydown.down.prevent="onArrow(1)"
+            @keydown.up.prevent="onArrow(-1)"
             @keydown.backspace="onBackspace"
             @pointerdown.stop
           />
@@ -57,49 +59,54 @@
     <Teleport to="body">
       <div
         v-if="dropdownVisible && dropdownStyle"
-        class="fixed z-1200 max-h-72 overflow-y-auto rounded-lg border border-border-default bg-base-background p-1 shadow-lg"
+        class="fixed overflow-y-auto rounded-lg border border-border-default bg-base-background p-1 shadow-lg"
         :style="dropdownStyle"
         data-capture-wheel="true"
-        @mousedown.prevent
-        @pointerdown.stop
+        @pointerdown.stop.prevent
       >
         <button
-          v-for="suggestion in filteredSuggestions"
-          :key="suggestion.name"
+          v-for="(item, idx) in dropdownItems"
+          :key="item.kind === 'create' ? '__create__' : item.name"
           type="button"
-          class="flex w-full cursor-pointer items-center gap-2 rounded-sm border-none bg-transparent px-2 py-1.5 text-left text-sm transition-colors hover:bg-secondary-background-hover"
-          @mousedown.prevent="addTag(suggestion.name)"
+          :data-highlighted="highlightedIndex === idx ? '' : null"
+          :class="
+            cn(
+              'flex w-full cursor-pointer items-center gap-2 rounded-sm border-none bg-transparent px-2 py-1.5 text-left text-sm transition-colors',
+              highlightedIndex === idx
+                ? 'bg-secondary-background-hover text-text-primary'
+                : 'hover:bg-secondary-background-hover'
+            )
+          "
+          @pointerdown.prevent.stop="selectItem(item)"
+          @pointerenter="highlightedIndex = idx"
         >
-          <span
-            class="inline-flex shrink-0 items-center rounded-sm bg-modal-card-tag-background px-1.5 py-px font-mono text-2xs text-modal-card-tag-foreground"
-          >
-            {{ suggestion.name }}
-          </span>
-          <span class="truncate text-xs text-muted-foreground">
-            {{
-              t(
-                'mediaAsset.tags.assetCount',
-                { count: suggestion.count },
-                suggestion.count
-              )
-            }}
-          </span>
-        </button>
-        <button
-          v-if="canCreateTyped"
-          type="button"
-          class="flex w-full cursor-pointer items-center gap-2 rounded-sm border-none bg-transparent px-2 py-1.5 text-left text-sm transition-colors hover:bg-secondary-background-hover"
-          @mousedown.prevent="addTag(typedQuery)"
-        >
-          <i
-            class="icon-[lucide--plus] size-3.5 shrink-0 text-muted-foreground"
-          />
-          <span class="truncate text-xs">
-            {{ t('mediaAsset.tags.createTag', { name: typedQuery }) }}
-          </span>
+          <template v-if="item.kind === 'create'">
+            <i
+              class="icon-[lucide--plus] size-3.5 shrink-0 text-muted-foreground"
+            />
+            <span class="truncate text-xs">
+              {{ t('mediaAsset.tags.createTag', { name: item.name }) }}
+            </span>
+          </template>
+          <template v-else>
+            <span
+              class="inline-flex shrink-0 items-center rounded-sm bg-modal-card-tag-background px-1.5 py-px font-mono text-2xs text-modal-card-tag-foreground"
+            >
+              {{ item.name }}
+            </span>
+            <span class="truncate text-xs text-muted-foreground">
+              {{
+                t(
+                  'mediaAsset.tags.assetCount',
+                  { count: item.count },
+                  item.count
+                )
+              }}
+            </span>
+          </template>
         </button>
         <div
-          v-if="filteredSuggestions.length === 0 && !canCreateTyped"
+          v-if="dropdownItems.length === 0"
           class="px-2 py-1.5 text-xs text-muted-foreground"
         >
           {{ t('mediaAsset.tags.noMatches') }}
@@ -110,9 +117,9 @@
 </template>
 
 <script setup lang="ts">
-import { useElementBounding } from '@vueuse/core'
+import { useElementBounding, useWindowSize } from '@vueuse/core'
 import type { CSSProperties } from 'vue'
-import { computed, ref, useTemplateRef } from 'vue'
+import { computed, ref, useTemplateRef, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import {
@@ -124,6 +131,20 @@ import { cn } from '@/utils/tailwindUtil'
 
 import { WidgetInputBaseClass } from './layout'
 import WidgetLayoutField from './layout/WidgetLayoutField.vue'
+
+interface SuggestionItem {
+  kind: 'suggestion'
+  name: string
+  count: number
+}
+interface CreateItem {
+  kind: 'create'
+  name: string
+}
+type DropdownItem = SuggestionItem | CreateItem
+
+const DROPDOWN_MAX_HEIGHT = 288
+const DROPDOWN_GAP = 4
 
 const { widget, size = 'medium' } = defineProps<{
   widget: SimplifiedWidget<string[] | undefined>
@@ -137,9 +158,11 @@ const { allTags } = useAssetTags()
 
 const isFocused = ref(false)
 const typedQuery = ref('')
+const highlightedIndex = ref(0)
 const inputEl = useTemplateRef<HTMLInputElement>('inputEl')
 const anchorRef = useTemplateRef<HTMLElement>('anchorRef')
-const { left, bottom, width } = useElementBounding(anchorRef)
+const { left, top, bottom, width } = useElementBounding(anchorRef)
+const { height: windowHeight } = useWindowSize()
 
 const tags = computed<string[]>(() => modelValue.value ?? [])
 
@@ -147,11 +170,17 @@ const isReadOnly = computed(() =>
   Boolean(widget.options?.read_only || widget.options?.disabled)
 )
 
-const filteredSuggestions = computed(() => {
+const filteredSuggestions = computed<SuggestionItem[]>(() => {
   const query = typedQuery.value.trim().toLowerCase()
   const available = allTags.value.filter((s) => !tags.value.includes(s.name))
-  if (!query) return available
-  return available.filter((s) => s.name.toLowerCase().includes(query))
+  const matches = query
+    ? available.filter((s) => s.name.toLowerCase().includes(query))
+    : available
+  return matches.map((s) => ({
+    kind: 'suggestion',
+    name: s.name,
+    count: s.count
+  }))
 })
 
 const canCreateTyped = computed(() => {
@@ -162,14 +191,32 @@ const canCreateTyped = computed(() => {
   return true
 })
 
+const dropdownItems = computed<DropdownItem[]>(() => {
+  const items: DropdownItem[] = [...filteredSuggestions.value]
+  if (canCreateTyped.value) {
+    items.push({ kind: 'create', name: typedQuery.value.trim() })
+  }
+  return items
+})
+
 const dropdownVisible = computed(() => isFocused.value && !isReadOnly.value)
 
 const dropdownStyle = computed<CSSProperties | null>(() => {
   if (!dropdownVisible.value || width.value === 0) return null
+  const spaceBelow = windowHeight.value - bottom.value
+  const placeAbove =
+    spaceBelow < DROPDOWN_MAX_HEIGHT && top.value > DROPDOWN_MAX_HEIGHT
+  const maxHeight = placeAbove
+    ? Math.min(DROPDOWN_MAX_HEIGHT, top.value - DROPDOWN_GAP)
+    : Math.min(DROPDOWN_MAX_HEIGHT, spaceBelow - DROPDOWN_GAP)
   return {
     left: `${left.value}px`,
-    top: `${bottom.value + 4}px`,
-    width: `${width.value}px`
+    top: placeAbove
+      ? `${top.value - maxHeight - DROPDOWN_GAP}px`
+      : `${bottom.value + DROPDOWN_GAP}px`,
+    width: `${width.value}px`,
+    maxHeight: `${maxHeight}px`,
+    zIndex: 2147483000
   }
 })
 
@@ -179,13 +226,28 @@ const layoutWidget = computed(() => ({
   borderStyle: widget.borderStyle
 }))
 
+watch(dropdownItems, (items) => {
+  if (highlightedIndex.value >= items.length) {
+    highlightedIndex.value = Math.max(0, items.length - 1)
+  }
+})
+
+watch(typedQuery, () => {
+  highlightedIndex.value = 0
+})
+
 function addTag(name: string) {
   const trimmed = name.trim()
   if (!isUserTag(trimmed)) return
   if (tags.value.includes(trimmed)) return
   modelValue.value = [...tags.value, trimmed]
   typedQuery.value = ''
+  highlightedIndex.value = 0
   inputEl.value?.focus()
+}
+
+function selectItem(item: DropdownItem) {
+  addTag(item.name)
 }
 
 function removeTag(name: string) {
@@ -193,16 +255,22 @@ function removeTag(name: string) {
   modelValue.value = tags.value.filter((t) => t !== name)
 }
 
+function onArrow(delta: number) {
+  if (!dropdownVisible.value) return
+  const count = dropdownItems.value.length
+  if (count === 0) return
+  highlightedIndex.value = (highlightedIndex.value + delta + count) % count
+}
+
 function onEnter() {
   if (isReadOnly.value) return
-  const trimmed = typedQuery.value.trim()
-  if (!trimmed) return
-  if (canCreateTyped.value) {
-    addTag(trimmed)
+  const item = dropdownItems.value[highlightedIndex.value]
+  if (item) {
+    selectItem(item)
     return
   }
-  const suggestion = filteredSuggestions.value[0]
-  if (suggestion) addTag(suggestion.name)
+  const trimmed = typedQuery.value.trim()
+  if (trimmed && canCreateTyped.value) addTag(trimmed)
 }
 
 function onBackspace() {
@@ -213,6 +281,7 @@ function onBackspace() {
 
 function onFocus() {
   isFocused.value = true
+  highlightedIndex.value = 0
 }
 
 function onBlur() {
