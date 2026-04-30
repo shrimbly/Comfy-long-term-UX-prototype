@@ -1,39 +1,103 @@
 <template>
   <div class="col-span-2 grid grid-cols-subgrid gap-y-1">
     <WidgetLayoutField :widget="layoutWidget" root-class="col-span-2">
-      <div ref="anchorRef" class="relative w-full">
-        <div
-          :class="
-            cn(
-              WidgetInputBaseClass,
-              'flex w-full items-center gap-2 px-4',
-              size === 'large' ? 'py-3 text-sm' : 'py-2 text-xs',
-              isReadOnly && 'cursor-not-allowed opacity-50'
-            )
-          "
-        >
-          <i
-            class="pointer-events-none icon-[lucide--search] size-3.5 shrink-0 text-muted-foreground"
-          />
-          <input
-            ref="inputEl"
-            v-model="typedQuery"
-            type="text"
-            :placeholder="t('mediaAsset.tags.addPlaceholder')"
-            :aria-label="widget.name"
-            :readonly="isReadOnly"
-            class="min-w-0 flex-1 border-none bg-transparent p-0 outline-none placeholder:text-muted-foreground"
-            @focus="onFocus"
-            @blur="onBlur"
-            @keydown.enter.prevent="onEnter"
-            @keydown.escape.prevent="closeDropdown"
-            @keydown.down.prevent="onArrow(1)"
-            @keydown.up.prevent="onArrow(-1)"
-            @keydown.backspace="onBackspace"
-            @pointerdown.stop
-          />
-        </div>
-      </div>
+      <PopoverRoot v-model:open="popoverOpen">
+        <PopoverAnchor as-child>
+          <div
+            :class="
+              cn(
+                WidgetInputBaseClass,
+                'flex w-full items-center gap-2 px-4',
+                size === 'large' ? 'py-3 text-sm' : 'py-2 text-xs',
+                isReadOnly && 'cursor-not-allowed opacity-50'
+              )
+            "
+          >
+            <i
+              class="pointer-events-none icon-[lucide--search] size-3.5 shrink-0 text-muted-foreground"
+            />
+            <input
+              ref="inputEl"
+              v-model="typedQuery"
+              type="text"
+              :placeholder="t('mediaAsset.tags.addPlaceholder')"
+              :aria-label="widget.name"
+              :readonly="isReadOnly"
+              class="min-w-0 flex-1 border-none bg-transparent p-0 outline-none placeholder:text-muted-foreground"
+              @focus="onFocus"
+              @blur="onBlur"
+              @keydown.enter.prevent="onEnter"
+              @keydown.escape.prevent="closeDropdown"
+              @keydown.down.prevent="onArrow(1)"
+              @keydown.up.prevent="onArrow(-1)"
+              @keydown.backspace="onBackspace"
+              @pointerdown.stop
+            />
+          </div>
+        </PopoverAnchor>
+        <PopoverPortal>
+          <PopoverContent
+            position="popper"
+            side="bottom"
+            align="start"
+            :side-offset="4"
+            :collision-padding="8"
+            :style="{ zIndex: 2147483000 }"
+            class="max-h-72 w-(--reka-popover-trigger-width) overflow-y-auto rounded-lg border border-border-default bg-base-background p-1 shadow-lg"
+            data-capture-wheel="true"
+            @open-auto-focus.prevent
+            @close-auto-focus.prevent
+            @pointerdown-outside="onPointerDownOutside"
+          >
+            <button
+              v-for="(item, idx) in dropdownItems"
+              :key="item.kind === 'create' ? '__create__' : item.name"
+              type="button"
+              :class="
+                cn(
+                  'flex w-full cursor-pointer items-center gap-2 rounded-sm border-none bg-transparent px-2 py-1.5 text-left text-sm transition-colors',
+                  highlightedIndex === idx
+                    ? 'bg-secondary-background-hover text-text-primary'
+                    : 'hover:bg-secondary-background-hover'
+                )
+              "
+              @pointerdown.prevent.stop="selectItem(item)"
+              @pointerenter="highlightedIndex = idx"
+            >
+              <template v-if="item.kind === 'create'">
+                <i
+                  class="icon-[lucide--plus] size-3.5 shrink-0 text-muted-foreground"
+                />
+                <span class="truncate text-xs">
+                  {{ t('mediaAsset.tags.createTag', { name: item.name }) }}
+                </span>
+              </template>
+              <template v-else>
+                <span
+                  class="inline-flex shrink-0 items-center rounded-sm bg-modal-card-tag-background px-1.5 py-px font-mono text-2xs text-modal-card-tag-foreground"
+                >
+                  {{ item.name }}
+                </span>
+                <span class="truncate text-xs text-muted-foreground">
+                  {{
+                    t(
+                      'mediaAsset.tags.assetCount',
+                      { count: item.count },
+                      item.count
+                    )
+                  }}
+                </span>
+              </template>
+            </button>
+            <div
+              v-if="dropdownItems.length === 0"
+              class="px-2 py-1.5 text-xs text-muted-foreground"
+            >
+              {{ t('mediaAsset.tags.noMatches') }}
+            </div>
+          </PopoverContent>
+        </PopoverPortal>
+      </PopoverRoot>
     </WidgetLayoutField>
 
     <div v-if="tags.length > 0" class="col-start-2 flex flex-wrap gap-1 px-1">
@@ -46,70 +110,16 @@
         @remove="removeTag(tag)"
       />
     </div>
-
-    <Teleport to="body">
-      <div
-        v-if="dropdownVisible && dropdownStyle"
-        class="fixed overflow-y-auto rounded-lg border border-border-default bg-base-background p-1 shadow-lg"
-        :style="dropdownStyle"
-        data-capture-wheel="true"
-        @pointerdown.stop.prevent
-      >
-        <button
-          v-for="(item, idx) in dropdownItems"
-          :key="item.kind === 'create' ? '__create__' : item.name"
-          type="button"
-          :data-highlighted="highlightedIndex === idx ? '' : null"
-          :class="
-            cn(
-              'flex w-full cursor-pointer items-center gap-2 rounded-sm border-none bg-transparent px-2 py-1.5 text-left text-sm transition-colors',
-              highlightedIndex === idx
-                ? 'bg-secondary-background-hover text-text-primary'
-                : 'hover:bg-secondary-background-hover'
-            )
-          "
-          @pointerdown.prevent.stop="selectItem(item)"
-          @pointerenter="highlightedIndex = idx"
-        >
-          <template v-if="item.kind === 'create'">
-            <i
-              class="icon-[lucide--plus] size-3.5 shrink-0 text-muted-foreground"
-            />
-            <span class="truncate text-xs">
-              {{ t('mediaAsset.tags.createTag', { name: item.name }) }}
-            </span>
-          </template>
-          <template v-else>
-            <span
-              class="inline-flex shrink-0 items-center rounded-sm bg-modal-card-tag-background px-1.5 py-px font-mono text-2xs text-modal-card-tag-foreground"
-            >
-              {{ item.name }}
-            </span>
-            <span class="truncate text-xs text-muted-foreground">
-              {{
-                t(
-                  'mediaAsset.tags.assetCount',
-                  { count: item.count },
-                  item.count
-                )
-              }}
-            </span>
-          </template>
-        </button>
-        <div
-          v-if="dropdownItems.length === 0"
-          class="px-2 py-1.5 text-xs text-muted-foreground"
-        >
-          {{ t('mediaAsset.tags.noMatches') }}
-        </div>
-      </div>
-    </Teleport>
   </div>
 </template>
 
 <script setup lang="ts">
-import { useElementBounding, useWindowSize } from '@vueuse/core'
-import type { CSSProperties } from 'vue'
+import {
+  PopoverAnchor,
+  PopoverContent,
+  PopoverPortal,
+  PopoverRoot
+} from 'reka-ui'
 import { computed, ref, useTemplateRef, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 
@@ -135,9 +145,6 @@ interface CreateItem {
 }
 type DropdownItem = SuggestionItem | CreateItem
 
-const DROPDOWN_MAX_HEIGHT = 288
-const DROPDOWN_GAP = 4
-
 const { widget, size = 'medium' } = defineProps<{
   widget: SimplifiedWidget<string[] | undefined>
   size?: 'medium' | 'large'
@@ -152,9 +159,6 @@ const isFocused = ref(false)
 const typedQuery = ref('')
 const highlightedIndex = ref(0)
 const inputEl = useTemplateRef<HTMLInputElement>('inputEl')
-const anchorRef = useTemplateRef<HTMLElement>('anchorRef')
-const { left, top, bottom, width } = useElementBounding(anchorRef)
-const { height: windowHeight } = useWindowSize()
 
 const tags = computed<string[]>(() => modelValue.value ?? [])
 
@@ -191,24 +195,10 @@ const dropdownItems = computed<DropdownItem[]>(() => {
   return items
 })
 
-const dropdownVisible = computed(() => isFocused.value && !isReadOnly.value)
-
-const dropdownStyle = computed<CSSProperties | null>(() => {
-  if (!dropdownVisible.value || width.value === 0) return null
-  const spaceBelow = windowHeight.value - bottom.value
-  const placeAbove =
-    spaceBelow < DROPDOWN_MAX_HEIGHT && top.value > DROPDOWN_MAX_HEIGHT
-  const maxHeight = placeAbove
-    ? Math.min(DROPDOWN_MAX_HEIGHT, top.value - DROPDOWN_GAP)
-    : Math.min(DROPDOWN_MAX_HEIGHT, spaceBelow - DROPDOWN_GAP)
-  return {
-    left: `${left.value}px`,
-    top: placeAbove
-      ? `${top.value - maxHeight - DROPDOWN_GAP}px`
-      : `${bottom.value + DROPDOWN_GAP}px`,
-    width: `${width.value}px`,
-    maxHeight: `${maxHeight}px`,
-    zIndex: 2147483000
+const popoverOpen = computed<boolean>({
+  get: () => isFocused.value && !isReadOnly.value,
+  set: (open) => {
+    if (!open) closeDropdown()
   }
 })
 
@@ -248,7 +238,7 @@ function removeTag(name: string) {
 }
 
 function onArrow(delta: number) {
-  if (!dropdownVisible.value) return
+  if (!popoverOpen.value) return
   const count = dropdownItems.value.length
   if (count === 0) return
   highlightedIndex.value = (highlightedIndex.value + delta + count) % count
@@ -285,5 +275,12 @@ function closeDropdown() {
   isFocused.value = false
   typedQuery.value = ''
   inputEl.value?.blur()
+}
+
+function onPointerDownOutside(event: Event) {
+  // Let clicks on the input still focus it.
+  if (event.target instanceof Node && inputEl.value?.contains(event.target)) {
+    event.preventDefault()
+  }
 }
 </script>
