@@ -75,7 +75,17 @@
       </div>
     </div>
 
-    <div v-if="editorTags.length > 0" class="flex flex-wrap gap-1">
+    <TransitionGroup
+      v-if="editorTags.length > 0"
+      tag="div"
+      class="flex flex-wrap gap-1"
+      enter-active-class="transition-[opacity,transform] duration-150 ease-out"
+      enter-from-class="opacity-0 scale-90"
+      enter-to-class="opacity-100 scale-100"
+      leave-active-class="transition-[opacity,transform] duration-100 ease-in"
+      leave-from-class="opacity-100 scale-100"
+      leave-to-class="opacity-0 scale-90"
+    >
       <TagChip
         v-for="tag in editorTags"
         :key="tag"
@@ -83,7 +93,7 @@
         removable
         @remove="removeEditorTag(tag)"
       />
-    </div>
+    </TransitionGroup>
   </div>
 </template>
 
