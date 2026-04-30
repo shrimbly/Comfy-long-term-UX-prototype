@@ -50,6 +50,7 @@
     <Teleport to="body">
       <div
         v-if="dropdownVisible && dropdownStyle"
+        ref="dropdownEl"
         class="fixed overflow-y-auto rounded-lg border border-border-default bg-base-background p-1 shadow-lg"
         :style="dropdownStyle"
         data-capture-wheel="true"
@@ -59,6 +60,7 @@
           v-for="(item, idx) in dropdownItems"
           :key="item.kind === 'create' ? '__create__' : item.name"
           type="button"
+          :data-index="idx"
           :class="
             cn(
               'flex w-full cursor-pointer items-center gap-2 rounded-sm border-none bg-transparent px-2 py-1.5 text-left text-sm transition-colors',
@@ -109,7 +111,14 @@
 <script setup lang="ts">
 import { useWindowSize } from '@vueuse/core'
 import type { CSSProperties } from 'vue'
-import { computed, onScopeDispose, ref, useTemplateRef, watch } from 'vue'
+import {
+  computed,
+  nextTick,
+  onScopeDispose,
+  ref,
+  useTemplateRef,
+  watch
+} from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import TagChip from '@/platform/assets/components/TagChip.vue'
@@ -152,6 +161,7 @@ const typedQuery = ref('')
 const highlightedIndex = ref(0)
 const inputEl = useTemplateRef<HTMLInputElement>('inputEl')
 const anchorRef = useTemplateRef<HTMLElement>('anchorRef')
+const dropdownEl = useTemplateRef<HTMLElement>('dropdownEl')
 const anchorRect = ref<DOMRect | null>(null)
 const { height: windowHeight } = useWindowSize()
 
@@ -275,6 +285,15 @@ watch(dropdownItems, (items) => {
 
 watch(typedQuery, () => {
   highlightedIndex.value = 0
+})
+
+watch(highlightedIndex, (idx) => {
+  void nextTick(() => {
+    const el = dropdownEl.value?.querySelector<HTMLElement>(
+      `[data-index="${idx}"]`
+    )
+    el?.scrollIntoView({ block: 'nearest' })
+  })
 })
 
 function addTag(name: string) {
