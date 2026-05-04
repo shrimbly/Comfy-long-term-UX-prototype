@@ -2,7 +2,6 @@ export type MetadataField =
   | 'model'
   | 'lora'
   | 'workflowTitle'
-  | 'prompt'
   | 'date'
   | 'tag'
   | 'type'
@@ -15,8 +14,7 @@ export interface MetadataFilter {
 const PROMPT_METADATA_FIELDS: MetadataField[] = [
   'model',
   'lora',
-  'workflowTitle',
-  'prompt'
+  'workflowTitle'
 ]
 
 export type DatePreset =
@@ -40,7 +38,7 @@ export const MEDIA_TYPE_OPTIONS = ['image', 'video', 'audio', '3D'] as const
 
 export function isPromptMetadataField(
   field: MetadataField
-): field is 'model' | 'lora' | 'workflowTitle' | 'prompt' {
+): field is 'model' | 'lora' | 'workflowTitle' {
   return (PROMPT_METADATA_FIELDS as string[]).includes(field)
 }
 

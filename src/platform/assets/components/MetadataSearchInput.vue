@@ -173,12 +173,7 @@ const recentByField = useStorage<Partial<Record<MetadataField, string[]>>>(
   {}
 )
 
-const METADATA_GROUP: MetadataField[] = [
-  'model',
-  'lora',
-  'workflowTitle',
-  'prompt'
-]
+const METADATA_GROUP: MetadataField[] = ['model', 'lora', 'workflowTitle']
 const ATTRIBUTES_GROUP: MetadataField[] = ['date', 'tag', 'type']
 const CUSTOM_VALUE_KEY = '__custom__'
 const FUSE_OPTIONS = { threshold: 0.4, keys: ['label'], includeScore: true }
@@ -213,12 +208,7 @@ function fieldHasOptions(field: MetadataField): boolean {
 }
 
 function fieldAllowsCustom(field: MetadataField): boolean {
-  return (
-    field === 'model' ||
-    field === 'lora' ||
-    field === 'workflowTitle' ||
-    field === 'prompt'
-  )
+  return field === 'model' || field === 'lora' || field === 'workflowTitle'
 }
 
 const fieldOptions = computed<LabelledValue[]>(() => {

@@ -3917,7 +3917,6 @@
       "model": "Model",
       "lora": "LoRA",
       "workflowTitle": "Workflow title",
-      "prompt": "Prompt",
       "date": "Date",
       "tag": "Tag",
       "type": "Type",
@@ -3936,7 +3935,6 @@
         "model": "Filter by model name",
         "lora": "Filter by LoRA",
         "workflowTitle": "Filter by workflow title",
-        "prompt": "Filter by prompt text",
         "date": "Filter by date",
         "tag": "Filter by tag",
         "type": "Filter by media type"
