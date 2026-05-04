@@ -120,6 +120,44 @@ export function useAssetTags() {
     return assets.filter((a) => hasTag(a, tag))
   }
 
+  function assetsWithAnyTag(
+    assets: readonly AssetItem[],
+    tags: readonly string[]
+  ): AssetItem[] {
+    if (tags.length === 0) return [...assets]
+    const targets = new Set(tags)
+    return assets.filter((a) => getTags(a).some((t) => targets.has(t)))
+  }
+
+  function tagsForAssets(assets: readonly AssetItem[]): TagWithCount[] {
+    const counts = new Map<string, number>()
+    for (const asset of assets) {
+      for (const tag of getTags(asset)) {
+        counts.set(tag, (counts.get(tag) ?? 0) + 1)
+      }
+    }
+    return Array.from(counts.entries())
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => a.name.localeCompare(b.name))
+  }
+
+  function removeTagEverywhere(name: string): void {
+    const target = name.trim()
+    if (!target) return
+    const next: TagsByKey = {}
+    let touched = false
+    for (const [key, tags] of Object.entries(tagsByKey.value)) {
+      if (!tags.includes(target)) {
+        next[key] = tags
+        continue
+      }
+      touched = true
+      const remaining = tags.filter((t) => t !== target)
+      if (remaining.length > 0) next[key] = remaining
+    }
+    if (touched) tagsByKey.value = next
+  }
+
   return {
     getTags,
     setTags,
@@ -128,6 +166,9 @@ export function useAssetTags() {
     renameTag,
     hasTag,
     allTags,
-    assetsWithTag
+    assetsWithTag,
+    assetsWithAnyTag,
+    tagsForAssets,
+    removeTagEverywhere
   }
 }

@@ -857,7 +857,29 @@
       "tagsHeader": "Tags",
       "noTagsHint": "Right-click an asset to add tags",
       "tagFilterLabel": "Tag: {tag}",
-      "renameTag": "Rename tag"
+      "tagFilterLabelMulti": "Tags: {count} selected",
+      "renameTag": "Rename tag",
+      "tagSearchPlaceholder": "Search tags",
+      "tagSearchAriaLabel": "Search tags",
+      "tagContextMenu": {
+        "delete": "Delete tag",
+        "deleteMulti": "Delete {count} tags",
+        "group": "Group...",
+        "rename": "Rename"
+      },
+      "tagGroupContextMenu": {
+        "rename": "Rename group",
+        "delete": "Delete group",
+        "deleteAllTags": "Delete all tags in group"
+      },
+      "tagGroup": {
+        "namePlaceholder": "Group name",
+        "allHeader": "All",
+        "collapseAriaLabel": "Toggle group {name}",
+        "dropTargetAriaLabel": "Drop tag here to add to group {name}",
+        "deleteConfirmTitle": "Delete tags",
+        "deleteConfirmMessage": "Remove {count} tag(s) from all assets? This cannot be undone."
+      }
     },
     "backToAssets": "Back to all assets",
     "folderView": {
@@ -3187,10 +3209,13 @@
       "assetDetails": "Asset Details",
       "generationDetails": "Generation Details",
       "tags": "Tags",
+      "sharedTags": "Shared Tags",
       "name": "Name",
       "type": "Type",
       "dimensions": "Dimensions",
       "size": "Size",
+      "totalSize": "Total Size",
+      "items": "Items",
       "duration": "Duration",
       "model": "Model",
       "lora": "LoRA",
@@ -3899,7 +3924,7 @@
       "tag": "Tag",
       "type": "Type",
       "favorite": "Favorite",
-      "searchPlaceholder": "Search or type {'@'} to filter",
+      "searchPlaceholder": "Search or filter",
       "enterValue": "Type {field} value...",
       "noMatches": "No matches",
       "group": {

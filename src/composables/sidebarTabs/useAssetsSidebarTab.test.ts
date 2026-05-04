@@ -64,18 +64,4 @@ describe('useAssetsSidebarTab', () => {
     expect(sidebarTab.panelMinSize).toBe(40)
     expect(sidebarTab.panelStateKeySuffix).toBe('recents-folders')
   })
-
-  it('provides extra pixel width when detail panel is open', () => {
-    localStorage.setItem('Comfy.Assets.ShowDetailPanel', 'true')
-
-    const sidebarTab = useAssetsSidebarTab()
-
-    expect(sidebarTab.panelExtraWidthPx).toBe(200)
-  })
-
-  it('has no extra pixel width when detail panel is closed', () => {
-    const sidebarTab = useAssetsSidebarTab()
-
-    expect(sidebarTab.panelExtraWidthPx).toBe(0)
-  })
 })

@@ -1,9 +1,40 @@
 <template>
   <div class="asset-detail-panel">
-    <div class="detail-section">
-      <h4 class="detail-section-title">
-        {{ $t('mediaAsset.details.assetDetails') }}
-      </h4>
+    <div
+      :class="[
+        'thumbnail-stage',
+        isSingle ? 'thumbnail-stage--single' : 'thumbnail-stage--multi'
+      ]"
+    >
+      <img
+        v-if="isSingle && fannedThumbnails[0]"
+        :src="fannedThumbnails[0]"
+        alt=""
+        class="single-thumb rounded-lg ring-2 ring-base-background"
+      />
+      <div v-else-if="!isSingle" class="card-stack">
+        <img
+          v-if="fannedThumbnails[2]"
+          :src="fannedThumbnails[2]"
+          alt=""
+          class="fan-back rounded-lg ring-2 ring-base-background"
+        />
+        <img
+          v-if="fannedThumbnails[1]"
+          :src="fannedThumbnails[1]"
+          alt=""
+          class="fan-mid rounded-lg ring-2 ring-base-background"
+        />
+        <img
+          v-if="fannedThumbnails[0]"
+          :src="fannedThumbnails[0]"
+          alt=""
+          class="fan-front rounded-lg ring-2 ring-base-background"
+        />
+      </div>
+    </div>
+
+    <div v-if="isSingle" class="detail-section">
       <div class="detail-rows">
         <div class="detail-row">
           <span class="detail-label">
@@ -25,7 +56,7 @@
           </span>
           <span class="detail-value">{{ dimensions }}</span>
         </div>
-        <div v-if="asset.size" class="detail-row">
+        <div v-if="singleAsset?.size" class="detail-row">
           <span class="detail-label">
             {{ $t('mediaAsset.details.size') }}
           </span>
@@ -34,14 +65,35 @@
       </div>
     </div>
 
-    <div class="detail-section">
-      <h4 class="detail-section-title">
-        {{ $t('mediaAsset.details.tags') }}
-      </h4>
-      <AssetTagsEditor :assets="assetForTags" />
+    <div v-else class="detail-section">
+      <div class="detail-rows">
+        <div class="detail-row">
+          <span class="detail-label">
+            {{ $t('mediaAsset.details.items') }}
+          </span>
+          <span class="detail-value">{{ assets.length }}</span>
+        </div>
+        <div v-if="totalSize > 0" class="detail-row">
+          <span class="detail-label">
+            {{ $t('mediaAsset.details.totalSize') }}
+          </span>
+          <span class="detail-value">{{ formattedTotalSize }}</span>
+        </div>
+      </div>
     </div>
 
-    <div v-if="hasGenerationDetails" class="detail-section">
+    <div class="detail-section">
+      <h4 class="detail-section-title">
+        {{
+          isSingle
+            ? $t('mediaAsset.details.tags')
+            : $t('mediaAsset.details.sharedTags')
+        }}
+      </h4>
+      <AssetTagsEditor :assets="assets" />
+    </div>
+
+    <div v-if="isSingle && hasGenerationDetails" class="detail-section">
       <h4 class="detail-section-title">
         {{ $t('mediaAsset.details.generationDetails') }}
       </h4>
@@ -102,30 +154,44 @@ import { getAssetDisplayName } from '@/platform/assets/utils/assetMetadataUtils'
 import type { PromptMetadata } from '@/platform/assets/utils/promptMetadataParser'
 import { formatSize, getMediaTypeFromFilename } from '@/utils/formatUtil'
 
-const { asset, promptMetadata = null } = defineProps<{
-  asset: AssetItem
+const { assets, promptMetadata = null } = defineProps<{
+  assets: readonly AssetItem[]
   promptMetadata?: PromptMetadata | null
 }>()
 
-const assetForTags = computed(() => [asset])
-const displayName = computed(() => getAssetDisplayName(asset))
+const isSingle = computed(() => assets.length === 1)
+const singleAsset = computed<AssetItem | null>(() =>
+  isSingle.value ? assets[0] : null
+)
+
+const thumbnails = computed(() =>
+  assets.map((a) => a.preview_url).filter((url): url is string => Boolean(url))
+)
+const fannedThumbnails = computed(() => thumbnails.value.slice(0, 3))
+
+const displayName = computed(() =>
+  singleAsset.value ? getAssetDisplayName(singleAsset.value) : ''
+)
 
 const fileType = computed(() => {
-  const mediaType = getMediaTypeFromFilename(asset.name)
+  if (!singleAsset.value) return ''
+  const mediaType = getMediaTypeFromFilename(singleAsset.value.name)
   return mediaType.charAt(0).toUpperCase() + mediaType.slice(1)
 })
 
 const dimensions = ref<string | null>(null)
 
 watch(
-  () => asset.id,
+  () => singleAsset.value?.id,
   () => {
     dimensions.value = null
+    const asset = singleAsset.value
+    if (!asset) return
     const mediaType = getMediaTypeFromFilename(asset.name)
     if (mediaType === 'image' && asset.preview_url) {
       const img = new Image()
       img.onload = () => {
-        dimensions.value = `${img.naturalWidth} \u00d7 ${img.naturalHeight}`
+        dimensions.value = `${img.naturalWidth} × ${img.naturalHeight}`
       }
       img.src = asset.preview_url
     }
@@ -137,10 +203,20 @@ onBeforeUnmount(() => {
   dimensions.value = null
 })
 
-const formattedSize = computed(() => formatSize(asset.size))
+const formattedSize = computed(() =>
+  singleAsset.value ? formatSize(singleAsset.value.size) : ''
+)
+
+const totalSize = computed(() =>
+  assets.reduce((sum, a) => sum + (a.size ?? 0), 0)
+)
+const formattedTotalSize = computed(() => formatSize(totalSize.value))
 
 const executionTime = computed(
-  () => asset.user_metadata?.executionTimeInSeconds as number | undefined
+  () =>
+    singleAsset.value?.user_metadata?.executionTimeInSeconds as
+      | number
+      | undefined
 )
 
 const formattedDuration = computed(() => {
@@ -151,23 +227,80 @@ const formattedDuration = computed(() => {
 const hasGenerationDetails = computed(
   () =>
     formattedDuration.value !== null ||
-    promptMetadata?.model !== null ||
-    promptMetadata?.lora !== null ||
-    promptMetadata?.vae !== null ||
-    promptMetadata?.steps !== null ||
-    promptMetadata?.seed !== null
+    promptMetadata?.model != null ||
+    promptMetadata?.lora != null ||
+    promptMetadata?.vae != null ||
+    promptMetadata?.steps != null ||
+    promptMetadata?.seed != null
 )
 </script>
 
 <style scoped>
 .asset-detail-panel {
-  width: 200px;
-  min-width: 200px;
-  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.thumbnail-stage {
+  display: flex;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.thumbnail-stage--single {
+  align-items: center;
+  padding: 0.75rem 1rem;
+}
+
+.thumbnail-stage--multi {
+  align-items: flex-end;
+  padding: 2.5rem 1.75rem 0.75rem 0.75rem;
+}
+
+.single-thumb {
+  display: block;
+  max-width: 100%;
+  max-height: 10rem;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+}
+
+.card-stack {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.fan-front {
+  position: relative;
+  display: block;
+  max-width: 10rem;
+  max-height: 10rem;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  z-index: 20;
+}
+
+.fan-mid,
+.fan-back {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
   height: 100%;
-  overflow-y: auto;
-  border-left: 1px solid var(--p-content-border-color);
-  background: var(--comfy-menu-bg);
+  object-fit: cover;
+  transform-origin: bottom left;
+}
+
+.fan-mid {
+  z-index: 10;
+  transform: translate(0.875rem, -1.25rem) rotate(6deg);
+}
+
+.fan-back {
+  z-index: 0;
+  transform: translate(1.75rem, -2.5rem) rotate(12deg);
 }
 
 .detail-section {

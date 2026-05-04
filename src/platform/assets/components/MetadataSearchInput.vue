@@ -36,6 +36,7 @@
                 activeField ? 'h-5 min-w-12' : 'h-6 min-w-24'
               )
             "
+            @focus="onInputFocus"
             @input="handleInput"
             @keydown="handleKeydown"
           />
@@ -458,6 +459,12 @@ function handleInput(e: Event) {
     triggerMode.value = 'field'
     isOpen.value = true
   }
+}
+
+function onInputFocus() {
+  if (activeField.value) return
+  if (triggerMode.value === null) triggerMode.value = 'field'
+  isOpen.value = true
 }
 
 function handleKeydown(e: KeyboardEvent) {

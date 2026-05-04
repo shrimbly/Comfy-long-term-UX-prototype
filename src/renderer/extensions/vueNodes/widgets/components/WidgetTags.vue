@@ -131,11 +131,16 @@ import {
 } from 'vue'
 import { useI18n } from 'vue-i18n'
 
+import {
+  singleValueExtractor,
+  useUpstreamValue
+} from '@/composables/useUpstreamValue'
 import TagChip from '@/platform/assets/components/TagChip.vue'
 import {
   isUserTag,
   useAssetTags
 } from '@/platform/assets/composables/useAssetTags'
+import { parseTagsFromString } from '@/platform/assets/utils/parseTagsFromString'
 import type { SimplifiedWidget } from '@/types/simplifiedWidget'
 import { cn } from '@/utils/tailwindUtil'
 
@@ -177,8 +182,27 @@ const { height: windowHeight } = useWindowSize()
 
 const tags = computed<string[]>(() => modelValue.value ?? [])
 
-const isReadOnly = computed(() =>
-  Boolean(widget.options?.read_only || widget.options?.disabled)
+const isLinked = computed(() => Boolean(widget.linkedUpstream))
+
+const isReadOnly = computed(
+  () =>
+    isLinked.value ||
+    Boolean(widget.options?.read_only || widget.options?.disabled)
+)
+
+const isString = (v: unknown): v is string => typeof v === 'string'
+const upstreamValue = useUpstreamValue(
+  () => widget.linkedUpstream,
+  singleValueExtractor(isString)
+)
+
+watch(
+  upstreamValue,
+  (upstream) => {
+    if (upstream === undefined) return
+    modelValue.value = parseTagsFromString(upstream)
+  },
+  { immediate: true }
 )
 
 const filteredSuggestions = computed<SuggestionItem[]>(() => {

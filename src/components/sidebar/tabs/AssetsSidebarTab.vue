@@ -52,7 +52,7 @@
     <template #body>
       <div
         :class="
-          showAllAssets || showDetailPanel || showRecentsSidebar
+          showAllAssets || showRecentsSidebar
             ? 'assets-content-layout'
             : 'contents'
         "
@@ -75,22 +75,21 @@
           <div class="flex min-h-0 flex-1">
             <AssetsSidebar
               v-if="showRecentsSidebar"
-              :selected-tag="selectedTag"
               :available-tags="availableUserTags"
               :recents-active="
-                !showAllAssets && !favoritesActive && !selectedTag
+                !showAllAssets && !favoritesActive && !hasTagFilter
               "
-              :favorites-active="favoritesActive && !selectedTag"
+              :favorites-active="favoritesActive && !hasTagFilter"
               :generated-active="
                 showAllAssets &&
                 !favoritesActive &&
-                !selectedTag &&
+                !hasTagFilter &&
                 singleActiveSource === 'output'
               "
               :imported-active="
                 showAllAssets &&
                 !favoritesActive &&
-                !selectedTag &&
+                !hasTagFilter &&
                 singleActiveSource === 'input'
               "
               :favorite-color-filter="favoriteColorFilter"
@@ -99,8 +98,9 @@
               @select-favorite-color="handleSelectFavoriteColor"
               @select-generated="handleSelectGenerated"
               @select-imported="handleSelectImported"
-              @select-tag="handleSelectTag"
+              @selection-changed="handleTagSelectionChanged"
               @rename-tag="handleRenameTag"
+              @delete-tags="handleDeleteTags"
             />
           </div>
           <!-- Resize handle -->
@@ -119,7 +119,7 @@
         <!-- Main Content Area -->
         <div
           :class="
-            showAllAssets || showDetailPanel || showRecentsSidebar
+            showAllAssets || showRecentsSidebar
               ? 'assets-main-content bg-base-background'
               : 'contents'
           "
@@ -133,7 +133,6 @@
               v-model:hide-sidebar="hideRecentsSidebar"
               v-model:media-type-filters="mediaTypeFilters"
               v-model:metadata-filters="metadataFilters"
-              v-model:composing="filterBarComposing"
               :bottom-divider="false"
               :show-generation-time-sort="activeSources.includes('output')"
               :available-tags="availableTags"
@@ -156,19 +155,55 @@
             >
               {{ activeFilterLabel }}
             </span>
-            <Button
+            <PopoverRoot
               v-if="selectionStore.lastSelectedAssetId"
-              variant="secondary"
-              size="sm"
-              class="ml-auto shrink-0"
-              @click="showDetailPanel = !showDetailPanel"
+              v-model:open="showDetailPanel"
             >
-              {{
-                showDetailPanel
-                  ? t('mediaAsset.details.hideDetails')
-                  : t('mediaAsset.details.showDetails')
-              }}
-            </Button>
+              <PopoverTrigger as-child>
+                <Button variant="secondary" size="sm" class="ml-auto shrink-0">
+                  {{
+                    showDetailPanel
+                      ? t('mediaAsset.details.hideDetails')
+                      : t('mediaAsset.details.showDetails')
+                  }}
+                </Button>
+              </PopoverTrigger>
+              <PopoverPortal>
+                <PopoverContent
+                  side="right"
+                  align="start"
+                  :side-offset="20"
+                  :collision-padding="10"
+                  class="data-[state=open]:data-[side=right]:animate-slideLeftAndFade data-[state=open]:data-[side=left]:animate-slideRightAndFade z-1700 w-72 overflow-hidden rounded-lg border border-border-subtle bg-base-background shadow-lg will-change-[transform,opacity]"
+                  @interact-outside.prevent
+                >
+                  <div
+                    v-if="detailAssets.length > 0"
+                    class="flex max-h-[70vh] flex-col"
+                  >
+                    <div
+                      class="flex shrink-0 items-center justify-between border-b border-border-subtle px-3 py-2"
+                    >
+                      <span class="text-sm font-medium text-text-primary">
+                        {{ t('mediaAsset.details.assetDetails') }}
+                      </span>
+                      <PopoverClose
+                        :aria-label="t('g.close')"
+                        class="flex cursor-pointer appearance-none items-center justify-center border-none bg-transparent p-1 text-muted-foreground hover:text-base-foreground"
+                      >
+                        <i class="icon-[lucide--x] size-4" />
+                      </PopoverClose>
+                    </div>
+                    <div class="min-h-0 flex-1 overflow-y-auto">
+                      <AssetDetailPanel
+                        :assets="detailAssets"
+                        :prompt-metadata="detailPromptMeta"
+                      />
+                    </div>
+                  </div>
+                </PopoverContent>
+              </PopoverPortal>
+            </PopoverRoot>
           </div>
           <div
             v-if="showLoadingState"
@@ -289,13 +324,6 @@
             </div>
           </div>
         </div>
-
-        <!-- Right Detail Panel -->
-        <AssetDetailPanel
-          v-if="activeDetailAsset"
-          :asset="activeDetailAsset"
-          :prompt-metadata="detailPromptMeta"
-        />
       </div>
     </template>
     <template #footer>
@@ -420,6 +448,13 @@ import {
 } from '@vueuse/core'
 import { useToast } from 'primevue/usetoast'
 import {
+  PopoverClose,
+  PopoverContent,
+  PopoverPortal,
+  PopoverRoot,
+  PopoverTrigger
+} from 'reka-ui'
+import {
   computed,
   defineAsyncComponent,
   nextTick,
@@ -444,6 +479,8 @@ import MediaAssetContextMenu from '@/platform/assets/components/MediaAssetContex
 import MediaAssetFilterBar from '@/platform/assets/components/MediaAssetFilterBar.vue'
 import MediaAssetFilterChipsBar from '@/platform/assets/components/MediaAssetFilterChipsBar.vue'
 import AssetsSidebar from '@/platform/assets/components/AssetsSidebar.vue'
+import { useAssetTagGroups } from '@/platform/assets/composables/useAssetTagGroups'
+import { useAssetTagSelectionStore } from '@/platform/assets/composables/useAssetTagSelectionStore'
 import { useAssetTags } from '@/platform/assets/composables/useAssetTags'
 import type { ViewMode } from '@/platform/assets/components/MediaAssetFilterBar.vue'
 import { getAssetType } from '@/platform/assets/composables/media/assetMappers'
@@ -563,16 +600,11 @@ function startSidebarResize(event: MouseEvent) {
   window.addEventListener('mousemove', onMove)
   window.addEventListener('mouseup', onUp)
 }
-const selectedTag = useStorage<string | null>('Comfy.Assets.SelectedTag', null)
 const userTags = useAssetTags()
-// True while the user is composing a filter in the search input (field picked,
-// dropdown open, etc.). We collapse the folders sidebar in that window so it
-// doesn't reappear between picking a field and typing its value.
-const filterBarComposing = ref(false)
-const showDetailPanel = useStorage<boolean>(
-  'Comfy.Assets.ShowDetailPanel',
-  false
-)
+const tagGroups = useAssetTagGroups()
+const tagSelection = useAssetTagSelectionStore()
+const hasTagFilter = computed(() => tagSelection.hasSelection)
+const showDetailPanel = ref(false)
 const isListView = computed(() => viewMode.value === 'list')
 const gridSize = computed<'sm' | 'md' | 'lg'>(() => {
   if (viewMode.value === 'grid-sm') return 'sm'
@@ -745,8 +777,11 @@ const favorites = useAssetFavorites()
 // Base assets before search filtering. Reflects the current sidebar
 // selection so search/metadata filters narrow that subset, not the global pool.
 const baseAssets = computed(() => {
-  if (selectedTag.value) {
-    return userTags.assetsWithTag(allMergedAssets.value, selectedTag.value)
+  if (tagSelection.hasSelection) {
+    return userTags.assetsWithAnyTag(
+      allMergedAssets.value,
+      tagSelection.asArray
+    )
   }
   if (favoritesActive.value) {
     const seen = new Set<string>()
@@ -787,21 +822,24 @@ const availableValuesByField = computed(() => ({
 // Detail panel — show info for last-clicked asset
 const selectionStore = useAssetSelectionStore()
 
-const activeDetailAsset = computed(() => {
-  if (!showDetailPanel.value) return null
+const detailAssets = computed<AssetItem[]>(() => {
+  if (!showDetailPanel.value) return []
+  const selected = getSelectedAssets(visibleAssets.value)
+  if (selected.length > 1) return selected
   const lastId = selectionStore.lastSelectedAssetId
-  if (!lastId) return null
-  return visibleAssets.value.find((a) => a.id === lastId) ?? null
+  if (!lastId) return selected
+  const last = visibleAssets.value.find((a) => a.id === lastId)
+  return last ? [last] : selected
 })
 
 const detailPromptMeta = ref<PromptMetadata | null>(null)
 
-watch(activeDetailAsset, async (asset) => {
-  if (!asset) {
+watch(detailAssets, async (assets) => {
+  if (assets.length !== 1) {
     detailPromptMeta.value = null
     return
   }
-  detailPromptMeta.value = await metadataExtractor.extractMetadata(asset)
+  detailPromptMeta.value = await metadataExtractor.extractMetadata(assets[0])
 })
 
 // Use media asset filtering composable
@@ -811,6 +849,41 @@ const { sortBy, filteredAssets } = useMediaAssetFiltering(baseAssets, {
   metadataFilters,
   mediaTypeFilters
 })
+
+// Same scope as `baseAssets` but skipping the sidebar tag selection — used to
+// derive which tags are available in the current search results without
+// circular narrowing when a tag is selected.
+const baseAssetsForTagScope = computed(() => {
+  if (favoritesActive.value) {
+    const seen = new Set<string>()
+    const unique: AssetItem[] = []
+    for (const asset of allMergedAssets.value) {
+      if (seen.has(asset.id)) continue
+      seen.add(asset.id)
+      unique.push(asset)
+    }
+    const favorited = favorites.favoritedAssets(unique)
+    if (favoriteColorFilter.value) {
+      return favorited.filter(
+        (a) => favorites.getFavoriteColor(a) === favoriteColorFilter.value
+      )
+    }
+    return favorited
+  }
+  if (isInFolderView.value) return folderAssets.value
+  if (showAllAssets.value) return allMergedAssets.value
+  return mergedAssets.value
+})
+
+const { filteredAssets: tagScopeFiltered } = useMediaAssetFiltering(
+  baseAssetsForTagScope,
+  {
+    metadataExtractor,
+    searchQuery,
+    metadataFilters,
+    mediaTypeFilters
+  }
+)
 
 // Extract metadata in background when metadata filters are active, or when
 // the advanced view is showing (so the @-filter type-ahead has real values
@@ -832,7 +905,7 @@ const assetFilters = useAssetFilters(filteredAssets)
 // doesn't reappear when the user clicks an asset in the new context.
 watch(
   [
-    selectedTag,
+    () => tagSelection.asArray,
     favoritesActive,
     favoriteColorFilter,
     activeSources,
@@ -1289,20 +1362,30 @@ const handleApproachEnd = useDebounceFn(async () => {
 // --- Sidebar (tag-based filtering) ---
 
 const showRecentsSidebar = computed(
-  () =>
-    !hideRecentsSidebar.value &&
-    !isInFolderView.value &&
-    !filterBarComposing.value
+  () => !hideRecentsSidebar.value && !isInFolderView.value
 )
 
 const hasLeftSidebar = showRecentsSidebar
 
-const availableUserTags = computed(() => userTags.allTags.value)
+const availableUserTags = computed(() => {
+  const scopedTags = userTags.tagsForAssets(tagScopeFiltered.value)
+  // Always include currently-selected tags so they remain visible (and
+  // de-selectable) even when narrowing means none of their assets are present.
+  const present = new Set(scopedTags.map((t) => t.name))
+  for (const name of tagSelection.asArray) {
+    if (!present.has(name)) scopedTags.push({ name, count: 0 })
+  }
+  return scopedTags.sort((a, b) => a.name.localeCompare(b.name))
+})
 
 const activeFilterLabel = computed(() => {
-  if (selectedTag.value) {
-    return t('sideToolbar.mediaAssets.tagFilterLabel', {
-      tag: selectedTag.value
+  if (tagSelection.hasSelection) {
+    const tags = tagSelection.asArray
+    if (tags.length === 1) {
+      return t('sideToolbar.mediaAssets.tagFilterLabel', { tag: tags[0] })
+    }
+    return t('sideToolbar.mediaAssets.tagFilterLabelMulti', {
+      count: tags.length
     })
   }
   if (favoritesActive.value) {
@@ -1320,7 +1403,7 @@ const activeFilterLabel = computed(() => {
 })
 
 function clearTagAndFavorites() {
-  selectedTag.value = null
+  tagSelection.clear()
   favoritesActive.value = false
   favoriteColorFilter.value = null
 }
@@ -1331,7 +1414,7 @@ const handleSelectRecents = () => {
 }
 
 const handleSelectFavorites = () => {
-  selectedTag.value = null
+  tagSelection.clear()
   favoritesActive.value = true
   favoriteColorFilter.value = null
 }
@@ -1352,23 +1435,40 @@ const handleSelectImported = () => {
   showAllAssets.value = true
 }
 
-const handleSelectTag = (tag: string | null) => {
+const handleTagSelectionChanged = () => {
+  if (!tagSelection.hasSelection) return
   favoritesActive.value = false
   favoriteColorFilter.value = null
-  selectedTag.value = tag
-  if (tag) {
-    // Tags transcend sources — show across both Generated and Imported.
-    activeSources.value = ['output', 'input']
-    showAllAssets.value = true
-  }
+  // Tags transcend sources — show across both Generated and Imported.
+  activeSources.value = ['output', 'input']
+  showAllAssets.value = true
 }
 
 const handleRenameTag = (oldName: string, newName: string) => {
   const renamed = userTags.renameTag(oldName, newName)
-  if (renamed && selectedTag.value === oldName) {
-    selectedTag.value = renamed
+  if (!renamed) return
+  tagGroups.renameTagInGroups(oldName, renamed)
+  if (tagSelection.isSelected(oldName)) {
+    tagSelection.remove(oldName)
+    tagSelection.add(renamed)
   }
 }
+
+const handleDeleteTags = (tags: string[]) => {
+  for (const tag of tags) {
+    userTags.removeTagEverywhere(tag)
+  }
+  tagGroups.removeTagsFromGroups(tags)
+  for (const tag of tags) tagSelection.remove(tag)
+}
+
+watch(
+  () => userTags.allTags.value,
+  (list) => {
+    tagSelection.pruneMissing(new Set(list.map((t) => t.name)))
+  },
+  { immediate: true }
+)
 
 watch(
   showRecentsSidebar,

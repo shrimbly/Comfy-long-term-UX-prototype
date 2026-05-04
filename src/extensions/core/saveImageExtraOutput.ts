@@ -98,6 +98,13 @@ app.registerExtension({
             serialize: false
           })
         }
+        // Pair a STRING input with the tags widget so connecting an upstream
+        // node renders a connection dot beside the widget. Comma-separated
+        // input strings are split into tags by WidgetTags.vue.
+        if (!node.inputs?.some((i) => i.widget?.name === TAGS_WIDGET_NAME)) {
+          const input = node.addInput(TAGS_WIDGET_NAME, 'STRING')
+          input.widget = { name: TAGS_WIDGET_NAME }
+        }
 
         return r
       }

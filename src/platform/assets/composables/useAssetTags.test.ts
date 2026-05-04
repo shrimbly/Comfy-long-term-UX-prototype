@@ -199,4 +199,69 @@ describe('useAssetTags', () => {
       expect(result.map((x) => x.name)).toEqual(['a.png', 'c.png'])
     })
   })
+
+  describe('assetsWithAnyTag', () => {
+    it('returns all assets when the tag list is empty', () => {
+      const { assetsWithAnyTag } = useAssetTags()
+      const a = makeAsset({ name: 'a.png' })
+      const b = makeAsset({ name: 'b.png' })
+      expect(assetsWithAnyTag([a, b], []).map((x) => x.name)).toEqual([
+        'a.png',
+        'b.png'
+      ])
+    })
+
+    it('returns assets matching ANY of the supplied tags (OR semantics)', () => {
+      const { addTag, assetsWithAnyTag } = useAssetTags()
+      const a = makeAsset({ name: 'a.png' })
+      const b = makeAsset({ name: 'b.png' })
+      const c = makeAsset({ name: 'c.png' })
+      addTag(a, 'hero')
+      addTag(b, 'sidekick')
+      const result = assetsWithAnyTag([a, b, c], ['hero', 'sidekick'])
+      expect(result.map((x) => x.name)).toEqual(['a.png', 'b.png'])
+    })
+
+    it('does not double-count an asset that has multiple matching tags', () => {
+      const { addTag, assetsWithAnyTag } = useAssetTags()
+      const a = makeAsset({ name: 'a.png' })
+      addTag(a, 'hero')
+      addTag(a, 'sidekick')
+      const result = assetsWithAnyTag([a], ['hero', 'sidekick'])
+      expect(result).toHaveLength(1)
+    })
+  })
+
+  describe('removeTagEverywhere', () => {
+    it('strips the tag from every asset record', () => {
+      const { addTag, removeTagEverywhere, getTags } = useAssetTags()
+      const a = makeAsset({ name: 'a.png' })
+      const b = makeAsset({ name: 'b.png' })
+      addTag(a, 'hero')
+      addTag(a, 'sidekick')
+      addTag(b, 'hero')
+      removeTagEverywhere('hero')
+      expect(getTags(a)).toEqual(['sidekick'])
+      expect(getTags(b)).toEqual([])
+    })
+
+    it('drops empty entries after the last tag is gone', () => {
+      const { addTag, removeTagEverywhere } = useAssetTags()
+      const a = makeAsset({ name: 'a.png' })
+      addTag(a, 'hero')
+      removeTagEverywhere('hero')
+      const raw = JSON.parse(
+        localStorage.getItem('Comfy.Assets.UserTags.v1') ?? '{}'
+      ) as Record<string, string[]>
+      expect(raw[assetTagStorageKey(a)]).toBeUndefined()
+    })
+
+    it('is a no-op when the tag is not present', () => {
+      const { addTag, removeTagEverywhere, getTags } = useAssetTags()
+      const a = makeAsset()
+      addTag(a, 'hero')
+      removeTagEverywhere('ghost')
+      expect(getTags(a)).toEqual(['hero'])
+    })
+  })
 })
