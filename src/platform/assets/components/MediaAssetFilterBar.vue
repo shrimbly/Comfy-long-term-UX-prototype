@@ -8,30 +8,6 @@
       :available-values-by-field="availableValuesByField"
     />
     <template #actions>
-      <Button
-        v-tooltip.top="
-          $t(
-            favoritesOnly
-              ? 'assets.filters.showAll'
-              : 'assets.filters.showFavoritesOnly'
-          )
-        "
-        variant="secondary"
-        size="icon"
-        :aria-pressed="favoritesOnly"
-        @click="favoritesOnly = !favoritesOnly"
-      >
-        <i
-          :class="
-            cn(
-              'size-4',
-              favoritesOnly
-                ? 'icon-[ph--star-fill] text-citrine-400'
-                : 'icon-[ph--star]'
-            )
-          "
-        />
-      </Button>
       <MediaAssetFilterButton
         v-if="isCloud"
         v-tooltip.top="{ value: $t('assetBrowser.filterBy') }"
@@ -139,6 +115,30 @@
               <i
                 class="ml-auto icon-[lucide--check] size-4"
                 :class="viewMode !== option.value && 'opacity-0'"
+              />
+            </Button>
+            <div class="my-1 border-t border-comfy-input" />
+            <Button
+              variant="textonly"
+              class="w-full"
+              @click="favoritesOnly = !favoritesOnly"
+            >
+              <span class="flex items-center gap-2">
+                <i
+                  :class="
+                    cn(
+                      'size-4',
+                      favoritesOnly
+                        ? 'icon-[ph--star-fill] text-citrine-400'
+                        : 'icon-[ph--star]'
+                    )
+                  "
+                />
+                <span>{{ $t('assets.filters.showFavoritesOnly') }}</span>
+              </span>
+              <i
+                class="ml-auto icon-[lucide--check] size-4"
+                :class="!favoritesOnly && 'opacity-0'"
               />
             </Button>
             <template v-if="enableSidebarToggle">
