@@ -59,28 +59,20 @@ describe('computeColumns', () => {
 
   it('handles sm preset at typical sidebar widths', () => {
     const { min, max } = GRID_COLUMN_RANGES.sm
-    const cols = computeColumns(400, min, max, GAP_PX)
-    expect(cols).toBeGreaterThanOrEqual(2)
-    const cellWidth = (400 - GAP_PX * (cols - 1)) / cols
-    expect(cellWidth).toBeLessThanOrEqual(max)
-  })
-
-  it('sm always produces more columns than md at typical sidebar widths', () => {
-    const sm = GRID_COLUMN_RANGES.sm
-    const md = GRID_COLUMN_RANGES.md
-    for (const width of [220, 270, 320, 370, 420]) {
-      const smCols = computeColumns(width, sm.min, sm.max, GAP_PX)
-      const mdCols = computeColumns(width, md.min, md.max, GAP_PX)
-      expect(smCols).toBeGreaterThan(mdCols)
-    }
-  })
-
-  it('handles md preset at typical sidebar widths', () => {
-    const { min, max } = GRID_COLUMN_RANGES.md
     const cols = computeColumns(600, min, max, GAP_PX)
     const cellWidth = (600 - GAP_PX * (cols - 1)) / cols
     expect(cellWidth).toBeGreaterThanOrEqual(min)
     expect(cellWidth).toBeLessThanOrEqual(max)
+  })
+
+  it('sm always produces more columns than lg at typical sidebar widths', () => {
+    const sm = GRID_COLUMN_RANGES.sm
+    const lg = GRID_COLUMN_RANGES.lg
+    for (const width of [270, 320, 500, 700, 900]) {
+      const smCols = computeColumns(width, sm.min, sm.max, GAP_PX)
+      const lgCols = computeColumns(width, lg.min, lg.max, GAP_PX)
+      expect(smCols).toBeGreaterThan(lgCols)
+    }
   })
 
   it('handles lg preset at typical sidebar widths', () => {

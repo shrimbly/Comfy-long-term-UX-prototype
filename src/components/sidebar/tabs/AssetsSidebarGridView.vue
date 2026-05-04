@@ -70,8 +70,7 @@
 
 <script lang="ts">
 export const GRID_COLUMN_RANGES = {
-  sm: { min: 72, max: 104 },
-  md: { min: 144, max: 220 },
+  sm: { min: 144, max: 220 },
   lg: { min: 224, max: 320 }
 } as const
 
@@ -115,7 +114,7 @@ const {
   isSelected,
   showOutputCount,
   getOutputCount,
-  gridSize = 'md',
+  gridSize = 'sm',
   restrictStackFavorites = false
 } = defineProps<{
   assets: AssetItem[]
@@ -123,7 +122,7 @@ const {
   isSelected: (assetId: string) => boolean
   showOutputCount: (asset: AssetItem) => boolean
   getOutputCount: (asset: AssetItem) => number
-  gridSize?: 'sm' | 'md' | 'lg'
+  gridSize?: 'sm' | 'lg'
   restrictStackFavorites?: boolean
 }>()
 
