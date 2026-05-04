@@ -44,7 +44,7 @@ import type { AssetItem } from '@/platform/assets/schemas/assetSchema'
 const {
   assets,
   columnWidth,
-  gap = 12,
+  gap = 8,
   isSelected = () => false
 } = defineProps<{
   assets: readonly AssetItem[]
