@@ -3,8 +3,7 @@
     <div
       v-for="asset in visibleAssets"
       :key="asset.id"
-      :ref="(el) => setItemRef(asset.id, el as HTMLElement | null)"
-      class="absolute transition-[transform,width] duration-200 ease-out will-change-transform"
+      class="absolute will-change-transform"
       :style="positionStyle(asset.id)"
     >
       <MediaAssetCard
@@ -33,10 +32,11 @@ import {
   useResizeObserver,
   useScroll
 } from '@vueuse/core'
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watchEffect } from 'vue'
 import type { CSSProperties } from 'vue'
 
 import MediaAssetCard from '@/platform/assets/components/MediaAssetCard.vue'
+import { useAssetDimensionsCache } from '@/platform/assets/composables/useAssetDimensionsCache'
 import { useMasonryLayout } from '@/platform/assets/composables/useMasonryLayout'
 import type { AssetItem } from '@/platform/assets/schemas/assetSchema'
 
@@ -59,20 +59,45 @@ const emit = defineEmits<{
   'approach-end': []
 }>()
 
+// Approximate non-preview height of a MediaAssetCard:
+// - p-2 outer padding (8px top + 8px bottom = 16)
+// - gap-2 between preview and info (8)
+// - MediaTitle: text-sm/tight, up to 2 lines (32 max)
+// - gap-1 + metadata row text-xs (4 + 16 = 20)
+// Slight over-estimate is preferred — small gaps look fine, overlap doesn't.
+const CARD_FOOTER_HEIGHT = 76
+
 const containerRef = ref<HTMLElement | null>(null)
 const sentinelRef = ref<HTMLElement | null>(null)
-const itemElements = new Map<string, HTMLElement>()
-const itemObservers = new Map<string, () => void>()
+const dimensions = useAssetDimensionsCache()
 
 const itemIds = computed(() => assets.map((a) => a.id))
 const columnWidthRef = computed(() => columnWidth)
 const gapRef = computed(() => gap)
 
-const { positions, containerHeight, reportItemHeight } = useMasonryLayout({
-  containerRef,
-  itemIds,
-  columnWidth: columnWidthRef,
-  gap: gapRef
+const { positions, containerHeight, actualColumnWidth, reportItemHeight } =
+  useMasonryLayout({
+    containerRef,
+    itemIds,
+    columnWidth: columnWidthRef,
+    gap: gapRef
+  })
+
+// Drive item heights from the dimensions cache rather than from per-card
+// ResizeObservers. This collapses the two competing height sources (cache vs.
+// measured DOM) into one and removes the feedback loop that made the layout
+// shuffle on scroll-up: each remount used to re-fire the observer with the
+// placeholder height, then again with the post-decode height, cascading
+// through every item below.
+watchEffect(() => {
+  const colW = actualColumnWidth.value
+  if (colW <= 0) return
+  for (const asset of assets) {
+    const dims = dimensions.getDimensions(asset.id)
+    if (!dims) continue
+    const previewHeight = colW * (dims.height / dims.width)
+    reportItemHeight(asset.id, previewHeight + CARD_FOOTER_HEIGHT)
+  }
 })
 
 const APPROACH_END_OFFSET = 600
@@ -85,9 +110,9 @@ useIntersectionObserver(sentinelRef, ([entry]) => {
   if (entry?.isIntersecting) emit('approach-end')
 })
 
-// Virtualization: only render cards in the viewport ± buffer so we don't pay
-// the cost of mounting hundreds of MediaAssetCards (and firing hundreds of
-// image requests + ResizeObservers) on first paint.
+// Virtualization: only render cards in the viewport ± buffer so we don't
+// pay the cost of mounting hundreds of MediaAssetCards (and firing hundreds
+// of image requests) on first paint.
 
 const VIEWPORT_BUFFER_PX = 800
 const FALLBACK_VISIBLE_HEIGHT = 1200
@@ -124,8 +149,6 @@ onMounted(() => {
 
 const visibleRange = computed(() => {
   const vpHeight = viewportHeight.value || FALLBACK_VISIBLE_HEIGHT
-  // Translate viewport coordinates into the masonry's local coordinate space
-  // (offsetTop relative to scroll parent).
   const top = scrollY.value - containerTopInDoc.value - VIEWPORT_BUFFER_PX
   const bottom =
     scrollY.value - containerTopInDoc.value + vpHeight + VIEWPORT_BUFFER_PX
@@ -135,7 +158,7 @@ const visibleRange = computed(() => {
 const visibleAssets = computed(() => {
   const { top, bottom } = visibleRange.value
   const out: AssetItem[] = []
-  const fallbackHeight = columnWidth // square estimate
+  const fallbackHeight = columnWidth + CARD_FOOTER_HEIGHT
   for (const asset of assets) {
     const pos = positions.value.get(asset.id)
     if (!pos) continue
@@ -162,40 +185,6 @@ function positionStyle(id: string): CSSProperties {
   }
 }
 
-function observe(id: string, el: HTMLElement) {
-  const stop = useResizeObserver(el, (entries) => {
-    const entry = entries[0]
-    if (entry) reportItemHeight(id, entry.contentRect.height)
-  }).stop
-  itemObservers.set(id, stop)
-  reportItemHeight(id, el.getBoundingClientRect().height)
-}
-
-function setItemRef(id: string, el: HTMLElement | null) {
-  if (el) {
-    if (itemElements.get(id) === el) return
-    if (itemElements.has(id)) {
-      itemObservers.get(id)?.()
-      itemObservers.delete(id)
-    }
-    itemElements.set(id, el)
-    observe(id, el)
-  } else {
-    itemObservers.get(id)?.()
-    itemObservers.delete(id)
-    itemElements.delete(id)
-  }
-}
-
-onBeforeUnmount(() => {
-  for (const stop of itemObservers.values()) stop()
-  itemObservers.clear()
-  itemElements.clear()
-})
-
-// Track the masonry container's offset within the scroll parent so we can
-// translate scroll coordinates into masonry-local coordinates without
-// rerunning getBoundingClientRect on every visibility recompute.
 function useContainerOffset(
   el: ReturnType<typeof ref<HTMLElement | null>>,
   parent: ReturnType<typeof ref<HTMLElement | null>>
