@@ -2,7 +2,6 @@ import { useStorage } from '@vueuse/core'
 import { computed, ref, watch } from 'vue'
 
 import { useMediaAssets } from '@/platform/assets/composables/media/useMediaAssets'
-import { useOutputJobsAssets } from '@/platform/assets/composables/media/useOutputJobsAssets'
 import { useAssetFavorites } from '@/platform/assets/composables/useAssetFavorites'
 import { useAssetFilters } from '@/platform/assets/composables/useAssetFilters'
 import { useAssetPromptMetadata } from '@/platform/assets/composables/useAssetPromptMetadata'
@@ -24,11 +23,12 @@ type SourceId = 'output' | 'input'
  */
 export function useMediaAssetBrowser() {
   const inputAssets = useMediaAssets('input')
-  // Paginated jobs source mirrors the assets panel: first page lands quickly,
-  // additional pages stream in as the user scrolls.
-  const outputAssets = useOutputJobsAssets()
+  // Modal pulls the full /files listing for output (vs the panel's paginated
+  // jobs source) so the bigscreen view shows every generated asset, not just
+  // the recent jobs.
+  const outputAssets = useMediaAssets('output')
 
-  const activeSources = ref<SourceId[]>(['output', 'input'])
+  const activeSources = ref<SourceId[]>(['output'])
   const favoritesActive = ref(false)
   const recentsOnly = ref(false)
 
@@ -189,16 +189,6 @@ export function useMediaAssetBrowser() {
     await Promise.all(promises)
   }
 
-  async function loadMore() {
-    if (!activeSources.value.includes('output')) return
-    if (!outputAssets.hasMore.value || outputAssets.isLoadingMore.value) return
-    await outputAssets.loadMore()
-  }
-
-  const hasMore = computed(
-    () => activeSources.value.includes('output') && outputAssets.hasMore.value
-  )
-
   void refreshAssets()
 
   const hasTagFilter = computed(() => tagSelection.hasSelection)
@@ -254,10 +244,6 @@ export function useMediaAssetBrowser() {
     selectGenerated,
     selectImported,
     onTagSelectionChanged,
-
-    // pagination
-    loadMore,
-    hasMore,
 
     refreshAssets
   }

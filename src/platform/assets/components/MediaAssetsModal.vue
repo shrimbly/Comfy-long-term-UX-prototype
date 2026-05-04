@@ -4,7 +4,6 @@
     size="full"
     class="size-full max-h-full max-w-full min-w-0"
     :content-title="$t('mediaAssets.modal.title')"
-    @close="handleClose"
   >
     <template #leftPanelHeaderTitle>
       <i class="icon-[comfy--image-ai-edit] size-5 shrink-0" />
@@ -128,7 +127,6 @@
         @select-asset="handleAssetSelect"
         @preview-asset="handlePreview"
         @context-menu="handleContextMenu"
-        @approach-end="handleApproachEnd"
       />
     </template>
   </BaseModalLayout>
@@ -144,8 +142,8 @@
 </template>
 
 <script setup lang="ts">
-import { useDebounceFn, useStorage } from '@vueuse/core'
-import { computed, nextTick, ref } from 'vue'
+import { useStorage } from '@vueuse/core'
+import { computed, nextTick, provide, ref } from 'vue'
 import type { CSSProperties } from 'vue'
 
 import NoResultsPlaceholder from '@/components/common/NoResultsPlaceholder.vue'
@@ -161,12 +159,15 @@ import { useAssetSelection } from '@/platform/assets/composables/useAssetSelecti
 import { useMediaAssetBrowser } from '@/platform/assets/composables/useMediaAssetBrowser'
 import type { AssetItem } from '@/platform/assets/schemas/assetSchema'
 import type { MediaKind } from '@/platform/assets/schemas/mediaAssetSchema'
+import { OnCloseKey } from '@/types/widgetTypes'
 import { getMediaTypeFromFilename } from '@/utils/formatUtil'
 import { cn } from '@/utils/tailwindUtil'
 
 const { onClose } = defineProps<{
   onClose?: () => void
 }>()
+
+provide(OnCloseKey, () => onClose?.())
 
 const browser = useMediaAssetBrowser()
 
@@ -211,10 +212,6 @@ function skeletonAspect(n: number): string {
   return aspects[n % aspects.length]
 }
 
-const handleApproachEnd = useDebounceFn(async () => {
-  await browser.loadMore()
-}, 200)
-
 function handleAssetSelect(asset: AssetItem) {
   const list = browser.displayAssets.value
   const index = list.findIndex((a) => a.id === asset.id)
@@ -233,9 +230,5 @@ function handleContextMenu(event: MouseEvent, asset: AssetItem) {
 
 function onContextMenuHide() {
   contextMenuAsset.value = null
-}
-
-function handleClose() {
-  onClose?.()
 }
 </script>
