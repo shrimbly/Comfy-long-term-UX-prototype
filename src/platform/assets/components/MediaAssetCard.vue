@@ -168,6 +168,7 @@ import { cn } from '@/utils/tailwindUtil'
 
 import { getAssetType } from '../composables/media/assetMappers'
 import { getAssetUrl } from '../utils/assetUrlUtil'
+import { useAssetDimensionsCache } from '../composables/useAssetDimensionsCache'
 import {
   ASSET_DRAG_MIME,
   useAssetDragPreview
@@ -243,6 +244,7 @@ const isHovered = useElementHover(cardContainerRef)
 
 const actions = useMediaAssetActions()
 const favorites = useAssetFavorites()
+const dimensionsCache = useAssetDimensionsCache()
 
 const favoriteToggleMounted = computed(() => {
   if (loading || !asset || isDeleting.value) return false
@@ -271,8 +273,12 @@ const previewKind = computed((): PreviewKind => {
 
 const canInspect = computed(() => isPreviewableMediaType(fileKind.value))
 
+const cachedDimensions = computed(() =>
+  asset ? dimensionsCache.getDimensions(asset.id) : null
+)
+
 const previewAspectRatio = computed(() => {
-  const dims = imageDimensions.value
+  const dims = imageDimensions.value ?? cachedDimensions.value
   if (dims && dims.width > 0 && dims.height > 0) {
     return `${dims.width} / ${dims.height}`
   }
@@ -355,6 +361,7 @@ const handleZoomClick = () => {
 
 const handleImageLoaded = (width: number, height: number) => {
   imageDimensions.value = { width, height }
+  if (asset) dimensionsCache.setDimensions(asset.id, width, height)
 }
 
 const handleOutputCountClick = () => {
