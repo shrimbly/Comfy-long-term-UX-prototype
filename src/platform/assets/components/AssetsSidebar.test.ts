@@ -32,8 +32,6 @@ const messages = {
         tagsHeader: 'Tags',
         noTagsHint: 'No tags',
         renameTag: 'Rename tag',
-        tagSearchPlaceholder: 'Search tags',
-        tagSearchAriaLabel: 'Search tags',
         foldersSidebar: {
           recent: 'Recent',
           favorites: 'Favorites',
@@ -71,12 +69,19 @@ function createI18nInstance() {
 const STORAGE_KEYS = [
   'Comfy.Assets.UserTagGroups.v1',
   'Comfy.Assets.SelectedTags.v1',
-  'Comfy.Assets.TagGroupCollapsed.v1'
+  'Comfy.Assets.TagGroupCollapsed.v1',
+  'Comfy.Assets.TagsSectionCollapsed.v1'
 ]
+
+function fallbackForKey(key: string): string {
+  if (key.endsWith('SelectedTags.v1')) return '[]'
+  if (key.endsWith('TagsSectionCollapsed.v1')) return 'false'
+  return '{}'
+}
 
 function resetStorage() {
   for (const key of STORAGE_KEYS) {
-    const fallback = key.endsWith('SelectedTags.v1') ? '[]' : '{}'
+    const fallback = fallbackForKey(key)
     localStorage.setItem(key, fallback)
     window.dispatchEvent(
       new StorageEvent('storage', {
@@ -112,26 +117,6 @@ describe('AssetsSidebar', () => {
 
   afterEach(() => {
     resetStorage()
-  })
-
-  it('filters tags via the search input (case-insensitive substring)', async () => {
-    mountSidebar(makeTags('hero', 'sidekick', 'villain'))
-    const user = userEvent.setup()
-
-    expect(screen.getByText('hero')).toBeTruthy()
-    expect(screen.getByText('sidekick')).toBeTruthy()
-
-    await user.click(
-      screen.getByLabelText('Search tags', { selector: 'button' })
-    )
-    const searchInput = screen.getByLabelText('Search tags', {
-      selector: 'input'
-    })
-    await user.type(searchInput, 'HER')
-
-    expect(screen.getByText('hero')).toBeTruthy()
-    expect(screen.queryByText('sidekick')).toBeNull()
-    expect(screen.queryByText('villain')).toBeNull()
   })
 
   it('plain click replaces the tag selection and emits selectionChanged', async () => {

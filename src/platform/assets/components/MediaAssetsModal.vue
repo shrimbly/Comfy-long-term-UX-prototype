@@ -38,33 +38,6 @@
       </div>
     </template>
 
-    <template #header-right-area>
-      <Button
-        v-tooltip.bottom="
-          $t(
-            browser.favoritesOnly.value
-              ? 'assets.filters.showAll'
-              : 'assets.filters.showFavoritesOnly'
-          )
-        "
-        variant="secondary"
-        size="lg"
-        :aria-pressed="browser.favoritesOnly.value"
-        @click="browser.favoritesOnly.value = !browser.favoritesOnly.value"
-      >
-        <i
-          :class="
-            cn(
-              'size-4',
-              browser.favoritesOnly.value
-                ? 'icon-[ph--star-fill] text-citrine-400'
-                : 'icon-[ph--star]'
-            )
-          "
-        />
-      </Button>
-    </template>
-
     <template #contentFilter>
       <div class="px-6">
         <MediaAssetFilterChipsBar v-model="browser.metadataFilters.value" />
@@ -80,19 +53,18 @@
           }}
         </span>
         <div class="flex items-center gap-3">
-          <label class="flex items-center gap-2 text-xs text-muted-foreground">
-            <i class="icon-[lucide--columns-2] size-3.5" />
+          <div class="flex items-center gap-3 text-xs text-muted-foreground">
             <span>{{ $t('mediaAssets.modal.density') }}</span>
-            <input
-              v-model.number="density"
-              type="range"
+            <Slider
+              :model-value="[density]"
               :min="MIN_DENSITY"
               :max="MAX_DENSITY"
               :step="DENSITY_STEP"
-              class="w-32 cursor-pointer accent-primary"
               :aria-label="$t('mediaAssets.modal.density')"
+              class="w-32"
+              @update:model-value="onDensityChange"
             />
-          </label>
+          </div>
         </div>
       </div>
     </template>
@@ -148,7 +120,7 @@ import { computed, nextTick, provide, ref } from 'vue'
 import type { CSSProperties } from 'vue'
 
 import NoResultsPlaceholder from '@/components/common/NoResultsPlaceholder.vue'
-import Button from '@/components/ui/button/Button.vue'
+import Slider from '@/components/ui/slider/Slider.vue'
 import BaseModalLayout from '@/components/widget/layout/BaseModalLayout.vue'
 import AssetMasonryGrid from '@/platform/assets/components/AssetMasonryGrid.vue'
 import AssetsSidebar from '@/platform/assets/components/AssetsSidebar.vue'
@@ -162,7 +134,6 @@ import type { AssetItem } from '@/platform/assets/schemas/assetSchema'
 import type { MediaKind } from '@/platform/assets/schemas/mediaAssetSchema'
 import { OnCloseKey } from '@/types/widgetTypes'
 import { getMediaTypeFromFilename } from '@/utils/formatUtil'
-import { cn } from '@/utils/tailwindUtil'
 
 const { onClose } = defineProps<{
   onClose?: () => void
@@ -178,6 +149,11 @@ const DENSITY_STEP = 20
 const DEFAULT_DENSITY = 240
 
 const density = useStorage('Comfy.Assets.Modal.Density', DEFAULT_DENSITY)
+
+function onDensityChange(value: number[] | undefined) {
+  const next = value?.[0]
+  if (typeof next === 'number') density.value = next
+}
 
 const { isSelected, handleAssetClick } = useAssetSelection()
 

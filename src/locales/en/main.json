@@ -853,8 +853,6 @@
       "tagFilterLabel": "Tag: {tag}",
       "tagFilterLabelMulti": "Tags: {count} selected",
       "renameTag": "Rename tag",
-      "tagSearchPlaceholder": "Search tags",
-      "tagSearchAriaLabel": "Search tags",
       "tagContextMenu": {
         "delete": "Delete tag",
         "deleteMulti": "Delete {count} tags",
@@ -3089,7 +3087,7 @@
     "modal": {
       "title": "Media Assets",
       "searchPlaceholder": "Search assets",
-      "density": "Density",
+      "density": "Card size",
       "assetCount": "{count} asset | {count} assets",
       "openBrowser": "Open asset browser",
       "empty": {

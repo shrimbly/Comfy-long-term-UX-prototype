@@ -15,12 +15,14 @@
         @click="emit('selectFavorites')"
       />
 
-      <SidebarItem
-        :active="generatedActive"
-        icon="icon-[comfy--image-ai-edit]"
-        :label="t('sideToolbar.mediaAssets.foldersSidebar.generatedHeader')"
-        @click="emit('selectGenerated')"
-      />
+      <div class="mt-4">
+        <SidebarItem
+          :active="generatedActive"
+          icon="icon-[comfy--image-ai-edit]"
+          :label="t('sideToolbar.mediaAssets.foldersSidebar.generatedHeader')"
+          @click="emit('selectGenerated')"
+        />
+      </div>
 
       <SidebarItem
         :active="importedActive"
@@ -30,125 +32,38 @@
       />
 
       <div class="mt-4 flex flex-col gap-1">
-        <div class="relative flex h-7 items-center px-3">
-          <p
-            v-show="!searchExpanded"
-            class="flex-1 truncate text-xs font-medium tracking-wide text-muted-foreground"
-          >
+        <button
+          type="button"
+          class="flex w-full cursor-pointer items-center-safe gap-2 rounded-md border-none bg-transparent px-4 py-3 text-left text-sm text-base-foreground transition-colors select-none hover:bg-interface-menu-component-surface-hovered"
+          :aria-expanded="!tagsCollapsed"
+          :aria-label="t('sideToolbar.mediaAssets.tagsHeader')"
+          @click="toggleTagsCollapsed"
+        >
+          <i class="text-neutral icon-[lucide--tags] shrink-0 text-sm" />
+          <span class="min-w-0 flex-1 truncate">
             {{ t('sideToolbar.mediaAssets.tagsHeader') }}
-          </p>
-          <input
-            v-show="searchExpanded"
-            ref="searchInputRef"
-            v-model="tagSearch"
-            type="text"
-            :placeholder="t('sideToolbar.mediaAssets.tagSearchPlaceholder')"
-            :aria-label="t('sideToolbar.mediaAssets.tagSearchAriaLabel')"
-            class="min-w-0 flex-1 rounded-sm border border-comfy-input bg-transparent px-1 text-sm text-base-foreground outline-none focus:border-primary"
-            @keydown.escape.prevent="collapseSearch"
-            @blur="onSearchBlur"
-          />
-          <button
-            type="button"
-            class="ml-1 flex size-6 cursor-pointer items-center justify-center rounded-sm border-none bg-transparent text-muted-foreground hover:bg-interface-menu-component-surface-hovered hover:text-base-foreground"
-            :aria-label="t('sideToolbar.mediaAssets.tagSearchAriaLabel')"
-            @click="toggleSearch"
-          >
-            <i
-              :class="
-                searchExpanded
-                  ? 'icon-[lucide--x] size-4'
-                  : 'icon-[lucide--search] size-4'
-              "
-            />
-          </button>
-        </div>
-        <p
-          v-if="availableTags.length === 0"
-          class="px-3 py-2 text-xs text-muted-foreground"
-        >
-          {{ t('sideToolbar.mediaAssets.noTagsHint') }}
-        </p>
-        <div
-          v-if="groupNaming.kind === 'naming' && groupNaming.target === null"
-          class="flex w-full items-center gap-2 rounded-md bg-interface-menu-component-surface-selected px-3 py-2 text-sm text-base-foreground"
-        >
-          <i class="icon-[lucide--folder-plus] size-3.5 shrink-0" />
-          <input
-            ref="groupNameInputRef"
-            v-model="groupNameDraft"
-            type="text"
-            :placeholder="t('sideToolbar.mediaAssets.tagGroup.namePlaceholder')"
-            class="min-w-0 flex-1 rounded-sm border border-comfy-input bg-transparent px-1 text-sm text-base-foreground outline-none focus:border-primary"
-            @keydown.enter.prevent="commitGroupNaming"
-            @keydown.escape.prevent="cancelGroupNaming"
-            @blur="commitGroupNaming"
-            @click.stop
-          />
-        </div>
-        <div
-          v-for="group in visibleGroups"
-          :key="`group:${group.name}`"
-          class="mt-2 flex flex-col gap-1 first:mt-0"
-        >
-          <div
-            v-if="editingGroup === group.name"
-            class="flex w-full items-center gap-2 rounded-md bg-interface-menu-component-surface-selected px-3 py-1.5 text-xs font-medium tracking-wide text-base-foreground"
-          >
-            <i class="icon-[lucide--folder] size-3 shrink-0" />
-            <input
-              ref="groupRenameInputRef"
-              v-model="editingGroupDraft"
-              type="text"
-              class="min-w-0 flex-1 rounded-sm border border-comfy-input bg-transparent px-1 text-xs text-base-foreground outline-none focus:border-primary"
-              @keydown.enter.prevent="commitGroupRename"
-              @keydown.escape.prevent="cancelGroupRename"
-              @blur="commitGroupRename"
-              @click.stop
-            />
-          </div>
-          <button
-            v-else
-            type="button"
+          </span>
+          <i
             :class="
               cn(
-                'flex w-full cursor-pointer items-center gap-1 rounded-md border-none px-3 py-1.5 text-left text-xs font-medium tracking-wide text-muted-foreground transition-colors',
-                isGroupHeaderDragOver(group.name)
-                  ? 'ring-1 ring-primary'
-                  : 'bg-transparent hover:bg-interface-menu-component-surface-hovered'
+                'text-neutral shrink-0 text-sm transition-transform',
+                tagsCollapsed
+                  ? 'icon-[lucide--chevron-right]'
+                  : 'icon-[lucide--chevron-down]'
               )
             "
-            :aria-label="
-              t('sideToolbar.mediaAssets.tagGroup.collapseAriaLabel', {
-                name: group.name
-              })
-            "
-            @click="toggleGroupCollapsed(group.name)"
-            @contextmenu.prevent="onGroupContextMenu($event, group.name)"
-            @dragover="onGroupHeaderDragOver($event, group.name)"
-            @dragleave="onGroupHeaderDragLeave(group.name)"
-            @drop.prevent="onGroupHeaderDrop($event, group.name)"
+          />
+        </button>
+        <template v-if="!tagsCollapsed">
+          <p
+            v-if="availableTags.length === 0"
+            class="px-3 py-2 text-xs text-muted-foreground"
           >
-            <i
-              :class="
-                cn(
-                  'size-3 shrink-0 transition-transform',
-                  isGroupCollapsed(group.name)
-                    ? 'icon-[lucide--chevron-right]'
-                    : 'icon-[lucide--chevron-down]'
-                )
-              "
-            />
-            <span class="truncate">{{ group.name }}</span>
-            <span class="ml-auto text-xs text-muted-foreground">
-              {{ group.tags.length }}
-            </span>
-          </button>
+            {{ t('sideToolbar.mediaAssets.noTagsHint') }}
+          </p>
           <div
-            v-if="
-              groupNaming.kind === 'naming' && groupNaming.target === group.name
-            "
-            class="ml-2 flex w-[calc(100%-0.5rem)] items-center gap-2 rounded-md bg-interface-menu-component-surface-selected px-3 py-2 text-sm text-base-foreground"
+            v-if="groupNaming.kind === 'naming' && groupNaming.target === null"
+            class="flex w-full items-center gap-2 rounded-md bg-interface-menu-component-surface-selected px-3 py-2 text-sm text-base-foreground"
           >
             <i class="icon-[lucide--folder-plus] size-3.5 shrink-0" />
             <input
@@ -165,73 +80,154 @@
               @click.stop
             />
           </div>
-          <template v-if="!isGroupCollapsed(group.name)">
-            <AssetsSidebarTagRow
-              v-for="tag in tagsInGroup(group.name)"
-              :key="`grouped:${group.name}:${tag.name}`"
-              :tag="tag"
-              :section="`group:${group.name}`"
-              :selected="tagSelection.isSelected(tag.name)"
-              :is-editing="editingTag === tag.name"
-              :editing-draft="editingTagDraft"
-              :is-drag-over="dragOverTagId === tag.name"
-              :is-context-target="contextTagTarget === tag.name"
-              @tag-click="onTagSelect"
-              @start-rename="startTagEdit"
-              @update-draft="(value: string) => (editingTagDraft = value)"
-              @commit-rename="commitTagEdit"
-              @cancel-rename="cancelTagEdit"
-              @context-menu="onTagContextMenu"
-              @drag-start="onTagDragStart"
-              @drag-over="onTagDragOver"
-              @drag-leave="onTagDragLeave"
-              @drop="onTagDrop"
-            />
-          </template>
-        </div>
-        <button
-          v-if="visibleGroups.length > 0"
-          type="button"
-          :class="
-            cn(
-              'mt-2 flex w-full cursor-pointer items-center gap-1 rounded-md border-none px-3 py-1.5 text-left text-xs font-medium tracking-wide text-muted-foreground transition-colors',
-              isAllHeaderDragOver
-                ? 'ring-1 ring-primary'
-                : 'bg-transparent hover:bg-interface-menu-component-surface-hovered'
-            )
-          "
-          @dragover="onAllHeaderDragOver"
-          @dragleave="isAllHeaderDragOver = false"
-          @drop.prevent="onAllHeaderDrop"
-        >
-          <span class="truncate">{{
-            t('sideToolbar.mediaAssets.tagGroup.allHeader')
-          }}</span>
-          <span class="ml-auto text-xs text-muted-foreground">
-            {{ visibleAllTags.length }}
-          </span>
-        </button>
-        <AssetsSidebarTagRow
-          v-for="tag in visibleAllTags"
-          :key="`all:${tag.name}`"
-          :tag="tag"
-          section="all"
-          :selected="tagSelection.isSelected(tag.name)"
-          :is-editing="editingTag === tag.name"
-          :editing-draft="editingTagDraft"
-          :is-drag-over="dragOverTagId === tag.name"
-          :is-context-target="contextTagTarget === tag.name"
-          @tag-click="onTagSelect"
-          @start-rename="startTagEdit"
-          @update-draft="(value: string) => (editingTagDraft = value)"
-          @commit-rename="commitTagEdit"
-          @cancel-rename="cancelTagEdit"
-          @context-menu="onTagContextMenu"
-          @drag-start="onTagDragStart"
-          @drag-over="onTagDragOver"
-          @drag-leave="onTagDragLeave"
-          @drop="onTagDrop"
-        />
+          <div
+            v-for="group in visibleGroups"
+            :key="`group:${group.name}`"
+            class="mt-2 flex flex-col gap-1 first:mt-0"
+          >
+            <div
+              v-if="editingGroup === group.name"
+              class="flex w-full items-center gap-2 rounded-md bg-interface-menu-component-surface-selected px-3 py-1.5 text-xs font-medium tracking-wide text-base-foreground"
+            >
+              <i class="icon-[lucide--folder] size-3 shrink-0" />
+              <input
+                ref="groupRenameInputRef"
+                v-model="editingGroupDraft"
+                type="text"
+                class="min-w-0 flex-1 rounded-sm border border-comfy-input bg-transparent px-1 text-xs text-base-foreground outline-none focus:border-primary"
+                @keydown.enter.prevent="commitGroupRename"
+                @keydown.escape.prevent="cancelGroupRename"
+                @blur="commitGroupRename"
+                @click.stop
+              />
+            </div>
+            <button
+              v-else
+              type="button"
+              :class="
+                cn(
+                  'flex w-full cursor-pointer items-center gap-1 rounded-md border-none px-3 py-1.5 text-left text-xs font-medium tracking-wide text-muted-foreground transition-colors',
+                  isGroupHeaderDragOver(group.name)
+                    ? 'ring-1 ring-primary'
+                    : 'bg-transparent hover:bg-interface-menu-component-surface-hovered'
+                )
+              "
+              :aria-label="
+                t('sideToolbar.mediaAssets.tagGroup.collapseAriaLabel', {
+                  name: group.name
+                })
+              "
+              @click="toggleGroupCollapsed(group.name)"
+              @contextmenu.prevent="onGroupContextMenu($event, group.name)"
+              @dragover="onGroupHeaderDragOver($event, group.name)"
+              @dragleave="onGroupHeaderDragLeave(group.name)"
+              @drop.prevent="onGroupHeaderDrop($event, group.name)"
+            >
+              <i
+                :class="
+                  cn(
+                    'size-3 shrink-0 transition-transform',
+                    isGroupCollapsed(group.name)
+                      ? 'icon-[lucide--chevron-right]'
+                      : 'icon-[lucide--chevron-down]'
+                  )
+                "
+              />
+              <span class="truncate">{{ group.name }}</span>
+              <span class="ml-auto text-xs text-muted-foreground">
+                {{ group.tags.length }}
+              </span>
+            </button>
+            <div
+              v-if="
+                groupNaming.kind === 'naming' &&
+                groupNaming.target === group.name
+              "
+              class="ml-2 flex w-[calc(100%-0.5rem)] items-center gap-2 rounded-md bg-interface-menu-component-surface-selected px-3 py-2 text-sm text-base-foreground"
+            >
+              <i class="icon-[lucide--folder-plus] size-3.5 shrink-0" />
+              <input
+                ref="groupNameInputRef"
+                v-model="groupNameDraft"
+                type="text"
+                :placeholder="
+                  t('sideToolbar.mediaAssets.tagGroup.namePlaceholder')
+                "
+                class="min-w-0 flex-1 rounded-sm border border-comfy-input bg-transparent px-1 text-sm text-base-foreground outline-none focus:border-primary"
+                @keydown.enter.prevent="commitGroupNaming"
+                @keydown.escape.prevent="cancelGroupNaming"
+                @blur="commitGroupNaming"
+                @click.stop
+              />
+            </div>
+            <template v-if="!isGroupCollapsed(group.name)">
+              <AssetsSidebarTagRow
+                v-for="tag in tagsInGroup(group.name)"
+                :key="`grouped:${group.name}:${tag.name}`"
+                :tag="tag"
+                :section="`group:${group.name}`"
+                :selected="tagSelection.isSelected(tag.name)"
+                :is-editing="editingTag === tag.name"
+                :editing-draft="editingTagDraft"
+                :is-drag-over="dragOverTagId === tag.name"
+                :is-context-target="contextTagTarget === tag.name"
+                @tag-click="onTagSelect"
+                @start-rename="startTagEdit"
+                @update-draft="(value: string) => (editingTagDraft = value)"
+                @commit-rename="commitTagEdit"
+                @cancel-rename="cancelTagEdit"
+                @context-menu="onTagContextMenu"
+                @drag-start="onTagDragStart"
+                @drag-over="onTagDragOver"
+                @drag-leave="onTagDragLeave"
+                @drop="onTagDrop"
+              />
+            </template>
+          </div>
+          <button
+            v-if="visibleGroups.length > 0"
+            type="button"
+            :class="
+              cn(
+                'mt-2 flex w-full cursor-pointer items-center gap-1 rounded-md border-none px-3 py-1.5 text-left text-xs font-medium tracking-wide text-muted-foreground transition-colors',
+                isAllHeaderDragOver
+                  ? 'ring-1 ring-primary'
+                  : 'bg-transparent hover:bg-interface-menu-component-surface-hovered'
+              )
+            "
+            @dragover="onAllHeaderDragOver"
+            @dragleave="isAllHeaderDragOver = false"
+            @drop.prevent="onAllHeaderDrop"
+          >
+            <span class="truncate">{{
+              t('sideToolbar.mediaAssets.tagGroup.allHeader')
+            }}</span>
+            <span class="ml-auto text-xs text-muted-foreground">
+              {{ visibleAllTags.length }}
+            </span>
+          </button>
+          <AssetsSidebarTagRow
+            v-for="tag in visibleAllTags"
+            :key="`all:${tag.name}`"
+            :tag="tag"
+            section="all"
+            :selected="tagSelection.isSelected(tag.name)"
+            :is-editing="editingTag === tag.name"
+            :editing-draft="editingTagDraft"
+            :is-drag-over="dragOverTagId === tag.name"
+            :is-context-target="contextTagTarget === tag.name"
+            @tag-click="onTagSelect"
+            @start-rename="startTagEdit"
+            @update-draft="(value: string) => (editingTagDraft = value)"
+            @commit-rename="commitTagEdit"
+            @cancel-rename="cancelTagEdit"
+            @context-menu="onTagContextMenu"
+            @drag-start="onTagDragStart"
+            @drag-over="onTagDragOver"
+            @drag-leave="onTagDragLeave"
+            @drop="onTagDrop"
+          />
+        </template>
       </div>
     </div>
     <AssetsSidebarTagContextMenu
@@ -301,12 +297,17 @@ const groupCollapsed = useStorage<Record<string, boolean>>(
   {}
 )
 
+const tagsCollapsed = useStorage<boolean>(
+  'Comfy.Assets.TagsSectionCollapsed.v1',
+  true
+)
+
+function toggleTagsCollapsed() {
+  tagsCollapsed.value = !tagsCollapsed.value
+}
+
 const editingTag = ref<string | null>(null)
 const editingTagDraft = ref('')
-
-const tagSearch = ref('')
-const searchExpanded = ref(false)
-const searchInputRef = ref<HTMLInputElement | null>(null)
 
 type GroupNamingState =
   | { kind: 'idle' }
@@ -336,25 +337,11 @@ const groupRenameInputRef = ref<HTMLInputElement | HTMLInputElement[] | null>(
   null
 )
 
-const filteredTags = computed<TagWithCount[]>(() => {
-  const query = tagSearch.value.trim().toLowerCase()
-  if (!query) return [...availableTags]
-  return availableTags.filter((tag) => tag.name.toLowerCase().includes(query))
-})
+const visibleGroups = computed(() =>
+  groups.allGroups.value.map((g) => ({ name: g.name, tags: [...g.tags] }))
+)
 
-const visibleGroups = computed(() => {
-  const visibleNames = new Set(filteredTags.value.map((t) => t.name))
-  return groups.allGroups.value
-    .map((g) => ({
-      name: g.name,
-      tags: g.tags.filter((t) => visibleNames.has(t))
-    }))
-    .filter((g) => g.tags.length > 0 || !tagSearch.value.trim())
-})
-
-// "All" section beneath the groups — every visible tag, including those that
-// also appear under a group header.
-const visibleAllTags = computed<TagWithCount[]>(() => [...filteredTags.value])
+const visibleAllTags = computed<TagWithCount[]>(() => [...availableTags])
 
 const lastClickedTag = ref<string | null>(null)
 const lastClickedSection = ref<string | null>(null)
@@ -363,7 +350,7 @@ const lastClickedSection = ref<string | null>(null)
 // range space for shift-click selection — scoped per-section so a shift-click
 // inside a group only selects within that group, not the global flat list.
 function namesForSection(id: string): string[] {
-  if (id === 'all') return filteredTags.value.map((t) => t.name)
+  if (id === 'all') return availableTags.map((t) => t.name)
   if (id.startsWith('group:')) {
     const groupName = id.slice('group:'.length)
     return tagsInGroup(groupName).map((t) => t.name)
@@ -372,11 +359,11 @@ function namesForSection(id: string): string[] {
 }
 
 function tagsInGroup(name: string): TagWithCount[] {
-  const visibleNames = new Map(filteredTags.value.map((t) => [t.name, t]))
+  const tagsByName = new Map(availableTags.map((t) => [t.name, t]))
   const tagNames = groups.getTagsInGroup(name)
   const result: TagWithCount[] = []
   for (const tagName of tagNames) {
-    const t = visibleNames.get(tagName)
+    const t = tagsByName.get(tagName)
     if (t) result.push(t)
   }
   return result
@@ -395,29 +382,6 @@ function toggleGroupCollapsed(name: string) {
 
 function isGroupHeaderDragOver(name: string): boolean {
   return dragOverGroupHeader.value === name
-}
-
-function toggleSearch() {
-  if (searchExpanded.value) {
-    if (!tagSearch.value) {
-      collapseSearch()
-      return
-    }
-    tagSearch.value = ''
-    searchInputRef.value?.focus()
-    return
-  }
-  searchExpanded.value = true
-  void nextTick(() => searchInputRef.value?.focus())
-}
-
-function collapseSearch() {
-  searchExpanded.value = false
-  tagSearch.value = ''
-}
-
-function onSearchBlur() {
-  if (!tagSearch.value) collapseSearch()
 }
 
 function onTagSelect(event: MouseEvent, tag: string, section: string) {

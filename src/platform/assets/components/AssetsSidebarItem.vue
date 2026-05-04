@@ -3,7 +3,7 @@
     type="button"
     :class="
       cn(
-        'flex w-full cursor-pointer items-center gap-2 rounded-md border-none px-3 py-2 text-left text-sm text-base-foreground transition-colors',
+        'flex w-full cursor-pointer items-center-safe gap-2 rounded-md border-none px-4 py-3 text-left text-sm text-base-foreground transition-colors select-none',
         active
           ? 'bg-interface-menu-component-surface-selected'
           : 'bg-transparent hover:bg-interface-menu-component-surface-hovered'
@@ -11,8 +11,8 @@
     "
     @click="emit('click')"
   >
-    <i :class="cn(icon, 'size-3.5 shrink-0')" />
-    <span class="truncate">{{ label }}</span>
+    <i :class="cn(icon, 'text-neutral shrink-0 text-sm')" />
+    <span class="min-w-0 truncate">{{ label }}</span>
   </button>
 </template>
 
