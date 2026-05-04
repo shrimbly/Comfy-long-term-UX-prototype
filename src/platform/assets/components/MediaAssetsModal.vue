@@ -2,6 +2,7 @@
   <BaseModalLayout
     data-component-id="MediaAssetsModal"
     size="full"
+    class="size-full max-h-full max-w-full min-w-0"
     :content-title="$t('mediaAssets.modal.title')"
     @close="handleClose"
   >
@@ -98,7 +99,19 @@
 
     <template #content>
       <div
-        v-if="showEmptyState"
+        v-if="showInitialLoading"
+        class="grid w-full gap-3"
+        :style="skeletonGridStyle"
+      >
+        <div
+          v-for="n in SKELETON_COUNT"
+          :key="`skeleton-${n}`"
+          class="animate-pulse rounded-lg bg-modal-card-placeholder-background"
+          :style="{ aspectRatio: skeletonAspect(n) }"
+        />
+      </div>
+      <div
+        v-else-if="showEmptyState"
         class="flex flex-1 items-center justify-center"
       >
         <NoResultsPlaceholder
@@ -115,6 +128,7 @@
         @select-asset="handleAssetSelect"
         @preview-asset="handlePreview"
         @context-menu="handleContextMenu"
+        @approach-end="handleApproachEnd"
       />
     </template>
   </BaseModalLayout>
@@ -130,8 +144,9 @@
 </template>
 
 <script setup lang="ts">
-import { useStorage } from '@vueuse/core'
+import { useDebounceFn, useStorage } from '@vueuse/core'
 import { computed, nextTick, ref } from 'vue'
+import type { CSSProperties } from 'vue'
 
 import NoResultsPlaceholder from '@/components/common/NoResultsPlaceholder.vue'
 import Button from '@/components/ui/button/Button.vue'
@@ -177,9 +192,28 @@ const contextMenuFileKind = computed<MediaKind>(() =>
   getMediaTypeFromFilename(contextMenuAsset.value?.name ?? '')
 )
 
+const showInitialLoading = computed(
+  () => browser.isLoading.value && browser.displayAssets.value.length === 0
+)
+
 const showEmptyState = computed(
   () => !browser.isLoading.value && browser.displayAssets.value.length === 0
 )
+
+const SKELETON_COUNT = 18
+
+const skeletonGridStyle = computed<CSSProperties>(() => ({
+  gridTemplateColumns: `repeat(auto-fill, minmax(${density.value}px, 1fr))`
+}))
+
+function skeletonAspect(n: number): string {
+  const aspects = ['1 / 1', '3 / 4', '4 / 3', '2 / 3', '16 / 9']
+  return aspects[n % aspects.length]
+}
+
+const handleApproachEnd = useDebounceFn(async () => {
+  await browser.loadMore()
+}, 200)
 
 function handleAssetSelect(asset: AssetItem) {
   const list = browser.displayAssets.value

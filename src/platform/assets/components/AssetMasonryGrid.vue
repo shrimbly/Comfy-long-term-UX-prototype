@@ -17,11 +17,17 @@
       />
     </div>
     <div :style="{ height: `${containerHeight}px` }" aria-hidden="true" />
+    <div
+      ref="sentinelRef"
+      class="pointer-events-none absolute inset-x-0 h-px"
+      :style="{ top: `${sentinelTop}px` }"
+      aria-hidden="true"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { useResizeObserver } from '@vueuse/core'
+import { useIntersectionObserver, useResizeObserver } from '@vueuse/core'
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import type { CSSProperties } from 'vue'
 
@@ -45,9 +51,11 @@ const emit = defineEmits<{
   'select-asset': [asset: AssetItem]
   'preview-asset': [asset: AssetItem]
   'context-menu': [event: MouseEvent, asset: AssetItem]
+  'approach-end': []
 }>()
 
 const containerRef = ref<HTMLElement | null>(null)
+const sentinelRef = ref<HTMLElement | null>(null)
 const itemElements = new Map<string, HTMLElement>()
 const itemObservers = new Map<string, () => void>()
 
@@ -62,6 +70,16 @@ const { positions, containerHeight, reportItemHeight, releaseItem } =
     columnWidth: columnWidthRef,
     gap: gapRef
   })
+
+const APPROACH_END_OFFSET = 600
+
+const sentinelTop = computed(() =>
+  Math.max(0, containerHeight.value - APPROACH_END_OFFSET)
+)
+
+useIntersectionObserver(sentinelRef, ([entry]) => {
+  if (entry?.isIntersecting) emit('approach-end')
+})
 
 function positionStyle(id: string): CSSProperties {
   const pos = positions.value.get(id)
