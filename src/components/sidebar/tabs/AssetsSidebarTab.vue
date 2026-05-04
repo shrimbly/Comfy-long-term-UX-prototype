@@ -38,6 +38,7 @@
         v-model:view-mode="viewMode"
         v-model:media-type-filters="mediaTypeFilters"
         v-model:metadata-filters="metadataFilters"
+        v-model:favorites-only="favoritesOnly"
         bottom-divider
         :show-generation-time-sort="activeTab === 'output'"
         :available-tags="availableTags"
@@ -255,6 +256,7 @@ import type { ViewMode } from '@/platform/assets/components/MediaAssetFilterBar.
 import { getAssetType } from '@/platform/assets/composables/media/assetMappers'
 import { useMediaAssets } from '@/platform/assets/composables/media/useMediaAssets'
 import { useAssetDragPreview } from '@/platform/assets/composables/useAssetDragPreview'
+import { useAssetFavorites } from '@/platform/assets/composables/useAssetFavorites'
 import { useAssetFilters } from '@/platform/assets/composables/useAssetFilters'
 import { useAssetPromptMetadata } from '@/platform/assets/composables/useAssetPromptMetadata'
 import { useAssetSelection } from '@/platform/assets/composables/useAssetSelection'
@@ -404,9 +406,13 @@ const {
   { immediate: false, resetOnExecute: true }
 )
 
-const baseAssets = computed(() =>
-  isInFolderView.value ? folderAssets.value : mediaAssets.value
-)
+const favoritesOnly = ref(false)
+const favorites = useAssetFavorites()
+
+const baseAssets = computed(() => {
+  const source = isInFolderView.value ? folderAssets.value : mediaAssets.value
+  return favoritesOnly.value ? favorites.favoritedAssets(source) : source
+})
 
 const userTags = useAssetTags()
 const availableTags = computed(() => userTags.allTags.value.map((t) => t.name))

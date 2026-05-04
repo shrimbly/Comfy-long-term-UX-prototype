@@ -8,6 +8,30 @@
       :available-values-by-field="availableValuesByField"
     />
     <template #actions>
+      <Button
+        v-tooltip.top="
+          $t(
+            favoritesOnly
+              ? 'assets.filters.showAll'
+              : 'assets.filters.showFavoritesOnly'
+          )
+        "
+        variant="secondary"
+        size="icon"
+        :aria-pressed="favoritesOnly"
+        @click="favoritesOnly = !favoritesOnly"
+      >
+        <i
+          :class="
+            cn(
+              'size-4',
+              favoritesOnly
+                ? 'icon-[ph--star-fill] text-citrine-400'
+                : 'icon-[ph--star]'
+            )
+          "
+        />
+      </Button>
       <MediaAssetFilterButton
         v-if="isCloud"
         v-tooltip.top="{ value: $t('assetBrowser.filterBy') }"
@@ -149,6 +173,7 @@ import Popover from '@/components/ui/Popover.vue'
 import SidebarTopArea from '@/components/sidebar/tabs/SidebarTopArea.vue'
 import type { MetadataFilter } from '@/platform/assets/types/metadataFilter'
 import { isCloud } from '@/platform/distribution/types'
+import { cn } from '@/utils/tailwindUtil'
 
 import MediaAssetFilterButton from './MediaAssetFilterButton.vue'
 import MediaAssetFilterMenu from './MediaAssetFilterMenu.vue'
@@ -187,6 +212,7 @@ const sortBy = defineModel<SortBy>('sortBy', { required: true })
 const viewMode = defineModel<ViewMode>('viewMode', { required: true })
 const hideSidebar = defineModel<boolean>('hideSidebar', { default: false })
 const composing = defineModel<boolean>('composing', { default: false })
+const favoritesOnly = defineModel<boolean>('favoritesOnly', { default: false })
 
 interface ViewOption {
   value: ViewMode
