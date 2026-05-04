@@ -13,8 +13,9 @@
     :tabindex="loading ? -1 : 0"
     :class="
       cn(
-        'flex cursor-pointer flex-col overflow-hidden rounded-lg p-2 transition-colors duration-200',
-        'group gap-2 select-none',
+        'flex cursor-pointer flex-col overflow-hidden rounded-lg transition-colors duration-200',
+        'group select-none',
+        hideFooter ? 'gap-0 p-0' : 'gap-2 p-2',
         selected
           ? 'ring-3 ring-modal-card-border-highlighted ring-inset'
           : 'hover:bg-modal-card-background-hovered/20'

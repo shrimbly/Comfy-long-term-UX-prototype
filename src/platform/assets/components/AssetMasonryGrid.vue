@@ -60,9 +60,10 @@ const emit = defineEmits<{
   'approach-end': []
 }>()
 
-// Cards in the masonry hide their info footer (title shows as hover overlay
-// instead), so the only non-preview chrome is the card's outer p-2 padding.
-const CARD_FOOTER_HEIGHT = 16
+// Cards in the masonry hide their info footer and outer padding (title shows
+// as a hover overlay over the image instead), so the card height equals the
+// preview height exactly.
+const CARD_FOOTER_HEIGHT = 0
 
 const containerRef = ref<HTMLElement | null>(null)
 const sentinelRef = ref<HTMLElement | null>(null)
