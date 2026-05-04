@@ -3085,6 +3085,19 @@
       "failed": "Could not rename asset."
     }
   },
+  "mediaAssets": {
+    "modal": {
+      "title": "Media Assets",
+      "searchPlaceholder": "Search assets",
+      "density": "Density",
+      "assetCount": "{count} asset | {count} assets",
+      "openBrowser": "Open asset browser",
+      "empty": {
+        "title": "No assets found",
+        "message": "Try adjusting your filters or generating new assets."
+      }
+    }
+  },
   "mediaAsset": {
     "deleteAssetTitle": "Delete this asset?",
     "deleteAssetDescription": "This asset will be permanently removed.",
@@ -3890,7 +3903,6 @@
       "tooltip": "View",
       "list": "List",
       "gridSmall": "Grid - Small",
-      "gridMedium": "Grid - Medium",
       "gridLarge": "Grid - Large",
       "hideSidebar": "Hide sidebar"
     },
