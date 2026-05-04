@@ -8,6 +8,7 @@
     >
       <MediaAssetCard
         natural-aspect
+        hide-footer
         :asset="asset"
         :selected="isSelected(asset.id)"
         @click="emit('select-asset', asset)"
@@ -59,13 +60,9 @@ const emit = defineEmits<{
   'approach-end': []
 }>()
 
-// Approximate non-preview height of a MediaAssetCard:
-// - p-2 outer padding (8px top + 8px bottom = 16)
-// - gap-2 between preview and info (8)
-// - MediaTitle: text-sm/tight, up to 2 lines (32 max)
-// - gap-1 + metadata row text-xs (4 + 16 = 20)
-// Slight over-estimate is preferred — small gaps look fine, overlap doesn't.
-const CARD_FOOTER_HEIGHT = 76
+// Cards in the masonry hide their info footer (title shows as hover overlay
+// instead), so the only non-preview chrome is the card's outer p-2 padding.
+const CARD_FOOTER_HEIGHT = 16
 
 const containerRef = ref<HTMLElement | null>(null)
 const sentinelRef = ref<HTMLElement | null>(null)

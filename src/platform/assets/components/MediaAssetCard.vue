@@ -94,10 +94,24 @@
         :visible="showFavoriteToggle"
         class="absolute top-2 right-2 origin-center"
       />
+
+      <!-- Hover title overlay (only when footer is hidden) -->
+      <div
+        v-if="hideFooter && asset && fileName"
+        class="pointer-events-none absolute inset-x-0 bottom-0 bg-linear-to-t from-black/70 via-black/40 to-transparent px-3 pt-6 pb-2 transition-opacity duration-150"
+        :class="isHovered ? 'opacity-100' : 'opacity-0'"
+      >
+        <p
+          class="m-0 line-clamp-2 text-sm/tight break-all text-white"
+          :title="fileName"
+        >
+          {{ fileName }}
+        </p>
+      </div>
     </div>
 
     <!-- Bottom Area: Media Info -->
-    <div class="flex-1">
+    <div v-if="!hideFooter" class="flex-1">
       <!-- Loading State -->
       <div v-if="loading" class="flex items-start justify-between">
         <div class="flex flex-col gap-1">
@@ -207,7 +221,8 @@ const {
   showOutputCount,
   outputCount,
   restrictStackFavorites = false,
-  naturalAspect = false
+  naturalAspect = false,
+  hideFooter = false
 } = defineProps<{
   asset?: AssetItem
   loading?: boolean
@@ -216,6 +231,7 @@ const {
   outputCount?: number
   restrictStackFavorites?: boolean
   naturalAspect?: boolean
+  hideFooter?: boolean
 }>()
 
 const assetsStore = useAssetsStore()
