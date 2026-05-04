@@ -56,12 +56,4 @@ describe('useAssetsSidebarTab', () => {
 
     expect((sidebarTab.iconBadge as () => string | null)()).toBeNull()
   })
-
-  it('uses fixed panel width tuned for the recents folders sidebar', () => {
-    const sidebarTab = useAssetsSidebarTab()
-
-    expect(sidebarTab.panelSize).toBe(40)
-    expect(sidebarTab.panelMinSize).toBe(40)
-    expect(sidebarTab.panelStateKeySuffix).toBe('recents-folders')
-  })
 })

@@ -5,8 +5,6 @@ import { useSettingStore } from '@/platform/settings/settingStore'
 import { useAssetsSidebarBadgeStore } from '@/stores/workspace/assetsSidebarBadgeStore'
 import type { SidebarTabExtension } from '@/types/extensionTypes'
 
-const PANEL_SIZE = 40
-
 export const useAssetsSidebarTab = (): SidebarTabExtension => {
   return {
     id: 'assets',
@@ -16,9 +14,6 @@ export const useAssetsSidebarTab = (): SidebarTabExtension => {
     label: 'sideToolbar.labels.assets',
     component: markRaw(AssetsSidebarTab),
     type: 'vue',
-    panelSize: PANEL_SIZE,
-    panelMinSize: PANEL_SIZE,
-    panelStateKeySuffix: 'recents-folders',
     iconBadge: () => {
       const settingStore = useSettingStore()
 

@@ -117,21 +117,23 @@
                 :class="viewMode !== option.value && 'opacity-0'"
               />
             </Button>
-            <div class="my-1 border-t border-comfy-input" />
-            <Button
-              variant="textonly"
-              class="w-full"
-              @click="hideSidebar = !hideSidebar"
-            >
-              <span class="flex items-center gap-2">
-                <i class="icon-[lucide--panel-left-close] size-4" />
-                <span>{{ $t('assets.view.hideSidebar') }}</span>
-              </span>
-              <i
-                class="ml-auto icon-[lucide--check] size-4"
-                :class="!hideSidebar && 'opacity-0'"
-              />
-            </Button>
+            <template v-if="enableSidebarToggle">
+              <div class="my-1 border-t border-comfy-input" />
+              <Button
+                variant="textonly"
+                class="w-full"
+                @click="hideSidebar = !hideSidebar"
+              >
+                <span class="flex items-center gap-2">
+                  <i class="icon-[lucide--panel-left-close] size-4" />
+                  <span>{{ $t('assets.view.hideSidebar') }}</span>
+                </span>
+                <i
+                  class="ml-auto icon-[lucide--check] size-4"
+                  :class="!hideSidebar && 'opacity-0'"
+                />
+              </Button>
+            </template>
           </div>
         </template>
       </Popover>
@@ -162,7 +164,8 @@ const {
   metadataFilters,
   availableTags = [],
   availableValuesByField,
-  bottomDivider = false
+  bottomDivider = false,
+  enableSidebarToggle = false
 } = defineProps<{
   searchQuery: string
   showGenerationTimeSort?: boolean
@@ -171,6 +174,7 @@ const {
   availableTags?: string[]
   availableValuesByField?: Record<'model' | 'lora' | 'workflowTitle', string[]>
   bottomDivider?: boolean
+  enableSidebarToggle?: boolean
 }>()
 
 const emit = defineEmits<{
