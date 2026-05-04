@@ -161,7 +161,6 @@
           </div>
         </template>
       </Popover>
-      <slot name="trailingActions" />
     </template>
   </SidebarTopArea>
 </template>

@@ -24,6 +24,17 @@
         </div>
       </div>
     </template>
+    <template v-if="!isInFolderView" #tool-buttons>
+      <Button
+        v-tooltip.bottom="$t('mediaAssets.modal.openBrowser')"
+        variant="secondary"
+        size="icon"
+        :aria-label="$t('mediaAssets.modal.openBrowser')"
+        @click="openMediaAssetBrowser"
+      >
+        <i class="icon-[lucide--maximize-2] size-4" />
+      </Button>
+    </template>
     <template #header>
       <div v-if="isInFolderView" class="px-2 2xl:px-4">
         <Button variant="secondary" size="lg" @click="exitFolderView">
@@ -43,19 +54,7 @@
         :show-generation-time-sort="activeTab === 'output'"
         :available-tags="availableTags"
         :available-values-by-field="availableValuesByField"
-      >
-        <template #trailingActions>
-          <Button
-            v-tooltip.bottom="$t('mediaAssets.modal.openBrowser')"
-            variant="secondary"
-            size="icon"
-            :aria-label="$t('mediaAssets.modal.openBrowser')"
-            @click="openMediaAssetBrowser"
-          >
-            <i class="icon-[lucide--maximize-2] size-4" />
-          </Button>
-        </template>
-      </MediaAssetFilterBar>
+      />
       <MediaAssetFilterChipsBar v-model="metadataFilters" />
       <div
         v-if="!isInFolderView"
