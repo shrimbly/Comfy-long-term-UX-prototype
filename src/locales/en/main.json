@@ -842,12 +842,6 @@
         "generatedHeader": "Generated",
         "recent": "Recent",
         "favorites": "Favorites",
-        "favoriteColors": {
-          "yellow": "Yellow",
-          "blue": "Blue",
-          "green": "Green"
-        },
-        "renameFavoriteColor": "Rename favorite",
         "pinHint": "Drag folders here to pin",
         "outputRoot": "output",
         "inputRoot": "input",
@@ -3103,16 +3097,6 @@
       "inspect": "Inspect asset",
       "favorite": "Add to favorites",
       "unfavorite": "Remove from favorites",
-      "favoriteAs": {
-        "yellow": "Favorite (yellow)",
-        "blue": "Favorite (blue)",
-        "green": "Favorite (green)"
-      },
-      "favoriteColor": {
-        "yellow": "Favorite as yellow",
-        "blue": "Favorite as blue",
-        "green": "Favorite as green"
-      },
       "more": "More options",
       "zoom": "Zoom in",
       "moreOptions": "More options",
@@ -3923,7 +3907,6 @@
       "date": "Date",
       "tag": "Tag",
       "type": "Type",
-      "favorite": "Favorite",
       "searchPlaceholder": "Search or filter",
       "enterValue": "Type {field} value...",
       "noMatches": "No matches",
@@ -3942,8 +3925,7 @@
         "prompt": "Filter by prompt text",
         "date": "Filter by date",
         "tag": "Filter by tag",
-        "type": "Filter by media type",
-        "favorite": "Filter by favorite color"
+        "type": "Filter by media type"
       },
       "datePresets": {
         "today": "Today",
@@ -3958,11 +3940,6 @@
         "video": "Video",
         "audio": "Audio",
         "3D": "3D"
-      },
-      "favoriteColors": {
-        "yellow": "Yellow",
-        "blue": "Blue",
-        "green": "Green"
       }
     }
   },

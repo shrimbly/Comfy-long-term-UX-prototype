@@ -26,43 +26,13 @@
           typeof item.label === 'function' ? item.label() : (item.label ?? '')
         }}</span>
         <i
-          v-if="
-            (item as MenuItemWithSubmenu).isFavoriteSubmenu ||
-            (item as MenuItemWithSubmenu).isTagsSubmenu
-          "
+          v-if="(item as MenuItemWithSubmenu).isTagsSubmenu"
           class="icon-[lucide--chevron-right] size-4 opacity-60"
         />
       </Button>
     </template>
   </ContextMenu>
   <Teleport to="body">
-    <div
-      v-if="favoritePopoverVisible"
-      ref="favoritePopoverRef"
-      class="fixed z-1100 flex flex-col gap-1 rounded-lg border border-border-default bg-secondary-background p-1 text-base-foreground shadow-lg"
-      :style="favoritePopoverStyle"
-      @mouseenter="cancelHidePopover"
-      @mouseleave="scheduleHidePopover"
-    >
-      <button
-        v-for="color in FAVORITE_COLORS"
-        :key="color"
-        type="button"
-        class="flex w-full cursor-pointer items-center gap-2 rounded-sm border-none bg-transparent px-3 py-1.5 text-left text-sm transition-colors hover:bg-secondary-background-hover"
-        @click.stop="handleColorSelect(color)"
-      >
-        <i
-          :class="
-            cn(
-              'size-4',
-              colorTextClass(color),
-              activeColor === color ? 'icon-[ph--star-fill]' : 'icon-[ph--star]'
-            )
-          "
-        />
-        <span>{{ t(`mediaAsset.actions.favoriteColor.${color}`) }}</span>
-      </button>
-    </div>
     <div
       v-if="tagsPopoverVisible"
       ref="tagsPopoverRef"
@@ -106,17 +76,12 @@ import { detectNodeTypeFromFilename } from '@/utils/loaderNodeUtil'
 import { electronAPI } from '@/utils/envUtil'
 import { cn } from '@/utils/tailwindUtil'
 
-import {
-  FAVORITE_COLORS,
-  useAssetFavorites
-} from '../composables/useAssetFavorites'
-import type { FavoriteColor } from '../composables/useAssetFavorites'
+import { useAssetFavorites } from '../composables/useAssetFavorites'
 import { useMediaAssetActions } from '../composables/useMediaAssetActions'
 import type { AssetItem } from '../schemas/assetSchema'
 import type { AssetContext, MediaKind } from '../schemas/mediaAssetSchema'
 
 type MenuItemWithSubmenu = MenuItem & {
-  isFavoriteSubmenu?: boolean
   isTagsSubmenu?: boolean
 }
 
@@ -163,11 +128,6 @@ const actions = useMediaAssetActions()
 const favorites = useAssetFavorites()
 const { t } = useI18n()
 
-const favoritePopoverVisible = ref(false)
-const favoritePopoverStyle = ref<CSSProperties>({})
-const favoritePopoverRef = ref<HTMLElement | null>(null)
-let hidePopoverTimeout: number | null = null
-
 const tagsPopoverVisible = ref(false)
 const tagsPopoverStyle = ref<CSSProperties>({})
 const tagsPopoverRef = ref<HTMLElement | null>(null)
@@ -177,8 +137,6 @@ const tagTargets = computed<AssetItem[]>(() =>
 )
 
 function showTagsPopover(anchor: HTMLElement) {
-  cancelHidePopover()
-  favoritePopoverVisible.value = false
   const rect = anchor.getBoundingClientRect()
   tagsPopoverStyle.value = {
     left: `${rect.right + 8}px`,
@@ -203,30 +161,27 @@ const favoriteTargets = computed<AssetItem[]>(() =>
   bulkActive.value && selectedAssets ? selectedAssets : asset ? [asset] : []
 )
 
-const activeColor = computed<FavoriteColor | null>(() => {
+const allTargetsFavorited = computed(() => {
   const targets = favoriteTargets.value
-  if (targets.length === 0) return null
-  const first = favorites.getFavoriteColor(targets[0])
-  for (let i = 1; i < targets.length; i++) {
-    if (favorites.getFavoriteColor(targets[i]) !== first) return null
-  }
-  return first
+  if (targets.length === 0) return false
+  return targets.every((a) => favorites.isFavorited(a))
 })
 
-async function applyFavoriteColor(color: FavoriteColor | null) {
+async function applyFavoriteToTargets(value: boolean) {
   await Promise.all(
-    favoriteTargets.value.map((a) => favorites.setFavoriteColor(a, color))
+    favoriteTargets.value.map((a) => favorites.setFavorited(a, value))
   )
 }
 
-function buildFavoriteMenuItem(): MenuItemWithSubmenu {
+function buildFavoriteMenuItem(): MenuItem {
+  const active = allTargetsFavorited.value
   return {
-    label: t('mediaAsset.actions.favorite'),
-    icon: activeColor.value ? 'icon-[ph--star-fill]' : 'icon-[ph--star]',
-    isFavoriteSubmenu: true,
+    label: t(
+      active ? 'mediaAsset.actions.unfavorite' : 'mediaAsset.actions.favorite'
+    ),
+    icon: active ? 'icon-[ph--star-fill] text-citrine-400' : 'icon-[ph--star]',
     command: () => {
-      const next = activeColor.value === 'yellow' ? null : 'yellow'
-      void applyFavoriteColor(next)
+      void applyFavoriteToTargets(!active)
     }
   }
 }
@@ -244,60 +199,12 @@ function buildTagsMenuItem(): MenuItemWithSubmenu {
   }
 }
 
-function colorTextClass(color: FavoriteColor): string {
-  switch (color) {
-    case 'yellow':
-      return 'text-citrine-400'
-    case 'blue':
-      return 'text-azure-400'
-    case 'green':
-      return 'text-jade-600'
-  }
-}
-
-function cancelHidePopover() {
-  if (hidePopoverTimeout !== null) {
-    clearTimeout(hidePopoverTimeout)
-    hidePopoverTimeout = null
-  }
-}
-
-function scheduleHidePopover() {
-  cancelHidePopover()
-  hidePopoverTimeout = window.setTimeout(() => {
-    favoritePopoverVisible.value = false
-  }, 150)
-}
-
-function showFavoritePopover(anchor: HTMLElement) {
-  cancelHidePopover()
-  tagsPopoverVisible.value = false
-  const rect = anchor.getBoundingClientRect()
-  favoritePopoverStyle.value = {
-    left: `${rect.right + 8}px`,
-    top: `${rect.top}px`,
-    minWidth: '12rem'
-  }
-  favoritePopoverVisible.value = true
-}
-
 function handleItemMouseEnter(event: MouseEvent, item: MenuItem) {
   const target = event.currentTarget as HTMLElement | null
   if (!target) return
-  if ((item as MenuItemWithSubmenu).isFavoriteSubmenu) {
-    showFavoritePopover(target)
-  } else if ((item as MenuItemWithSubmenu).isTagsSubmenu) {
+  if ((item as MenuItemWithSubmenu).isTagsSubmenu) {
     showTagsPopover(target)
-  } else {
-    scheduleHidePopover()
   }
-}
-
-function handleColorSelect(color: FavoriteColor) {
-  const isActive = activeColor.value === color
-  void applyFavoriteColor(isActive ? null : color)
-  favoritePopoverVisible.value = false
-  hide()
 }
 
 useEventListener(
@@ -311,7 +218,6 @@ useEventListener(
     }
     const menuEl = document.getElementById(contextMenuId)
     if (menuEl?.contains(event.target)) return
-    if (favoritePopoverRef.value?.contains(event.target)) return
     if (tagsPopoverRef.value?.contains(event.target)) return
     hide()
   },
@@ -599,8 +505,6 @@ const contextMenuItems = computed<MenuItem[]>(() => {
 
 function onMenuHide() {
   isVisible.value = false
-  favoritePopoverVisible.value = false
-  cancelHidePopover()
   emit('hide')
 }
 

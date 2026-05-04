@@ -137,7 +137,6 @@ import type {
 } from '@/platform/assets/types/metadataFilter'
 import {
   DATE_PRESETS,
-  FAVORITE_FILTER_OPTIONS,
   MEDIA_TYPE_OPTIONS
 } from '@/platform/assets/types/metadataFilter'
 import { formatMetadataFilterValue } from '@/platform/assets/utils/metadataFilterFormat'
@@ -180,7 +179,7 @@ const METADATA_GROUP: MetadataField[] = [
   'workflowTitle',
   'prompt'
 ]
-const ATTRIBUTES_GROUP: MetadataField[] = ['date', 'tag', 'type', 'favorite']
+const ATTRIBUTES_GROUP: MetadataField[] = ['date', 'tag', 'type']
 const CUSTOM_VALUE_KEY = '__custom__'
 const FUSE_OPTIONS = { threshold: 0.4, keys: ['label'], includeScore: true }
 
@@ -207,7 +206,6 @@ function fieldHasOptions(field: MetadataField): boolean {
     field === 'date' ||
     field === 'tag' ||
     field === 'type' ||
-    field === 'favorite' ||
     field === 'model' ||
     field === 'lora' ||
     field === 'workflowTitle'
@@ -237,12 +235,6 @@ const fieldOptions = computed<LabelledValue[]>(() => {
     return MEDIA_TYPE_OPTIONS.map((type) => ({
       value: type,
       label: t(`assets.metadata.mediaTypes.${type}`)
-    }))
-  }
-  if (activeField.value === 'favorite') {
-    return FAVORITE_FILTER_OPTIONS.map((color) => ({
-      value: color,
-      label: t(`assets.metadata.favoriteColors.${color}`)
     }))
   }
   if (

@@ -4,97 +4,74 @@ import { useAssetsStore } from '@/stores/assetsStore'
 
 import type { AssetItem } from '../schemas/assetSchema'
 
-export const FAVORITE_COLORS = ['yellow', 'blue', 'green'] as const
-export type FavoriteColor = (typeof FAVORITE_COLORS)[number]
+export const FAVORITE_TAG = 'favorite'
 
 const FAVORITE_TAG_PREFIX = 'favorite-'
 
-export function favoriteTagFor(color: FavoriteColor): string {
-  return `${FAVORITE_TAG_PREFIX}${color}`
+function isFavoriteTag(tag: string): boolean {
+  return tag === FAVORITE_TAG || tag.startsWith(FAVORITE_TAG_PREFIX)
 }
 
-function tagToColor(tag: string): FavoriteColor | null {
-  if (!tag.startsWith(FAVORITE_TAG_PREFIX)) return null
-  const candidate = tag.slice(FAVORITE_TAG_PREFIX.length)
-  return (FAVORITE_COLORS as readonly string[]).includes(candidate)
-    ? (candidate as FavoriteColor)
-    : null
+function tagsAreFavorited(tags: readonly string[] | undefined): boolean {
+  if (!tags) return false
+  return tags.some(isFavoriteTag)
 }
 
-function readColorFromTags(
-  tags: readonly string[] | undefined
-): FavoriteColor | null {
-  if (!tags) return null
-  for (const tag of tags) {
-    const color = tagToColor(tag)
-    if (color) return color
-  }
-  return null
-}
+const optimisticById = ref(new Map<string, boolean>())
 
-const optimisticColorById = ref(new Map<string, FavoriteColor | null>())
-
-function rememberColor(assetId: string, color: FavoriteColor | null) {
-  const next = new Map(optimisticColorById.value)
-  next.set(assetId, color)
-  optimisticColorById.value = next
+function rememberOptimistic(assetId: string, value: boolean) {
+  const next = new Map(optimisticById.value)
+  next.set(assetId, value)
+  optimisticById.value = next
 }
 
 function forgetOptimistic(assetId: string) {
-  if (!optimisticColorById.value.has(assetId)) return
-  const next = new Map(optimisticColorById.value)
+  if (!optimisticById.value.has(assetId)) return
+  const next = new Map(optimisticById.value)
   next.delete(assetId)
-  optimisticColorById.value = next
+  optimisticById.value = next
 }
 
 export function useAssetFavorites() {
   const assetsStore = useAssetsStore()
 
-  function getFavoriteColor(asset: AssetItem): FavoriteColor | null {
-    if (optimisticColorById.value.has(asset.id)) {
-      return optimisticColorById.value.get(asset.id) ?? null
-    }
-    return readColorFromTags(asset.tags)
-  }
-
   function isFavorited(asset: AssetItem): boolean {
-    return getFavoriteColor(asset) !== null
+    if (optimisticById.value.has(asset.id)) {
+      return optimisticById.value.get(asset.id) ?? false
+    }
+    return tagsAreFavorited(asset.tags)
   }
 
-  async function setFavoriteColor(
-    asset: AssetItem,
-    color: FavoriteColor | null
-  ): Promise<void> {
-    const currentColor = getFavoriteColor(asset)
-    if (currentColor === color) return
+  async function setFavorited(asset: AssetItem, value: boolean): Promise<void> {
+    const current = isFavorited(asset)
+    if (current === value) return
 
     const originalTags = asset.tags ?? []
     const tagsWithoutFavorite = originalTags.filter(
-      (tag) => tagToColor(tag) === null
+      (tag) => !isFavoriteTag(tag)
     )
-    const newTags = color
-      ? [...tagsWithoutFavorite, favoriteTagFor(color)]
+    const newTags = value
+      ? [...tagsWithoutFavorite, FAVORITE_TAG]
       : tagsWithoutFavorite
 
-    rememberColor(asset.id, color)
+    rememberOptimistic(asset.id, value)
     asset.tags = newTags
 
     try {
       await assetsStore.updateAssetTags(asset, newTags)
     } catch (error) {
       asset.tags = originalTags
-      if (currentColor === readColorFromTags(originalTags)) {
+      if (current === tagsAreFavorited(originalTags)) {
         forgetOptimistic(asset.id)
       } else {
-        rememberColor(asset.id, currentColor)
+        rememberOptimistic(asset.id, current)
       }
       throw error
     }
   }
 
   async function toggleFavorite(asset: AssetItem): Promise<void> {
-    const current = getFavoriteColor(asset)
-    await setFavoriteColor(asset, current ? null : 'yellow')
+    await setFavorited(asset, !isFavorited(asset))
   }
 
   function favoritedAssets(assets: readonly AssetItem[]): AssetItem[] {
@@ -103,8 +80,7 @@ export function useAssetFavorites() {
 
   return {
     isFavorited,
-    getFavoriteColor,
-    setFavoriteColor,
+    setFavorited,
     toggleFavorite,
     favoritedAssets
   }

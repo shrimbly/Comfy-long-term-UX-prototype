@@ -38,9 +38,7 @@ const messages = {
           recent: 'Recent',
           favorites: 'Favorites',
           generatedHeader: 'Generated',
-          importedHeader: 'Imported',
-          renameFavoriteColor: 'Rename color',
-          favoriteColors: { yellow: 'Yellow', blue: 'Blue', green: 'Green' }
+          importedHeader: 'Imported'
         },
         tagContextMenu: {
           delete: 'Delete tag',

@@ -17,8 +17,5 @@ export function formatMetadataFilterValue(
   if (field === 'type') {
     return t(`assets.metadata.mediaTypes.${value}`)
   }
-  if (field === 'favorite') {
-    return t(`assets.metadata.favoriteColors.${value}`)
-  }
   return value
 }

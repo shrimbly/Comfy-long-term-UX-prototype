@@ -1,7 +1,3 @@
-// Keep in sync with FAVORITE_COLORS in
-// src/platform/assets/composables/useAssetFavorites.ts
-export const FAVORITE_FILTER_OPTIONS = ['yellow', 'blue', 'green'] as const
-
 export type MetadataField =
   | 'model'
   | 'lora'
@@ -10,7 +6,6 @@ export type MetadataField =
   | 'date'
   | 'tag'
   | 'type'
-  | 'favorite'
 
 export interface MetadataFilter {
   field: MetadataField

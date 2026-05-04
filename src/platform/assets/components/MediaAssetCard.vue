@@ -82,12 +82,12 @@
         </IconGroup>
       </div>
 
-      <!-- Favorite color picker (top-right) -->
-      <FavoriteColorPicker
-        v-if="asset && pickerMounted"
+      <!-- Favorite toggle (top-right) -->
+      <AssetFavoriteToggle
+        v-if="asset && favoriteToggleMounted"
         :asset="asset"
         :pill="isHovered"
-        :visible="showFavoritePicker"
+        :visible="showFavoriteToggle"
         class="absolute top-2 right-2 origin-center"
       />
     </div>
@@ -175,7 +175,7 @@ import type { AssetItem } from '../schemas/assetSchema'
 import { getAssetDisplayName } from '../utils/assetMetadataUtils'
 import type { MediaKind } from '../schemas/mediaAssetSchema'
 import { MediaAssetKey } from '../schemas/mediaAssetSchema'
-import FavoriteColorPicker from './FavoriteColorPicker.vue'
+import AssetFavoriteToggle from './AssetFavoriteToggle.vue'
 import MediaTitle from './MediaTitle.vue'
 
 type PreviewKind = ReturnType<typeof getMediaTypeFromFilename>
@@ -238,14 +238,14 @@ const isHovered = useElementHover(cardContainerRef)
 const actions = useMediaAssetActions()
 const favorites = useAssetFavorites()
 
-const pickerMounted = computed(() => {
+const favoriteToggleMounted = computed(() => {
   if (loading || !asset || isDeleting.value) return false
   if (restrictStackFavorites && showOutputCount) return false
   return true
 })
 
-const showFavoritePicker = computed(() => {
-  if (!pickerMounted.value || !asset) return false
+const showFavoriteToggle = computed(() => {
+  if (!favoriteToggleMounted.value || !asset) return false
   return isHovered.value || favorites.isFavorited(asset)
 })
 

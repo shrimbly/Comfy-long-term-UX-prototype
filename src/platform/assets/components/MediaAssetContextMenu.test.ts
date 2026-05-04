@@ -25,14 +25,13 @@ vi.mock('vue-i18n', () => ({
 
 const mockFavorites = vi.hoisted(() => ({
   isFavorited: vi.fn(() => false),
-  getFavoriteColor: vi.fn(() => null),
-  setFavoriteColor: vi.fn(),
+  setFavorited: vi.fn(),
   toggleFavorite: vi.fn(),
   favoritedAssets: vi.fn(() => [])
 }))
 
 vi.mock('../composables/useAssetFavorites', () => ({
-  FAVORITE_COLORS: ['yellow', 'blue', 'green'] as const,
+  FAVORITE_TAG: 'favorite',
   useAssetFavorites: () => mockFavorites
 }))
 

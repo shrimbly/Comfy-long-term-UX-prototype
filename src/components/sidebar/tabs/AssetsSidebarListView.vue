@@ -88,10 +88,9 @@
               "
               #actions
             >
-              <FavoriteColorPicker
+              <AssetFavoriteToggle
                 v-if="showFavoriteButton(item.item)"
                 :asset="item.item.asset"
-                orientation="horizontal"
               />
               <Button
                 v-if="hoveredAssetId === item.item.asset.id"
@@ -118,7 +117,7 @@ import LoadingOverlay from '@/components/common/LoadingOverlay.vue'
 import VirtualGrid from '@/components/common/VirtualGrid.vue'
 import Button from '@/components/ui/button/Button.vue'
 import AssetsListItem from '@/platform/assets/components/AssetsListItem.vue'
-import FavoriteColorPicker from '@/platform/assets/components/FavoriteColorPicker.vue'
+import AssetFavoriteToggle from '@/platform/assets/components/AssetFavoriteToggle.vue'
 import { useAssetFavorites } from '@/platform/assets/composables/useAssetFavorites'
 import type { OutputStackListItem } from '@/platform/assets/composables/useOutputStacks'
 import { getOutputAssetMetadata } from '@/platform/assets/schemas/assetMetadataSchema'

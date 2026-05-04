@@ -168,55 +168,6 @@ describe('useMediaAssetFiltering - tag filter', () => {
   })
 })
 
-describe('useMediaAssetFiltering - favorite filter', () => {
-  it('matches assets with the corresponding favorite-<color> tag', async () => {
-    const yellow = makeAsset({
-      id: '1',
-      name: 'a.png',
-      tags: ['output', 'favorite-yellow']
-    })
-    const blue = makeAsset({
-      id: '2',
-      name: 'b.png',
-      tags: ['output', 'favorite-blue']
-    })
-    const none = makeAsset({ id: '3', name: 'c.png', tags: ['output'] })
-    const assets = ref([yellow, blue, none])
-
-    const { metadataFilters, filteredAssets } = useMediaAssetFiltering(assets)
-    metadataFilters.value = [{ field: 'favorite', value: 'yellow' }]
-    await nextTick()
-
-    expect(filteredAssets.value.map((a) => a.id)).toEqual(['1'])
-  })
-
-  it('does not match the legacy plain "favorite" tag', async () => {
-    const legacy = makeAsset({
-      id: '1',
-      name: 'a.png',
-      tags: ['output', 'favorite']
-    })
-    const assets = ref([legacy])
-
-    const { metadataFilters, filteredAssets } = useMediaAssetFiltering(assets)
-    metadataFilters.value = [{ field: 'favorite', value: 'yellow' }]
-    await nextTick()
-
-    expect(filteredAssets.value).toEqual([])
-  })
-
-  it('excludes assets with no tags', async () => {
-    const asset = makeAsset({ id: '1', name: 'a.png', tags: [] })
-    const assets = ref([asset])
-
-    const { metadataFilters, filteredAssets } = useMediaAssetFiltering(assets)
-    metadataFilters.value = [{ field: 'favorite', value: 'green' }]
-    await nextTick()
-
-    expect(filteredAssets.value).toEqual([])
-  })
-})
-
 describe('useMediaAssetFiltering - type filter', () => {
   it('filters assets by media type', async () => {
     const imageAsset = makeAsset({ id: '1', name: 'photo.png' })

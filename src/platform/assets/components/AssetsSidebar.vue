@@ -9,80 +9,11 @@
       />
 
       <SidebarItem
-        :active="favoritesActive && favoriteColorFilter === null"
+        :active="favoritesActive"
         icon="icon-[lucide--star]"
         :label="t('sideToolbar.mediaAssets.foldersSidebar.favorites')"
         @click="emit('selectFavorites')"
       />
-
-      <div v-if="favoritesActive" class="flex flex-col">
-        <template v-for="color in FAVORITE_COLORS" :key="color">
-          <div
-            v-if="editingColor === color"
-            class="flex w-full items-center gap-2 rounded-md bg-interface-menu-component-surface-selected py-1.5 pr-3 pl-7 text-sm text-base-foreground"
-          >
-            <i
-              :class="
-                cn(
-                  'icon-[ph--circle-fill] size-3 shrink-0',
-                  favoriteSwatchColorClass(color)
-                )
-              "
-            />
-            <input
-              ref="colorEditInput"
-              v-model="editingDraft"
-              type="text"
-              class="min-w-0 flex-1 rounded-sm border border-comfy-input bg-transparent px-1 text-sm text-base-foreground outline-none focus:border-primary"
-              @keydown.enter.prevent="commitColorEdit"
-              @keydown.escape.prevent="cancelColorEdit"
-              @blur="commitColorEdit"
-              @click.stop
-            />
-          </div>
-          <button
-            v-else
-            type="button"
-            :class="
-              cn(
-                'group flex w-full cursor-pointer items-center gap-2 rounded-md border-none py-1.5 pr-3 pl-7 text-left text-sm text-base-foreground transition-colors',
-                favoriteColorFilter === color
-                  ? 'bg-interface-menu-component-surface-selected'
-                  : 'bg-transparent hover:bg-interface-menu-component-surface-hovered'
-              )
-            "
-            :aria-pressed="favoriteColorFilter === color"
-            @click="
-              emit(
-                'selectFavoriteColor',
-                favoriteColorFilter === color ? null : color
-              )
-            "
-          >
-            <i
-              :class="
-                cn(
-                  'icon-[ph--circle-fill] size-3 shrink-0',
-                  favoriteSwatchColorClass(color)
-                )
-              "
-            />
-            <span class="truncate">
-              {{ favoriteColorLabel(color) }}
-            </span>
-            <i
-              class="ml-auto icon-[lucide--pencil] size-3 shrink-0 cursor-pointer opacity-0 transition-opacity group-hover:opacity-60 hover:opacity-100"
-              :aria-label="
-                $t('sideToolbar.mediaAssets.foldersSidebar.renameFavoriteColor')
-              "
-              role="button"
-              tabindex="0"
-              @click.stop="startColorEdit(color)"
-              @keydown.enter.stop.prevent="startColorEdit(color)"
-            />
-          </button>
-        </template>
-      </div>
 
       <SidebarItem
         :active="generatedActive"
@@ -324,8 +255,6 @@ import { useStorage } from '@vueuse/core'
 import { computed, nextTick, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
-import { FAVORITE_COLORS } from '@/platform/assets/composables/useAssetFavorites'
-import type { FavoriteColor } from '@/platform/assets/composables/useAssetFavorites'
 import { useAssetTagGroups } from '@/platform/assets/composables/useAssetTagGroups'
 import { useAssetTagSelectionStore } from '@/platform/assets/composables/useAssetTagSelectionStore'
 import type { TagWithCount } from '@/platform/assets/composables/useAssetTags'
@@ -345,21 +274,18 @@ const {
   recentsActive = false,
   favoritesActive = false,
   generatedActive = false,
-  importedActive = false,
-  favoriteColorFilter = null
+  importedActive = false
 } = defineProps<{
   availableTags: readonly TagWithCount[]
   recentsActive?: boolean
   favoritesActive?: boolean
   generatedActive?: boolean
   importedActive?: boolean
-  favoriteColorFilter?: FavoriteColor | null
 }>()
 
 const emit = defineEmits<{
   selectRecents: []
   selectFavorites: []
-  selectFavoriteColor: [color: FavoriteColor | null]
   selectGenerated: []
   selectImported: []
   selectionChanged: []
@@ -370,18 +296,10 @@ const emit = defineEmits<{
 const tagSelection = useAssetTagSelectionStore()
 const groups = useAssetTagGroups()
 
-const customColorNames = useStorage<Partial<Record<FavoriteColor, string>>>(
-  'Comfy.Assets.FavoriteColorNames',
-  {}
-)
 const groupCollapsed = useStorage<Record<string, boolean>>(
   'Comfy.Assets.TagGroupCollapsed.v1',
   {}
 )
-
-const editingColor = ref<FavoriteColor | null>(null)
-const editingDraft = ref('')
-const colorEditInput = ref<HTMLInputElement[] | HTMLInputElement | null>(null)
 
 const editingTag = ref<string | null>(null)
 const editingTagDraft = ref('')
@@ -751,57 +669,5 @@ function readDragTags(event: DragEvent): string[] {
     // ignore
   }
   return []
-}
-
-function favoriteColorLabel(color: FavoriteColor): string {
-  const custom = customColorNames.value[color]?.trim()
-  if (custom) return custom
-  return t(`sideToolbar.mediaAssets.foldersSidebar.favoriteColors.${color}`)
-}
-
-function startColorEdit(color: FavoriteColor) {
-  editingColor.value = color
-  editingDraft.value = favoriteColorLabel(color)
-  void nextTick(() => {
-    const el = Array.isArray(colorEditInput.value)
-      ? colorEditInput.value[0]
-      : colorEditInput.value
-    el?.focus()
-    el?.select()
-  })
-}
-
-function commitColorEdit() {
-  if (!editingColor.value) return
-  const color = editingColor.value
-  const next = editingDraft.value.trim()
-  const defaultLabel = t(
-    `sideToolbar.mediaAssets.foldersSidebar.favoriteColors.${color}`
-  )
-  const updated = { ...customColorNames.value }
-  if (!next || next === defaultLabel) {
-    delete updated[color]
-  } else {
-    updated[color] = next
-  }
-  customColorNames.value = updated
-  editingColor.value = null
-  editingDraft.value = ''
-}
-
-function cancelColorEdit() {
-  editingColor.value = null
-  editingDraft.value = ''
-}
-
-function favoriteSwatchColorClass(color: FavoriteColor): string {
-  switch (color) {
-    case 'yellow':
-      return 'text-citrine-400'
-    case 'blue':
-      return 'text-azure-400'
-    case 'green':
-      return 'text-jade-600'
-  }
 }
 </script>
