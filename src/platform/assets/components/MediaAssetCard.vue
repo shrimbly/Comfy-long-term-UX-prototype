@@ -29,7 +29,11 @@
     @dragstart="dragStart"
   >
     <!-- Top Area: Media Preview -->
-    <div class="relative aspect-square overflow-hidden p-0">
+    <div
+      class="relative overflow-hidden p-0"
+      :class="naturalAspect ? '' : 'aspect-square'"
+      :style="naturalAspect ? { aspectRatio: previewAspectRatio } : undefined"
+    >
       <!-- Loading State -->
       <div
         v-if="loading"
@@ -201,7 +205,8 @@ const {
   selected,
   showOutputCount,
   outputCount,
-  restrictStackFavorites = false
+  restrictStackFavorites = false,
+  naturalAspect = false
 } = defineProps<{
   asset?: AssetItem
   loading?: boolean
@@ -209,6 +214,7 @@ const {
   showOutputCount?: boolean
   outputCount?: number
   restrictStackFavorites?: boolean
+  naturalAspect?: boolean
 }>()
 
 const assetsStore = useAssetsStore()
@@ -264,6 +270,15 @@ const previewKind = computed((): PreviewKind => {
 })
 
 const canInspect = computed(() => isPreviewableMediaType(fileKind.value))
+
+const previewAspectRatio = computed(() => {
+  const dims = imageDimensions.value
+  if (dims && dims.width > 0 && dims.height > 0) {
+    return `${dims.width} / ${dims.height}`
+  }
+  if (fileKind.value === 'video') return '16 / 9'
+  return '1 / 1'
+})
 
 // Get filename without extension
 const fileName = computed(() => {
