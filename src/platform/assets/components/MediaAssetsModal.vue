@@ -28,13 +28,14 @@
     </template>
 
     <template #header>
-      <SearchInput
-        v-model="browser.searchQuery.value"
-        :autofocus="true"
-        size="lg"
-        :placeholder="$t('mediaAssets.modal.searchPlaceholder')"
-        class="max-w-lg flex-1"
-      />
+      <div class="max-w-lg flex-1">
+        <MetadataSearchInput
+          v-model:search-query="browser.searchQuery.value"
+          v-model:metadata-filters="browser.metadataFilters.value"
+          :available-tags="browser.availableTags.value"
+          :available-values-by-field="browser.availableValuesByField.value"
+        />
+      </div>
     </template>
 
     <template #header-right-area>
@@ -148,12 +149,12 @@ import type { CSSProperties } from 'vue'
 
 import NoResultsPlaceholder from '@/components/common/NoResultsPlaceholder.vue'
 import Button from '@/components/ui/button/Button.vue'
-import SearchInput from '@/components/ui/search-input/SearchInput.vue'
 import BaseModalLayout from '@/components/widget/layout/BaseModalLayout.vue'
 import AssetMasonryGrid from '@/platform/assets/components/AssetMasonryGrid.vue'
 import AssetsSidebar from '@/platform/assets/components/AssetsSidebar.vue'
 import MediaAssetContextMenu from '@/platform/assets/components/MediaAssetContextMenu.vue'
 import MediaAssetFilterChipsBar from '@/platform/assets/components/MediaAssetFilterChipsBar.vue'
+import MetadataSearchInput from '@/platform/assets/components/MetadataSearchInput.vue'
 import { getAssetType } from '@/platform/assets/composables/media/assetMappers'
 import { useAssetSelection } from '@/platform/assets/composables/useAssetSelection'
 import { useMediaAssetBrowser } from '@/platform/assets/composables/useMediaAssetBrowser'
