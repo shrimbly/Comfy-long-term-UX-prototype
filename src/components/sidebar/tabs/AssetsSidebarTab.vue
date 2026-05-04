@@ -3,6 +3,9 @@
     :title="isInFolderView ? '' : $t('sideToolbar.mediaAssets.title')"
     v-bind="$attrs"
   >
+    <template v-if="!isInFolderView" #title-icon>
+      <i class="mr-2 icon-[comfy--image-ai-edit] size-5 shrink-0" />
+    </template>
     <template #alt-title>
       <div
         v-if="isInFolderView"
@@ -24,16 +27,16 @@
         </div>
       </div>
     </template>
-    <template v-if="!isInFolderView" #tool-buttons>
-      <Button
+    <template #tool-buttons-pinned>
+      <button
         v-tooltip.bottom="$t('mediaAssets.modal.openBrowser')"
-        variant="secondary"
-        size="icon"
+        type="button"
+        class="m-0 flex cursor-pointer items-center justify-center border-0 bg-transparent p-1 text-text-primary outline-0 hover:text-base-foreground"
         :aria-label="$t('mediaAssets.modal.openBrowser')"
         @click="openMediaAssetBrowser"
       >
-        <i class="icon-[lucide--maximize-2] size-4" />
-      </Button>
+        <i class="icon-[lucide--external-link] size-5" />
+      </button>
     </template>
     <template #header>
       <div v-if="isInFolderView" class="px-2 2xl:px-4">
