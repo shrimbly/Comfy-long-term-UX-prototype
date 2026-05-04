@@ -161,6 +161,7 @@
           </div>
         </template>
       </Popover>
+      <slot name="trailingActions" />
     </template>
   </SidebarTopArea>
 </template>
@@ -180,7 +181,7 @@ import MediaAssetFilterMenu from './MediaAssetFilterMenu.vue'
 import MetadataSearchInput from './MetadataSearchInput.vue'
 
 type SortBy = 'newest' | 'oldest' | 'longest' | 'fastest'
-export type ViewMode = 'list' | 'grid-sm' | 'grid-md' | 'grid-lg'
+export type ViewMode = 'list' | 'grid-sm' | 'grid-lg'
 
 const {
   searchQuery,
@@ -224,13 +225,8 @@ const ALL_VIEW_OPTIONS: ViewOption[] = [
   { value: 'list', icon: 'icon-[lucide--list]', labelKey: 'assets.view.list' },
   {
     value: 'grid-sm',
-    icon: 'icon-[lucide--grid-3x3]',
-    labelKey: 'assets.view.gridSmall'
-  },
-  {
-    value: 'grid-md',
     icon: 'icon-[lucide--layout-grid]',
-    labelKey: 'assets.view.gridMedium'
+    labelKey: 'assets.view.gridSmall'
   },
   {
     value: 'grid-lg',

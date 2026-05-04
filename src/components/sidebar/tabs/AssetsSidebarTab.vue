@@ -43,7 +43,19 @@
         :show-generation-time-sort="activeTab === 'output'"
         :available-tags="availableTags"
         :available-values-by-field="availableValuesByField"
-      />
+      >
+        <template #trailingActions>
+          <Button
+            v-tooltip.bottom="$t('mediaAssets.modal.openBrowser')"
+            variant="secondary"
+            size="icon"
+            :aria-label="$t('mediaAssets.modal.openBrowser')"
+            @click="openMediaAssetBrowser"
+          >
+            <i class="icon-[lucide--maximize-2] size-4" />
+          </Button>
+        </template>
+      </MediaAssetFilterBar>
       <MediaAssetFilterChipsBar v-model="metadataFilters" />
       <div
         v-if="!isInFolderView"
@@ -255,6 +267,7 @@ import MediaAssetFilterChipsBar from '@/platform/assets/components/MediaAssetFil
 import type { ViewMode } from '@/platform/assets/components/MediaAssetFilterBar.vue'
 import { getAssetType } from '@/platform/assets/composables/media/assetMappers'
 import { useMediaAssets } from '@/platform/assets/composables/media/useMediaAssets'
+import { useOutputJobsAssets } from '@/platform/assets/composables/media/useOutputJobsAssets'
 import { useAssetDragPreview } from '@/platform/assets/composables/useAssetDragPreview'
 import { useAssetFavorites } from '@/platform/assets/composables/useAssetFavorites'
 import { useAssetFilters } from '@/platform/assets/composables/useAssetFilters'
@@ -262,6 +275,7 @@ import { useAssetPromptMetadata } from '@/platform/assets/composables/useAssetPr
 import { useAssetSelection } from '@/platform/assets/composables/useAssetSelection'
 import { useAssetTags } from '@/platform/assets/composables/useAssetTags'
 import { useMediaAssetActions } from '@/platform/assets/composables/useMediaAssetActions'
+import { useMediaAssetBrowserDialog } from '@/platform/assets/composables/useMediaAssetBrowserDialog'
 import { useMediaAssetFiltering } from '@/platform/assets/composables/useMediaAssetFiltering'
 import { useOutputStacks } from '@/platform/assets/composables/useOutputStacks'
 import type { OutputAssetMetadata } from '@/platform/assets/schemas/assetMetadataSchema'
@@ -296,14 +310,12 @@ const expectedFolderCount = ref(0)
 const isInFolderView = computed(() => folderJobId.value !== null)
 const viewMode = useStorage<ViewMode>(
   'Comfy.Assets.Sidebar.ViewMode',
-  'grid-md'
+  'grid-sm'
 )
 const isListView = computed(() => viewMode.value === 'list')
-const gridSize = computed<'sm' | 'md' | 'lg'>(() => {
-  if (viewMode.value === 'grid-sm') return 'sm'
-  if (viewMode.value === 'grid-lg') return 'lg'
-  return 'md'
-})
+const gridSize = computed<'sm' | 'lg'>(() =>
+  viewMode.value === 'grid-lg' ? 'lg' : 'sm'
+)
 
 const contextMenuRef = ref<InstanceType<typeof MediaAssetContextMenu>>()
 const contextMenuAsset = ref<AssetItem | null>(null)
@@ -335,6 +347,7 @@ const toast = useToast()
 
 const inputAssets = useMediaAssets('input')
 const outputAssets = useMediaAssets('output')
+const outputJobsAssets = useOutputJobsAssets()
 
 const {
   isSelected,
@@ -377,12 +390,31 @@ const totalOutputCount = computed(() =>
   getTotalOutputCount(selectedAssets.value)
 )
 
-const currentAssets = computed(() =>
-  activeTab.value === 'input' ? inputAssets : outputAssets
+const favoritesOnly = ref(false)
+const searchQuery = ref('')
+
+const isFlattenedView = computed(
+  () => searchQuery.value.trim() !== '' || favoritesOnly.value
 )
-const loading = computed(() => currentAssets.value.loading.value)
-const error = computed(() => currentAssets.value.error.value)
-const mediaAssets = computed(() => currentAssets.value.media.value)
+
+const tabAssets = computed(() =>
+  activeTab.value === 'input' ? inputAssets : outputJobsAssets
+)
+const loading = computed(() =>
+  isFlattenedView.value
+    ? inputAssets.loading.value || outputAssets.loading.value
+    : tabAssets.value.loading.value
+)
+const error = computed(() =>
+  isFlattenedView.value
+    ? (inputAssets.error.value ?? outputAssets.error.value)
+    : tabAssets.value.error.value
+)
+const mediaAssets = computed<AssetItem[]>(() =>
+  isFlattenedView.value
+    ? [...inputAssets.media.value, ...outputAssets.media.value]
+    : tabAssets.value.media.value
+)
 
 const galleryActiveIndex = ref(-1)
 const currentGalleryAssetId = ref<string | null>(null)
@@ -406,7 +438,6 @@ const {
   { immediate: false, resetOnExecute: true }
 )
 
-const favoritesOnly = ref(false)
 const favorites = useAssetFavorites()
 
 const baseAssets = computed(() => {
@@ -424,7 +455,6 @@ const availableValuesByField = computed(() => ({
   workflowTitle: metadataExtractor.getAvailableValues('workflowTitle')
 }))
 
-const searchQuery = ref('')
 const metadataFilters = ref<MetadataFilter[]>([])
 const mediaTypeFilters = ref<string[]>([])
 
@@ -566,11 +596,30 @@ const galleryItems = computed(() =>
 )
 
 const refreshAssets = async () => {
-  await currentAssets.value.fetchMediaList()
+  if (isFlattenedView.value) {
+    await Promise.all([
+      inputAssets.fetchMediaList(),
+      outputAssets.fetchMediaList()
+    ])
+  } else {
+    await tabAssets.value.fetchMediaList()
+  }
   if (error.value) {
     console.error('Failed to refresh assets:', error.value)
   }
 }
+
+watch(isFlattenedView, async (flattened) => {
+  if (!flattened) return
+  const tasks: Promise<unknown>[] = []
+  if (inputAssets.media.value.length === 0) {
+    tasks.push(inputAssets.fetchMediaList())
+  }
+  if (outputAssets.media.value.length === 0) {
+    tasks.push(outputAssets.fetchMediaList())
+  }
+  await Promise.all(tasks)
+})
 
 watch(
   activeTab,
@@ -751,13 +800,16 @@ const copyJobId = async () => {
 }
 
 const handleApproachEnd = useDebounceFn(async () => {
-  if (
-    activeTab.value === 'output' &&
-    !isInFolderView.value &&
-    outputAssets.hasMore.value &&
-    !outputAssets.isLoadingMore.value
-  ) {
-    await outputAssets.loadMore()
+  if (isInFolderView.value || isFlattenedView.value) return
+  if (activeTab.value !== 'output') return
+  if (!outputJobsAssets.hasMore.value || outputJobsAssets.isLoadingMore.value) {
+    return
   }
+  await outputJobsAssets.loadMore()
 }, 300)
+
+const mediaAssetBrowserDialog = useMediaAssetBrowserDialog()
+function openMediaAssetBrowser() {
+  mediaAssetBrowserDialog.show()
+}
 </script>
