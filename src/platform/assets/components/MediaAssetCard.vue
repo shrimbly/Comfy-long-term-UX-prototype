@@ -13,12 +13,14 @@
     :tabindex="loading ? -1 : 0"
     :class="
       cn(
-        'flex cursor-pointer flex-col overflow-hidden rounded-lg transition-colors duration-200',
+        'relative flex cursor-pointer flex-col overflow-hidden rounded-lg transition-colors duration-200',
         'group select-none',
-        hideFooter ? 'gap-0 p-0' : 'gap-2 p-2',
-        selected
-          ? 'ring-3 ring-modal-card-border-highlighted ring-inset'
-          : 'hover:bg-modal-card-background-hovered/20'
+        hideFooter ? 'gap-0 p-1' : 'gap-2 p-2',
+        selected && hideFooter && 'ring-2 ring-white ring-inset',
+        selected &&
+          !hideFooter &&
+          'ring-3 ring-modal-card-border-highlighted ring-inset',
+        !selected && 'hover:bg-modal-card-background-hovered/20'
       )
     "
     :data-selected="selected"
@@ -32,7 +34,9 @@
     <!-- Top Area: Media Preview -->
     <div
       class="relative overflow-hidden p-0"
-      :class="naturalAspect ? '' : 'aspect-square'"
+      :class="
+        cn(naturalAspect ? '' : 'aspect-square', hideFooter && 'rounded-md')
+      "
       :style="naturalAspect ? { aspectRatio: previewAspectRatio } : undefined"
     >
       <!-- Loading State -->
@@ -60,41 +64,76 @@
       </LoadingOverlay>
 
       <!-- Action buttons overlay (top-left) -->
-      <div
-        v-if="showActionsOverlay"
-        class="absolute top-2 left-2 flex flex-wrap justify-start gap-2"
+      <Transition
+        enter-active-class="transition-[transform,opacity] duration-150 ease-out"
+        leave-active-class="transition-[transform,opacity] duration-100 ease-in"
+        enter-from-class="scale-90 opacity-0"
+        leave-to-class="scale-90 opacity-0"
       >
-        <IconGroup background-class="bg-white">
-          <Button
-            v-if="canInspect"
-            variant="overlay-white"
-            size="icon"
-            :aria-label="$t('mediaAsset.actions.zoom')"
-            @click.stop="handleZoomClick"
-          >
-            <i class="icon-[lucide--zoom-in] size-4" />
-          </Button>
-          <Button
-            variant="overlay-white"
-            size="icon"
-            :aria-label="$t('mediaAsset.actions.moreOptions')"
-            @click.stop="
-              asset ? emit('context-menu', $event, asset) : undefined
-            "
-          >
-            <i class="icon-[lucide--ellipsis] size-4" />
-          </Button>
-        </IconGroup>
-      </div>
+        <div
+          v-if="showActionsOverlay"
+          class="absolute top-2 left-2 flex origin-top-left flex-wrap justify-start gap-2"
+        >
+          <IconGroup background-class="bg-white">
+            <Button
+              v-if="canFavorite"
+              variant="overlay-white"
+              size="icon"
+              :aria-label="
+                $t(
+                  isFavorited
+                    ? 'mediaAsset.actions.unfavorite'
+                    : 'mediaAsset.actions.favorite'
+                )
+              "
+              :aria-pressed="isFavorited"
+              @click.stop="handleFavoriteToggle"
+            >
+              <i
+                :class="
+                  cn(
+                    'size-4',
+                    isFavorited
+                      ? 'icon-[ph--star-fill] text-citrine-400'
+                      : 'icon-[ph--star]'
+                  )
+                "
+              />
+            </Button>
+            <Button
+              variant="overlay-white"
+              size="icon"
+              :aria-label="$t('mediaAsset.actions.moreOptions')"
+              @click.stop="
+                asset ? emit('context-menu', $event, asset) : undefined
+              "
+            >
+              <i class="icon-[lucide--ellipsis] size-4" />
+            </Button>
+          </IconGroup>
+        </div>
+      </Transition>
 
-      <!-- Favorite toggle (top-right) -->
-      <AssetFavoriteToggle
-        v-if="asset && favoriteToggleMounted"
-        :asset="asset"
-        :pill="isHovered"
-        :visible="showFavoriteToggle"
-        class="absolute top-2 right-2 origin-center"
-      />
+      <!-- Compact favorited indicator (shown when not hovered) -->
+      <Transition
+        enter-active-class="transition-[transform,opacity] duration-150 ease-out"
+        leave-active-class="transition-[transform,opacity] duration-100 ease-in"
+        enter-from-class="scale-75 opacity-0"
+        leave-to-class="scale-75 opacity-0"
+      >
+        <button
+          v-if="!showActionsOverlay && canFavorite && isFavorited"
+          type="button"
+          class="absolute top-2 left-2 inline-flex origin-center cursor-pointer items-center justify-center rounded-md border-none bg-transparent p-0"
+          :aria-label="$t('mediaAsset.actions.unfavorite')"
+          :aria-pressed="true"
+          @click.stop="handleFavoriteToggle"
+        >
+          <i
+            class="icon-[ph--star-fill] size-3.5 text-citrine-400 drop-shadow-[0_1px_3px_rgba(0,0,0,0.85)]"
+          />
+        </button>
+      </Transition>
 
       <!-- Hover title overlay (only when footer is hidden) -->
       <div
@@ -195,7 +234,6 @@ import type { AssetItem } from '../schemas/assetSchema'
 import { getAssetDisplayName } from '../utils/assetMetadataUtils'
 import type { MediaKind } from '../schemas/mediaAssetSchema'
 import { MediaAssetKey } from '../schemas/mediaAssetSchema'
-import AssetFavoriteToggle from './AssetFavoriteToggle.vue'
 import MediaTitle from './MediaTitle.vue'
 
 type PreviewKind = ReturnType<typeof getMediaTypeFromFilename>
@@ -263,16 +301,19 @@ const actions = useMediaAssetActions()
 const favorites = useAssetFavorites()
 const dimensionsCache = useAssetDimensionsCache()
 
-const favoriteToggleMounted = computed(() => {
+const canFavorite = computed(() => {
   if (loading || !asset || isDeleting.value) return false
   if (restrictStackFavorites && showOutputCount) return false
   return true
 })
 
-const showFavoriteToggle = computed(() => {
-  if (!favoriteToggleMounted.value || !asset) return false
-  return isHovered.value || favorites.isFavorited(asset)
-})
+const isFavorited = computed(() =>
+  asset ? favorites.isFavorited(asset) : false
+)
+
+async function handleFavoriteToggle() {
+  if (asset) await favorites.toggleFavorite(asset)
+}
 
 // Get asset type from tags
 const assetType = computed(() => {
