@@ -39,18 +39,13 @@ export function parsePromptMetadata(
 
     const classType = node.class_type
 
-    if (
-      !model &&
-      (classType === 'CheckpointLoaderSimple' ||
-        classType === 'CheckpointLoader')
-    ) {
-      const name = node.inputs.ckpt_name
-      if (typeof name === 'string') model = stripPath(name)
-    }
-
-    if (!model && classType === 'UNETLoader') {
-      const name = node.inputs.unet_name
-      if (typeof name === 'string') model = stripPath(name)
+    if (!model) {
+      const candidate =
+        (classType.includes('Checkpoint') && node.inputs.ckpt_name) ||
+        (/unet/i.test(classType) && node.inputs.unet_name) ||
+        (/diffusion|dit|model.*loader/i.test(classType) &&
+          (node.inputs.model_name ?? node.inputs.model))
+      if (typeof candidate === 'string') model = stripPath(candidate)
     }
 
     if (classType.includes('LoraLoader')) {

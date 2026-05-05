@@ -38,6 +38,7 @@ describe('parsePromptMetadata', () => {
       model: 'sd_xl_base_1.0.safetensors',
       lora: 'detail_enhancer.safetensors',
       vae: 'sdxl_vae.safetensors',
+      workflowTitle: null,
       prompt: 'a beautiful sunset over the ocean',
       steps: null,
       seed: null
@@ -73,6 +74,7 @@ describe('parsePromptMetadata', () => {
       model: null,
       lora: null,
       vae: null,
+      workflowTitle: null,
       prompt: null,
       steps: null,
       seed: null
@@ -115,6 +117,39 @@ describe('parsePromptMetadata', () => {
     expect(result!.model).toBe('flux1-dev.safetensors')
   })
 
+  it('extracts model from ImageOnlyCheckpointLoader', () => {
+    const promptData = {
+      '1': {
+        class_type: 'ImageOnlyCheckpointLoader',
+        inputs: { ckpt_name: 'svd_xt.safetensors' }
+      }
+    }
+
+    expect(parsePromptMetadata(promptData)!.model).toBe('svd_xt.safetensors')
+  })
+
+  it('extracts model from UnetLoaderGGUF variant', () => {
+    const promptData = {
+      '1': {
+        class_type: 'UnetLoaderGGUF',
+        inputs: { unet_name: 'flux1-dev-Q4_0.gguf' }
+      }
+    }
+
+    expect(parsePromptMetadata(promptData)!.model).toBe('flux1-dev-Q4_0.gguf')
+  })
+
+  it('ignores linked array refs for ckpt_name', () => {
+    const promptData = {
+      '1': {
+        class_type: 'CheckpointLoaderSimple',
+        inputs: { ckpt_name: ['5', 0] }
+      }
+    }
+
+    expect(parsePromptMetadata(promptData)!.model).toBeNull()
+  })
+
   it('skips nodes without class_type or inputs', () => {
     const promptData = {
       '1': { class_type: 'CheckpointLoaderSimple' },
@@ -127,6 +162,7 @@ describe('parsePromptMetadata', () => {
       model: null,
       lora: null,
       vae: null,
+      workflowTitle: null,
       prompt: null,
       steps: null,
       seed: null
