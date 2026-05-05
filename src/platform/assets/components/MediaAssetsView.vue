@@ -1,7 +1,7 @@
 <template>
   <div
     data-component-id="MediaAssetsView"
-    class="flex size-full overflow-hidden bg-modal-panel-background"
+    class="absolute inset-0 flex overflow-hidden bg-modal-panel-background"
   >
     <aside
       class="flex w-72 shrink-0 flex-col overflow-hidden border-r border-border-subtle bg-base-background"
