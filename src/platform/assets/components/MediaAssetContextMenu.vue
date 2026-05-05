@@ -36,21 +36,11 @@
     <div
       v-if="tagsPopoverVisible"
       ref="tagsPopoverRef"
-      class="fixed z-1100 w-64 rounded-lg border border-border-default bg-secondary-background p-2 text-base-foreground shadow-lg"
+      class="fixed z-1500 w-64 overscroll-contain rounded-lg border border-border-default bg-secondary-background p-2 text-base-foreground shadow-lg"
       :style="tagsPopoverStyle"
       @click.stop
+      @wheel.stop
     >
-      <div
-        class="px-2 pt-1.5 pb-1 text-2xs font-semibold tracking-wide text-muted-foreground uppercase"
-      >
-        {{
-          tagTargets.length > 1
-            ? t('mediaAsset.tags.popoverTitleBulk', {
-                count: tagTargets.length
-              })
-            : t('mediaAsset.tags.popoverTitle')
-        }}
-      </div>
       <AssetTagsEditor :assets="tagTargets" always-editing />
     </div>
   </Teleport>
@@ -144,6 +134,20 @@ function showTagsPopover(anchor: HTMLElement) {
   }
   tagsPopoverVisible.value = true
 }
+
+useEventListener(
+  window,
+  'wheel',
+  (event: WheelEvent) => {
+    if (!tagsPopoverVisible.value) return
+    const target = event.target
+    if (!(target instanceof Node)) return
+    if (tagsPopoverRef.value?.contains(target)) {
+      event.stopImmediatePropagation()
+    }
+  },
+  { capture: true }
+)
 
 const isCurrentAssetSelected = computed(
   () => selectedAssets?.some((a) => a.id === asset.id) ?? false
@@ -244,8 +248,13 @@ useEventListener(
 useEventListener(
   window,
   'scroll',
-  () => {
-    if (isVisible.value) hide()
+  (event: Event) => {
+    if (!isVisible.value) return
+    const target = event.target
+    if (target instanceof Node && tagsPopoverRef.value?.contains(target)) {
+      return
+    }
+    hide()
   },
   { capture: true, passive: true }
 )

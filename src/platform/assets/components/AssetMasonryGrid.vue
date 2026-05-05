@@ -1,8 +1,9 @@
 <template>
-  <div ref="containerRef" class="relative w-full">
+  <div ref="containerRef" class="relative w-full" @pointerdown="onPointerDown">
     <div
       v-for="asset in visibleAssets"
       :key="asset.id"
+      data-asset-card
       class="absolute will-change-transform"
       :style="positionStyle(asset.id)"
     >
@@ -23,6 +24,16 @@
       :style="{ top: `${sentinelTop}px` }"
       aria-hidden="true"
     />
+    <div
+      v-if="isDragging && marqueeRect"
+      class="pointer-events-none absolute z-50 rounded-sm border border-modal-card-border-highlighted bg-modal-card-border-highlighted/20"
+      :style="{
+        left: `${marqueeRect.left}px`,
+        top: `${marqueeRect.top}px`,
+        width: `${marqueeRect.width}px`,
+        height: `${marqueeRect.height}px`
+      }"
+    />
   </div>
 </template>
 
@@ -30,12 +41,14 @@
 import {
   useElementSize,
   useIntersectionObserver,
+  useKeyModifier,
   useResizeObserver,
   useScroll
 } from '@vueuse/core'
 import { computed, onMounted, ref, watchEffect } from 'vue'
 import type { CSSProperties } from 'vue'
 
+import { useClickDragGuard } from '@/composables/useClickDragGuard'
 import MediaAssetCard from '@/platform/assets/components/MediaAssetCard.vue'
 import { useAssetDimensionsCache } from '@/platform/assets/composables/useAssetDimensionsCache'
 import { useMasonryLayout } from '@/platform/assets/composables/useMasonryLayout'
@@ -45,12 +58,12 @@ const {
   assets,
   columnWidth,
   gap = 12,
-  isSelected = () => false
+  selectedIds
 } = defineProps<{
   assets: readonly AssetItem[]
   columnWidth: number
   gap?: number
-  isSelected?: (assetId: string) => boolean
+  selectedIds: ReadonlySet<string>
 }>()
 
 const emit = defineEmits<{
@@ -58,7 +71,12 @@ const emit = defineEmits<{
   'preview-asset': [asset: AssetItem]
   'context-menu': [event: MouseEvent, asset: AssetItem]
   'approach-end': []
+  'update:selectedIds': [ids: Set<string>]
 }>()
+
+function isSelected(id: string): boolean {
+  return selectedIds.has(id)
+}
 
 // Cards in the masonry hide their info footer and outer padding (title shows
 // as a hover overlay over the image instead), so the card height equals the
@@ -202,4 +220,170 @@ function useContainerOffset(
   onMounted(recompute)
   return { top }
 }
+
+const itemHeights = computed(() => {
+  const map = new Map<string, number>()
+  const colW = actualColumnWidth.value
+  if (colW <= 0) return map
+  const fallback = colW
+  for (const asset of assets) {
+    const dims = dimensions.getDimensions(asset.id)
+    map.set(
+      asset.id,
+      dims && dims.width > 0
+        ? colW * (dims.height / dims.width) + CARD_FOOTER_HEIGHT
+        : fallback
+    )
+  }
+  return map
+})
+
+const shiftKey = useKeyModifier('Shift')
+const ctrlKey = useKeyModifier('Control')
+const metaKey = useKeyModifier('Meta')
+
+const isDragging = ref(false)
+const marqueeRect = ref<{
+  left: number
+  top: number
+  width: number
+  height: number
+} | null>(null)
+
+const dragGuard = useClickDragGuard(5)
+let dragStartContainerX = 0
+let dragStartContainerY = 0
+let dragStartScrollTop = 0
+let preDragSelection = new Set<string>()
+let suppressNextClick = false
+
+function isOnCard(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) return false
+  return !!target.closest('[data-asset-card]')
+}
+
+function clientToContainer(
+  e: { clientX: number; clientY: number },
+  scrollDelta: number
+): { x: number; y: number } {
+  const containerRect = containerRef.value?.getBoundingClientRect()
+  if (!containerRect) return { x: 0, y: 0 }
+  return {
+    x: e.clientX - containerRect.left,
+    y: e.clientY - containerRect.top + scrollDelta
+  }
+}
+
+function computeHitIds(rect: {
+  left: number
+  top: number
+  right: number
+  bottom: number
+}): Set<string> {
+  const hits = new Set<string>()
+  const heights = itemHeights.value
+  for (const asset of assets) {
+    const pos = positions.value.get(asset.id)
+    if (!pos) continue
+    const itemHeight = heights.get(asset.id) ?? pos.width
+    const itemRight = pos.left + pos.width
+    const itemBottom = pos.top + itemHeight
+    if (
+      rect.left < itemRight &&
+      rect.right > pos.left &&
+      rect.top < itemBottom &&
+      rect.bottom > pos.top
+    ) {
+      hits.add(asset.id)
+    }
+  }
+  return hits
+}
+
+function onPointerDown(e: PointerEvent) {
+  if (e.button !== 0) return
+  if (isOnCard(e.target)) return
+
+  dragStartScrollTop = scrollParent.value?.scrollTop ?? 0
+  const start = clientToContainer(e, 0)
+  dragStartContainerX = start.x
+  dragStartContainerY = start.y
+
+  dragGuard.recordStart(e)
+  preDragSelection = new Set(selectedIds)
+
+  document.addEventListener('pointermove', onPointerMove)
+  document.addEventListener('pointerup', onPointerUp)
+}
+
+function onPointerMove(e: PointerEvent) {
+  if (!dragGuard.wasDragged(e)) return
+  isDragging.value = true
+
+  const scrollDelta = (scrollParent.value?.scrollTop ?? 0) - dragStartScrollTop
+  const current = clientToContainer(e, scrollDelta)
+
+  const left = Math.min(dragStartContainerX, current.x)
+  const right = Math.max(dragStartContainerX, current.x)
+  const top = Math.min(dragStartContainerY, current.y)
+  const bottom = Math.max(dragStartContainerY, current.y)
+
+  marqueeRect.value = {
+    left,
+    top,
+    width: right - left,
+    height: bottom - top
+  }
+
+  const hits = computeHitIds({ left, top, right, bottom })
+  const isCmdCtrl = ctrlKey.value || metaKey.value
+
+  if (isCmdCtrl) {
+    const next = new Set<string>()
+    for (const id of preDragSelection) {
+      if (!hits.has(id)) next.add(id)
+    }
+    for (const id of hits) {
+      if (!preDragSelection.has(id)) next.add(id)
+    }
+    emit('update:selectedIds', next)
+  } else if (shiftKey.value) {
+    const next = new Set(preDragSelection)
+    for (const id of hits) next.add(id)
+    emit('update:selectedIds', next)
+  } else {
+    emit('update:selectedIds', new Set(hits))
+  }
+}
+
+function onPointerUp(e: PointerEvent) {
+  document.removeEventListener('pointermove', onPointerMove)
+  document.removeEventListener('pointerup', onPointerUp)
+
+  const wasDrag = isDragging.value
+  isDragging.value = false
+  marqueeRect.value = null
+  dragGuard.reset()
+
+  if (wasDrag) {
+    suppressNextClick = true
+    return
+  }
+
+  // Plain click on empty space → clear selection.
+  if (!isOnCard(e.target)) {
+    emit('update:selectedIds', new Set())
+  }
+}
+
+function onContainerClickCapture(e: MouseEvent) {
+  if (suppressNextClick) {
+    e.stopPropagation()
+    suppressNextClick = false
+  }
+}
+
+onMounted(() => {
+  containerRef.value?.addEventListener('click', onContainerClickCapture, true)
+})
 </script>

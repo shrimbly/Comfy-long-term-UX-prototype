@@ -1,11 +1,27 @@
 <template>
-  <div class="flex size-full flex-col overflow-hidden">
+  <div
+    class="flex size-full flex-col overflow-hidden bg-modal-panel-background"
+  >
     <div class="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto px-3">
       <SidebarItem
-        :active="recentsActive"
+        :active="generatedActive"
+        icon="icon-[comfy--image-ai-edit]"
+        :label="t('sideToolbar.mediaAssets.foldersSidebar.generatedHeader')"
+        @click="emit('selectGenerated')"
+      />
+
+      <SidebarItem
+        :active="importedActive"
+        icon="icon-[lucide--upload]"
+        :label="t('sideToolbar.mediaAssets.foldersSidebar.importedHeader')"
+        @click="emit('selectImported')"
+      />
+
+      <SidebarItem
+        :active="tempActive"
         icon="icon-[lucide--clock]"
-        :label="t('sideToolbar.mediaAssets.foldersSidebar.recent')"
-        @click="emit('selectRecents')"
+        :label="t('sideToolbar.labels.temp')"
+        @click="emit('selectTemp')"
       />
 
       <SidebarItem
@@ -15,23 +31,7 @@
         @click="emit('selectFavorites')"
       />
 
-      <div class="mt-4">
-        <SidebarItem
-          :active="generatedActive"
-          icon="icon-[comfy--image-ai-edit]"
-          :label="t('sideToolbar.mediaAssets.foldersSidebar.generatedHeader')"
-          @click="emit('selectGenerated')"
-        />
-      </div>
-
-      <SidebarItem
-        :active="importedActive"
-        icon="icon-[lucide--upload]"
-        :label="t('sideToolbar.mediaAssets.foldersSidebar.importedHeader')"
-        @click="emit('selectImported')"
-      />
-
-      <div class="mt-4 flex flex-col gap-1">
+      <div class="mt-6 flex flex-col gap-1">
         <button
           type="button"
           class="flex w-full cursor-pointer items-center-safe gap-2 rounded-md border-none bg-transparent px-4 py-3 text-left text-sm text-base-foreground transition-colors select-none hover:bg-interface-menu-component-surface-hovered"
@@ -267,20 +267,20 @@ const { t } = useI18n()
 
 const {
   availableTags,
-  recentsActive = false,
+  tempActive = false,
   favoritesActive = false,
   generatedActive = false,
   importedActive = false
 } = defineProps<{
   availableTags: readonly TagWithCount[]
-  recentsActive?: boolean
+  tempActive?: boolean
   favoritesActive?: boolean
   generatedActive?: boolean
   importedActive?: boolean
 }>()
 
 const emit = defineEmits<{
-  selectRecents: []
+  selectTemp: []
   selectFavorites: []
   selectGenerated: []
   selectImported: []

@@ -6,7 +6,7 @@
         :always-editing="alwaysEditing"
         :class="
           cn(
-            'min-h-9 w-full gap-1 rounded-lg border border-comfy-input bg-secondary-background px-3 py-1',
+            'min-h-9 w-full gap-1 rounded-lg border border-comfy-input bg-base-background px-3 py-1',
             $attrs.class as string
           )
         "
@@ -28,8 +28,9 @@
 
       <div
         v-if="dropdownVisible"
-        class="absolute inset-x-0 top-full z-1200 mt-1 max-h-72 overflow-y-auto rounded-lg border border-border-default bg-base-background p-1 shadow-lg"
+        class="absolute inset-x-0 top-full z-1200 mt-1 max-h-72 overflow-y-auto overscroll-contain rounded-lg border border-border-default bg-base-background p-1 shadow-lg"
         @mousedown.prevent
+        @wheel.stop
       >
         <button
           v-for="suggestion in filteredSuggestions"

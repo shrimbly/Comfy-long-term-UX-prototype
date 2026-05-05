@@ -2,6 +2,7 @@ import { useStorage } from '@vueuse/core'
 import { computed, ref, watch } from 'vue'
 
 import { useMediaAssets } from '@/platform/assets/composables/media/useMediaAssets'
+import { useOutputJobsAssets } from '@/platform/assets/composables/media/useOutputJobsAssets'
 import { useAssetFavorites } from '@/platform/assets/composables/useAssetFavorites'
 import { useAssetFilters } from '@/platform/assets/composables/useAssetFilters'
 import { useAssetPromptMetadata } from '@/platform/assets/composables/useAssetPromptMetadata'
@@ -23,14 +24,14 @@ type SourceId = 'output' | 'input'
  */
 export function useMediaAssetBrowser() {
   const inputAssets = useMediaAssets('input')
-  // Modal pulls the full /files listing for output (vs the panel's paginated
-  // jobs source) so the bigscreen view shows every generated asset, not just
-  // the recent jobs.
+  // Generated → full /files listing (every saved asset).
+  // Temp     → queue-history jobs source (one preview per recent run).
   const outputAssets = useMediaAssets('output')
+  const outputJobsAssets = useOutputJobsAssets()
 
   const activeSources = ref<SourceId[]>(['output'])
   const favoritesActive = ref(false)
-  const recentsOnly = ref(false)
+  const tempActive = ref(false)
 
   const tagSelection = useAssetTagSelectionStore()
   const userTags = useAssetTags()
@@ -42,24 +43,21 @@ export function useMediaAssetBrowser() {
   const mediaTypeFilters = ref<string[]>([])
   const favoritesOnly = ref(false)
 
-  function collect(useAll: boolean): AssetItem[] {
+  const allMergedAssets = computed<AssetItem[]>(() => {
     const result: AssetItem[] = []
     if (activeSources.value.includes('output')) {
-      const src = outputAssets
-      result.push(...(useAll ? src.allMedia : src.media).value)
+      result.push(...outputAssets.allMedia.value)
     }
     if (activeSources.value.includes('input')) {
-      const src = inputAssets
-      result.push(...(useAll ? src.allMedia : src.media).value)
+      result.push(...inputAssets.allMedia.value)
     }
     return result
-  }
-
-  const mergedAssets = computed(() => collect(false))
-  const allMergedAssets = computed(() => collect(true))
+  })
 
   const baseAssets = computed(() => {
-    const pool = recentsOnly.value ? mergedAssets.value : allMergedAssets.value
+    const pool = tempActive.value
+      ? outputJobsAssets.media.value
+      : allMergedAssets.value
     if (tagSelection.hasSelection) {
       return userTags.assetsWithAnyTag(pool, tagSelection.asArray)
     }
@@ -129,6 +127,7 @@ export function useMediaAssetBrowser() {
   )
 
   const isLoading = computed(() => {
+    if (tempActive.value) return outputJobsAssets.loading.value
     if (activeSources.value.includes('output') && outputAssets.loading.value)
       return true
     if (activeSources.value.includes('input') && inputAssets.loading.value)
@@ -141,34 +140,33 @@ export function useMediaAssetBrowser() {
     favoritesActive.value = false
   }
 
-  function selectRecents() {
+  function selectTemp() {
     clearTagAndFavorites()
-    recentsOnly.value = true
-    activeSources.value = ['output', 'input']
+    tempActive.value = true
   }
 
   function selectFavorites() {
     tagSelection.clear()
     favoritesActive.value = true
-    recentsOnly.value = false
+    tempActive.value = false
   }
 
   function selectGenerated() {
     clearTagAndFavorites()
-    recentsOnly.value = false
+    tempActive.value = false
     activeSources.value = ['output']
   }
 
   function selectImported() {
     clearTagAndFavorites()
-    recentsOnly.value = false
+    tempActive.value = false
     activeSources.value = ['input']
   }
 
   function onTagSelectionChanged() {
     if (!tagSelection.hasSelection) return
     favoritesActive.value = false
-    recentsOnly.value = false
+    tempActive.value = false
     activeSources.value = ['output', 'input']
   }
 
@@ -182,29 +180,37 @@ export function useMediaAssetBrowser() {
 
   async function refreshAssets() {
     const promises: Promise<unknown>[] = []
-    if (activeSources.value.includes('output'))
-      promises.push(outputAssets.fetchMediaList())
-    if (activeSources.value.includes('input'))
-      promises.push(inputAssets.fetchMediaList())
+    if (tempActive.value) {
+      promises.push(outputJobsAssets.fetchMediaList())
+    } else {
+      if (activeSources.value.includes('output'))
+        promises.push(outputAssets.fetchMediaList())
+      if (activeSources.value.includes('input'))
+        promises.push(inputAssets.fetchMediaList())
+    }
     await Promise.all(promises)
   }
 
   void refreshAssets()
 
+  watch(tempActive, (active) => {
+    if (active) void outputJobsAssets.fetchMediaList()
+  })
+
   const hasTagFilter = computed(() => tagSelection.hasSelection)
 
   const sidebarFlags = computed(() => ({
-    recentsActive:
-      recentsOnly.value && !favoritesActive.value && !hasTagFilter.value,
+    tempActive:
+      tempActive.value && !favoritesActive.value && !hasTagFilter.value,
     favoritesActive: favoritesActive.value && !hasTagFilter.value,
     generatedActive:
-      !recentsOnly.value &&
+      !tempActive.value &&
       !favoritesActive.value &&
       !hasTagFilter.value &&
       activeSources.value.length === 1 &&
       activeSources.value[0] === 'output',
     importedActive:
-      !recentsOnly.value &&
+      !tempActive.value &&
       !favoritesActive.value &&
       !hasTagFilter.value &&
       activeSources.value.length === 1 &&
@@ -239,7 +245,7 @@ export function useMediaAssetBrowser() {
     }),
 
     // sidebar handlers
-    selectRecents,
+    selectTemp,
     selectFavorites,
     selectGenerated,
     selectImported,

@@ -18,14 +18,6 @@ export function useMediaAssetBrowserDialog() {
       component: MediaAssetsModal,
       props: {
         onClose: hide
-      },
-      dialogComponentProps: {
-        style: {
-          width: 'calc(100vw - 2rem)',
-          height: 'calc(100vh - 2rem)',
-          maxWidth: '1600px',
-          maxHeight: 'calc(100vh - 2rem)'
-        }
       }
     })
   }
