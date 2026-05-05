@@ -4,7 +4,7 @@
     class="flex size-full overflow-hidden bg-modal-panel-background"
   >
     <aside
-      class="flex w-72 shrink-0 flex-col overflow-y-auto border-r border-border-subtle bg-base-background"
+      class="flex w-72 shrink-0 flex-col overflow-hidden border-r border-border-subtle bg-base-background"
     >
       <header
         class="flex shrink-0 items-center gap-2 border-b border-border-subtle px-4 py-3"
@@ -14,22 +14,24 @@
           {{ $t('mediaAssets.modal.title') }}
         </h2>
       </header>
-      <AssetsSidebar
-        data-component-id="MediaAssetsView-Sidebar"
-        :available-tags="browser.sidebarTags.value"
-        :temp-active="browser.sidebarFlags.value.tempActive"
-        :favorites-active="browser.sidebarFlags.value.favoritesActive"
-        :generated-active="browser.sidebarFlags.value.generatedActive"
-        :imported-active="browser.sidebarFlags.value.importedActive"
-        @select-temp="browser.selectTemp"
-        @select-favorites="browser.selectFavorites"
-        @select-generated="browser.selectGenerated"
-        @select-imported="browser.selectImported"
-        @selection-changed="browser.onTagSelectionChanged"
-      />
+      <div class="flex min-h-0 flex-1 flex-col">
+        <AssetsSidebar
+          data-component-id="MediaAssetsView-Sidebar"
+          :available-tags="browser.sidebarTags.value"
+          :temp-active="browser.sidebarFlags.value.tempActive"
+          :favorites-active="browser.sidebarFlags.value.favoritesActive"
+          :generated-active="browser.sidebarFlags.value.generatedActive"
+          :imported-active="browser.sidebarFlags.value.importedActive"
+          @select-temp="browser.selectTemp"
+          @select-favorites="browser.selectFavorites"
+          @select-generated="browser.selectGenerated"
+          @select-imported="browser.selectImported"
+          @selection-changed="browser.onTagSelectionChanged"
+        />
+      </div>
     </aside>
 
-    <section class="flex min-w-0 flex-1 flex-col overflow-hidden">
+    <section class="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
       <header
         class="flex shrink-0 items-center gap-3 border-b border-border-subtle px-6 py-3"
       >
@@ -99,7 +101,9 @@
         />
       </div>
 
-      <div class="relative flex flex-1 flex-col overflow-y-auto px-6 pb-6">
+      <div
+        class="relative flex scrollbar-custom min-h-0 flex-1 flex-col overflow-y-auto px-6 pb-6"
+      >
         <div
           v-if="showInitialLoading"
           class="grid w-full gap-3"

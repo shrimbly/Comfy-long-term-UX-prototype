@@ -35,13 +35,13 @@
         <ExtensionSlot v-if="activeSidebarTab" :extension="activeSidebarTab" />
       </div>
     </template>
-    <template v-if="showUI && !isBuilderMode" #topmenu>
+    <template v-if="showUI && !isBuilderMode && !mediaAssetsTabActive" #topmenu>
       <TopMenuSection />
     </template>
-    <template v-if="showUI" #bottom-panel>
+    <template v-if="showUI && !mediaAssetsTabActive" #bottom-panel>
       <BottomPanel />
     </template>
-    <template v-if="showUI" #right-side-panel>
+    <template v-if="showUI && !mediaAssetsTabActive" #right-side-panel>
       <AppBuilder v-if="isBuilderMode" />
       <NodePropertiesPanel v-else />
     </template>
