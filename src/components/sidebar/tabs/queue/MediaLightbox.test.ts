@@ -417,7 +417,7 @@ describe('MediaLightbox', () => {
       expect(getAssetFilenames(container)).toEqual(['a.png', 'b.png'])
     })
 
-    it('pin-swap swaps left and right on PinBadge click', async () => {
+    it('pin-swap swaps pinned side when clicking the unpinned panel', async () => {
       const { container } = renderCompare([
         makeItem('1', 'a.png'),
         makeItem('2', 'b.png'),
@@ -427,11 +427,14 @@ describe('MediaLightbox', () => {
       // Initial: [a, b] → left = pinned (a), right = cursor (b)
       expect(getAssetFilenames(container)).toEqual(['a.png', 'b.png'])
 
+      // Click the right panel (unpinned) to pin it instead.
       // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access
-      const rightPin = container.querySelectorAll(
-        '.mock-pin-badge'
-      )[1] as HTMLElement
-      rightPin.click()
+      const rightAsset = container.querySelector(
+        '[data-filename="b.png"]'
+      ) as HTMLElement
+      // eslint-disable-next-line testing-library/no-node-access
+      const rightPanel = rightAsset.parentElement?.parentElement as HTMLElement
+      rightPanel.click()
       await nextTick()
       // Right pane now pinned (b), left is cursor which was previously pinned (a).
       // After swap: left=compareItems[cursorIndex=0]=a, right=compareItems[pinnedIndex=1]=b.

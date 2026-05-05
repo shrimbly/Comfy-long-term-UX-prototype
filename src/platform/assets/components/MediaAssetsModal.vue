@@ -1,8 +1,8 @@
 <template>
   <BaseModalLayout
     data-component-id="MediaAssetsModal"
-    size="full"
-    class="size-full max-h-full max-w-full min-w-0"
+    size="lg"
+    content-padding="compact"
     :content-title="$t('mediaAssets.modal.title')"
   >
     <template #leftPanelHeaderTitle>
@@ -15,11 +15,11 @@
       <AssetsSidebar
         data-component-id="MediaAssetsModal-Sidebar"
         :available-tags="browser.sidebarTags.value"
-        :recents-active="browser.sidebarFlags.value.recentsActive"
+        :temp-active="browser.sidebarFlags.value.tempActive"
         :favorites-active="browser.sidebarFlags.value.favoritesActive"
         :generated-active="browser.sidebarFlags.value.generatedActive"
         :imported-active="browser.sidebarFlags.value.importedActive"
-        @select-recents="browser.selectRecents"
+        @select-temp="browser.selectTemp"
         @select-favorites="browser.selectFavorites"
         @select-generated="browser.selectGenerated"
         @select-imported="browser.selectImported"
@@ -39,33 +39,60 @@
     </template>
 
     <template #contentFilter>
-      <div class="px-6">
-        <MediaAssetFilterChipsBar v-model="browser.metadataFilters.value" />
-      </div>
-      <div
-        class="flex shrink-0 items-center justify-between gap-4 px-6 pt-2 pb-4"
-      >
-        <span class="text-sm text-muted-foreground">
-          {{
-            $t('mediaAssets.modal.assetCount', {
-              count: browser.displayAssets.value.length
-            })
-          }}
-        </span>
-        <div class="flex items-center gap-3">
-          <div class="flex items-center gap-3 text-xs text-muted-foreground">
-            <span>{{ $t('mediaAssets.modal.density') }}</span>
-            <Slider
-              :model-value="[density]"
-              :min="MIN_DENSITY"
-              :max="MAX_DENSITY"
-              :step="DENSITY_STEP"
-              :aria-label="$t('mediaAssets.modal.density')"
-              class="w-32"
-              @update:model-value="onDensityChange"
-            />
+      <div class="flex shrink-0 flex-col gap-1 px-6 pt-0 pb-2">
+        <div class="flex items-center justify-between gap-4">
+          <div class="flex min-w-0 items-baseline gap-3">
+            <h1 class="text-neutral truncate text-2xl font-semibold">
+              {{ pageTitle }}
+            </h1>
+            <span class="shrink-0 text-sm text-muted-foreground">
+              {{
+                $t('mediaAssets.modal.assetCount', {
+                  count: browser.displayAssets.value.length
+                })
+              }}
+            </span>
+          </div>
+          <div class="flex shrink-0 items-center gap-3">
+            <Popover :show-arrow="false" align="start">
+              <template #button>
+                <Button
+                  variant="secondary"
+                  size="lg"
+                  :aria-label="$t('mediaAssets.modal.density')"
+                >
+                  <span>{{ $t('mediaAssets.modal.density') }}</span>
+                  <i class="icon-[lucide--chevron-down] size-4" />
+                </Button>
+              </template>
+              <div class="flex w-32 items-center p-2">
+                <Slider
+                  :model-value="[density]"
+                  :min="MIN_DENSITY"
+                  :max="MAX_DENSITY"
+                  :step="DENSITY_STEP"
+                  :aria-label="$t('mediaAssets.modal.density')"
+                  class="flex-1 **:data-[slot=slider-range]:bg-white **:data-[slot=slider-thumb]:bg-white"
+                  @update:model-value="onDensityChange"
+                />
+              </div>
+            </Popover>
+            <SingleSelect
+              v-model="sortBy"
+              :label="$t('mediaAssets.modal.sortBy')"
+              :options="sortOptions"
+              class="w-56"
+            >
+              <template #icon>
+                <i class="icon-[lucide--arrow-up-down] text-muted-foreground" />
+              </template>
+            </SingleSelect>
           </div>
         </div>
+        <MediaAssetFilterChipsBar
+          v-model="browser.metadataFilters.value"
+          class="-mx-2 2xl:-mx-4"
+        />
       </div>
     </template>
 
@@ -94,12 +121,21 @@
       </div>
       <AssetMasonryGrid
         v-else
+        v-model:selected-ids="selectedIds"
         :assets="browser.displayAssets.value"
         :column-width="density"
-        :is-selected="(id) => isSelected(id)"
         @select-asset="handleAssetSelect"
         @preview-asset="handlePreview"
         @context-menu="handleContextMenu"
+      />
+      <AssetSelectionFloatingBar
+        :visible="hasSelection"
+        :count="selectedAssets.length"
+        bottom-offset="md"
+        @select-all="handleSelectAll"
+        @deselect-all="handleDeselectAll"
+        @download="handleDownloadSelected"
+        @delete-selected="handleDeleteSelected"
       />
     </template>
   </BaseModalLayout>
@@ -109,31 +145,51 @@
     :asset="contextMenuAsset"
     :asset-type="contextMenuAssetType"
     :file-kind="contextMenuFileKind"
+    :selected-assets="selectedAssets"
+    :is-bulk-mode="isBulkMode"
     @hide="onContextMenuHide"
     @asset-deleted="browser.refreshAssets"
+    @bulk-compare="handleBulkCompare"
+  />
+  <MediaLightbox
+    v-model:active-index="galleryActiveIndex"
+    :all-gallery-items="galleryItems"
+    :compare-items="compareItems"
   />
 </template>
 
 <script setup lang="ts">
-import { useStorage } from '@vueuse/core'
-import { computed, nextTick, provide, ref } from 'vue'
+import { useKeyModifier, useStorage } from '@vueuse/core'
+import { useToast } from 'primevue/usetoast'
+import { computed, nextTick, provide, ref, watch } from 'vue'
 import type { CSSProperties } from 'vue'
+import { useI18n } from 'vue-i18n'
 
 import NoResultsPlaceholder from '@/components/common/NoResultsPlaceholder.vue'
+import SingleSelect from '@/components/input/SingleSelect.vue'
+import MediaLightbox from '@/components/sidebar/tabs/queue/MediaLightbox.vue'
+import Popover from '@/components/ui/Popover.vue'
+import Button from '@/components/ui/button/Button.vue'
 import Slider from '@/components/ui/slider/Slider.vue'
 import BaseModalLayout from '@/components/widget/layout/BaseModalLayout.vue'
 import AssetMasonryGrid from '@/platform/assets/components/AssetMasonryGrid.vue'
+import AssetSelectionFloatingBar from '@/platform/assets/components/AssetSelectionFloatingBar.vue'
 import AssetsSidebar from '@/platform/assets/components/AssetsSidebar.vue'
 import MediaAssetContextMenu from '@/platform/assets/components/MediaAssetContextMenu.vue'
 import MediaAssetFilterChipsBar from '@/platform/assets/components/MediaAssetFilterChipsBar.vue'
 import MetadataSearchInput from '@/platform/assets/components/MetadataSearchInput.vue'
 import { getAssetType } from '@/platform/assets/composables/media/assetMappers'
-import { useAssetSelection } from '@/platform/assets/composables/useAssetSelection'
+import { useMediaAssetActions } from '@/platform/assets/composables/useMediaAssetActions'
 import { useMediaAssetBrowser } from '@/platform/assets/composables/useMediaAssetBrowser'
 import type { AssetItem } from '@/platform/assets/schemas/assetSchema'
 import type { MediaKind } from '@/platform/assets/schemas/mediaAssetSchema'
+import { assetToResultItem } from '@/platform/assets/utils/assetLightboxAdapter'
+import type { ResultItemImpl } from '@/stores/queueStore'
 import { OnCloseKey } from '@/types/widgetTypes'
-import { getMediaTypeFromFilename } from '@/utils/formatUtil'
+import {
+  getMediaTypeFromFilename,
+  isPreviewableMediaType
+} from '@/utils/formatUtil'
 
 const { onClose } = defineProps<{
   onClose?: () => void
@@ -141,11 +197,36 @@ const { onClose } = defineProps<{
 
 provide(OnCloseKey, () => onClose?.())
 
+const { t } = useI18n()
 const browser = useMediaAssetBrowser()
+
+const sortBy = browser.sortBy
+const sortOptions = computed(() => [
+  { value: 'newest', name: t('sideToolbar.mediaAssets.sortNewestFirst') },
+  { value: 'oldest', name: t('sideToolbar.mediaAssets.sortOldestFirst') },
+  { value: 'longest', name: t('sideToolbar.mediaAssets.sortLongestFirst') },
+  { value: 'fastest', name: t('sideToolbar.mediaAssets.sortFastestFirst') }
+])
+
+const pageTitle = computed(() => {
+  const flags = browser.sidebarFlags.value
+  const selectedTags = browser.tagSelection.asArray
+  if (selectedTags.length > 0) {
+    return selectedTags.length === 1
+      ? t('mediaAssets.modal.titleTag', { tag: selectedTags[0] })
+      : t('mediaAssets.modal.titleTags', { count: selectedTags.length })
+  }
+  if (flags.favoritesActive) {
+    return t('sideToolbar.mediaAssets.foldersSidebar.favorites')
+  }
+  if (flags.tempActive) return t('sideToolbar.labels.temp')
+  if (flags.importedActive) return t('sideToolbar.importedAssetsHeader')
+  return t('sideToolbar.generatedAssetsHeader')
+})
 
 const MIN_DENSITY = 160
 const MAX_DENSITY = 480
-const DENSITY_STEP = 20
+const DENSITY_STEP = 80
 const DEFAULT_DENSITY = 240
 
 const density = useStorage('Comfy.Assets.Modal.Density', DEFAULT_DENSITY)
@@ -155,7 +236,60 @@ function onDensityChange(value: number[] | undefined) {
   if (typeof next === 'number') density.value = next
 }
 
-const { isSelected, handleAssetClick } = useAssetSelection()
+const selectedIds = ref<Set<string>>(new Set())
+const lastClickedId = ref<string | null>(null)
+const shiftKey = useKeyModifier('Shift')
+const ctrlKey = useKeyModifier('Control')
+const metaKey = useKeyModifier('Meta')
+
+const hasSelection = computed(() => selectedIds.value.size > 0)
+const selectedAssets = computed(() =>
+  browser.displayAssets.value.filter((a) => selectedIds.value.has(a.id))
+)
+
+const { downloadMultipleAssets, deleteAssets } = useMediaAssetActions()
+
+function handleSelectAll() {
+  selectedIds.value = new Set(browser.displayAssets.value.map((a) => a.id))
+}
+
+function handleDeselectAll() {
+  selectedIds.value = new Set()
+  lastClickedId.value = null
+}
+
+function handleDownloadSelected() {
+  downloadMultipleAssets(selectedAssets.value)
+  handleDeselectAll()
+}
+
+async function handleDeleteSelected() {
+  if (await deleteAssets(selectedAssets.value)) {
+    handleDeselectAll()
+  }
+}
+
+function handleAssetClick(asset: AssetItem, index: number, list: AssetItem[]) {
+  const id = asset.id
+  if (shiftKey.value && lastClickedId.value) {
+    const anchor = list.findIndex((a) => a.id === lastClickedId.value)
+    if (anchor !== -1) {
+      const [start, end] = anchor <= index ? [anchor, index] : [index, anchor]
+      selectedIds.value = new Set(list.slice(start, end + 1).map((a) => a.id))
+      return
+    }
+  }
+  if (ctrlKey.value || metaKey.value) {
+    const next = new Set(selectedIds.value)
+    if (next.has(id)) next.delete(id)
+    else next.add(id)
+    selectedIds.value = next
+    lastClickedId.value = id
+    return
+  }
+  selectedIds.value = new Set([id])
+  lastClickedId.value = id
+}
 
 const contextMenuRef = ref<InstanceType<typeof MediaAssetContextMenu> | null>(
   null
@@ -195,9 +329,52 @@ function handleAssetSelect(asset: AssetItem) {
   handleAssetClick(asset, index, list)
 }
 
+const previewableAssets = computed(() =>
+  browser.displayAssets.value.filter((a) =>
+    isPreviewableMediaType(getMediaTypeFromFilename(a.name))
+  )
+)
+
+const galleryItems = computed(() =>
+  previewableAssets.value.map(assetToResultItem)
+)
+const galleryActiveIndex = ref(-1)
+const compareItems = ref<ResultItemImpl[]>([])
+
+watch(galleryActiveIndex, (index) => {
+  if (index === -1) compareItems.value = []
+})
+
+const isBulkMode = computed(() => selectedAssets.value.length > 1)
+
+const toast = useToast()
+
 function handlePreview(asset: AssetItem) {
-  // v1: no inline lightbox in modal — pass through select.
-  handleAssetSelect(asset)
+  const index = previewableAssets.value.findIndex((a) => a.id === asset.id)
+  if (index === -1) {
+    handleAssetSelect(asset)
+    return
+  }
+  compareItems.value = []
+  galleryActiveIndex.value = index
+}
+
+function handleBulkCompare(assets: AssetItem[], totalSelected: number) {
+  const items = assets.map(assetToResultItem)
+  if (items.length < 2) return
+  compareItems.value = items
+  galleryActiveIndex.value = 0
+  if (totalSelected > items.length) {
+    toast.add({
+      severity: 'info',
+      summary: t('mediaAsset.compare.action'),
+      detail: t('mediaAsset.compare.filteredToast', {
+        n: items.length,
+        m: totalSelected - items.length
+      }),
+      life: 3000
+    })
+  }
 }
 
 function handleContextMenu(event: MouseEvent, asset: AssetItem) {

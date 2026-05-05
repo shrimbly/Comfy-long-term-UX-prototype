@@ -889,11 +889,13 @@
       "console": "Console",
       "menu": "Menu",
       "imported": "Imported",
-      "generated": "Generated"
+      "generated": "Generated",
+      "temp": "Temp"
     },
     "noFilesFound": "No files found",
     "noImportedFiles": "No imported files found",
     "noGeneratedFiles": "No generated files found",
+    "noTempFiles": "No temp files found",
     "noCustomFiles": "No files in selected directory",
     "generatedAssetsHeader": "Generated assets",
     "importedAssetsHeader": "Imported assets",
@@ -3086,8 +3088,11 @@
   "mediaAssets": {
     "modal": {
       "title": "Media Assets",
+      "titleTag": "Tag: {tag}",
+      "titleTags": "{count} tags selected",
       "searchPlaceholder": "Search assets",
       "density": "Card size",
+      "sortBy": "Sort by",
       "assetCount": "{count} asset | {count} assets",
       "openBrowser": "Open asset browser",
       "empty": {
@@ -3131,12 +3136,19 @@
       "action": "Compare",
       "disabledTooltip": "Select 2+ items of the same type to compare",
       "filteredToast": "Comparing {n} items — excluded {m} of other types",
+      "pin": "Pin",
       "pinSide": "Pin to this side",
+      "pinned": "Pinned",
       "vs": "vs",
       "mode": {
         "side-by-side": "Side by side",
         "wipe": "Wipe",
         "flip": "Flip"
+      },
+      "hint": {
+        "wipe": "Click and drag to slide the divider",
+        "flip": "Press space to flip",
+        "navigate": "← → to step through {count} items"
       }
     },
     "jobIdToast": {
