@@ -3099,6 +3099,9 @@
         "title": "No assets found",
         "message": "Try adjusting your filters or generating new assets."
       }
+    },
+    "tab": {
+      "title": "Media Assets"
     }
   },
   "mediaAsset": {

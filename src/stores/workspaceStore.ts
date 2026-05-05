@@ -27,6 +27,12 @@ function workspaceStoreSetup() {
    * When in focus mode, only the graph editor is visible.
    */
   const focusMode = ref(false)
+  /**
+   * Whether the pinned Media Assets tab is the active workspace tab.
+   * When true, the canvas and workflow-specific left sidebar are hidden and
+   * the full-screen media assets browser fills the main area.
+   */
+  const mediaAssetsTabActive = ref(false)
 
   const toast = computed<ToastManager>(() => useToastStore())
   const queueSettings = computed(() => useQueueSettingsStore())
@@ -97,6 +103,7 @@ function workspaceStoreSetup() {
     toggleFocusMode: () => {
       focusMode.value = !focusMode.value
     },
+    mediaAssetsTabActive,
     toast,
     queueSettings,
     command,

@@ -22,7 +22,10 @@
         </div>
       </div>
     </template>
-    <template v-if="showUI && !isBuilderMode" #side-toolbar>
+    <template
+      v-if="showUI && !isBuilderMode && !mediaAssetsTabActive"
+      #side-toolbar
+    >
       <SideToolbar />
     </template>
     <template v-if="showUI" #side-bar-panel>
@@ -43,16 +46,22 @@
       <NodePropertiesPanel v-else />
     </template>
     <template #graph-canvas-panel>
-      <GraphCanvasMenu
-        v-if="canvasMenuEnabled && !isBuilderMode"
+      <MediaAssetsView
+        v-if="mediaAssetsTabActive"
         class="pointer-events-auto"
       />
-      <MiniMap
-        v-if="
-          comfyAppReady && minimapEnabled && betaMenuEnabled && !isBuilderMode
-        "
-        class="pointer-events-auto"
-      />
+      <template v-else>
+        <GraphCanvasMenu
+          v-if="canvasMenuEnabled && !isBuilderMode"
+          class="pointer-events-auto"
+        />
+        <MiniMap
+          v-if="
+            comfyAppReady && minimapEnabled && betaMenuEnabled && !isBuilderMode
+          "
+          class="pointer-events-auto"
+        />
+      </template>
     </template>
   </LiteGraphCanvasSplitterOverlay>
   <canvas
@@ -60,12 +69,14 @@
     ref="canvasRef"
     tabindex="1"
     class="absolute inset-0 size-full touch-none"
+    :class="{ hidden: mediaAssetsTabActive }"
   />
 
   <!-- TransformPane for Vue node rendering -->
   <TransformPane
     v-if="shouldRenderVueNodes && comfyApp.canvas && comfyAppReady"
     :canvas="comfyApp.canvas"
+    :class="{ hidden: mediaAssetsTabActive }"
     @wheel.capture="canvasInteractions.forwardEventToCanvas"
     @pointerdown.capture="forwardPanEvent"
     @pointerup.capture="forwardPanEvent"
@@ -88,6 +99,7 @@
   <LinkOverlayCanvas
     v-if="shouldRenderVueNodes && comfyApp.canvas && comfyAppReady"
     :canvas="comfyApp.canvas"
+    :class="{ hidden: mediaAssetsTabActive }"
     @ready="onLinkOverlayReady"
     @dispose="onLinkOverlayDispose"
   />
@@ -164,6 +176,7 @@ import { useWorkflowService } from '@/platform/workflow/core/services/workflowSe
 import { useWorkflowStore } from '@/platform/workflow/management/stores/workflowStore'
 import { useWorkflowAutoSave } from '@/platform/workflow/persistence/composables/useWorkflowAutoSave'
 import { useWorkflowPersistenceV2 as useWorkflowPersistence } from '@/platform/workflow/persistence/composables/useWorkflowPersistenceV2'
+import MediaAssetsView from '@/platform/assets/components/MediaAssetsView.vue'
 import { useCanvasStore } from '@/renderer/core/canvas/canvasStore'
 import { useCanvasInteractions } from '@/renderer/core/canvas/useCanvasInteractions'
 import { layoutStore } from '@/renderer/core/layout/store/layoutStore'
@@ -209,6 +222,7 @@ const nodeSearchboxPopoverRef = shallowRef<InstanceType<
 const settingStore = useSettingStore()
 const nodeDefStore = useNodeDefStore()
 const workspaceStore = useWorkspaceStore()
+const { mediaAssetsTabActive } = storeToRefs(workspaceStore)
 const { isBuilderMode } = useAppMode()
 const canvasStore = useCanvasStore()
 const workflowStore = useWorkflowStore()

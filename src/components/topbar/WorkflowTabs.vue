@@ -26,24 +26,26 @@
       <SelectButton
         class="workflow-tabs bg-transparent"
         :class="props.class"
-        :model-value="selectedWorkflow"
+        :model-value="selectedTab"
         :options="options"
         option-label="label"
         data-key="value"
-        @update:model-value="onWorkflowChange"
+        @update:model-value="onTabChange"
       >
         <template #option="{ option, index }">
+          <MediaAssetsTabButton v-if="option.kind === 'media-assets'" />
           <WorkflowTab
+            v-else
             :workflow-option="option"
-            :is-first="index === 0"
+            :is-first="index === 1"
             :is-last="index === options.length - 1"
             @click.middle="onCloseWorkflow(option)"
-            @close-to-left="closeWorkflows(options.slice(0, index))"
-            @close-to-right="closeWorkflows(options.slice(index + 1))"
+            @close-to-left="closeWorkflowOptions(workflowOptionsBefore(index))"
+            @close-to-right="closeWorkflowOptions(workflowOptionsAfter(index))"
             @close-others="
-              closeWorkflows([
-                ...options.slice(index + 1),
-                ...options.slice(0, index)
+              closeWorkflowOptions([
+                ...workflowOptionsAfter(index),
+                ...workflowOptionsBefore(index)
               ])
             "
           />
@@ -75,7 +77,7 @@
       variant="muted-textonly"
       size="icon"
       :aria-label="$t('sideToolbar.newBlankWorkflow')"
-      @click="() => commandStore.execute('Comfy.NewBlankWorkflow')"
+      @click="onNewBlankWorkflow"
     >
       <i class="pi pi-plus" />
     </Button>
@@ -109,6 +111,7 @@ import { computed, nextTick, onUpdated, ref, watch } from 'vue'
 import type { WatchStopHandle } from 'vue'
 import CurrentUserButton from '@/components/topbar/CurrentUserButton.vue'
 import LoginButton from '@/components/topbar/LoginButton.vue'
+import MediaAssetsTabButton from '@/components/topbar/MediaAssetsTabButton.vue'
 import WorkflowTab from '@/components/topbar/WorkflowTab.vue'
 import Button from '@/components/ui/button/Button.vue'
 import { useCurrentUser } from '@/composables/auth/useCurrentUser'
@@ -126,8 +129,23 @@ import { whileMouseDown } from '@/utils/mouseDownUtil'
 import WorkflowOverflowMenu from './WorkflowOverflowMenu.vue'
 
 interface WorkflowOption {
+  kind: 'workflow'
   value: string
   workflow: ComfyWorkflow
+}
+
+interface MediaAssetsOption {
+  kind: 'media-assets'
+  value: typeof MEDIA_ASSETS_TAB_VALUE
+}
+
+type TabOption = WorkflowOption | MediaAssetsOption
+
+const MEDIA_ASSETS_TAB_VALUE = '__media-assets__' as const
+
+const MEDIA_ASSETS_OPTION: MediaAssetsOption = {
+  kind: 'media-assets',
+  value: MEDIA_ASSETS_TAB_VALUE
 }
 
 const props = defineProps<{
@@ -157,34 +175,53 @@ const leftArrowEnabled = ref(false)
 const rightArrowEnabled = ref(false)
 
 const workflowToOption = (workflow: ComfyWorkflow): WorkflowOption => ({
+  kind: 'workflow',
   value: workflow.path,
   workflow
 })
 
-const options = computed<WorkflowOption[]>(() =>
-  workflowStore.openWorkflows.map(workflowToOption)
-)
-const selectedWorkflow = computed<WorkflowOption | null>(() =>
-  workflowStore.activeWorkflow
+const options = computed<TabOption[]>(() => [
+  MEDIA_ASSETS_OPTION,
+  ...workflowStore.openWorkflows.map(workflowToOption)
+])
+
+const isWorkflowOption = (option: TabOption): option is WorkflowOption =>
+  option.kind === 'workflow'
+
+const workflowOptionsBefore = (index: number): WorkflowOption[] =>
+  options.value.slice(0, index).filter(isWorkflowOption)
+
+const workflowOptionsAfter = (index: number): WorkflowOption[] =>
+  options.value.slice(index + 1).filter(isWorkflowOption)
+
+const selectedTab = computed<TabOption | null>(() => {
+  if (workspaceStore.mediaAssetsTabActive) return MEDIA_ASSETS_OPTION
+  return workflowStore.activeWorkflow
     ? workflowToOption(workflowStore.activeWorkflow as ComfyWorkflow)
     : null
-)
+})
 
-const onWorkflowChange = async (option: WorkflowOption) => {
-  // Prevent unselecting the current workflow
+const onTabChange = async (option: TabOption) => {
+  // Prevent unselecting the current tab
   if (!option) {
     return
   }
-  // Prevent reloading the current workflow
-  if (selectedWorkflow.value?.value === option.value) {
+  // Prevent re-activating the current tab
+  if (selectedTab.value?.value === option.value) {
     return
   }
 
+  if (option.kind === 'media-assets') {
+    workspaceStore.mediaAssetsTabActive = true
+    return
+  }
+
+  workspaceStore.mediaAssetsTabActive = false
   await workflowService.openWorkflow(option.workflow)
 }
 
-const closeWorkflows = async (options: WorkflowOption[]) => {
-  for (const opt of options) {
+const closeWorkflowOptions = async (workflowOpts: WorkflowOption[]) => {
+  for (const opt of workflowOpts) {
     if (
       !(await workflowService.closeWorkflow(opt.workflow, {
         warnIfUnsaved: !workspaceStore.shiftDown
@@ -197,7 +234,12 @@ const closeWorkflows = async (options: WorkflowOption[]) => {
 }
 
 const onCloseWorkflow = async (option: WorkflowOption) => {
-  await closeWorkflows([option])
+  await closeWorkflowOptions([option])
+}
+
+const onNewBlankWorkflow = async () => {
+  workspaceStore.mediaAssetsTabActive = false
+  await commandStore.execute('Comfy.NewBlankWorkflow')
 }
 
 // Horizontal scroll on wheel
@@ -225,7 +267,7 @@ const scroll = (direction: number) => {
 const ensureActiveTabVisible = async (
   options: { waitForDom?: boolean } = {}
 ) => {
-  if (!selectedWorkflow.value) return
+  if (!selectedTab.value) return
 
   if (options.waitForDom !== false) {
     await nextTick()
@@ -244,7 +286,7 @@ const ensureActiveTabVisible = async (
 
 // Scroll to active offscreen tab when opened
 watch(
-  () => workflowStore.activeWorkflow,
+  () => selectedTab.value?.value,
   () => {
     void ensureActiveTabVisible()
   },

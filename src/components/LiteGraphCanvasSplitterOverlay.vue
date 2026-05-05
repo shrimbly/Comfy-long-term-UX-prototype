@@ -170,8 +170,13 @@ const showOffsideSplitter = computed(
   () => rightSidePanelVisible.value || isSelectMode.value
 )
 
+const { mediaAssetsTabActive } = storeToRefs(workspaceStore)
+
 const sidebarPanelVisible = computed(
-  () => activeSidebarTab.value !== null && !isBuilderMode.value
+  () =>
+    activeSidebarTab.value !== null &&
+    !isBuilderMode.value &&
+    !mediaAssetsTabActive.value
 )
 
 // Get panel size from active tab or use default

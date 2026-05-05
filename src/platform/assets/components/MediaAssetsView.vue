@@ -1,19 +1,21 @@
 <template>
-  <BaseModalLayout
-    data-component-id="MediaAssetsModal"
-    size="lg"
-    content-padding="compact"
-    :content-title="$t('mediaAssets.modal.title')"
+  <div
+    data-component-id="MediaAssetsView"
+    class="flex size-full overflow-hidden bg-modal-panel-background"
   >
-    <template #leftPanelHeaderTitle>
-      <i class="icon-[comfy--image-ai-edit] size-5 shrink-0" />
-      <h2 class="flex-auto text-base text-nowrap select-none">
-        {{ $t('mediaAssets.modal.title') }}
-      </h2>
-    </template>
-    <template #leftPanel>
+    <aside
+      class="flex w-72 shrink-0 flex-col overflow-y-auto border-r border-border-subtle bg-base-background"
+    >
+      <header
+        class="flex shrink-0 items-center gap-2 border-b border-border-subtle px-4 py-3"
+      >
+        <i class="icon-[comfy--image-ai-edit] size-5 shrink-0" />
+        <h2 class="flex-auto text-base text-nowrap select-none">
+          {{ $t('mediaAssets.modal.title') }}
+        </h2>
+      </header>
       <AssetsSidebar
-        data-component-id="MediaAssetsModal-Sidebar"
+        data-component-id="MediaAssetsView-Sidebar"
         :available-tags="browser.sidebarTags.value"
         :temp-active="browser.sidebarFlags.value.tempActive"
         :favorites-active="browser.sidebarFlags.value.favoritesActive"
@@ -25,21 +27,23 @@
         @select-imported="browser.selectImported"
         @selection-changed="browser.onTagSelectionChanged"
       />
-    </template>
+    </aside>
 
-    <template #header>
-      <div class="max-w-lg flex-1">
-        <MetadataSearchInput
-          v-model:search-query="browser.searchQuery.value"
-          v-model:metadata-filters="browser.metadataFilters.value"
-          :available-tags="browser.availableTags.value"
-          :available-values-by-field="browser.availableValuesByField.value"
-        />
-      </div>
-    </template>
+    <section class="flex min-w-0 flex-1 flex-col overflow-hidden">
+      <header
+        class="flex shrink-0 items-center gap-3 border-b border-border-subtle px-6 py-3"
+      >
+        <div class="max-w-lg flex-1">
+          <MetadataSearchInput
+            v-model:search-query="browser.searchQuery.value"
+            v-model:metadata-filters="browser.metadataFilters.value"
+            :available-tags="browser.availableTags.value"
+            :available-values-by-field="browser.availableValuesByField.value"
+          />
+        </div>
+      </header>
 
-    <template #contentFilter>
-      <div class="flex shrink-0 flex-col gap-1 px-6 pt-0 pb-2">
+      <div class="flex shrink-0 flex-col gap-1 px-6 pt-4 pb-2">
         <div class="flex items-center justify-between gap-4">
           <div class="flex min-w-0 items-baseline gap-3">
             <h1 class="text-neutral truncate text-2xl font-semibold">
@@ -68,9 +72,9 @@
               <div class="flex w-32 items-center p-2">
                 <Slider
                   :model-value="[density]"
-                  :min="MIN_DENSITY"
-                  :max="MAX_DENSITY"
-                  :step="DENSITY_STEP"
+                  :min="densityRange.min"
+                  :max="densityRange.max"
+                  :step="densityRange.step"
                   :aria-label="$t('mediaAssets.modal.density')"
                   class="flex-1 **:data-[slot=slider-range]:bg-white **:data-[slot=slider-thumb]:bg-white"
                   @update:model-value="onDensityChange"
@@ -94,72 +98,73 @@
           class="-mx-2 2xl:-mx-4"
         />
       </div>
-    </template>
 
-    <template #content>
-      <div
-        v-if="showInitialLoading"
-        class="grid w-full gap-3"
-        :style="skeletonGridStyle"
-      >
+      <div class="relative flex flex-1 flex-col overflow-y-auto px-6 pb-6">
         <div
-          v-for="n in SKELETON_COUNT"
-          :key="`skeleton-${n}`"
-          class="animate-pulse rounded-lg bg-modal-card-placeholder-background"
-          :style="{ aspectRatio: skeletonAspect(n) }"
+          v-if="showInitialLoading"
+          class="grid w-full gap-3"
+          :style="skeletonGridStyle"
+        >
+          <div
+            v-for="n in skeletonCount"
+            :key="`skeleton-${n}`"
+            class="animate-pulse rounded-lg bg-modal-card-placeholder-background"
+            :style="{ aspectRatio: skeletonAspect(n) }"
+          />
+        </div>
+        <div
+          v-else-if="showEmptyState"
+          class="flex flex-1 items-center justify-center"
+        >
+          <NoResultsPlaceholder
+            icon="pi pi-info-circle"
+            :title="$t('mediaAssets.modal.empty.title')"
+            :message="$t('mediaAssets.modal.empty.message')"
+          />
+        </div>
+        <AssetMasonryGrid
+          v-else
+          v-model:selected-ids="selectedIds"
+          :assets="browser.displayAssets.value"
+          :column-width="density"
+          @select-asset="handleAssetSelect"
+          @preview-asset="handlePreview"
+          @context-menu="handleContextMenu"
+        />
+        <AssetSelectionFloatingBar
+          :visible="hasSelection"
+          :count="selectedAssets.length"
+          bottom-offset="md"
+          @select-all="handleSelectAll"
+          @deselect-all="handleDeselectAll"
+          @download="handleDownloadSelected"
+          @delete-selected="handleDeleteSelected"
         />
       </div>
-      <div
-        v-else-if="showEmptyState"
-        class="flex flex-1 items-center justify-center"
-      >
-        <NoResultsPlaceholder
-          icon="pi pi-info-circle"
-          :title="$t('mediaAssets.modal.empty.title')"
-          :message="$t('mediaAssets.modal.empty.message')"
-        />
-      </div>
-      <AssetMasonryGrid
-        v-else
-        v-model:selected-ids="selectedIds"
-        :assets="browser.displayAssets.value"
-        :column-width="density"
-        @select-asset="handleAssetSelect"
-        @preview-asset="handlePreview"
-        @context-menu="handleContextMenu"
-      />
-      <AssetSelectionFloatingBar
-        :visible="hasSelection"
-        :count="selectedAssets.length"
-        bottom-offset="md"
-        @select-all="handleSelectAll"
-        @deselect-all="handleDeselectAll"
-        @download="handleDownloadSelected"
-        @delete-selected="handleDeleteSelected"
-      />
-    </template>
-  </BaseModalLayout>
-  <MediaAssetContextMenu
-    v-if="contextMenuAsset"
-    ref="contextMenuRef"
-    :asset="contextMenuAsset"
-    :asset-type="contextMenuAssetType"
-    :file-kind="contextMenuFileKind"
-    :selected-assets="selectedAssets"
-    :is-bulk-mode="isBulkMode"
-    @hide="onContextMenuHide"
-    @asset-deleted="browser.refreshAssets"
-    @bulk-compare="handleBulkCompare"
-  />
-  <MediaLightbox
-    v-model:active-index="galleryActiveIndex"
-    :all-gallery-items="galleryItems"
-    :compare-items="compareItems"
-  />
+    </section>
+
+    <MediaAssetContextMenu
+      v-if="contextMenuAsset"
+      ref="contextMenuRef"
+      :asset="contextMenuAsset"
+      :asset-type="contextMenuAssetType"
+      :file-kind="contextMenuFileKind"
+      :selected-assets="selectedAssets"
+      :is-bulk-mode="isBulkMode"
+      @hide="onContextMenuHide"
+      @asset-deleted="browser.refreshAssets"
+      @bulk-compare="handleBulkCompare"
+    />
+    <MediaLightbox
+      v-model:active-index="galleryActiveIndex"
+      :all-gallery-items="galleryItems"
+      :compare-items="compareItems"
+    />
+  </div>
 </template>
 
 <script setup lang="ts">
-import { provide, ref } from 'vue'
+import { ref } from 'vue'
 
 import NoResultsPlaceholder from '@/components/common/NoResultsPlaceholder.vue'
 import SingleSelect from '@/components/input/SingleSelect.vue'
@@ -167,7 +172,6 @@ import MediaLightbox from '@/components/sidebar/tabs/queue/MediaLightbox.vue'
 import Popover from '@/components/ui/Popover.vue'
 import Button from '@/components/ui/button/Button.vue'
 import Slider from '@/components/ui/slider/Slider.vue'
-import BaseModalLayout from '@/components/widget/layout/BaseModalLayout.vue'
 import AssetMasonryGrid from '@/platform/assets/components/AssetMasonryGrid.vue'
 import AssetSelectionFloatingBar from '@/platform/assets/components/AssetSelectionFloatingBar.vue'
 import AssetsSidebar from '@/platform/assets/components/AssetsSidebar.vue'
@@ -175,13 +179,6 @@ import MediaAssetContextMenu from '@/platform/assets/components/MediaAssetContex
 import MediaAssetFilterChipsBar from '@/platform/assets/components/MediaAssetFilterChipsBar.vue'
 import MetadataSearchInput from '@/platform/assets/components/MetadataSearchInput.vue'
 import { useMediaAssetsBrowserState } from '@/platform/assets/composables/useMediaAssetsBrowserState'
-import { OnCloseKey } from '@/types/widgetTypes'
-
-const { onClose } = defineProps<{
-  onClose?: () => void
-}>()
-
-provide(OnCloseKey, () => onClose?.())
 
 const contextMenuRef = ref<InstanceType<typeof MediaAssetContextMenu> | null>(
   null
@@ -220,9 +217,4 @@ const {
   galleryActiveIndex,
   compareItems
 } = useMediaAssetsBrowserState({ contextMenuRef })
-
-const MIN_DENSITY = densityRange.min
-const MAX_DENSITY = densityRange.max
-const DENSITY_STEP = densityRange.step
-const SKELETON_COUNT = skeletonCount
 </script>
