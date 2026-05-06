@@ -7,8 +7,8 @@
       class="flex w-72 shrink-0 flex-col overflow-hidden bg-modal-panel-background"
     >
       <header class="flex h-18 w-full shrink-0 items-center gap-2 pr-3 pl-6">
-        <i class="icon-[comfy--image-ai-edit] size-5 shrink-0" />
-        <h2 class="flex-auto text-lg font-semibold text-nowrap select-none">
+        <i class="icon-[comfy--image-ai-edit] size-6 shrink-0" />
+        <h2 class="flex-auto text-xl font-semibold text-nowrap select-none">
           {{ $t('mediaAssets.modal.title') }}
         </h2>
       </header>
