@@ -42,22 +42,22 @@
         @click="emit('selectFavorites')"
       />
 
-      <div v-if="!compact" class="mt-3 flex flex-col gap-1">
+      <div v-if="!compact" class="mt-5 flex flex-col gap-1">
         <button
           type="button"
-          class="flex w-full cursor-pointer items-center-safe gap-3 rounded-md border-none bg-transparent px-4 py-3 text-left text-base text-base-foreground transition-colors select-none hover:bg-interface-menu-component-surface-hovered"
+          class="flex w-full cursor-pointer items-center-safe gap-3 rounded-md border-none bg-transparent px-4 py-2 text-left text-sm text-base-foreground transition-colors select-none hover:bg-interface-menu-component-surface-hovered"
           :aria-expanded="!tagsCollapsed"
           :aria-label="t('sideToolbar.mediaAssets.tagsHeader')"
           @click="toggleTagsCollapsed"
         >
-          <i class="text-neutral icon-[lucide--tags] shrink-0 text-base" />
+          <i class="text-neutral icon-[lucide--tags] shrink-0 text-sm" />
           <span class="min-w-0 flex-1 truncate">
             {{ t('sideToolbar.mediaAssets.tagsHeader') }}
           </span>
           <i
             :class="
               cn(
-                'text-neutral shrink-0 text-base transition-transform',
+                'text-neutral shrink-0 text-sm transition-transform',
                 tagsCollapsed
                   ? 'icon-[lucide--chevron-right]'
                   : 'icon-[lucide--chevron-down]'
@@ -250,19 +250,19 @@
       >
         <button
           type="button"
-          class="flex w-full cursor-pointer items-center-safe gap-3 rounded-md border-none bg-transparent px-4 py-3 text-left text-base text-base-foreground transition-colors select-none hover:bg-interface-menu-component-surface-hovered"
+          class="flex w-full cursor-pointer items-center-safe gap-3 rounded-md border-none bg-transparent px-4 py-2 text-left text-sm text-base-foreground transition-colors select-none hover:bg-interface-menu-component-surface-hovered"
           :aria-expanded="!directoryCollapsed"
           :aria-label="t('sideToolbar.mediaAssets.directoryHeader')"
           @click="toggleDirectoryCollapsed"
         >
-          <i class="text-neutral icon-[lucide--folder] shrink-0 text-base" />
+          <i class="text-neutral icon-[lucide--folder] shrink-0 text-sm" />
           <span class="min-w-0 flex-1 truncate">
             {{ t('sideToolbar.mediaAssets.directoryHeader') }}
           </span>
           <i
             :class="
               cn(
-                'text-neutral shrink-0 text-base transition-transform',
+                'text-neutral shrink-0 text-sm transition-transform',
                 directoryCollapsed
                   ? 'icon-[lucide--chevron-right]'
                   : 'icon-[lucide--chevron-down]'
@@ -280,7 +280,7 @@
             type="button"
             :class="
               cn(
-                'flex w-full cursor-pointer items-center gap-3 rounded-md border-none py-2 pr-3 pl-7 text-left text-base text-base-foreground transition-colors select-none',
+                'flex w-full cursor-pointer items-center gap-3 rounded-md border-none py-1.5 pr-3 pl-7 text-left text-sm text-base-foreground transition-colors select-none',
                 selectedDirectory === dir.path
                   ? 'bg-interface-menu-component-surface-selected'
                   : 'bg-transparent hover:bg-interface-menu-component-surface-hovered'
@@ -288,7 +288,7 @@
             "
             @click="onDirectoryClick(dir.path)"
           >
-            <i class="text-neutral icon-[lucide--folder] shrink-0 text-base" />
+            <i class="text-neutral icon-[lucide--folder] shrink-0 text-sm" />
             <span class="min-w-0 flex-1 truncate">{{ dir.name }}</span>
             <span class="shrink-0 text-xs text-muted-foreground">
               {{ dir.itemCount }}

@@ -80,6 +80,7 @@
             icon="pi pi-question-circle"
             :label="$t('menu.help')"
             :compact="sidebarCollapsed"
+            size="sm"
             @click="toggleHelpCenter"
           />
           <AssetsSidebarItem
@@ -87,6 +88,7 @@
             icon="icon-[lucide--settings]"
             :label="$t('g.settings')"
             :compact="sidebarCollapsed"
+            size="sm"
             @click="openSettings"
           />
         </div>
@@ -265,7 +267,6 @@
             v-model:selected-ids="selectedIds"
             :assets="browser.displayAssets.value"
             :column-width="density"
-            :details-asset-id="detailsAssetId"
             @select-asset="handleAssetSelect"
             @preview-asset="handlePreview"
             @context-menu="handleContextMenu"
@@ -300,7 +301,6 @@
       :asset="detailsAsset"
       :anchor="detailsAnchor"
       @close="closeDetails"
-      @navigate="navigateDetails"
     />
     <MediaLightbox
       v-model:active-index="galleryActiveIndex"
@@ -374,9 +374,7 @@ const {
   handleBulkCompare,
   handleShowDetails,
   closeDetails,
-  navigateDetails,
   detailsAsset,
-  detailsAssetId,
   detailsAnchor,
   contextMenuAsset,
   contextMenuAssetType,
