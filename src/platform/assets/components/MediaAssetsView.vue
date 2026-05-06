@@ -6,7 +6,7 @@
     <nav
       class="flex w-72 shrink-0 flex-col overflow-hidden bg-modal-panel-background"
     >
-      <header class="flex h-18 w-full shrink-0 items-center gap-2 pr-3 pl-6">
+      <header class="flex h-22 w-full shrink-0 items-center gap-2 pr-3 pl-6">
         <i class="icon-[comfy--image-ai-edit] size-6 shrink-0" />
         <h2 class="flex-auto text-xl font-semibold text-nowrap select-none">
           {{ $t('mediaAssets.modal.title') }}
@@ -33,7 +33,7 @@
       class="mt-3 mr-3 flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-t-2xl bg-base-background"
     >
       <header
-        class="flex h-18 w-full shrink-0 items-center justify-between gap-2 px-6"
+        class="flex h-22 w-full shrink-0 items-center justify-between gap-2 px-6"
       >
         <div class="flex flex-1 shrink-0 gap-2">
           <div class="max-w-xl flex-1">
