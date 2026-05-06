@@ -10,8 +10,8 @@
       <div
         :class="
           cn(
-            'flex cursor-text flex-wrap items-center gap-1 rounded-lg border border-comfy-input bg-secondary-background',
-            isLarge ? 'min-h-12 px-4 py-2' : 'min-h-9 px-3 py-1'
+            'flex cursor-text flex-wrap items-center rounded-lg border border-comfy-input bg-secondary-background',
+            isLarge ? 'min-h-12 gap-3 px-4 py-2' : 'min-h-9 gap-1 px-3 py-1'
           )
         "
         @click="focus"
@@ -20,7 +20,7 @@
           :class="
             cn(
               'pointer-events-none icon-[lucide--search] shrink-0 text-white',
-              isLarge ? 'size-5' : 'size-3.5'
+              isLarge ? 'size-4' : 'size-3.5'
             )
           "
         />
