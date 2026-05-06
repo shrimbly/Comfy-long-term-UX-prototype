@@ -47,7 +47,7 @@
           />
         </Button>
       </header>
-      <div class="flex min-h-0 flex-1 flex-col">
+      <div class="flex min-h-0 flex-1 flex-col pt-3">
         <AssetsSidebar
           data-component-id="MediaAssetsView-Sidebar"
           :available-tags="browser.sidebarTags.value"
