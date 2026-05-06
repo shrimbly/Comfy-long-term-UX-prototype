@@ -48,23 +48,48 @@
         </Button>
       </header>
       <div class="flex min-h-0 flex-1 flex-col pt-3">
-        <AssetsSidebar
-          data-component-id="MediaAssetsView-Sidebar"
-          :available-tags="browser.sidebarTags.value"
-          :temp-active="browser.sidebarFlags.value.tempActive"
-          :favorites-active="browser.sidebarFlags.value.favoritesActive"
-          :generated-active="browser.sidebarFlags.value.generatedActive"
-          :imported-active="browser.sidebarFlags.value.importedActive"
-          :compact="sidebarCollapsed"
-          :available-directories="browser.availableDirectories.value"
-          :selected-directory="browser.selectedDirectory.value"
-          @select-temp="browser.selectTemp"
-          @select-favorites="browser.selectFavorites"
-          @select-generated="browser.selectGenerated"
-          @select-imported="browser.selectImported"
-          @select-directory="browser.selectDirectory"
-          @selection-changed="browser.onTagSelectionChanged"
-        />
+        <div class="flex min-h-0 flex-1 flex-col">
+          <AssetsSidebar
+            data-component-id="MediaAssetsView-Sidebar"
+            :available-tags="browser.sidebarTags.value"
+            :temp-active="browser.sidebarFlags.value.tempActive"
+            :favorites-active="browser.sidebarFlags.value.favoritesActive"
+            :generated-active="browser.sidebarFlags.value.generatedActive"
+            :imported-active="browser.sidebarFlags.value.importedActive"
+            :compact="sidebarCollapsed"
+            :available-directories="browser.availableDirectories.value"
+            :selected-directory="browser.selectedDirectory.value"
+            @select-temp="browser.selectTemp"
+            @select-favorites="browser.selectFavorites"
+            @select-generated="browser.selectGenerated"
+            @select-imported="browser.selectImported"
+            @select-directory="browser.selectDirectory"
+            @selection-changed="browser.onTagSelectionChanged"
+          />
+        </div>
+        <div
+          :class="
+            cn(
+              'flex shrink-0 flex-col gap-1 border-t border-border-subtle py-2',
+              sidebarCollapsed ? 'px-2' : 'px-3'
+            )
+          "
+        >
+          <AssetsSidebarItem
+            :active="false"
+            icon="pi pi-question-circle"
+            :label="$t('menu.help')"
+            :compact="sidebarCollapsed"
+            @click="toggleHelpCenter"
+          />
+          <AssetsSidebarItem
+            :active="false"
+            icon="icon-[lucide--settings]"
+            :label="$t('g.settings')"
+            :compact="sidebarCollapsed"
+            @click="openSettings"
+          />
+        </div>
       </div>
     </nav>
 
@@ -240,6 +265,7 @@
             v-model:selected-ids="selectedIds"
             :assets="browser.displayAssets.value"
             :column-width="density"
+            :details-asset-id="detailsAssetId"
             @select-asset="handleAssetSelect"
             @preview-asset="handlePreview"
             @context-menu="handleContextMenu"
@@ -268,6 +294,13 @@
       @hide="onContextMenuHide"
       @asset-deleted="browser.refreshAssets"
       @bulk-compare="handleBulkCompare"
+      @show-details="handleShowDetails"
+    />
+    <AssetDetailPopover
+      :asset="detailsAsset"
+      :anchor="detailsAnchor"
+      @close="closeDetails"
+      @navigate="navigateDetails"
     />
     <MediaLightbox
       v-model:active-index="galleryActiveIndex"
@@ -288,14 +321,24 @@ import MediaLightbox from '@/components/sidebar/tabs/queue/MediaLightbox.vue'
 import Popover from '@/components/ui/Popover.vue'
 import Button from '@/components/ui/button/Button.vue'
 import Slider from '@/components/ui/slider/Slider.vue'
+import AssetDetailPopover from '@/platform/assets/components/AssetDetailPopover.vue'
 import AssetMasonryGrid from '@/platform/assets/components/AssetMasonryGrid.vue'
 import AssetSelectionFloatingBar from '@/platform/assets/components/AssetSelectionFloatingBar.vue'
 import AssetsSidebar from '@/platform/assets/components/AssetsSidebar.vue'
+import AssetsSidebarItem from '@/platform/assets/components/AssetsSidebarItem.vue'
 import MediaAssetContextMenu from '@/platform/assets/components/MediaAssetContextMenu.vue'
 import MediaAssetFilterChipsBar from '@/platform/assets/components/MediaAssetFilterChipsBar.vue'
 import MetadataSearchInput from '@/platform/assets/components/MetadataSearchInput.vue'
 import { useMediaAssetsBrowserState } from '@/platform/assets/composables/useMediaAssetsBrowserState'
+import { useHelpCenter } from '@/composables/useHelpCenter'
+import { useCommandStore } from '@/stores/commandStore'
 import { cn } from '@/utils/tailwindUtil'
+
+const { toggleHelpCenter } = useHelpCenter()
+const settingsCommand = useCommandStore().getCommand('Comfy.ShowSettingsDialog')
+const openSettings = () => {
+  settingsCommand.function()
+}
 
 const contextMenuRef = ref<InstanceType<typeof MediaAssetContextMenu> | null>(
   null
@@ -329,6 +372,12 @@ const {
   handleContextMenu,
   onContextMenuHide,
   handleBulkCompare,
+  handleShowDetails,
+  closeDetails,
+  navigateDetails,
+  detailsAsset,
+  detailsAssetId,
+  detailsAnchor,
   contextMenuAsset,
   contextMenuAssetType,
   contextMenuFileKind,
