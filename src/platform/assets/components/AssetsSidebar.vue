@@ -2,11 +2,19 @@
   <div
     class="flex size-full flex-col overflow-hidden bg-modal-panel-background"
   >
-    <div class="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto px-3">
+    <div
+      :class="
+        cn(
+          'flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto',
+          compact ? 'px-2' : 'px-3'
+        )
+      "
+    >
       <SidebarItem
         :active="generatedActive"
         icon="icon-[comfy--image-ai-edit]"
         :label="t('sideToolbar.mediaAssets.foldersSidebar.generatedHeader')"
+        :compact="compact"
         @click="emit('selectGenerated')"
       />
 
@@ -14,6 +22,7 @@
         :active="importedActive"
         icon="icon-[lucide--upload]"
         :label="t('sideToolbar.mediaAssets.foldersSidebar.importedHeader')"
+        :compact="compact"
         @click="emit('selectImported')"
       />
 
@@ -21,6 +30,7 @@
         :active="tempActive"
         icon="icon-[lucide--clock]"
         :label="t('sideToolbar.labels.temp')"
+        :compact="compact"
         @click="emit('selectTemp')"
       />
 
@@ -28,10 +38,11 @@
         :active="favoritesActive"
         icon="icon-[lucide--star]"
         :label="t('sideToolbar.mediaAssets.foldersSidebar.favorites')"
+        :compact="compact"
         @click="emit('selectFavorites')"
       />
 
-      <div class="mt-6 flex flex-col gap-1">
+      <div v-if="!compact" class="mt-6 flex flex-col gap-1">
         <button
           type="button"
           class="flex w-full cursor-pointer items-center-safe gap-2 rounded-md border-none bg-transparent px-4 py-3 text-left text-sm text-base-foreground transition-colors select-none hover:bg-interface-menu-component-surface-hovered"
@@ -270,13 +281,15 @@ const {
   tempActive = false,
   favoritesActive = false,
   generatedActive = false,
-  importedActive = false
+  importedActive = false,
+  compact = false
 } = defineProps<{
   availableTags: readonly TagWithCount[]
   tempActive?: boolean
   favoritesActive?: boolean
   generatedActive?: boolean
   importedActive?: boolean
+  compact?: boolean
 }>()
 
 const emit = defineEmits<{
