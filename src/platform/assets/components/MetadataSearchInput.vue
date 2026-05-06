@@ -8,17 +8,30 @@
   >
     <ComboboxAnchor as-child>
       <div
-        class="flex min-h-9 cursor-text flex-wrap items-center gap-1 rounded-lg border border-comfy-input bg-secondary-background px-3 py-1"
+        :class="
+          cn(
+            'flex cursor-text flex-wrap items-center gap-1 rounded-lg border border-comfy-input bg-secondary-background',
+            isLarge ? 'min-h-12 px-4 py-2' : 'min-h-9 px-3 py-1'
+          )
+        "
         @click="focus"
       >
         <i
-          class="pointer-events-none icon-[lucide--search] size-3.5 shrink-0 text-white"
+          :class="
+            cn(
+              'pointer-events-none icon-[lucide--search] shrink-0 text-white',
+              isLarge ? 'size-5' : 'size-3.5'
+            )
+          "
         />
 
         <span
           :class="
             activeField
-              ? '-my-0.5 flex min-w-0 flex-1 items-center gap-1 overflow-hidden rounded-md bg-base-background px-2 py-0.5 text-xs'
+              ? cn(
+                  '-my-0.5 flex min-w-0 flex-1 items-center gap-1 overflow-hidden rounded-md bg-base-background px-2 py-0.5',
+                  isLarge ? 'text-sm' : 'text-xs'
+                )
               : 'flex min-w-0 flex-1 items-center'
           "
         >
@@ -32,8 +45,15 @@
             :placeholder="inputPlaceholder"
             :class="
               cn(
-                'flex-1 border-none bg-transparent text-xs outline-none placeholder:text-muted-foreground',
-                activeField ? 'h-5 min-w-12' : 'h-6 min-w-24'
+                'flex-1 border-none bg-transparent outline-none placeholder:text-muted-foreground',
+                isLarge ? 'text-base' : 'text-xs',
+                activeField
+                  ? isLarge
+                    ? 'h-7 min-w-16'
+                    : 'h-5 min-w-12'
+                  : isLarge
+                    ? 'h-8 min-w-32'
+                    : 'h-6 min-w-24'
               )
             "
             @focus="onInputFocus"
@@ -144,10 +164,17 @@ import { cn } from '@/utils/tailwindUtil'
 
 const { t } = useI18n()
 
-const { availableTags = [], availableValuesByField } = defineProps<{
+const {
+  availableTags = [],
+  availableValuesByField,
+  size = 'default'
+} = defineProps<{
   availableTags?: string[]
   availableValuesByField?: Record<'model' | 'lora' | 'workflowTitle', string[]>
+  size?: 'default' | 'lg'
 }>()
+
+const isLarge = computed(() => size === 'lg')
 
 const searchQuery = defineModel<string>('searchQuery', { required: true })
 const metadataFilters = defineModel<MetadataFilter[]>('metadataFilters', {

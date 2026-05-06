@@ -1,7 +1,7 @@
 <template>
   <div
     data-component-id="MediaAssetsView"
-    class="absolute inset-0 flex overflow-hidden bg-base-background"
+    class="absolute inset-0 flex overflow-hidden bg-modal-panel-background"
   >
     <nav
       class="flex w-72 shrink-0 flex-col overflow-hidden bg-modal-panel-background"
@@ -30,18 +30,19 @@
     </nav>
 
     <section
-      class="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-base-background"
+      class="mt-3 mr-3 flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-t-2xl bg-base-background"
     >
       <header
         class="flex h-18 w-full shrink-0 items-center justify-between gap-2 px-6"
       >
         <div class="flex flex-1 shrink-0 gap-2">
-          <div class="max-w-lg flex-1">
+          <div class="max-w-xl flex-1">
             <MetadataSearchInput
               v-model:search-query="browser.searchQuery.value"
               v-model:metadata-filters="browser.metadataFilters.value"
               :available-tags="browser.availableTags.value"
               :available-values-by-field="browser.availableValuesByField.value"
+              size="lg"
             />
           </div>
         </div>
@@ -167,8 +168,9 @@
     />
     <MediaLightbox
       v-model:active-index="galleryActiveIndex"
+      v-model:compare-items="compareItems"
+      v-model:compare-assets="compareAssets"
       :all-gallery-items="galleryItems"
-      :compare-items="compareItems"
     />
   </div>
 </template>
@@ -225,6 +227,7 @@ const {
   skeletonCount,
   galleryItems,
   galleryActiveIndex,
-  compareItems
+  compareItems,
+  compareAssets
 } = useMediaAssetsBrowserState({ contextMenuRef })
 </script>
