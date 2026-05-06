@@ -850,7 +850,7 @@
         "addFolder": "Add folder",
         "newFolderName": "New folder"
       },
-      "directoryHeader": "Directory",
+      "directoryHeader": "Folders",
       "tagsHeader": "Tags",
       "noTagsHint": "Right-click an asset to add tags",
       "tagFilterLabel": "Tag: {tag}",
@@ -3117,7 +3117,6 @@
     "failedToDeleteAsset": "Failed to delete asset",
     "actions": {
       "inspect": "Inspect asset",
-      "showDetails": "Show details",
       "favorite": "Add to favorites",
       "unfavorite": "Remove from favorites",
       "more": "More options",
