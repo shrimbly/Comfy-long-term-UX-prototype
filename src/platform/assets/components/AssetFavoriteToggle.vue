@@ -1,11 +1,16 @@
 <template>
   <button
+    v-tooltip.top.pt:pointer-events-none="
+      $t(
+        active ? 'mediaAsset.actions.unfavorite' : 'mediaAsset.actions.favorite'
+      )
+    "
     type="button"
     :class="
       cn(
         'flex shrink-0 cursor-pointer items-center justify-center rounded-md border-none bg-transparent transition-[background-color,filter,padding,opacity,transform] duration-150 ease-out hover:scale-110',
         pill
-          ? 'bg-white p-1 text-gray-600 shadow-sm hover:bg-white/90'
+          ? 'size-8 bg-white text-gray-600 shadow-sm hover:bg-white/90'
           : 'p-0 drop-shadow-none',
         visible
           ? 'scale-100 opacity-100'
@@ -25,9 +30,9 @@
     <i
       :class="
         cn(
-          'text-citrine-400 transition-[width,height,filter] duration-200 ease-out',
+          'transition-[width,height,filter] duration-200 ease-out',
           pill ? 'size-4' : 'size-3 drop-shadow-[0_1px_2px_rgba(0,0,0,0.6)]',
-          active ? 'icon-[ph--star-fill]' : 'icon-[ph--star]'
+          active ? 'icon-[ph--star-fill] text-citrine-400' : 'icon-[ph--star]'
         )
       "
     />
