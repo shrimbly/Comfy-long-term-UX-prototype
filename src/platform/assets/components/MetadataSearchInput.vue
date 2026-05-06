@@ -11,7 +11,8 @@
         :class="
           cn(
             'flex cursor-text flex-wrap items-center rounded-lg border border-comfy-input bg-secondary-background',
-            isLarge ? 'min-h-12 gap-5 px-4 py-2' : 'min-h-9 gap-1 px-3 py-1'
+            'transition-[min-height,padding,gap,column-gap] duration-200 ease-out',
+            sizeClasses.container
           )
         "
         @click="focus"
@@ -20,7 +21,8 @@
           :class="
             cn(
               'pointer-events-none icon-[lucide--search] shrink-0 text-white',
-              isLarge ? 'size-4' : 'size-3.5'
+              'transition-[width,height] duration-200 ease-out',
+              sizeClasses.icon
             )
           "
         />
@@ -30,7 +32,8 @@
             activeField
               ? cn(
                   '-my-0.5 flex min-w-0 flex-1 items-center gap-1 overflow-hidden rounded-md bg-base-background px-2 py-0.5',
-                  isLarge ? 'text-sm' : 'text-xs'
+                  'transition-[font-size] duration-200 ease-out',
+                  sizeClasses.chipText
                 )
               : 'flex min-w-0 flex-1 items-center'
           "
@@ -46,14 +49,9 @@
             :class="
               cn(
                 'flex-1 border-none bg-transparent outline-none placeholder:text-muted-foreground',
-                isLarge ? 'text-base' : 'text-xs',
-                activeField
-                  ? isLarge
-                    ? 'h-7 min-w-16'
-                    : 'h-5 min-w-12'
-                  : isLarge
-                    ? 'h-8 min-w-32'
-                    : 'h-6 min-w-24'
+                'transition-[height,font-size,min-width] duration-200 ease-out',
+                sizeClasses.inputText,
+                activeField ? sizeClasses.inputActive : sizeClasses.inputIdle
               )
             "
             @focus="onInputFocus"
@@ -171,10 +169,37 @@ const {
 } = defineProps<{
   availableTags?: string[]
   availableValuesByField?: Record<'model' | 'lora' | 'workflowTitle', string[]>
-  size?: 'default' | 'lg'
+  size?: 'default' | 'md' | 'lg'
 }>()
 
-const isLarge = computed(() => size === 'lg')
+const SIZE_CLASSES = {
+  lg: {
+    container: 'min-h-12 gap-5 px-4 py-2',
+    icon: 'size-4',
+    chipText: 'text-sm',
+    inputText: 'text-base',
+    inputActive: 'h-7 min-w-16',
+    inputIdle: 'h-8 min-w-32'
+  },
+  md: {
+    container: 'min-h-10 gap-3 px-4 py-2',
+    icon: 'size-4',
+    chipText: 'text-sm',
+    inputText: 'text-sm',
+    inputActive: 'h-5 min-w-16',
+    inputIdle: 'h-6 min-w-32'
+  },
+  default: {
+    container: 'min-h-9 gap-1 px-3 py-1',
+    icon: 'size-3.5',
+    chipText: 'text-xs',
+    inputText: 'text-xs',
+    inputActive: 'h-5 min-w-12',
+    inputIdle: 'h-6 min-w-24'
+  }
+} as const
+
+const sizeClasses = computed(() => SIZE_CLASSES[size])
 
 const searchQuery = defineModel<string>('searchQuery', { required: true })
 const metadataFilters = defineModel<MetadataFilter[]>('metadataFilters', {

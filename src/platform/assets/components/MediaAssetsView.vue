@@ -108,17 +108,17 @@
               v-model:metadata-filters="browser.metadataFilters.value"
               :available-tags="browser.availableTags.value"
               :available-values-by-field="browser.availableValuesByField.value"
-              size="lg"
+              :size="isScrolled ? 'md' : 'lg'"
             />
           </div>
         </div>
         <div
           :class="
             cn(
-              'flex shrink-0 items-center gap-3 transition-opacity duration-200',
+              'flex shrink-0 items-center gap-3 transition-[opacity,transform] duration-200 ease-out',
               isScrolled
-                ? 'opacity-100'
-                : 'pointer-events-none invisible opacity-0'
+                ? 'translate-y-0 opacity-100'
+                : 'pointer-events-none -translate-y-1 opacity-0'
             )
           "
           aria-hidden="true"
@@ -238,7 +238,7 @@
 
         <div
           ref="scrollContainerRef"
-          class="relative flex scrollbar-custom min-h-0 flex-1 flex-col overflow-y-auto px-6 pt-0 pb-2"
+          class="relative flex scrollbar-custom min-h-0 flex-1 flex-col overflow-y-auto mask-[linear-gradient(to_bottom,transparent_0,black_2px)] px-6 pt-0 pb-2"
         >
           <div
             v-if="showInitialLoading"
