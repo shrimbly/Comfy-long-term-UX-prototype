@@ -48,6 +48,7 @@
           <AssetsListItem
             role="button"
             tabindex="0"
+            :data-asset-id="item.item.asset.id"
             :aria-label="
               t('assetBrowser.ariaLabel.assetCard', {
                 name: getAssetDisplayName(item.item.asset),

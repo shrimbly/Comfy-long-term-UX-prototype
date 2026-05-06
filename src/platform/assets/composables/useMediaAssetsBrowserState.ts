@@ -1,4 +1,4 @@
-import { useKeyModifier, useStorage } from '@vueuse/core'
+import { useEventListener, useKeyModifier, useStorage } from '@vueuse/core'
 import { useToast } from 'primevue/usetoast'
 import { computed, nextTick, ref, watch } from 'vue'
 import type { CSSProperties, Ref } from 'vue'
@@ -124,6 +124,7 @@ export function useMediaAssetsBrowserState(options: {
   }
 
   const contextMenuAsset = ref<AssetItem | null>(null)
+  let contextMenuAnchor: HTMLElement | null = null
 
   const contextMenuAssetType = computed(() =>
     contextMenuAsset.value ? getAssetType(contextMenuAsset.value.tags) : 'input'
@@ -132,6 +133,114 @@ export function useMediaAssetsBrowserState(options: {
   const contextMenuFileKind = computed<MediaKind>(() =>
     getMediaTypeFromFilename(contextMenuAsset.value?.name ?? '')
   )
+
+  const detailsAsset = ref<AssetItem | null>(null)
+  const detailsAnchor = ref<HTMLElement | null>(null)
+
+  function findAnchorForAsset(assetId: string): HTMLElement | null {
+    const el = document.querySelector(`[data-asset-id="${assetId}"]`)
+    if (!(el instanceof HTMLElement)) return null
+    return (el.closest('[data-asset-card]') as HTMLElement | null) ?? el
+  }
+
+  function handleShowDetails(asset: AssetItem) {
+    selectedIds.value = new Set([asset.id])
+    lastClickedId.value = asset.id
+    detailsAsset.value = asset
+    detailsAnchor.value = contextMenuAnchor ?? findAnchorForAsset(asset.id)
+  }
+
+  function closeDetails() {
+    detailsAsset.value = null
+    detailsAnchor.value = null
+  }
+
+  useEventListener(window, 'keydown', (event: KeyboardEvent) => {
+    if (selectedIds.value.size !== 1) return
+    const target = event.target
+    if (
+      target instanceof HTMLElement &&
+      (target.isContentEditable ||
+        target.tagName === 'INPUT' ||
+        target.tagName === 'TEXTAREA' ||
+        target.tagName === 'SELECT')
+    )
+      return
+    const dir =
+      event.key === 'ArrowRight'
+        ? 'right'
+        : event.key === 'ArrowLeft'
+          ? 'left'
+          : event.key === 'ArrowDown'
+            ? 'down'
+            : event.key === 'ArrowUp'
+              ? 'up'
+              : null
+    if (!dir) return
+    event.preventDefault()
+    navigateSelection(dir)
+  })
+
+  function findSpatialNeighbor(
+    currentId: string,
+    dir: 'up' | 'down',
+    candidates: readonly AssetItem[]
+  ): AssetItem | undefined {
+    const currentEl = findAnchorForAsset(currentId)
+    if (!currentEl) return undefined
+    const currentRect = currentEl.getBoundingClientRect()
+    const currentCenterX = currentRect.left + currentRect.width / 2
+    let inCol: { asset: AssetItem; score: number } | null = null
+    let offCol: { asset: AssetItem; score: number } | null = null
+    for (const candidate of candidates) {
+      if (candidate.id === currentId) continue
+      const el = findAnchorForAsset(candidate.id)
+      if (!el) continue
+      const rect = el.getBoundingClientRect()
+      const dy = rect.top - currentRect.top
+      if (dir === 'down' && dy <= 5) continue
+      if (dir === 'up' && dy >= -5) continue
+      const overlap =
+        Math.min(rect.right, currentRect.right) -
+        Math.max(rect.left, currentRect.left)
+      const overlapsColumn =
+        overlap > Math.min(rect.width, currentRect.width) * 0.3
+      if (overlapsColumn) {
+        const score = Math.abs(dy)
+        if (!inCol || score < inCol.score) inCol = { asset: candidate, score }
+      } else {
+        const candCenterX = rect.left + rect.width / 2
+        const dx = Math.abs(candCenterX - currentCenterX)
+        const score = dx + Math.abs(dy)
+        if (!offCol || score < offCol.score)
+          offCol = { asset: candidate, score }
+      }
+    }
+    return inCol?.asset ?? offCol?.asset
+  }
+
+  function navigateSelection(direction: 'up' | 'down' | 'left' | 'right') {
+    if (selectedIds.value.size !== 1) return
+    const list = browser.displayAssets.value
+    const currentId = [...selectedIds.value][0]
+    const idx = list.findIndex((a) => a.id === currentId)
+    if (idx === -1) return
+    let next: AssetItem | undefined
+    if (direction === 'left') next = list[idx - 1]
+    else if (direction === 'right') next = list[idx + 1]
+    else next = findSpatialNeighbor(currentId, direction, list)
+    if (!next) return
+    selectedIds.value = new Set([next.id])
+    lastClickedId.value = next.id
+    if (detailsAsset.value) {
+      const el = findAnchorForAsset(next.id)
+      if (el) {
+        el.scrollIntoView({ block: 'nearest', behavior: 'auto' })
+        detailsAnchor.value = el
+      }
+      detailsAsset.value = next
+    }
+  }
 
   const showInitialLoading = computed(
     () => browser.isLoading.value && browser.displayAssets.value.length === 0
@@ -166,9 +275,13 @@ export function useMediaAssetsBrowserState(options: {
   )
   const galleryActiveIndex = ref(-1)
   const compareItems = ref<ResultItemImpl[]>([])
+  const compareAssets = ref<AssetItem[]>([])
 
   watch(galleryActiveIndex, (index) => {
-    if (index === -1) compareItems.value = []
+    if (index === -1) {
+      compareItems.value = []
+      compareAssets.value = []
+    }
   })
 
   const isBulkMode = computed(() => selectedAssets.value.length > 1)
@@ -182,6 +295,7 @@ export function useMediaAssetsBrowserState(options: {
       return
     }
     compareItems.value = []
+    compareAssets.value = []
     galleryActiveIndex.value = index
   }
 
@@ -189,6 +303,7 @@ export function useMediaAssetsBrowserState(options: {
     const items = assets.map(assetToResultItem)
     if (items.length < 2) return
     compareItems.value = items
+    compareAssets.value = assets
     galleryActiveIndex.value = 0
     if (totalSelected > items.length) {
       toast.add({
@@ -205,6 +320,11 @@ export function useMediaAssetsBrowserState(options: {
 
   function handleContextMenu(event: MouseEvent, asset: AssetItem) {
     contextMenuAsset.value = asset
+    const target = event.target
+    contextMenuAnchor =
+      target instanceof HTMLElement
+        ? (target.closest('[data-asset-card]') as HTMLElement | null)
+        : null
     void nextTick(() => contextMenuRef.value?.show(event))
   }
 
@@ -231,6 +351,11 @@ export function useMediaAssetsBrowserState(options: {
     handleContextMenu,
     onContextMenuHide,
     handleBulkCompare,
+    handleShowDetails,
+    closeDetails,
+    navigateSelection,
+    detailsAsset,
+    detailsAnchor,
     contextMenuAsset,
     contextMenuAssetType,
     contextMenuFileKind,
@@ -242,6 +367,7 @@ export function useMediaAssetsBrowserState(options: {
     galleryItems,
     galleryActiveIndex,
     compareItems,
+    compareAssets,
     densityRange: {
       min: MIN_DENSITY,
       max: MAX_DENSITY,

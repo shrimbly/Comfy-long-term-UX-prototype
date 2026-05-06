@@ -104,6 +104,7 @@ const emit = defineEmits<{
   'bulk-open-workflow': [assets: AssetItem[]]
   'bulk-export-workflow': [assets: AssetItem[]]
   'bulk-compare': [assets: AssetItem[], totalSelected: number]
+  'show-details': [asset: AssetItem]
 }>()
 
 type ContextMenuHandle = {
@@ -408,6 +409,13 @@ const contextMenuItems = computed<MenuItem[]>(() => {
       command: () => emit('zoom')
     })
   }
+
+  // Show details
+  items.push({
+    label: t('mediaAsset.details.showDetails'),
+    icon: 'icon-[lucide--info]',
+    command: () => emit('show-details', asset)
+  })
 
   items.push(buildFavoriteMenuItem())
   items.push(buildTagsMenuItem())

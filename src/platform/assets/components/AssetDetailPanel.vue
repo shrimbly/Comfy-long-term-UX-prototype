@@ -141,6 +141,12 @@
           <span class="detail-value">{{ promptMetadata.seed }}</span>
         </div>
       </div>
+      <div v-if="promptMetadata?.prompt" class="prompt-block">
+        <span class="detail-label">
+          {{ $t('mediaAsset.details.prompt') }}
+        </span>
+        <p class="prompt-text">{{ promptMetadata.prompt }}</p>
+      </div>
     </div>
   </div>
 </template>
@@ -231,7 +237,8 @@ const hasGenerationDetails = computed(
     promptMetadata?.lora != null ||
     promptMetadata?.vae != null ||
     promptMetadata?.steps != null ||
-    promptMetadata?.seed != null
+    promptMetadata?.seed != null ||
+    promptMetadata?.prompt != null
 )
 </script>
 
@@ -347,5 +354,23 @@ const hasGenerationDetails = computed(
   text-overflow: ellipsis;
   white-space: nowrap;
   min-width: 0;
+}
+
+.prompt-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-top: 0.5rem;
+  font-size: 0.6875rem;
+  line-height: 1.4;
+}
+
+.prompt-text {
+  margin: 0;
+  color: var(--p-text-color);
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 8rem;
+  overflow-y: auto;
 }
 </style>

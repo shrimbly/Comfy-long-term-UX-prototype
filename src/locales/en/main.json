@@ -3234,7 +3234,8 @@
       "lora": "LoRA",
       "vae": "VAE",
       "steps": "Steps",
-      "seed": "Seed"
+      "seed": "Seed",
+      "prompt": "Prompt"
     },
     "tags": {
       "addPlaceholder": "Add tag...",

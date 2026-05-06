@@ -207,4 +207,99 @@ describe('parsePromptMetadata', () => {
     expect(result!.steps).toBeNull()
     expect(result!.seed).toBeNull()
   })
+
+  it('extracts model and prompt from a Bytedance API node', () => {
+    const promptData = {
+      '25': {
+        class_type: 'ByteDanceSeedreamNode',
+        _meta: { title: 'ByteDance Seedream 4.5 & 5.0' },
+        inputs: {
+          model: 'seedream 5.0 lite',
+          prompt: 'Refer to the second image and change the style.',
+          height: 2048,
+          seed: 99,
+          image: ['31', 0]
+        }
+      },
+      '40': { class_type: 'SaveImage', inputs: { filename_prefix: 'foo' } }
+    }
+
+    const result = parsePromptMetadata(promptData)
+    expect(result!.model).toBe('seedream 5.0 lite')
+    expect(result!.prompt).toBe(
+      'Refer to the second image and change the style.'
+    )
+    expect(result!.seed).toBe(99)
+  })
+
+  it('extracts model and prompt from a Grok API node', () => {
+    const promptData = {
+      '2': {
+        class_type: 'GrokImageNode',
+        inputs: {
+          model: 'grok-imagine-image-beta',
+          aspect_ratio: '1:1',
+          prompt: 'Cinematic portrait',
+          number_of_images: 1
+        }
+      }
+    }
+
+    const result = parsePromptMetadata(promptData)
+    expect(result!.model).toBe('grok-imagine-image-beta')
+    expect(result!.prompt).toBe('Cinematic portrait')
+  })
+
+  it('does not strip API model strings without paths or weight extensions', () => {
+    const promptData = {
+      '1': {
+        class_type: 'GrokImageNode',
+        inputs: { model: 'grok-imagine-image-beta' }
+      }
+    }
+    expect(parsePromptMetadata(promptData)!.model).toBe(
+      'grok-imagine-image-beta'
+    )
+  })
+
+  it('skips negative-titled CLIPTextEncode and prefers positive', () => {
+    const promptData = {
+      '6': {
+        class_type: 'CLIPTextEncode',
+        _meta: { title: 'Negative Prompt' },
+        inputs: { text: 'low quality, blurry' }
+      },
+      '7': {
+        class_type: 'CLIPTextEncode',
+        _meta: { title: 'Positive Prompt' },
+        inputs: { text: 'a beautiful sunset' }
+      }
+    }
+
+    const result = parsePromptMetadata(promptData)
+    expect(result!.prompt).toBe('a beautiful sunset')
+  })
+
+  it('extracts seed from API nodes outside KSampler', () => {
+    const promptData = {
+      '1': {
+        class_type: 'SomeApiNode',
+        inputs: { seed: 1234 }
+      }
+    }
+    expect(parsePromptMetadata(promptData)!.seed).toBe(1234)
+  })
+
+  it('ignores graph-link arrays in model input', () => {
+    const promptData = {
+      '1': {
+        class_type: 'KSampler',
+        inputs: { model: ['10', 0], steps: 20, seed: 5 }
+      }
+    }
+    const result = parsePromptMetadata(promptData)
+    expect(result!.model).toBeNull()
+    expect(result!.steps).toBe(20)
+    expect(result!.seed).toBe(5)
+  })
 })

@@ -139,8 +139,9 @@
   </SidebarTabTemplate>
   <MediaLightbox
     v-model:active-index="galleryActiveIndex"
+    v-model:compare-items="compareItems"
+    v-model:compare-assets="compareAssets"
     :all-gallery-items="galleryItems"
-    :compare-items="compareItems"
   />
   <MediaAssetContextMenu
     v-if="contextMenuAsset"
@@ -160,6 +161,12 @@
     @bulk-add-to-workflow="handleBulkAddToWorkflow"
     @bulk-open-workflow="handleBulkOpenWorkflow"
     @bulk-export-workflow="handleBulkExportWorkflow"
+    @show-details="handleShowDetails"
+  />
+  <AssetDetailPopover
+    :asset="detailsAsset"
+    :anchor="detailsAnchor"
+    @close="closeDetails"
   />
   <Teleport to="body">
     <div
@@ -180,6 +187,7 @@
 import {
   useAsyncState,
   useDebounceFn,
+  useEventListener,
   useStorage,
   useTimeoutFn
 } from '@vueuse/core'
@@ -204,6 +212,7 @@ import Tab from '@/components/tab/Tab.vue'
 import TabList from '@/components/tab/TabList.vue'
 import Button from '@/components/ui/button/Button.vue'
 import Skeleton from '@/components/ui/skeleton/Skeleton.vue'
+import AssetDetailPopover from '@/platform/assets/components/AssetDetailPopover.vue'
 import AssetDragPreview from '@/platform/assets/components/AssetDragPreview.vue'
 import AssetSelectionFloatingBar from '@/platform/assets/components/AssetSelectionFloatingBar.vue'
 import MediaAssetContextMenu from '@/platform/assets/components/MediaAssetContextMenu.vue'
@@ -218,6 +227,7 @@ import { useAssetFavorites } from '@/platform/assets/composables/useAssetFavorit
 import { useAssetFilters } from '@/platform/assets/composables/useAssetFilters'
 import { useAssetPromptMetadata } from '@/platform/assets/composables/useAssetPromptMetadata'
 import { useAssetSelection } from '@/platform/assets/composables/useAssetSelection'
+import { useAssetSelectionStore } from '@/platform/assets/composables/useAssetSelectionStore'
 import { useAssetTags } from '@/platform/assets/composables/useAssetTags'
 import { useMediaAssetActions } from '@/platform/assets/composables/useMediaAssetActions'
 import { useMediaAssetBrowserDialog } from '@/platform/assets/composables/useMediaAssetBrowserDialog'
@@ -265,6 +275,104 @@ const gridSize = computed<'sm' | 'lg'>(() =>
 
 const contextMenuRef = ref<InstanceType<typeof MediaAssetContextMenu>>()
 const contextMenuAsset = ref<AssetItem | null>(null)
+const detailsAsset = ref<AssetItem | null>(null)
+const detailsAnchor = ref<HTMLElement | null>(null)
+
+function handleShowDetails(asset: AssetItem) {
+  selectionStore.setSelection([asset.id])
+  detailsAsset.value = asset
+  detailsAnchor.value = contextMenuAnchor ?? findSidebarAnchorForAsset(asset.id)
+}
+
+function closeDetails() {
+  detailsAsset.value = null
+  detailsAnchor.value = null
+}
+
+function findSpatialNeighbor(
+  currentId: string,
+  dir: 'up' | 'down',
+  candidates: readonly AssetItem[]
+): AssetItem | undefined {
+  const currentEl = findSidebarAnchorForAsset(currentId)
+  if (!currentEl) return undefined
+  const currentRect = currentEl.getBoundingClientRect()
+  const currentCenterX = currentRect.left + currentRect.width / 2
+  let inCol: { asset: AssetItem; score: number } | null = null
+  let offCol: { asset: AssetItem; score: number } | null = null
+  for (const candidate of candidates) {
+    if (candidate.id === currentId) continue
+    const el = findSidebarAnchorForAsset(candidate.id)
+    if (!el) continue
+    const rect = el.getBoundingClientRect()
+    const dy = rect.top - currentRect.top
+    if (dir === 'down' && dy <= 5) continue
+    if (dir === 'up' && dy >= -5) continue
+    const overlap =
+      Math.min(rect.right, currentRect.right) -
+      Math.max(rect.left, currentRect.left)
+    const overlapsColumn =
+      overlap > Math.min(rect.width, currentRect.width) * 0.3
+    if (overlapsColumn) {
+      const score = Math.abs(dy)
+      if (!inCol || score < inCol.score) inCol = { asset: candidate, score }
+    } else {
+      const candCenterX = rect.left + rect.width / 2
+      const dx = Math.abs(candCenterX - currentCenterX)
+      const score = dx + Math.abs(dy)
+      if (!offCol || score < offCol.score) offCol = { asset: candidate, score }
+    }
+  }
+  return inCol?.asset ?? offCol?.asset
+}
+
+function navigateSelection(direction: 'up' | 'down' | 'left' | 'right') {
+  if (selectedIds.value.size !== 1) return
+  const list = visibleAssets.value
+  const currentId = [...selectedIds.value][0]
+  const idx = list.findIndex((a) => a.id === currentId)
+  if (idx === -1) return
+  let next: AssetItem | undefined
+  if (direction === 'left') next = list[idx - 1]
+  else if (direction === 'right') next = list[idx + 1]
+  else next = findSpatialNeighbor(currentId, direction, list)
+  if (!next) return
+  selectionStore.setSelection([next.id])
+  if (detailsAsset.value) {
+    const el = findSidebarAnchorForAsset(next.id)
+    if (el) {
+      el.scrollIntoView({ block: 'nearest', behavior: 'auto' })
+      detailsAnchor.value = el
+    }
+    detailsAsset.value = next
+  }
+}
+
+useEventListener(window, 'keydown', (event: KeyboardEvent) => {
+  if (selectedIds.value.size !== 1) return
+  const target = event.target
+  if (
+    target instanceof HTMLElement &&
+    (target.isContentEditable ||
+      target.tagName === 'INPUT' ||
+      target.tagName === 'TEXTAREA' ||
+      target.tagName === 'SELECT')
+  )
+    return
+  const dir =
+    event.key === 'ArrowRight'
+      ? 'right'
+      : event.key === 'ArrowLeft'
+        ? 'left'
+        : event.key === 'ArrowDown'
+          ? 'down'
+          : event.key === 'ArrowUp'
+            ? 'up'
+            : null
+  if (!dir) return
+  event.preventDefault()
+  navigateSelection(dir)
+})
 
 const shouldShowDeleteButton = computed(() => {
   if (activeTab.value === 'input' && !isCloud) return false
@@ -303,6 +411,7 @@ const outputJobsAssets = useOutputJobsAssets()
 
 const {
   isSelected,
+  selectedIds,
   handleAssetClick,
   hasSelection,
   clearSelection,
@@ -314,6 +423,7 @@ const {
   activate: activateSelection,
   deactivate: deactivateSelection
 } = useAssetSelection()
+const selectionStore = useAssetSelectionStore()
 
 function handleSelectAll() {
   selectAll(visibleAssets.value)
@@ -362,6 +472,7 @@ const mediaAssets = computed<AssetItem[]>(() =>
 const galleryActiveIndex = ref(-1)
 const currentGalleryAssetId = ref<string | null>(null)
 const compareItems = ref<ResultItemImpl[]>([])
+const compareAssets = ref<AssetItem[]>([])
 
 const DEFAULT_SKELETON_COUNT = 6
 const skeletonCount = computed(() =>
@@ -515,6 +626,7 @@ watch(galleryActiveIndex, (index) => {
   if (index === -1) {
     currentGalleryAssetId.value = null
     compareItems.value = []
+    compareAssets.value = []
   }
 })
 
@@ -526,6 +638,7 @@ function handleBulkCompare(assets: AssetItem[], totalSelected: number) {
   const items = assets.map(assetToResultItem)
   if (items.length < 2) return
   compareItems.value = items
+  compareAssets.value = assets
   galleryActiveIndex.value = 0
   if (totalSelected > items.length) {
     toast.add({
@@ -591,12 +704,25 @@ const { start: scheduleCleanup, stop: cancelCleanup } = useTimeoutFn(
   { immediate: false }
 )
 
+let contextMenuAnchor: HTMLElement | null = null
+
 function handleAssetContextMenu(event: MouseEvent, asset: AssetItem) {
   cancelCleanup()
   contextMenuAsset.value = asset
+  const target = event.target
+  contextMenuAnchor =
+    target instanceof HTMLElement
+      ? ((target.closest('[data-asset-id]') as HTMLElement | null) ??
+        (target.closest('[data-asset-card]') as HTMLElement | null))
+      : null
   void nextTick(() => {
     contextMenuRef.value?.show(event)
   })
+}
+
+function findSidebarAnchorForAsset(assetId: string): HTMLElement | null {
+  const el = document.querySelector(`[data-asset-id="${assetId}"]`)
+  return el instanceof HTMLElement ? el : null
 }
 
 function handleContextMenuHide() {

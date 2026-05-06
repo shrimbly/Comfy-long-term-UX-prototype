@@ -16,9 +16,54 @@ interface PromptNode {
 
 type PromptData = Record<string, PromptNode>
 
+const PATH_SEPARATOR_RE = /[/\\]/
+const WEIGHT_EXTENSION_RE = /\.(safetensors|ckpt|pt|pth|gguf|bin)$/i
+const MODEL_INPUT_KEYS = [
+  'ckpt_name',
+  'unet_name',
+  'diffusion_model_name',
+  'model_name',
+  'model'
+] as const
+
 function stripPath(name: string): string {
   const lastSep = Math.max(name.lastIndexOf('/'), name.lastIndexOf('\\'))
   return lastSep >= 0 ? name.slice(lastSep + 1) : name
+}
+
+function isNonEmptyString(value: unknown): value is string {
+  return typeof value === 'string' && value.length > 0
+}
+
+function maybeStripWeightPath(name: string): string {
+  if (PATH_SEPARATOR_RE.test(name) || WEIGHT_EXTENSION_RE.test(name)) {
+    return stripPath(name)
+  }
+  return name
+}
+
+function isNegativeTitled(node: PromptNode): boolean {
+  const title = node._meta?.title
+  return typeof title === 'string' && /negative/i.test(title)
+}
+
+function extractModel(inputs: Record<string, unknown>): string | null {
+  for (const key of MODEL_INPUT_KEYS) {
+    const value = inputs[key]
+    if (isNonEmptyString(value)) return maybeStripWeightPath(value)
+  }
+  return null
+}
+
+function extractPrompt(node: PromptNode): string | null {
+  const inputs = node.inputs
+  if (!inputs) return null
+  if (isNegativeTitled(node)) return null
+  if (node.class_type === 'CLIPTextEncode' && isNonEmptyString(inputs.text)) {
+    return inputs.text
+  }
+  if (isNonEmptyString(inputs.prompt)) return inputs.prompt
+  return null
 }
 
 export function parsePromptMetadata(
@@ -37,38 +82,26 @@ export function parsePromptMetadata(
   for (const node of Object.values(nodes)) {
     if (!node.class_type || !node.inputs) continue
 
-    const classType = node.class_type
+    if (!model) model = extractModel(node.inputs)
 
-    if (!model) {
-      const candidate =
-        (classType.includes('Checkpoint') && node.inputs.ckpt_name) ||
-        (/unet/i.test(classType) && node.inputs.unet_name) ||
-        (/diffusion|dit|model.*loader/i.test(classType) &&
-          (node.inputs.model_name ?? node.inputs.model))
-      if (typeof candidate === 'string') model = stripPath(candidate)
+    if (isNonEmptyString(node.inputs.lora_name)) {
+      loras.push(maybeStripWeightPath(node.inputs.lora_name))
     }
 
-    if (classType.includes('LoraLoader')) {
-      const name = node.inputs.lora_name
-      if (typeof name === 'string') loras.push(stripPath(name))
+    if (!vae && isNonEmptyString(node.inputs.vae_name)) {
+      vae = maybeStripWeightPath(node.inputs.vae_name)
     }
 
-    if (!vae && classType === 'VAELoader') {
-      const name = node.inputs.vae_name
-      if (typeof name === 'string') vae = stripPath(name)
+    if (!prompt) {
+      const candidate = extractPrompt(node)
+      if (candidate) prompt = candidate
     }
 
-    if (!prompt && classType === 'CLIPTextEncode') {
-      const text = node.inputs.text
-      if (typeof text === 'string') prompt = text
+    if (steps === null && typeof node.inputs.steps === 'number') {
+      steps = node.inputs.steps
     }
-
-    if (
-      steps === null &&
-      (classType === 'KSampler' || classType === 'KSamplerAdvanced')
-    ) {
-      if (typeof node.inputs.steps === 'number') steps = node.inputs.steps
-      if (typeof node.inputs.seed === 'number') seed = node.inputs.seed
+    if (seed === null && typeof node.inputs.seed === 'number') {
+      seed = node.inputs.seed
     }
   }
 

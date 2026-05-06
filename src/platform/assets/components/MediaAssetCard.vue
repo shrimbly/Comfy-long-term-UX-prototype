@@ -2,6 +2,7 @@
   <div
     ref="cardContainerRef"
     role="button"
+    :data-asset-id="asset?.id"
     :aria-label="
       asset
         ? $t('assetBrowser.ariaLabel.assetCard', {

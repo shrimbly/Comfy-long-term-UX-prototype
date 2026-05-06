@@ -150,11 +150,18 @@
     @hide="onContextMenuHide"
     @asset-deleted="browser.refreshAssets"
     @bulk-compare="handleBulkCompare"
+    @show-details="handleShowDetails"
+  />
+  <AssetDetailPopover
+    :asset="detailsAsset"
+    :anchor="detailsAnchor"
+    @close="closeDetails"
   />
   <MediaLightbox
     v-model:active-index="galleryActiveIndex"
+    v-model:compare-items="compareItems"
+    v-model:compare-assets="compareAssets"
     :all-gallery-items="galleryItems"
-    :compare-items="compareItems"
   />
 </template>
 
@@ -168,6 +175,7 @@ import Popover from '@/components/ui/Popover.vue'
 import Button from '@/components/ui/button/Button.vue'
 import Slider from '@/components/ui/slider/Slider.vue'
 import BaseModalLayout from '@/components/widget/layout/BaseModalLayout.vue'
+import AssetDetailPopover from '@/platform/assets/components/AssetDetailPopover.vue'
 import AssetMasonryGrid from '@/platform/assets/components/AssetMasonryGrid.vue'
 import AssetSelectionFloatingBar from '@/platform/assets/components/AssetSelectionFloatingBar.vue'
 import AssetsSidebar from '@/platform/assets/components/AssetsSidebar.vue'
@@ -207,6 +215,10 @@ const {
   handleContextMenu,
   onContextMenuHide,
   handleBulkCompare,
+  handleShowDetails,
+  closeDetails,
+  detailsAsset,
+  detailsAnchor,
   contextMenuAsset,
   contextMenuAssetType,
   contextMenuFileKind,
@@ -218,7 +230,8 @@ const {
   skeletonCount,
   galleryItems,
   galleryActiveIndex,
-  compareItems
+  compareItems,
+  compareAssets
 } = useMediaAssetsBrowserState({ contextMenuRef })
 
 const MIN_DENSITY = densityRange.min
