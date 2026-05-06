@@ -27,7 +27,7 @@
         </template>
         <Button
           variant="muted-textonly"
-          size="icon"
+          size="icon-lg"
           :aria-label="
             sidebarCollapsed
               ? $t('sideToolbar.expandSidebar')
@@ -37,9 +37,12 @@
         >
           <i
             :class="
-              sidebarCollapsed
-                ? 'icon-[lucide--panel-left-open]'
-                : 'icon-[lucide--panel-left-close]'
+              cn(
+                'size-5',
+                sidebarCollapsed
+                  ? 'icon-[lucide--panel-left-open]'
+                  : 'icon-[lucide--panel-left-close]'
+              )
             "
           />
         </Button>
@@ -127,7 +130,14 @@
       </header>
 
       <main class="flex min-h-0 flex-1 flex-col">
-        <div class="flex shrink-0 flex-col gap-1 px-6 pt-0 pb-2">
+        <div
+          :class="
+            cn(
+              'flex shrink-0 flex-col px-6 pt-0 transition-[gap,padding] duration-200 ease-out',
+              isScrolled ? 'gap-0 pb-0' : 'gap-1 pb-2'
+            )
+          "
+        >
           <div
             :class="
               cn(
