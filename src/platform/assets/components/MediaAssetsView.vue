@@ -1,14 +1,12 @@
 <template>
   <div
     data-component-id="MediaAssetsView"
-    class="absolute inset-0 flex overflow-hidden bg-modal-panel-background"
+    class="absolute inset-0 flex overflow-hidden bg-base-background"
   >
-    <aside
-      class="flex w-72 shrink-0 flex-col overflow-hidden border-r border-border-subtle bg-base-background"
+    <nav
+      class="flex w-72 shrink-0 flex-col overflow-hidden bg-modal-panel-background"
     >
-      <header
-        class="flex shrink-0 items-center gap-2 border-b border-border-subtle px-4 py-3"
-      >
+      <header class="flex h-18 w-full shrink-0 items-center gap-2 pr-3 pl-6">
         <i class="icon-[comfy--image-ai-edit] size-5 shrink-0" />
         <h2 class="flex-auto text-base text-nowrap select-none">
           {{ $t('mediaAssets.modal.title') }}
@@ -29,122 +27,130 @@
           @selection-changed="browser.onTagSelectionChanged"
         />
       </div>
-    </aside>
+    </nav>
 
-    <section class="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+    <section
+      class="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-base-background"
+    >
       <header
-        class="flex shrink-0 items-center gap-3 border-b border-border-subtle px-6 py-3"
+        class="flex h-18 w-full shrink-0 items-center justify-between gap-2 px-6"
       >
-        <div class="max-w-lg flex-1">
-          <MetadataSearchInput
-            v-model:search-query="browser.searchQuery.value"
-            v-model:metadata-filters="browser.metadataFilters.value"
-            :available-tags="browser.availableTags.value"
-            :available-values-by-field="browser.availableValuesByField.value"
-          />
+        <div class="flex flex-1 shrink-0 gap-2">
+          <div class="max-w-lg flex-1">
+            <MetadataSearchInput
+              v-model:search-query="browser.searchQuery.value"
+              v-model:metadata-filters="browser.metadataFilters.value"
+              :available-tags="browser.availableTags.value"
+              :available-values-by-field="browser.availableValuesByField.value"
+            />
+          </div>
         </div>
       </header>
 
-      <div class="flex shrink-0 flex-col gap-1 px-6 pt-4 pb-2">
-        <div class="flex items-center justify-between gap-4">
-          <div class="flex min-w-0 items-baseline gap-3">
-            <h1 class="text-neutral truncate text-2xl font-semibold">
-              {{ pageTitle }}
-            </h1>
-            <span class="shrink-0 text-sm text-muted-foreground">
-              {{
-                $t('mediaAssets.modal.assetCount', {
-                  count: browser.displayAssets.value.length
-                })
-              }}
-            </span>
+      <main class="flex min-h-0 flex-1 flex-col">
+        <div class="flex shrink-0 flex-col gap-1 px-6 pt-0 pb-2">
+          <div class="flex items-center justify-between gap-4">
+            <div class="flex min-w-0 items-baseline gap-3">
+              <h1 class="text-neutral truncate text-2xl font-semibold">
+                {{ pageTitle }}
+              </h1>
+              <span class="shrink-0 text-sm text-muted-foreground">
+                {{
+                  $t('mediaAssets.modal.assetCount', {
+                    count: browser.displayAssets.value.length
+                  })
+                }}
+              </span>
+            </div>
+            <div class="flex shrink-0 items-center gap-3">
+              <Popover :show-arrow="false" align="start">
+                <template #button>
+                  <Button
+                    variant="secondary"
+                    size="lg"
+                    :aria-label="$t('mediaAssets.modal.density')"
+                  >
+                    <span>{{ $t('mediaAssets.modal.density') }}</span>
+                    <i class="icon-[lucide--chevron-down] size-4" />
+                  </Button>
+                </template>
+                <div class="flex w-32 items-center p-2">
+                  <Slider
+                    :model-value="[density]"
+                    :min="densityRange.min"
+                    :max="densityRange.max"
+                    :step="densityRange.step"
+                    :aria-label="$t('mediaAssets.modal.density')"
+                    class="flex-1 **:data-[slot=slider-range]:bg-white **:data-[slot=slider-thumb]:bg-white"
+                    @update:model-value="onDensityChange"
+                  />
+                </div>
+              </Popover>
+              <SingleSelect
+                v-model="sortBy"
+                :label="$t('mediaAssets.modal.sortBy')"
+                :options="sortOptions"
+                class="w-56"
+              >
+                <template #icon>
+                  <i
+                    class="icon-[lucide--arrow-up-down] text-muted-foreground"
+                  />
+                </template>
+              </SingleSelect>
+            </div>
           </div>
-          <div class="flex shrink-0 items-center gap-3">
-            <Popover :show-arrow="false" align="start">
-              <template #button>
-                <Button
-                  variant="secondary"
-                  size="lg"
-                  :aria-label="$t('mediaAssets.modal.density')"
-                >
-                  <span>{{ $t('mediaAssets.modal.density') }}</span>
-                  <i class="icon-[lucide--chevron-down] size-4" />
-                </Button>
-              </template>
-              <div class="flex w-32 items-center p-2">
-                <Slider
-                  :model-value="[density]"
-                  :min="densityRange.min"
-                  :max="densityRange.max"
-                  :step="densityRange.step"
-                  :aria-label="$t('mediaAssets.modal.density')"
-                  class="flex-1 **:data-[slot=slider-range]:bg-white **:data-[slot=slider-thumb]:bg-white"
-                  @update:model-value="onDensityChange"
-                />
-              </div>
-            </Popover>
-            <SingleSelect
-              v-model="sortBy"
-              :label="$t('mediaAssets.modal.sortBy')"
-              :options="sortOptions"
-              class="w-56"
-            >
-              <template #icon>
-                <i class="icon-[lucide--arrow-up-down] text-muted-foreground" />
-              </template>
-            </SingleSelect>
-          </div>
+          <MediaAssetFilterChipsBar
+            v-model="browser.metadataFilters.value"
+            class="-mx-2 2xl:-mx-4"
+          />
         </div>
-        <MediaAssetFilterChipsBar
-          v-model="browser.metadataFilters.value"
-          class="-mx-2 2xl:-mx-4"
-        />
-      </div>
 
-      <div
-        class="relative flex scrollbar-custom min-h-0 flex-1 flex-col overflow-y-auto px-6 pb-6"
-      >
         <div
-          v-if="showInitialLoading"
-          class="grid w-full gap-3"
-          :style="skeletonGridStyle"
+          class="relative flex scrollbar-custom min-h-0 flex-1 flex-col overflow-y-auto px-6 pt-0 pb-2"
         >
           <div
-            v-for="n in skeletonCount"
-            :key="`skeleton-${n}`"
-            class="animate-pulse rounded-lg bg-modal-card-placeholder-background"
-            :style="{ aspectRatio: skeletonAspect(n) }"
+            v-if="showInitialLoading"
+            class="grid w-full gap-3"
+            :style="skeletonGridStyle"
+          >
+            <div
+              v-for="n in skeletonCount"
+              :key="`skeleton-${n}`"
+              class="animate-pulse rounded-lg bg-modal-card-placeholder-background"
+              :style="{ aspectRatio: skeletonAspect(n) }"
+            />
+          </div>
+          <div
+            v-else-if="showEmptyState"
+            class="flex flex-1 items-center justify-center"
+          >
+            <NoResultsPlaceholder
+              icon="pi pi-info-circle"
+              :title="$t('mediaAssets.modal.empty.title')"
+              :message="$t('mediaAssets.modal.empty.message')"
+            />
+          </div>
+          <AssetMasonryGrid
+            v-else
+            v-model:selected-ids="selectedIds"
+            :assets="browser.displayAssets.value"
+            :column-width="density"
+            @select-asset="handleAssetSelect"
+            @preview-asset="handlePreview"
+            @context-menu="handleContextMenu"
+          />
+          <AssetSelectionFloatingBar
+            :visible="hasSelection"
+            :count="selectedAssets.length"
+            bottom-offset="md"
+            @select-all="handleSelectAll"
+            @deselect-all="handleDeselectAll"
+            @download="handleDownloadSelected"
+            @delete-selected="handleDeleteSelected"
           />
         </div>
-        <div
-          v-else-if="showEmptyState"
-          class="flex flex-1 items-center justify-center"
-        >
-          <NoResultsPlaceholder
-            icon="pi pi-info-circle"
-            :title="$t('mediaAssets.modal.empty.title')"
-            :message="$t('mediaAssets.modal.empty.message')"
-          />
-        </div>
-        <AssetMasonryGrid
-          v-else
-          v-model:selected-ids="selectedIds"
-          :assets="browser.displayAssets.value"
-          :column-width="density"
-          @select-asset="handleAssetSelect"
-          @preview-asset="handlePreview"
-          @context-menu="handleContextMenu"
-        />
-        <AssetSelectionFloatingBar
-          :visible="hasSelection"
-          :count="selectedAssets.length"
-          bottom-offset="md"
-          @select-all="handleSelectAll"
-          @deselect-all="handleDeselectAll"
-          @download="handleDownloadSelected"
-          @delete-selected="handleDeleteSelected"
-        />
-      </div>
+      </main>
     </section>
 
     <MediaAssetContextMenu
