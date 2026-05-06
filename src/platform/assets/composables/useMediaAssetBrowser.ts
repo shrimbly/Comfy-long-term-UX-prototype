@@ -11,6 +11,7 @@ import { useAssetTags } from '@/platform/assets/composables/useAssetTags'
 import { useMediaAssetFiltering } from '@/platform/assets/composables/useMediaAssetFiltering'
 import type { AssetItem } from '@/platform/assets/schemas/assetSchema'
 import type { MetadataFilter } from '@/platform/assets/types/metadataFilter'
+import { parseFoldersFromFilenames } from '@/platform/assets/utils/folderParser'
 
 type SourceId = 'output' | 'input'
 
@@ -42,6 +43,7 @@ export function useMediaAssetBrowser() {
   const metadataFilters = ref<MetadataFilter[]>([])
   const mediaTypeFilters = ref<string[]>([])
   const favoritesOnly = ref(false)
+  const selectedDirectory = ref<string | null>(null)
 
   const allMergedAssets = computed<AssetItem[]>(() => {
     const result: AssetItem[] = []
@@ -54,14 +56,20 @@ export function useMediaAssetBrowser() {
     return result
   })
 
+  const sourcePool = computed(() =>
+    tempActive.value ? outputJobsAssets.media.value : allMergedAssets.value
+  )
+
+  const availableDirectories = computed(() =>
+    parseFoldersFromFilenames(sourcePool.value.map((a) => a.name))
+  )
+
   const baseAssets = computed(() => {
-    const pool = tempActive.value
-      ? outputJobsAssets.media.value
-      : allMergedAssets.value
+    const pool = sourcePool.value
+    let filtered: AssetItem[]
     if (tagSelection.hasSelection) {
-      return userTags.assetsWithAnyTag(pool, tagSelection.asArray)
-    }
-    if (favoritesActive.value || favoritesOnly.value) {
+      filtered = userTags.assetsWithAnyTag(pool, tagSelection.asArray)
+    } else if (favoritesActive.value || favoritesOnly.value) {
       const seen = new Set<string>()
       const unique: AssetItem[] = []
       for (const asset of pool) {
@@ -69,9 +77,15 @@ export function useMediaAssetBrowser() {
         seen.add(asset.id)
         unique.push(asset)
       }
-      return favorites.favoritedAssets(unique)
+      filtered = favorites.favoritedAssets(unique)
+    } else {
+      filtered = pool
     }
-    return pool
+    if (selectedDirectory.value) {
+      const prefix = `${selectedDirectory.value}/`
+      filtered = filtered.filter((asset) => asset.name.startsWith(prefix))
+    }
+    return filtered
   })
 
   const availableTags = computed(() =>
@@ -142,31 +156,40 @@ export function useMediaAssetBrowser() {
 
   function selectTemp() {
     clearTagAndFavorites()
+    selectedDirectory.value = null
     tempActive.value = true
   }
 
   function selectFavorites() {
     tagSelection.clear()
+    selectedDirectory.value = null
     favoritesActive.value = true
     tempActive.value = false
   }
 
   function selectGenerated() {
     clearTagAndFavorites()
+    selectedDirectory.value = null
     tempActive.value = false
     activeSources.value = ['output']
   }
 
   function selectImported() {
     clearTagAndFavorites()
+    selectedDirectory.value = null
     tempActive.value = false
     activeSources.value = ['input']
+  }
+
+  function selectDirectory(path: string | null) {
+    selectedDirectory.value = path
   }
 
   function onTagSelectionChanged() {
     if (!tagSelection.hasSelection) return
     favoritesActive.value = false
     tempActive.value = false
+    selectedDirectory.value = null
     activeSources.value = ['output', 'input']
   }
 
@@ -249,7 +272,12 @@ export function useMediaAssetBrowser() {
     selectFavorites,
     selectGenerated,
     selectImported,
+    selectDirectory,
     onTagSelectionChanged,
+
+    // directory state
+    availableDirectories,
+    selectedDirectory,
 
     refreshAssets
   }

@@ -56,10 +56,13 @@
           :generated-active="browser.sidebarFlags.value.generatedActive"
           :imported-active="browser.sidebarFlags.value.importedActive"
           :compact="sidebarCollapsed"
+          :available-directories="browser.availableDirectories.value"
+          :selected-directory="browser.selectedDirectory.value"
           @select-temp="browser.selectTemp"
           @select-favorites="browser.selectFavorites"
           @select-generated="browser.selectGenerated"
           @select-imported="browser.selectImported"
+          @select-directory="browser.selectDirectory"
           @selection-changed="browser.onTagSelectionChanged"
         />
       </div>
