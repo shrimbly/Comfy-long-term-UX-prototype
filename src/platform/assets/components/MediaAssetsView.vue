@@ -4,7 +4,7 @@
     class="absolute inset-0 flex overflow-hidden bg-modal-panel-background"
   >
     <nav
-      class="flex w-72 shrink-0 flex-col overflow-hidden bg-modal-panel-background"
+      class="mt-5 flex w-72 shrink-0 flex-col overflow-hidden bg-modal-panel-background"
     >
       <header class="flex h-22 w-full shrink-0 items-center gap-2 pr-3 pl-6">
         <i class="icon-[comfy--image-ai-edit] size-6 shrink-0" />
@@ -30,7 +30,7 @@
     </nav>
 
     <section
-      class="mt-3 mr-3 flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-t-2xl bg-base-background"
+      class="mt-5 mr-3 flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-t-2xl bg-base-background"
     >
       <header
         class="flex h-22 w-full shrink-0 items-center justify-between gap-2 px-6"
