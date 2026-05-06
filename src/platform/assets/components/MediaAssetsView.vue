@@ -7,7 +7,7 @@
       :class="
         cn(
           'mt-5 flex shrink-0 flex-col overflow-hidden bg-modal-panel-background transition-[width] duration-200 ease-out',
-          sidebarCollapsed ? 'w-16' : 'w-72'
+          sidebarCollapsed ? 'w-16' : 'w-64'
         )
       "
     >
