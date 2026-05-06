@@ -51,7 +51,7 @@
         <div class="flex shrink-0 flex-col gap-1 px-6 pt-0 pb-2">
           <div class="flex items-center justify-between gap-4">
             <div class="flex min-w-0 items-baseline gap-3">
-              <h1 class="text-neutral truncate text-2xl font-semibold">
+              <h1 class="text-neutral truncate text-lg font-semibold">
                 {{ pageTitle }}
               </h1>
               <span class="shrink-0 text-sm text-muted-foreground">
