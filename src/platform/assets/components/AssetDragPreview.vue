@@ -1,12 +1,12 @@
 <template>
   <div
     ref="rootRef"
-    class="pointer-events-none h-14 w-60 rounded-2xl border border-comfy-input bg-base-background shadow-lg"
+    class="pointer-events-none h-14 w-60 rounded-lg border border-comfy-input bg-base-background shadow-lg"
   >
     <div
       :class="
         cn(
-          'flex h-full items-center gap-3 px-3 transition-[opacity,transform] duration-300 ease-out',
+          'flex h-full items-center gap-3 pr-3 pl-1 transition-[opacity,transform] duration-300 ease-out',
           contentVisible ? 'scale-100 opacity-100' : 'scale-90 opacity-0'
         )
       "
@@ -36,25 +36,41 @@
           />
         </template>
       </div>
-      <span class="min-w-0 flex-1 truncate text-sm text-base-foreground">
-        {{ label }}
-      </span>
+      <div class="flex min-w-0 flex-1 flex-col leading-tight">
+        <span class="truncate text-sm text-base-foreground">
+          {{ label }}
+        </span>
+        <span class="truncate text-xs text-muted-foreground">
+          {{
+            overCanvas
+              ? t('mediaAsset.dragPreview.dropHint', count)
+              : t('mediaAsset.dragPreview.dragHint')
+          }}
+        </span>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 
 import { cn } from '@/utils/tailwindUtil'
+
+const { t } = useI18n()
 
 const {
   thumbnails,
   label,
+  count = 1,
+  overCanvas = false,
   contentVisible = true
 } = defineProps<{
   thumbnails: string[]
   label: string
+  count?: number
+  overCanvas?: boolean
   contentVisible?: boolean
 }>()
 

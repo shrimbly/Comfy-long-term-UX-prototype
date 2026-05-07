@@ -115,6 +115,7 @@
           v-else
           :assets="displayAssets"
           :is-selected="isSelected"
+          :selected-ids="selectedIds"
           :show-output-count="shouldShowOutputCount"
           :get-output-count="getOutputCount"
           :grid-size="gridSize"
@@ -168,19 +169,6 @@
     :anchor="detailsAnchor"
     @close="closeDetails"
   />
-  <Teleport to="body">
-    <div
-      ref="dragPreviewWrapperRef"
-      class="pointer-events-none fixed -top-[10000px] -left-[10000px]"
-      aria-hidden="true"
-    >
-      <AssetDragPreview
-        :thumbnails="dragPreviewThumbnails"
-        :label="dragPreviewLabel"
-        :content-visible="dragPreviewContentVisible"
-      />
-    </div>
-  </Teleport>
 </template>
 
 <script setup lang="ts">
@@ -213,7 +201,6 @@ import TabList from '@/components/tab/TabList.vue'
 import Button from '@/components/ui/button/Button.vue'
 import Skeleton from '@/components/ui/skeleton/Skeleton.vue'
 import AssetDetailPopover from '@/platform/assets/components/AssetDetailPopover.vue'
-import AssetDragPreview from '@/platform/assets/components/AssetDragPreview.vue'
 import AssetSelectionFloatingBar from '@/platform/assets/components/AssetSelectionFloatingBar.vue'
 import MediaAssetContextMenu from '@/platform/assets/components/MediaAssetContextMenu.vue'
 import MediaAssetFilterBar from '@/platform/assets/components/MediaAssetFilterBar.vue'
@@ -222,7 +209,6 @@ import type { ViewMode } from '@/platform/assets/components/MediaAssetFilterBar.
 import { getAssetType } from '@/platform/assets/composables/media/assetMappers'
 import { useMediaAssets } from '@/platform/assets/composables/media/useMediaAssets'
 import { useOutputJobsAssets } from '@/platform/assets/composables/media/useOutputJobsAssets'
-import { useAssetDragPreview } from '@/platform/assets/composables/useAssetDragPreview'
 import { useAssetFavorites } from '@/platform/assets/composables/useAssetFavorites'
 import { useAssetFilters } from '@/platform/assets/composables/useAssetFilters'
 import { useAssetPromptMetadata } from '@/platform/assets/composables/useAssetPromptMetadata'
@@ -554,22 +540,6 @@ const displayAssets = computed(() =>
   assetFilters.hasActiveFilters.value
     ? assetFilters.filteredByDate.value
     : filteredAssets.value
-)
-
-const dragPreviewWrapperRef = ref<HTMLElement | null>(null)
-const {
-  thumbnails: dragPreviewThumbnails,
-  label: dragPreviewLabel,
-  contentVisible: dragPreviewContentVisible,
-  setPreviewElement
-} = useAssetDragPreview()
-
-watch(
-  dragPreviewWrapperRef,
-  (el) => {
-    setPreviewElement(el)
-  },
-  { immediate: true }
 )
 
 const {

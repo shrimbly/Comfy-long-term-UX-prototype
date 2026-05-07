@@ -3210,7 +3210,9 @@
       "stubToast": "Move to \"{path}\" — not yet implemented"
     },
     "dragPreview": {
-      "itemsLabel": "{count} items"
+      "itemsLabel": "{count} items",
+      "dropHint": "Drop to add node | Drop to create nodes",
+      "dragHint": "Drag to node graph"
     },
     "dragMove": {
       "mockToast": "Moved {count} item(s) to {folder} (mock — not persisted)"

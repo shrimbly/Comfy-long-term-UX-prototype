@@ -12,6 +12,7 @@
         hide-footer
         :asset="asset"
         :selected="isSelected(asset.id)"
+        :selected-ids="selectedIds"
         @click="emit('select-asset', asset)"
         @zoom="emit('preview-asset', asset)"
         @context-menu="(event, a) => emit('context-menu', event, a)"
@@ -45,7 +46,7 @@ import {
   useResizeObserver,
   useScroll
 } from '@vueuse/core'
-import { computed, onMounted, ref, watchEffect } from 'vue'
+import { computed, nextTick, onMounted, ref, watch, watchEffect } from 'vue'
 import type { CSSProperties } from 'vue'
 
 import { useClickDragGuard } from '@/composables/useClickDragGuard'
@@ -161,6 +162,41 @@ const { top: containerTopInDoc } = useContainerOffset(
 
 onMounted(() => {
   scrollParent.value = findScrollParent(containerRef.value)
+})
+
+// Track the topmost visible item so we can keep it in view when the
+// layout reflows (sidebar / details panel toggling, window resize, card
+// size slider). Updated on scroll; consumed when actualColumnWidth changes.
+const scrollAnchor = ref<{ id: string; offsetInViewport: number } | null>(null)
+
+watch(scrollY, () => {
+  if (!scrollParent.value) return
+  const visibleTop = scrollY.value - containerTopInDoc.value
+  let bestId: string | null = null
+  let bestOffset = Infinity
+  for (const asset of assets) {
+    const pos = positions.value.get(asset.id)
+    if (!pos) continue
+    const offset = pos.top - visibleTop
+    if (offset >= 0 && offset < bestOffset) {
+      bestOffset = offset
+      bestId = asset.id
+    }
+  }
+  scrollAnchor.value = bestId
+    ? { id: bestId, offsetInViewport: bestOffset }
+    : null
+})
+
+watch(actualColumnWidth, async (newW, oldW) => {
+  if (newW <= 0 || oldW <= 0 || newW === oldW) return
+  const anchor = scrollAnchor.value
+  if (!anchor || !scrollParent.value) return
+  await nextTick()
+  const newPos = positions.value.get(anchor.id)
+  if (!newPos) return
+  const target = containerTopInDoc.value + newPos.top - anchor.offsetInViewport
+  scrollParent.value.scrollTop = Math.max(0, target)
 })
 
 const visibleRange = computed(() => {

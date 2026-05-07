@@ -11,6 +11,7 @@ const thumbnails = ref<string[]>([])
 const label = ref('')
 const count = ref(0)
 const contentVisible = ref(true)
+const overCanvas = ref(false)
 
 type Translator = (key: string, params?: Record<string, unknown>) => string
 
@@ -212,6 +213,10 @@ export function useAssetDragPreview() {
         el.style.left = `${e.clientX - CURSOR_OFFSET_X}px`
         el.style.top = `${e.clientY - CURSOR_OFFSET_Y}px`
       }
+      const target = document.elementFromPoint(e.clientX, e.clientY)
+      overCanvas.value =
+        target?.id === 'graph-canvas' ||
+        target?.closest('[data-node-id]') !== null
     }
 
     function cleanup() {
@@ -224,6 +229,7 @@ export function useAssetDragPreview() {
       document.removeEventListener('drop', cleanup)
       resetPreviewStyles(el)
       contentVisible.value = true
+      overCanvas.value = false
       activeCleanup = null
     }
 
@@ -239,6 +245,7 @@ export function useAssetDragPreview() {
     label,
     count,
     contentVisible,
+    overCanvas,
     setPreviewElement,
     configure,
     startDrag

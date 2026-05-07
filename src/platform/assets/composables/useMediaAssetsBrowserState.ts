@@ -156,6 +156,7 @@ export function useMediaAssetsBrowserState(options: {
   }
 
   useEventListener(window, 'keydown', (event: KeyboardEvent) => {
+    if (isInspecting.value) return
     if (selectedIds.value.size !== 1) return
     const target = event.target
     if (
@@ -274,6 +275,8 @@ export function useMediaAssetsBrowserState(options: {
     previewableAssets.value.map(assetToResultItem)
   )
   const galleryActiveIndex = ref(-1)
+  const inspectActiveIndex = ref(-1)
+  const isInspecting = computed(() => inspectActiveIndex.value !== -1)
   const compareItems = ref<ResultItemImpl[]>([])
   const compareAssets = ref<AssetItem[]>([])
 
@@ -283,6 +286,23 @@ export function useMediaAssetsBrowserState(options: {
       compareAssets.value = []
     }
   })
+
+  function exitInspect() {
+    inspectActiveIndex.value = -1
+  }
+
+  function navigateInspect(direction: number) {
+    const total = previewableAssets.value.length
+    if (total === 0) return
+    inspectActiveIndex.value =
+      (inspectActiveIndex.value + direction + total) % total
+  }
+
+  function setInspectIndex(index: number) {
+    const total = previewableAssets.value.length
+    if (total === 0) return
+    inspectActiveIndex.value = ((index % total) + total) % total
+  }
 
   const isBulkMode = computed(() => selectedAssets.value.length > 1)
 
@@ -296,7 +316,7 @@ export function useMediaAssetsBrowserState(options: {
     }
     compareItems.value = []
     compareAssets.value = []
-    galleryActiveIndex.value = index
+    inspectActiveIndex.value = index
   }
 
   function handleBulkCompare(assets: AssetItem[], totalSelected: number) {
@@ -366,6 +386,12 @@ export function useMediaAssetsBrowserState(options: {
     skeletonAspect,
     galleryItems,
     galleryActiveIndex,
+    inspectActiveIndex,
+    isInspecting,
+    previewableAssets,
+    exitInspect,
+    navigateInspect,
+    setInspectIndex,
     compareItems,
     compareAssets,
     densityRange: {

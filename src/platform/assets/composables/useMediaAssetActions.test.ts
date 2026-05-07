@@ -80,7 +80,8 @@ vi.mock('@/services/litegraphService', () => ({
     addNodeOnGraph: vi.fn().mockReturnValue(
       fromAny<LGraphNode, unknown>({
         widgets: [{ name: 'image', value: '', callback: vi.fn() }],
-        graph: { setDirtyCanvas: vi.fn() }
+        graph: { setDirtyCanvas: vi.fn() },
+        size: [200, 200]
       })
     ),
     getCanvasCenter: vi.fn().mockReturnValue([100, 100])

@@ -50,6 +50,7 @@
         <MediaAssetCard
           :asset="item.asset"
           :selected="isSelected(item.asset.id)"
+          :selected-ids="selectedIds"
           :show-output-count="showOutputCount(item.asset)"
           :output-count="getOutputCount(item.asset)"
           :restrict-stack-favorites="restrictStackFavorites"
@@ -112,6 +113,7 @@ const {
   assets,
   folders,
   isSelected,
+  selectedIds,
   showOutputCount,
   getOutputCount,
   gridSize = 'sm',
@@ -120,6 +122,7 @@ const {
   assets: AssetItem[]
   folders?: FolderItem[]
   isSelected: (assetId: string) => boolean
+  selectedIds: ReadonlySet<string>
   showOutputCount: (asset: AssetItem) => boolean
   getOutputCount: (asset: AssetItem) => number
   gridSize?: 'sm' | 'lg'

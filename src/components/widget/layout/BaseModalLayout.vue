@@ -30,9 +30,11 @@
         <slot name="leftPanel" />
       </nav>
 
-      <div class="flex flex-col overflow-hidden bg-base-background">
+      <div
+        class="flex h-full min-h-0 flex-col overflow-hidden bg-base-background"
+      >
         <header
-          v-if="$slots.header"
+          v-if="$slots.header && !hideHeader"
           class="flex h-18 w-full items-center justify-between gap-2 px-6"
         >
           <div class="flex flex-1 shrink-0 gap-2">
@@ -147,7 +149,8 @@ const SIZE_CLASSES = {
   sm: 'h-[80vh] w-[90vw] max-w-[960px]',
   md: 'h-[80vh] w-[90vw] max-w-[1400px]',
   lg: 'h-[80vh] w-[90vw] max-w-[1280px] aspect-[20/13] min-[1450px]:max-w-[1724px]',
-  full: 'h-full w-full max-w-[1400px] 2xl:max-w-[1600px]'
+  full: 'h-full w-full max-w-[1400px] 2xl:max-w-[1600px]',
+  inspect: 'h-[98vh] w-[98vw]'
 } as const
 
 type ModalSize = keyof typeof SIZE_CLASSES
@@ -158,13 +161,15 @@ const {
   rightPanelTitle,
   size = 'lg',
   leftPanelWidth = '14rem',
-  contentPadding = 'default'
+  contentPadding = 'default',
+  hideHeader = false
 } = defineProps<{
   contentTitle: string
   rightPanelTitle?: string
   size?: ModalSize
   leftPanelWidth?: string
   contentPadding?: ContentPadding
+  hideHeader?: boolean
 }>()
 
 const sizeClasses = computed(() => SIZE_CLASSES[size])
@@ -202,7 +207,10 @@ const showLeftPanel = computed(() => {
 
 const contentContainerClass = computed(() =>
   cn(
-    'flex scrollbar-custom min-h-0 flex-1 flex-col overflow-y-auto',
+    'flex min-h-0 flex-1 flex-col',
+    contentPadding === 'none'
+      ? 'relative overflow-hidden'
+      : 'scrollbar-custom overflow-y-auto',
     contentPadding === 'default' && 'px-6 pt-0 pb-10',
     contentPadding === 'compact' && 'px-6 pt-0 pb-2'
   )

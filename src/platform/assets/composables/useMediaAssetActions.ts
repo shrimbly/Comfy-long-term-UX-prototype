@@ -5,6 +5,8 @@ import { useI18n } from 'vue-i18n'
 import ConfirmationDialogContent from '@/components/dialog/content/ConfirmationDialogContent.vue'
 import { downloadFile } from '@/base/common/downloadUtil'
 import { useCopyToClipboard } from '@/composables/useCopyToClipboard'
+import { LiteGraph } from '@/lib/litegraph/src/litegraph'
+import type { LGraphNode } from '@/lib/litegraph/src/litegraph'
 import { isCloud } from '@/platform/distribution/types'
 import { useWorkflowActionsService } from '@/platform/workflow/core/services/workflowActionsService'
 import { extractWorkflowFromAsset } from '@/platform/workflow/utils/workflowExtractionUtil'
@@ -28,6 +30,51 @@ import { MediaAssetKey } from '../schemas/mediaAssetSchema'
 import { assetService } from '../services/assetService'
 
 const EXCLUDED_TAGS = new Set(['models', 'input', 'output'])
+
+/**
+ * Re-position a freshly-added grid of loader nodes after their previews have
+ * had time to load. Computes per-column max width and per-row max height from
+ * the now-populated node sizes and places nodes with an even padding gap.
+ */
+function relayoutGrid(
+  placed: { node: LGraphNode; col: number; row: number }[],
+  basePos: [number, number],
+  columns: number,
+  padding: number
+) {
+  if (placed.length === 0) return
+
+  const colWidths: number[] = new Array(columns).fill(0)
+  const rowHeights = new Map<number, number>()
+
+  for (const { node, col, row } of placed) {
+    const [w, h] = node.size
+    colWidths[col] = Math.max(colWidths[col], w)
+    rowHeights.set(row, Math.max(rowHeights.get(row) ?? 0, h))
+  }
+
+  const rowYByIndex = new Map<number, number>()
+  let cursorY = basePos[1]
+  const sortedRows = [...rowHeights.keys()].sort((a, b) => a - b)
+  for (const row of sortedRows) {
+    rowYByIndex.set(row, cursorY)
+    cursorY +=
+      (rowHeights.get(row) ?? 0) + LiteGraph.NODE_TITLE_HEIGHT + padding
+  }
+
+  const colXByIndex: number[] = []
+  let cursorX = basePos[0]
+  for (let c = 0; c < columns; c++) {
+    colXByIndex.push(cursorX)
+    cursorX += colWidths[c] + padding
+  }
+
+  for (const { node, col, row } of placed) {
+    node.pos = [colXByIndex[col], rowYByIndex.get(row) ?? basePos[1]]
+  }
+
+  placed[0]?.node.graph?.setDirtyCanvas(true, true)
+}
 
 export function useMediaAssetActions() {
   const { t } = useI18n()
@@ -257,18 +304,28 @@ export function useMediaAssetActions() {
       return
     }
 
-    // Get metadata to construct the annotated path
-    const metadata = getOutputAssetMetadata(targetAsset.user_metadata)
-    const assetType = getAssetType(targetAsset, 'input')
+    assignAssetToWidget(node, targetAsset, widgetName)
+
+    toast.add({
+      severity: 'success',
+      summary: t('g.success'),
+      detail: t('mediaAsset.nodeAddedToWorkflow', { nodeType }),
+      life: 2000
+    })
+  }
+
+  function assignAssetToWidget(
+    node: LGraphNode,
+    asset: AssetItem,
+    widgetName: string
+  ) {
+    const metadata = getOutputAssetMetadata(asset.user_metadata)
+    const assetType = getAssetType(asset, 'input')
 
     // In Cloud mode, use asset_hash (the actual stored filename)
     // In OSS mode, use the original name
-    const filename =
-      isCloud && targetAsset.asset_hash
-        ? targetAsset.asset_hash
-        : targetAsset.name
+    const filename = isCloud && asset.asset_hash ? asset.asset_hash : asset.name
 
-    // Create annotated path for the asset
     const annotated = createAnnotatedPath(
       {
         filename,
@@ -286,13 +343,20 @@ export function useMediaAssetActions() {
       widget.callback?.(annotated)
     }
     node.graph?.setDirtyCanvas(true, true)
+  }
 
-    toast.add({
-      severity: 'success',
-      summary: t('g.success'),
-      detail: t('mediaAsset.nodeAddedToWorkflow', { nodeType }),
-      life: 2000
-    })
+  /**
+   * Apply an asset to an existing compatible node (e.g. drop-on-LoadImage).
+   * Returns true if the node accepted the asset, false if its class does not
+   * match the asset's media type so the caller should fall back to creating
+   * a new loader node.
+   */
+  function applyAssetToNode(node: LGraphNode, asset: AssetItem): boolean {
+    const { nodeType, widgetName } = detectNodeTypeFromFilename(asset.name)
+    if (!nodeType || !widgetName) return false
+    if (node.comfyClass !== nodeType) return false
+    assignAssetToWidget(node, asset, widgetName)
+    return true
   }
 
   /**
@@ -365,13 +429,30 @@ export function useMediaAssetActions() {
    * Add multiple assets to the current workflow
    * Creates loader nodes for each asset
    */
-  const addMultipleToWorkflow = async (assets: AssetItem[]) => {
+  const addMultipleToWorkflow = async (
+    assets: AssetItem[],
+    options?: { basePos?: [number, number] }
+  ) => {
     if (!assets || assets.length === 0) return
 
-    const NODE_OFFSET = 50
-    let nodeIndex = 0
+    const NODE_PADDING = 24
+    // Loader nodes grow asynchronously when their preview loads. Initial
+    // placement uses a generous stride to avoid overlap; after the previews
+    // have had time to load, we re-layout based on each node's actual size
+    // for an even gap matching NODE_PADDING in both dimensions.
+    const INITIAL_ROW_STRIDE = 380
+    const RELAYOUT_DELAY_MS = 600
+
+    const columns = Math.max(1, Math.ceil(Math.sqrt(assets.length)))
     let succeeded = 0
     let failed = 0
+    const basePos = options?.basePos ?? litegraphService.getCanvasCenter()
+
+    const placed: { node: LGraphNode; col: number; row: number }[] = []
+    let cursorX = basePos[0]
+    let cursorY = basePos[1]
+    let colInRow = 0
+    let rowIndex = 0
 
     for (const asset of assets) {
       const { nodeType, widgetName } = detectNodeTypeFromFilename(asset.name)
@@ -387,12 +468,8 @@ export function useMediaAssetActions() {
         continue
       }
 
-      const center = litegraphService.getCanvasCenter()
       const node = litegraphService.addNodeOnGraph(nodeDef, {
-        pos: [
-          center[0] + nodeIndex * NODE_OFFSET,
-          center[1] + nodeIndex * NODE_OFFSET
-        ]
+        pos: [cursorX, cursorY]
       })
 
       if (!node) {
@@ -400,34 +477,25 @@ export function useMediaAssetActions() {
         continue
       }
 
-      const metadata = getOutputAssetMetadata(asset.user_metadata)
-      const assetType = getAssetType(asset, 'input')
-
-      // In Cloud mode, use asset_hash (the actual stored filename)
-      // In OSS mode, use the original name
-      const filename =
-        isCloud && asset.asset_hash ? asset.asset_hash : asset.name
-
-      const annotated = createAnnotatedPath(
-        {
-          filename,
-          subfolder: metadata?.subfolder || '',
-          type: isResultItemType(assetType) ? assetType : undefined
-        },
-        {
-          rootFolder: isResultItemType(assetType) ? assetType : undefined
-        }
-      )
-
-      const widget = node.widgets?.find((w) => w.name === widgetName)
-      if (widget) {
-        widget.value = annotated
-        widget.callback?.(annotated)
-      }
-      node.graph?.setDirtyCanvas(true, true)
+      assignAssetToWidget(node, asset, widgetName)
+      placed.push({ node, col: colInRow, row: rowIndex })
       succeeded++
-      nodeIndex++
+      colInRow++
+
+      if (colInRow >= columns) {
+        cursorX = basePos[0]
+        cursorY += INITIAL_ROW_STRIDE
+        colInRow = 0
+        rowIndex++
+      } else {
+        cursorX += node.size[0] + NODE_PADDING
+      }
     }
+
+    setTimeout(
+      () => relayoutGrid(placed, basePos, columns, NODE_PADDING),
+      RELAYOUT_DELAY_MS
+    )
 
     if (failed === 0) {
       toast.add({
@@ -769,6 +837,7 @@ export function useMediaAssetActions() {
     copyJobId,
     addWorkflow,
     addMultipleToWorkflow,
+    applyAssetToNode,
     openWorkflow,
     openMultipleWorkflows,
     exportWorkflow,

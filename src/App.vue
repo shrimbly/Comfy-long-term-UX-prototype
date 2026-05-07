@@ -2,16 +2,33 @@
   <router-view />
   <GlobalDialog />
   <BlockUI full-screen :blocked="isLoading" />
+  <Teleport to="body">
+    <div
+      ref="dragPreviewWrapperRef"
+      class="pointer-events-none fixed -top-[10000px] -left-[10000px]"
+      aria-hidden="true"
+    >
+      <AssetDragPreview
+        :thumbnails="dragPreviewThumbnails"
+        :label="dragPreviewLabel"
+        :count="dragPreviewCount"
+        :over-canvas="dragPreviewOverCanvas"
+        :content-visible="dragPreviewContentVisible"
+      />
+    </div>
+  </Teleport>
 </template>
 
 <script setup lang="ts">
 import { captureException } from '@sentry/vue'
 import BlockUI from 'primevue/blockui'
-import { computed, onMounted, watch } from 'vue'
+import { computed, onMounted, useTemplateRef, watch } from 'vue'
 
 import GlobalDialog from '@/components/dialog/GlobalDialog.vue'
 import config from '@/config'
 import { isDesktop } from '@/platform/distribution/types'
+import AssetDragPreview from '@/platform/assets/components/AssetDragPreview.vue'
+import { useAssetDragPreview } from '@/platform/assets/composables/useAssetDragPreview'
 import { app } from '@/scripts/app'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
 import { electronAPI } from '@/utils/envUtil'
@@ -23,6 +40,26 @@ app.extensionManager = useWorkspaceStore()
 
 const conflictDetection = useConflictDetection()
 const isLoading = computed<boolean>(() => workspaceStore.spinner)
+
+const dragPreviewWrapperRef = useTemplateRef<HTMLElement>(
+  'dragPreviewWrapperRef'
+)
+const {
+  thumbnails: dragPreviewThumbnails,
+  label: dragPreviewLabel,
+  count: dragPreviewCount,
+  contentVisible: dragPreviewContentVisible,
+  overCanvas: dragPreviewOverCanvas,
+  setPreviewElement
+} = useAssetDragPreview()
+
+watch(
+  dragPreviewWrapperRef,
+  (el) => {
+    setPreviewElement(el)
+  },
+  { immediate: true }
+)
 
 watch(
   isLoading,

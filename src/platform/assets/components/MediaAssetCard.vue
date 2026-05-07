@@ -229,7 +229,6 @@ import {
   useAssetDragPreview
 } from '../composables/useAssetDragPreview'
 import { useAssetFavorites } from '../composables/useAssetFavorites'
-import { useAssetSelectionStore } from '../composables/useAssetSelectionStore'
 import { useMediaAssetActions } from '../composables/useMediaAssetActions'
 import type { AssetItem } from '../schemas/assetSchema'
 import { getAssetDisplayName } from '../utils/assetMetadataUtils'
@@ -258,6 +257,7 @@ const {
   asset,
   loading,
   selected,
+  selectedIds,
   showOutputCount,
   outputCount,
   restrictStackFavorites = false,
@@ -267,6 +267,7 @@ const {
   asset?: AssetItem
   loading?: boolean
   selected?: boolean
+  selectedIds?: ReadonlySet<string>
   showOutputCount?: boolean
   outputCount?: number
   restrictStackFavorites?: boolean
@@ -427,7 +428,6 @@ const handleOutputCountClick = () => {
   emit('output-count-click')
 }
 
-const selectionStore = useAssetSelectionStore()
 const dragPreview = useAssetDragPreview()
 const { t } = useI18n()
 
@@ -438,19 +438,12 @@ function dragStart(e: DragEvent) {
   if (!dataTransfer) return
 
   const dragIds =
-    selected && selectionStore.selectedCount > 1
-      ? selectionStore.selectedIdsArray
+    selected && selectedIds && selectedIds.size > 1
+      ? [...selectedIds]
       : [asset.id]
 
   dataTransfer.setData(ASSET_DRAG_MIME, JSON.stringify(dragIds))
   dataTransfer.effectAllowed = 'copyMove'
-
-  if (dragIds.length === 1 && asset.preview_url) {
-    const url = URL.parse(asset.preview_url, location.href)
-    if (url) {
-      dataTransfer.items.add(url.toString(), 'text/uri-list')
-    }
-  }
 
   dragPreview.configure(dragIds, asset, t)
   dragPreview.startDrag(e)
