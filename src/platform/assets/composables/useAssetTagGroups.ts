@@ -9,7 +9,7 @@ type GroupsByName = Record<string, string[]>
 
 const groupsByName = useStorage<GroupsByName>(STORAGE_KEY, {})
 
-export interface TagGroup {
+interface TagGroup {
   name: string
   tags: string[]
 }

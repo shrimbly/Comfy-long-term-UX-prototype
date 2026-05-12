@@ -1,6 +1,6 @@
 import { shallowRef } from 'vue'
 
-export interface AssetDimensions {
+interface AssetDimensions {
   width: number
   height: number
 }

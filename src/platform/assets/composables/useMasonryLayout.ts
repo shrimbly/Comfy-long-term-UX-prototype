@@ -2,13 +2,13 @@ import { useElementSize } from '@vueuse/core'
 import { computed, ref, shallowRef, watch } from 'vue'
 import type { ComputedRef, Ref } from 'vue'
 
-export interface MasonryPosition {
+interface MasonryPosition {
   left: number
   top: number
   width: number
 }
 
-export interface MasonryLayoutOptions {
+interface MasonryLayoutOptions {
   /** Reactive reference to the masonry container element. */
   containerRef: Ref<HTMLElement | null>
   /** Stable list of item ids in display order. */
@@ -24,7 +24,7 @@ export interface MasonryLayoutOptions {
   estimatedAspectRatio?: number
 }
 
-export interface MasonryLayoutResult {
+interface MasonryLayoutResult {
   /** Map from item id to absolute position within the container. */
   positions: ComputedRef<Map<string, MasonryPosition>>
   /** Total height the container must be to fit all items. */
