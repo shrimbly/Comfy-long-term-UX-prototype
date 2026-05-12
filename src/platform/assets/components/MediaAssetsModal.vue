@@ -1,6 +1,7 @@
 <template>
   <div ref="modalRootRef" class="contents">
     <BaseModalLayout
+      ref="modalLayoutRef"
       data-component-id="MediaAssetsModal"
       :size="isInspecting ? 'inspect' : 'lg'"
       :left-panel-width="isInspecting ? '4rem' : '14rem'"
@@ -41,63 +42,129 @@
             v-model:metadata-filters="browser.metadataFilters.value"
             :available-tags="browser.availableTags.value"
             :available-values-by-field="browser.availableValuesByField.value"
+            :size="isScrolled ? 'md' : 'lg'"
           />
+        </div>
+        <div
+          :class="
+            cn(
+              'ml-auto flex shrink-0 items-center gap-3 transition-[opacity,transform] duration-200 ease-out',
+              isScrolled
+                ? 'translate-y-0 opacity-100'
+                : 'pointer-events-none -translate-y-1 opacity-0'
+            )
+          "
+          :aria-hidden="!isScrolled"
+        >
+          <Popover :show-arrow="false" align="start">
+            <template #button>
+              <Button
+                variant="secondary"
+                size="lg"
+                :aria-label="$t('mediaAssets.modal.density')"
+              >
+                <span class="font-normal">
+                  {{ $t('mediaAssets.modal.density') }}
+                </span>
+                <i class="icon-[lucide--chevron-down] size-4" />
+              </Button>
+            </template>
+            <div class="flex w-32 items-center p-2">
+              <Slider
+                :model-value="[density]"
+                :min="MIN_DENSITY"
+                :max="MAX_DENSITY"
+                :step="DENSITY_STEP"
+                :aria-label="$t('mediaAssets.modal.density')"
+                class="flex-1 **:data-[slot=slider-range]:bg-white **:data-[slot=slider-thumb]:bg-white"
+                @update:model-value="onDensityChange"
+              />
+            </div>
+          </Popover>
+          <SingleSelect
+            v-model="sortBy"
+            :label="$t('mediaAssets.modal.sortBy')"
+            :options="sortOptions"
+            class="w-56"
+          >
+            <template #icon>
+              <i class="icon-[lucide--arrow-up-down] text-muted-foreground" />
+            </template>
+          </SingleSelect>
         </div>
       </template>
 
       <template v-if="!isInspecting" #contentFilter>
-        <div class="flex shrink-0 flex-col gap-1 px-6 pt-0 pb-2">
-          <div class="flex items-center justify-between gap-4">
-            <div class="flex min-w-0 items-baseline gap-3">
-              <h1 class="text-neutral truncate text-2xl font-semibold">
-                {{ pageTitle }}
-              </h1>
-              <span class="shrink-0 text-sm text-muted-foreground">
-                {{
-                  $t('mediaAssets.modal.assetCount', {
-                    count: browser.displayAssets.value.length
-                  })
-                }}
-              </span>
-            </div>
-            <div class="flex shrink-0 items-center gap-3">
-              <Popover :show-arrow="false" align="start">
-                <template #button>
-                  <Button
-                    variant="secondary"
-                    size="lg"
-                    :aria-label="$t('mediaAssets.modal.density')"
-                  >
-                    <span class="font-normal">
-                      {{ $t('mediaAssets.modal.density') }}
-                    </span>
-                    <i class="icon-[lucide--chevron-down] size-4" />
-                  </Button>
-                </template>
-                <div class="flex w-32 items-center p-2">
-                  <Slider
-                    :model-value="[density]"
-                    :min="MIN_DENSITY"
-                    :max="MAX_DENSITY"
-                    :step="DENSITY_STEP"
-                    :aria-label="$t('mediaAssets.modal.density')"
-                    class="flex-1 **:data-[slot=slider-range]:bg-white **:data-[slot=slider-thumb]:bg-white"
-                    @update:model-value="onDensityChange"
-                  />
+        <div
+          :class="
+            cn(
+              'flex shrink-0 flex-col px-6 pt-0 transition-[gap,padding] duration-200 ease-out',
+              isScrolled ? 'gap-0 pb-0' : 'gap-1 pb-2'
+            )
+          "
+        >
+          <div
+            :class="
+              cn(
+                'grid transition-[grid-template-rows] duration-200 ease-out',
+                isScrolled ? 'grid-rows-[0fr]' : 'grid-rows-[1fr]'
+              )
+            "
+          >
+            <div class="overflow-hidden">
+              <div class="flex items-center justify-between gap-4">
+                <div class="flex min-w-0 items-baseline gap-3">
+                  <h1 class="text-neutral truncate text-2xl font-semibold">
+                    {{ pageTitle }}
+                  </h1>
+                  <span class="shrink-0 text-sm text-muted-foreground">
+                    {{
+                      $t('mediaAssets.modal.assetCount', {
+                        count: browser.displayAssets.value.length
+                      })
+                    }}
+                  </span>
                 </div>
-              </Popover>
-              <SingleSelect
-                v-model="sortBy"
-                :label="$t('mediaAssets.modal.sortBy')"
-                :options="sortOptions"
-                class="w-56"
-              >
-                <template #icon>
-                  <i
-                    class="icon-[lucide--arrow-up-down] text-muted-foreground"
-                  />
-                </template>
-              </SingleSelect>
+                <div class="flex shrink-0 items-center gap-3">
+                  <Popover :show-arrow="false" align="start">
+                    <template #button>
+                      <Button
+                        variant="secondary"
+                        size="lg"
+                        :aria-label="$t('mediaAssets.modal.density')"
+                      >
+                        <span class="font-normal">
+                          {{ $t('mediaAssets.modal.density') }}
+                        </span>
+                        <i class="icon-[lucide--chevron-down] size-4" />
+                      </Button>
+                    </template>
+                    <div class="flex w-32 items-center p-2">
+                      <Slider
+                        :model-value="[density]"
+                        :min="MIN_DENSITY"
+                        :max="MAX_DENSITY"
+                        :step="DENSITY_STEP"
+                        :aria-label="$t('mediaAssets.modal.density')"
+                        class="flex-1 **:data-[slot=slider-range]:bg-white **:data-[slot=slider-thumb]:bg-white"
+                        @update:model-value="onDensityChange"
+                      />
+                    </div>
+                  </Popover>
+                  <SingleSelect
+                    v-model="sortBy"
+                    :label="$t('mediaAssets.modal.sortBy')"
+                    :options="sortOptions"
+                    class="w-56"
+                  >
+                    <template #icon>
+                      <i
+                        class="icon-[lucide--arrow-up-down] text-muted-foreground"
+                      />
+                    </template>
+                  </SingleSelect>
+                </div>
+              </div>
             </div>
           </div>
           <MediaAssetFilterChipsBar
@@ -188,8 +255,8 @@
 </template>
 
 <script setup lang="ts">
-import { useEventListener } from '@vueuse/core'
-import { provide, ref, useTemplateRef } from 'vue'
+import { useEventListener, useScroll } from '@vueuse/core'
+import { computed, provide, ref, useTemplateRef } from 'vue'
 
 import NoResultsPlaceholder from '@/components/common/NoResultsPlaceholder.vue'
 import SingleSelect from '@/components/input/SingleSelect.vue'
@@ -209,12 +276,24 @@ import MetadataSearchInput from '@/platform/assets/components/MetadataSearchInpu
 import { ASSET_DRAG_MIME } from '@/platform/assets/composables/useAssetDragPreview'
 import { useMediaAssetsBrowserState } from '@/platform/assets/composables/useMediaAssetsBrowserState'
 import { OnCloseKey } from '@/types/widgetTypes'
+import { cn } from '@/utils/tailwindUtil'
 
 const { onClose } = defineProps<{
   onClose?: () => void
 }>()
 
 provide(OnCloseKey, () => onClose?.())
+
+const SCROLL_COLLAPSE_THRESHOLD = 32
+
+const modalLayoutRef = useTemplateRef<{
+  scrollContainerRef: HTMLElement | null
+}>('modalLayoutRef')
+const scrollContainer = computed(
+  () => modalLayoutRef.value?.scrollContainerRef ?? null
+)
+const { y: scrollY } = useScroll(scrollContainer)
+const isScrolled = computed(() => scrollY.value > SCROLL_COLLAPSE_THRESHOLD)
 
 const contextMenuRef = ref<InstanceType<typeof MediaAssetContextMenu> | null>(
   null

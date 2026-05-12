@@ -79,7 +79,7 @@
           >
             {{ contentTitle }}
           </h2>
-          <div :class="contentContainerClass">
+          <div ref="scrollContainerRef" :class="contentContainerClass">
             <slot name="content" />
           </div>
         </main>
@@ -136,7 +136,7 @@
 
 <script setup lang="ts">
 import { useBreakpoints } from '@vueuse/core'
-import { computed, inject, ref, useSlots, watch } from 'vue'
+import { computed, inject, ref, useSlots, useTemplateRef, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import Button from '@/components/ui/button/Button.vue'
@@ -233,6 +233,10 @@ const toggleLeftPanel = () => {
 const toggleRightPanel = () => {
   isRightPanelOpen.value = !isRightPanelOpen.value
 }
+
+const scrollContainerRef = useTemplateRef<HTMLElement>('scrollContainerRef')
+
+defineExpose({ scrollContainerRef })
 
 function handleEscape(event: KeyboardEvent) {
   const target = event.target
