@@ -3143,6 +3143,7 @@
       "disabledTooltip": "Select 2+ items of the same type to compare",
       "filteredToast": "Comparing {n} items — excluded {m} of other types",
       "pin": "Pin",
+      "pinImage": "Pin this image",
       "pinSide": "Pin to this side",
       "pinned": "Pinned",
       "vs": "vs",

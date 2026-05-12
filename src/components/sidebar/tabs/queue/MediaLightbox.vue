@@ -57,373 +57,88 @@
         </Button>
       </template>
 
-      <!-- Compare mode (modal) -->
+      <!-- Compare mode (lightbox) -->
       <template v-else>
+        <!-- Top-left mode buttons -->
         <div
-          class="flex h-[min(900px,90vh)] w-[min(1400px,92vw)] overflow-hidden rounded-2xl border border-white/10 bg-neutral-900 text-white shadow-2xl"
+          class="absolute top-4 left-4 z-10 flex items-center gap-1 rounded-lg bg-black/50 p-1 backdrop-blur-sm"
         >
-          <!-- Sidebar -->
-          <aside
-            class="flex w-56 shrink-0 flex-col border-r border-border-subtle bg-modal-panel-background text-base-foreground"
+          <Button
+            v-for="mode in compareModes"
+            :key="mode"
+            :variant="compareMode === mode ? 'overlay-white' : 'textonly'"
+            size="md"
+            :class="
+              cn(compareMode !== mode && 'text-white/80 hover:bg-white/10')
+            "
+            :aria-label="$t(`mediaAsset.compare.mode.${mode}`)"
+            :aria-pressed="compareMode === mode"
+            @click="setMode(mode)"
           >
-            <header
-              class="flex h-18 w-full shrink-0 items-center-safe gap-2 px-6"
-            >
-              <i
-                class="text-neutral icon-[lucide--columns-2] size-5 shrink-0"
-              />
-              <h2 class="m-0 flex-1 text-base font-semibold select-none">
-                {{ $t('mediaAsset.compare.action') }}
-              </h2>
-            </header>
-            <nav
-              class="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto px-3"
-            >
-              <button
-                v-for="mode in compareModes"
-                :key="mode"
-                type="button"
-                :class="
-                  cn(
-                    'flex w-full cursor-pointer items-center-safe gap-2 rounded-md border-none px-4 py-3 text-left text-sm text-base-foreground transition-colors select-none',
-                    compareMode === mode
-                      ? 'bg-interface-menu-component-surface-selected'
-                      : 'bg-transparent hover:bg-interface-menu-component-surface-hovered'
-                  )
-                "
-                :aria-label="$t(`mediaAsset.compare.mode.${mode}`)"
-                :aria-pressed="compareMode === mode"
-                @click="setMode(mode)"
-              >
-                <i
-                  :class="cn(modeIcon[mode], 'text-neutral shrink-0 text-sm')"
-                />
-                <span class="min-w-0 truncate">{{
-                  $t(`mediaAsset.compare.mode.${mode}`)
-                }}</span>
-              </button>
-            </nav>
-            <p
-              v-if="modeHint"
-              class="m-0 px-6 pt-3 pb-5 text-xs/snug text-muted-foreground"
-            >
-              {{ modeHint }}
-            </p>
-          </aside>
+            <i :class="cn(modeIcon[mode], 'size-4 shrink-0')" />
+            <span class="hidden sm:inline">{{
+              $t(`mediaAsset.compare.mode.${mode}`)
+            }}</span>
+          </Button>
+        </div>
 
-          <!-- Content -->
-          <main
-            class="relative flex flex-1 items-center justify-center overflow-hidden"
+        <div class="relative flex size-full flex-col text-white">
+          <!-- Side-by-side -->
+          <div
+            v-if="compareMode === 'side-by-side'"
+            :class="
+              cn(
+                'flex size-full items-stretch gap-4 px-2 pt-14',
+                showPinHighlight ? 'pb-16' : 'pb-4'
+              )
+            "
           >
-            <!-- Side-by-side -->
             <div
-              v-if="compareMode === 'side-by-side'"
-              class="flex size-full items-stretch justify-center"
+              :class="
+                cn(
+                  'group/panel relative flex h-full flex-1 items-center justify-center',
+                  showPinHighlight && pinnedSide !== 'left' && 'cursor-pointer'
+                )
+              "
+              @click="
+                showPinHighlight && pinnedSide !== 'left' && setPin('left')
+              "
             >
               <div
-                :class="
-                  cn(
-                    'group/panel flex h-full flex-1 flex-col items-center overflow-hidden p-6 transition-colors',
-                    showPinHighlight &&
-                      pinnedSide !== 'left' &&
-                      'cursor-pointer hover:bg-white/3'
-                  )
-                "
-                @click="showPinHighlight && setPin('left')"
+                class="inline-grid max-h-full max-w-full grid-rows-[auto_minmax(0,1fr)]"
               >
                 <div
-                  class="mb-3 flex h-7 items-center gap-2 self-start text-base font-semibold text-white"
-                  @click.stop
+                  class="flex h-6 shrink-0 items-center justify-end gap-1.5 text-sm select-none"
                 >
+                  <span
+                    :class="
+                      pinnedSide === 'left' ? 'text-white' : 'text-white/40'
+                    "
+                  >
+                    {{
+                      pinnedSide === 'left'
+                        ? $t('mediaAsset.compare.pinned')
+                        : $t('mediaAsset.compare.pinImage')
+                    }}
+                  </span>
                   <i
                     :class="
                       pinnedSide === 'left'
-                        ? 'icon-[ph--push-pin-fill] size-5 text-white'
-                        : 'icon-[ph--push-pin] size-5 text-white/55'
-                    "
-                  />
-                  <span v-if="pinnedSide === 'left'">{{
-                    $t('mediaAsset.compare.pinned')
-                  }}</span>
-                </div>
-                <div
-                  class="flex flex-1 items-center justify-center self-stretch overflow-hidden"
-                >
-                  <div
-                    :class="
-                      cn(
-                        'relative inline-flex max-h-full max-w-full',
-                        showPinHighlight &&
-                          pinnedSide === 'left' &&
-                          'p-1 ring-3 ring-modal-card-border-highlighted ring-inset'
-                      )
-                    "
-                  >
-                    <LightboxAssetView
-                      v-if="leftItem"
-                      :item="leftItem"
-                      class="max-h-full max-w-full"
-                    />
-                    <div
-                      class="absolute top-3 left-3 z-10 flex items-center gap-1 opacity-0 transition-opacity duration-150 group-hover/panel:opacity-100"
-                      @click.stop
-                    >
-                      <AssetFavoriteToggle
-                        v-if="leftAsset"
-                        :asset="leftAsset"
-                        :pill="true"
-                        :visible="true"
-                      />
-                      <Button
-                        v-tooltip.top.pt:pointer-events-none="$t('g.remove')"
-                        variant="overlay-white"
-                        size="icon"
-                        class="transition-transform duration-150 ease-out hover:scale-110"
-                        :aria-label="$t('g.remove')"
-                        @click.stop="removeFromCompare(leftIndex)"
-                      >
-                        <i class="icon-[lucide--circle-minus] size-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-                <div
-                  v-if="showPinHighlight"
-                  class="mt-3 flex h-10 items-center justify-center gap-3"
-                  @click.stop
-                >
-                  <template v-if="pinnedSide !== 'left'">
-                    <Button
-                      variant="secondary"
-                      size="icon"
-                      class="rounded-full"
-                      :aria-label="$t('g.previous')"
-                      @click="advanceCursor(-1)"
-                    >
-                      <i class="icon-[lucide--chevron-left] size-4" />
-                    </Button>
-                    <span
-                      class="min-w-12 text-center text-sm text-white/80 tabular-nums"
-                    >
-                      {{ cursorPositionLabel }}
-                    </span>
-                    <Button
-                      variant="secondary"
-                      size="icon"
-                      class="rounded-full"
-                      :aria-label="$t('g.next')"
-                      @click="advanceCursor(1)"
-                    >
-                      <i class="icon-[lucide--chevron-right] size-4" />
-                    </Button>
-                  </template>
-                </div>
-              </div>
-              <div
-                :class="
-                  cn(
-                    'group/panel flex h-full flex-1 flex-col items-center overflow-hidden p-6 transition-colors',
-                    showPinHighlight &&
-                      pinnedSide !== 'right' &&
-                      'cursor-pointer hover:bg-white/3'
-                  )
-                "
-                @click="showPinHighlight && setPin('right')"
-              >
-                <div
-                  class="mb-3 flex h-7 items-center gap-2 self-end text-base font-semibold text-white"
-                  @click.stop
-                >
-                  <span v-if="pinnedSide === 'right'">{{
-                    $t('mediaAsset.compare.pinned')
-                  }}</span>
-                  <i
-                    :class="
-                      pinnedSide === 'right'
-                        ? 'icon-[ph--push-pin-fill] size-5 text-white'
-                        : 'icon-[ph--push-pin] size-5 text-white/55'
+                        ? 'icon-[ph--push-pin-fill] size-4 text-white'
+                        : 'icon-[ph--push-pin] size-4 text-white/40'
                     "
                   />
                 </div>
-                <div
-                  class="flex flex-1 items-center justify-center self-stretch overflow-hidden"
-                >
-                  <div
-                    :class="
-                      cn(
-                        'relative inline-flex max-h-full max-w-full',
-                        showPinHighlight &&
-                          pinnedSide === 'right' &&
-                          'p-1 ring-3 ring-modal-card-border-highlighted ring-inset'
-                      )
-                    "
-                  >
-                    <LightboxAssetView
-                      v-if="rightItem"
-                      :item="rightItem"
-                      class="max-h-full max-w-full"
-                    />
-                    <div
-                      class="absolute top-3 left-3 z-10 flex items-center gap-1 opacity-0 transition-opacity duration-150 group-hover/panel:opacity-100"
-                      @click.stop
-                    >
-                      <AssetFavoriteToggle
-                        v-if="rightAsset"
-                        :asset="rightAsset"
-                        :pill="true"
-                        :visible="true"
-                      />
-                      <Button
-                        v-tooltip.top.pt:pointer-events-none="$t('g.remove')"
-                        variant="overlay-white"
-                        size="icon"
-                        class="transition-transform duration-150 ease-out hover:scale-110"
-                        :aria-label="$t('g.remove')"
-                        @click.stop="removeFromCompare(rightIndex)"
-                      >
-                        <i class="icon-[lucide--circle-minus] size-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-                <div
-                  v-if="showPinHighlight"
-                  class="mt-3 flex h-10 items-center justify-center gap-3"
-                  @click.stop
-                >
-                  <template v-if="pinnedSide !== 'right'">
-                    <Button
-                      variant="secondary"
-                      size="icon"
-                      class="rounded-full"
-                      :aria-label="$t('g.previous')"
-                      @click="advanceCursor(-1)"
-                    >
-                      <i class="icon-[lucide--chevron-left] size-4" />
-                    </Button>
-                    <span
-                      class="min-w-12 text-center text-sm text-white/80 tabular-nums"
-                    >
-                      {{ cursorPositionLabel }}
-                    </span>
-                    <Button
-                      variant="secondary"
-                      size="icon"
-                      class="rounded-full"
-                      :aria-label="$t('g.next')"
-                      @click="advanceCursor(1)"
-                    >
-                      <i class="icon-[lucide--chevron-right] size-4" />
-                    </Button>
-                  </template>
-                </div>
-              </div>
-            </div>
-
-            <!-- Wipe -->
-            <div
-              v-else-if="compareMode === 'wipe'"
-              class="relative flex size-full flex-col items-stretch p-6 select-none"
-            >
-              <div class="mb-3 flex h-7 w-full items-center justify-between">
-                <div
-                  v-if="pinnedSide === 'left'"
-                  class="flex items-center gap-2 text-base font-semibold text-white"
-                >
-                  <i class="icon-[ph--push-pin-fill] size-5 text-white" />
-                  <span>{{ $t('mediaAsset.compare.pinned') }}</span>
-                </div>
-                <Button
-                  v-else-if="showPinHighlight"
-                  variant="inverted"
-                  size="sm"
-                  class="rounded-full"
-                  :aria-label="$t('mediaAsset.compare.pin')"
-                  @click="setPin('left')"
-                >
-                  <i class="icon-[ph--push-pin] size-4" />
-                  <span>{{ $t('mediaAsset.compare.pin') }}</span>
-                </Button>
-                <span v-else aria-hidden="true" />
-                <div
-                  v-if="pinnedSide === 'right'"
-                  class="flex items-center gap-2 text-base font-semibold text-white"
-                >
-                  <i class="icon-[ph--push-pin-fill] size-5 text-white" />
-                  <span>{{ $t('mediaAsset.compare.pinned') }}</span>
-                </div>
-                <Button
-                  v-else-if="showPinHighlight"
-                  variant="inverted"
-                  size="sm"
-                  class="rounded-full"
-                  :aria-label="$t('mediaAsset.compare.pin')"
-                  @click="setPin('right')"
-                >
-                  <i class="icon-[ph--push-pin] size-4" />
-                  <span>{{ $t('mediaAsset.compare.pin') }}</span>
-                </Button>
-                <span v-else aria-hidden="true" />
-              </div>
-              <div
-                class="group/wipe relative w-full flex-1 overflow-hidden"
-                @pointerdown="onWipePointerDown"
-              >
-                <div ref="wipeBoxRef" class="relative size-full">
-                  <img
-                    v-if="leftItem?.isImage"
-                    :src="leftItem.url"
-                    :alt="leftItem.filename"
-                    class="pointer-events-none absolute inset-0 size-full object-contain"
-                  />
-                  <video
-                    v-else-if="leftItem?.isVideo"
-                    :src="leftItem.url"
-                    muted
-                    loop
-                    autoplay
-                    playsinline
-                    class="pointer-events-none absolute inset-0 size-full object-contain"
+                <div class="relative flex min-h-0 items-center justify-end">
+                  <LightboxAssetView
+                    v-if="leftItem"
+                    :item="leftItem"
+                    class="max-h-full max-w-full"
                   />
                   <div
-                    class="absolute inset-0"
-                    :style="{
-                      clipPath: `inset(0 0 0 ${wipePosition * 100}%)`
-                    }"
+                    class="absolute top-3 right-3 z-10 flex items-center gap-1 opacity-0 transition-opacity duration-150 group-hover/panel:opacity-100"
+                    @click.stop
                   >
-                    <img
-                      v-if="rightItem?.isImage"
-                      :src="rightItem.url"
-                      :alt="rightItem.filename"
-                      class="pointer-events-none absolute inset-0 size-full object-contain"
-                    />
-                    <video
-                      v-else-if="rightItem?.isVideo"
-                      :src="rightItem.url"
-                      muted
-                      loop
-                      autoplay
-                      playsinline
-                      class="pointer-events-none absolute inset-0 size-full object-contain"
-                    />
-                  </div>
-                  <div
-                    class="pointer-events-none absolute inset-y-0 w-0.5 bg-white/80"
-                    :style="{ left: `${wipePosition * 100}%` }"
-                  >
-                    <div
-                      class="pointer-events-auto absolute top-1/2 left-1/2 flex size-8 -translate-1/2 cursor-ew-resize items-center justify-center rounded-full bg-white text-black shadow-lg"
-                    >
-                      <i class="icon-[lucide--chevrons-left-right] size-4" />
-                    </div>
-                  </div>
-                </div>
-                <div
-                  class="pointer-events-none absolute top-3 left-3 z-10 flex items-center gap-1 opacity-0 transition-opacity duration-150 group-hover/wipe:opacity-100"
-                  @pointerdown.stop
-                  @click.stop
-                >
-                  <div class="pointer-events-auto flex items-center gap-1">
                     <AssetFavoriteToggle
                       v-if="leftAsset"
                       :asset="leftAsset"
@@ -442,12 +157,54 @@
                     </Button>
                   </div>
                 </div>
+              </div>
+            </div>
+            <div
+              :class="
+                cn(
+                  'group/panel relative flex h-full flex-1 items-center justify-center',
+                  showPinHighlight && pinnedSide !== 'right' && 'cursor-pointer'
+                )
+              "
+              @click="
+                showPinHighlight && pinnedSide !== 'right' && setPin('right')
+              "
+            >
+              <div
+                class="inline-grid max-h-full max-w-full grid-rows-[auto_minmax(0,1fr)]"
+              >
                 <div
-                  class="pointer-events-none absolute top-3 right-3 z-10 flex items-center gap-1 opacity-0 transition-opacity duration-150 group-hover/wipe:opacity-100"
-                  @pointerdown.stop
-                  @click.stop
+                  class="flex h-6 shrink-0 items-center justify-start gap-1.5 text-sm select-none"
                 >
-                  <div class="pointer-events-auto flex items-center gap-1">
+                  <i
+                    :class="
+                      pinnedSide === 'right'
+                        ? 'icon-[ph--push-pin-fill] size-4 text-white'
+                        : 'icon-[ph--push-pin] size-4 text-white/40'
+                    "
+                  />
+                  <span
+                    :class="
+                      pinnedSide === 'right' ? 'text-white' : 'text-white/40'
+                    "
+                  >
+                    {{
+                      pinnedSide === 'right'
+                        ? $t('mediaAsset.compare.pinned')
+                        : $t('mediaAsset.compare.pinImage')
+                    }}
+                  </span>
+                </div>
+                <div class="relative flex min-h-0 items-center justify-start">
+                  <LightboxAssetView
+                    v-if="rightItem"
+                    :item="rightItem"
+                    class="max-h-full max-w-full"
+                  />
+                  <div
+                    class="absolute top-3 left-3 z-10 flex items-center gap-1 opacity-0 transition-opacity duration-150 group-hover/panel:opacity-100"
+                    @click.stop
+                  >
                     <AssetFavoriteToggle
                       v-if="rightAsset"
                       :asset="rightAsset"
@@ -467,187 +224,436 @@
                   </div>
                 </div>
               </div>
-              <div
-                v-if="showPinHighlight"
-                class="mt-4 flex items-center justify-center gap-2"
-              >
-                <button
-                  v-if="pinnedItem"
-                  type="button"
-                  class="size-10 cursor-pointer overflow-hidden rounded-sm border-none p-0 opacity-60 transition-all hover:opacity-100"
-                  :aria-label="pinnedItem.filename"
-                >
-                  <img
-                    :src="pinnedItem.url"
-                    :alt="pinnedItem.filename"
-                    class="size-full object-cover"
-                  />
-                </button>
-                <div
-                  v-if="otherFlipItems.length > 0"
-                  class="h-8 w-px bg-white/20"
-                />
-                <button
-                  v-for="other in otherFlipItems"
-                  :key="other.index"
-                  type="button"
-                  :class="
-                    cn(
-                      'size-10 cursor-pointer overflow-hidden rounded-sm border-none p-0 transition-all',
-                      cursorIndex === other.index
-                        ? 'ring-2 ring-white ring-offset-2 ring-offset-neutral-900'
-                        : 'opacity-60 hover:opacity-100'
-                    )
-                  "
-                  :aria-label="other.item.filename"
-                  :aria-pressed="cursorIndex === other.index"
-                  @click="cursorIndex = other.index"
-                >
-                  <img
-                    :src="other.item.url"
-                    :alt="other.item.filename"
-                    class="size-full object-cover"
-                  />
-                </button>
-              </div>
             </div>
-
-            <!-- Flip -->
             <div
-              v-else-if="compareMode === 'flip'"
-              class="relative flex size-full flex-col items-center justify-center p-6"
+              v-if="showPinHighlight"
+              :class="
+                cn(
+                  'pointer-events-none absolute bottom-4 flex justify-center',
+                  pinnedSide === 'left'
+                    ? 'right-0 left-1/2'
+                    : 'right-1/2 left-0'
+                )
+              "
             >
               <div
-                class="group/flip flex w-full flex-1 items-center justify-center overflow-hidden"
+                class="pointer-events-auto flex items-center gap-2 rounded-full bg-black/60 px-2 py-1 backdrop-blur-sm"
               >
-                <div class="relative inline-flex max-h-full max-w-full">
-                  <LightboxAssetView
-                    v-if="flipItem"
-                    :item="flipItem"
-                    class="max-h-full max-w-full"
+                <Button
+                  variant="textonly"
+                  size="icon"
+                  class="rounded-full text-white hover:bg-white/10"
+                  :aria-label="$t('g.previous')"
+                  @click="advanceCursor(-1)"
+                >
+                  <i class="icon-[lucide--chevron-left] size-4" />
+                </Button>
+                <span
+                  class="min-w-12 text-center text-sm text-white/80 tabular-nums"
+                >
+                  {{ cursorPositionLabel }}
+                </span>
+                <Button
+                  variant="textonly"
+                  size="icon"
+                  class="rounded-full text-white hover:bg-white/10"
+                  :aria-label="$t('g.next')"
+                  @click="advanceCursor(1)"
+                >
+                  <i class="icon-[lucide--chevron-right] size-4" />
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Wipe -->
+          <div
+            v-else-if="compareMode === 'wipe'"
+            class="flex size-full flex-col items-stretch px-4 pt-20 pb-6 select-none"
+          >
+            <div
+              class="mb-2 flex h-7 shrink-0 items-center justify-between gap-2 px-1 text-sm select-none"
+            >
+              <button
+                type="button"
+                :class="
+                  cn(
+                    'flex items-center gap-1.5 border-0 bg-transparent p-0 text-inherit',
+                    showPinHighlight && pinnedSide !== 'left'
+                      ? 'cursor-pointer'
+                      : 'cursor-default'
+                  )
+                "
+                :disabled="!showPinHighlight || pinnedSide === 'left'"
+                :aria-label="$t('mediaAsset.compare.pin')"
+                @click="setPin('left')"
+              >
+                <i
+                  :class="
+                    pinnedSide === 'left'
+                      ? 'icon-[ph--push-pin-fill] size-4 text-white'
+                      : 'icon-[ph--push-pin] size-4 text-white/40'
+                  "
+                />
+                <span
+                  :class="
+                    pinnedSide === 'left' ? 'text-white' : 'text-white/40'
+                  "
+                >
+                  {{
+                    pinnedSide === 'left'
+                      ? $t('mediaAsset.compare.pinned')
+                      : showPinHighlight
+                        ? $t('mediaAsset.compare.pinImage')
+                        : ''
+                  }}
+                </span>
+              </button>
+              <button
+                type="button"
+                :class="
+                  cn(
+                    'flex items-center gap-1.5 border-0 bg-transparent p-0 text-inherit',
+                    showPinHighlight && pinnedSide !== 'right'
+                      ? 'cursor-pointer'
+                      : 'cursor-default'
+                  )
+                "
+                :disabled="!showPinHighlight || pinnedSide === 'right'"
+                :aria-label="$t('mediaAsset.compare.pin')"
+                @click="setPin('right')"
+              >
+                <span
+                  :class="
+                    pinnedSide === 'right' ? 'text-white' : 'text-white/40'
+                  "
+                >
+                  {{
+                    pinnedSide === 'right'
+                      ? $t('mediaAsset.compare.pinned')
+                      : showPinHighlight
+                        ? $t('mediaAsset.compare.pinImage')
+                        : ''
+                  }}
+                </span>
+                <i
+                  :class="
+                    pinnedSide === 'right'
+                      ? 'icon-[ph--push-pin-fill] size-4 text-white'
+                      : 'icon-[ph--push-pin] size-4 text-white/40'
+                  "
+                />
+              </button>
+            </div>
+            <div
+              ref="wipeAreaRef"
+              class="flex min-h-0 w-full flex-1 items-center justify-center"
+            >
+              <div
+                ref="wipeBoxRef"
+                class="relative"
+                :style="wipeBoxStyle"
+                @pointerdown="onWipePointerDown"
+              >
+                <img
+                  v-if="leftItem?.isImage"
+                  :src="leftItem.url"
+                  :alt="leftItem.filename"
+                  class="pointer-events-none absolute inset-0 size-full object-contain"
+                  @load="onLeftMediaLoad"
+                />
+                <video
+                  v-else-if="leftItem?.isVideo"
+                  :src="leftItem.url"
+                  muted
+                  loop
+                  autoplay
+                  playsinline
+                  class="pointer-events-none absolute inset-0 size-full object-contain"
+                  @loadedmetadata="onLeftMediaLoad"
+                />
+                <div
+                  class="absolute inset-0 overflow-hidden"
+                  :style="{
+                    clipPath: `inset(0 0 0 ${wipePosition * 100}%)`
+                  }"
+                >
+                  <img
+                    v-if="rightItem?.isImage"
+                    :src="rightItem.url"
+                    :alt="rightItem.filename"
+                    class="pointer-events-none absolute inset-0 size-full object-contain"
                   />
-                  <span
-                    class="absolute top-3 left-3 rounded-full bg-black/70 px-3 py-1 text-sm font-semibold text-white"
-                  >
-                    {{ flipShowingRight ? 'B' : 'A' }}
-                  </span>
+                  <video
+                    v-else-if="rightItem?.isVideo"
+                    :src="rightItem.url"
+                    muted
+                    loop
+                    autoplay
+                    playsinline
+                    class="pointer-events-none absolute inset-0 size-full object-contain"
+                  />
+                </div>
+                <div
+                  class="pointer-events-none absolute inset-y-0 w-0.5 bg-white/80"
+                  :style="{ left: `${wipePosition * 100}%` }"
+                >
                   <div
-                    class="absolute top-3 left-12 z-10 flex items-center gap-1 opacity-0 transition-opacity duration-150 group-hover/flip:opacity-100"
-                    @click.stop
+                    class="pointer-events-auto absolute top-1/2 left-1/2 flex size-8 -translate-1/2 cursor-ew-resize items-center justify-center rounded-full bg-white text-black shadow-lg"
                   >
-                    <AssetFavoriteToggle
-                      v-if="flipAsset"
-                      :asset="flipAsset"
-                      :pill="true"
-                      :visible="true"
-                    />
-                    <Button
-                      v-tooltip.top.pt:pointer-events-none="$t('g.remove')"
-                      variant="overlay-white"
-                      size="icon"
-                      class="transition-transform duration-150 ease-out hover:scale-110"
-                      :aria-label="$t('g.remove')"
-                      @click.stop="removeFromCompare(flipIndex)"
-                    >
-                      <i class="icon-[lucide--circle-minus] size-4" />
-                    </Button>
+                    <i class="icon-[lucide--chevrons-left-right] size-4" />
                   </div>
+                </div>
+                <div
+                  class="absolute top-2 left-2 z-10 flex flex-col items-center gap-1"
+                  @pointerdown.stop
+                  @click.stop
+                >
+                  <AssetFavoriteToggle
+                    v-if="leftAsset"
+                    :asset="leftAsset"
+                    :pill="true"
+                    :visible="true"
+                  />
                   <Button
-                    v-if="
-                      showPinHighlight && flipItem && flipItem !== pinnedItem
-                    "
-                    variant="inverted"
-                    size="sm"
-                    class="absolute top-3 right-3 rounded-full shadow-md"
-                    :aria-label="$t('mediaAsset.compare.pin')"
-                    @click="togglePin"
+                    v-tooltip.right.pt:pointer-events-none="$t('g.remove')"
+                    variant="overlay-white"
+                    size="icon"
+                    class="transition-transform duration-150 ease-out hover:scale-110"
+                    :aria-label="$t('g.remove')"
+                    @click.stop="removeFromCompare(leftIndex)"
                   >
-                    <i class="icon-[ph--push-pin] size-4" />
-                    <span>{{ $t('mediaAsset.compare.pin') }}</span>
+                    <i class="icon-[lucide--circle-minus] size-4" />
+                  </Button>
+                </div>
+                <div
+                  class="absolute top-2 right-2 z-10 flex flex-col items-center gap-1"
+                  @pointerdown.stop
+                  @click.stop
+                >
+                  <AssetFavoriteToggle
+                    v-if="rightAsset"
+                    :asset="rightAsset"
+                    :pill="true"
+                    :visible="true"
+                  />
+                  <Button
+                    v-tooltip.left.pt:pointer-events-none="$t('g.remove')"
+                    variant="overlay-white"
+                    size="icon"
+                    class="transition-transform duration-150 ease-out hover:scale-110"
+                    :aria-label="$t('g.remove')"
+                    @click.stop="removeFromCompare(rightIndex)"
+                  >
+                    <i class="icon-[lucide--circle-minus] size-4" />
                   </Button>
                 </div>
               </div>
-              <div class="mt-4 flex items-center justify-center gap-2">
-                <button
-                  v-if="pinnedItem"
-                  type="button"
-                  :class="
-                    cn(
-                      'size-10 cursor-pointer overflow-hidden rounded-sm border-none p-0 transition-all',
-                      flipItem === pinnedItem
-                        ? 'ring-2 ring-white ring-offset-2 ring-offset-neutral-900'
-                        : 'opacity-60 hover:opacity-100'
-                    )
-                  "
-                  :aria-label="pinnedItem.filename"
-                  :aria-pressed="flipItem === pinnedItem"
-                  @click="flipShowingRight = pinnedSide === 'right'"
-                >
-                  <img
-                    :src="pinnedItem.url"
-                    :alt="pinnedItem.filename"
-                    class="size-full object-cover"
-                  />
-                </button>
-                <div
-                  v-if="otherFlipItems.length > 0"
-                  class="h-8 w-px bg-white/20"
+            </div>
+            <div
+              v-if="showPinHighlight"
+              class="mt-3 flex items-center justify-center gap-2"
+            >
+              <button
+                v-if="pinnedItem"
+                type="button"
+                class="size-10 cursor-pointer overflow-hidden rounded-sm border-none p-0 opacity-60 transition-all hover:opacity-100"
+                :aria-label="pinnedItem.filename"
+              >
+                <img
+                  :src="pinnedItem.url"
+                  :alt="pinnedItem.filename"
+                  class="size-full object-cover"
                 />
-                <button
-                  v-for="other in otherFlipItems"
-                  :key="other.index"
-                  type="button"
-                  :class="
-                    cn(
-                      'size-10 cursor-pointer overflow-hidden rounded-sm border-none p-0 transition-all',
-                      flipItem === other.item && cursorIndex === other.index
-                        ? 'ring-2 ring-white ring-offset-2 ring-offset-neutral-900'
-                        : 'opacity-60 hover:opacity-100'
-                    )
-                  "
-                  :aria-label="other.item.filename"
-                  :aria-pressed="
-                    flipItem === other.item && cursorIndex === other.index
-                  "
-                  @click="selectFlipCursor(other.index)"
+              </button>
+              <div
+                v-if="otherFlipItems.length > 0"
+                class="h-8 w-px bg-white/20"
+              />
+              <button
+                v-for="other in otherFlipItems"
+                :key="other.index"
+                type="button"
+                :class="
+                  cn(
+                    'size-10 cursor-pointer overflow-hidden rounded-sm border-none p-0 transition-all',
+                    cursorIndex === other.index
+                      ? 'ring-2 ring-white ring-offset-2 ring-offset-black'
+                      : 'opacity-60 hover:opacity-100'
+                  )
+                "
+                :aria-label="other.item.filename"
+                :aria-pressed="cursorIndex === other.index"
+                @click="cursorIndex = other.index"
+              >
+                <img
+                  :src="other.item.url"
+                  :alt="other.item.filename"
+                  class="size-full object-cover"
+                />
+              </button>
+            </div>
+          </div>
+
+          <!-- Flip -->
+          <div
+            v-else-if="compareMode === 'flip'"
+            class="flex size-full flex-col items-center px-4 pt-20 pb-6"
+          >
+            <button
+              type="button"
+              :class="
+                cn(
+                  'mb-2 flex h-7 shrink-0 items-center justify-center gap-1.5 border-0 bg-transparent p-0 text-sm text-inherit select-none',
+                  showPinHighlight && flipItem && flipItem !== pinnedItem
+                    ? 'cursor-pointer'
+                    : 'cursor-default'
+                )
+              "
+              :disabled="
+                !showPinHighlight || !flipItem || flipItem === pinnedItem
+              "
+              :aria-label="$t('mediaAsset.compare.pin')"
+              @click="togglePin"
+            >
+              <i
+                :class="
+                  flipItem === pinnedItem
+                    ? 'icon-[ph--push-pin-fill] size-4 text-white'
+                    : 'icon-[ph--push-pin] size-4 text-white/40'
+                "
+              />
+              <span
+                :class="
+                  flipItem === pinnedItem ? 'text-white' : 'text-white/40'
+                "
+              >
+                {{
+                  flipItem === pinnedItem
+                    ? $t('mediaAsset.compare.pinned')
+                    : showPinHighlight
+                      ? $t('mediaAsset.compare.pinImage')
+                      : ''
+                }}
+              </span>
+            </button>
+            <div
+              class="flex min-h-0 w-full flex-1 items-center justify-center overflow-hidden"
+            >
+              <div class="relative inline-flex max-h-full max-w-full">
+                <LightboxAssetView
+                  v-if="flipItem"
+                  :item="flipItem"
+                  class="max-h-full max-w-full"
+                />
+                <span
+                  class="absolute top-3 left-3 rounded-full bg-black/70 px-3 py-1 text-sm font-semibold text-white"
                 >
-                  <img
-                    :src="other.item.url"
-                    :alt="other.item.filename"
-                    class="size-full object-cover"
+                  {{ flipShowingRight ? 'B' : 'A' }}
+                </span>
+                <div
+                  class="absolute top-3 right-3 z-10 flex flex-col items-center gap-1"
+                  @click.stop
+                >
+                  <AssetFavoriteToggle
+                    v-if="flipAsset"
+                    :asset="flipAsset"
+                    :pill="true"
+                    :visible="true"
                   />
-                </button>
+                  <Button
+                    v-tooltip.left.pt:pointer-events-none="$t('g.remove')"
+                    variant="overlay-white"
+                    size="icon"
+                    class="transition-transform duration-150 ease-out hover:scale-110"
+                    :aria-label="$t('g.remove')"
+                    @click.stop="removeFromCompare(flipIndex)"
+                  >
+                    <i class="icon-[lucide--circle-minus] size-4" />
+                  </Button>
+                </div>
               </div>
             </div>
+            <div class="mt-3 flex items-center justify-center gap-2">
+              <button
+                v-if="pinnedItem"
+                type="button"
+                :class="
+                  cn(
+                    'size-10 cursor-pointer overflow-hidden rounded-sm border-none p-0 transition-all',
+                    flipItem === pinnedItem
+                      ? 'ring-2 ring-white ring-offset-2 ring-offset-black'
+                      : 'opacity-60 hover:opacity-100'
+                  )
+                "
+                :aria-label="pinnedItem.filename"
+                :aria-pressed="flipItem === pinnedItem"
+                @click="flipShowingRight = pinnedSide === 'right'"
+              >
+                <img
+                  :src="pinnedItem.url"
+                  :alt="pinnedItem.filename"
+                  class="size-full object-cover"
+                />
+              </button>
+              <div
+                v-if="otherFlipItems.length > 0"
+                class="h-8 w-px bg-white/20"
+              />
+              <button
+                v-for="other in otherFlipItems"
+                :key="other.index"
+                type="button"
+                :class="
+                  cn(
+                    'size-10 cursor-pointer overflow-hidden rounded-sm border-none p-0 transition-all',
+                    flipItem === other.item && cursorIndex === other.index
+                      ? 'ring-2 ring-white ring-offset-2 ring-offset-black'
+                      : 'opacity-60 hover:opacity-100'
+                  )
+                "
+                :aria-label="other.item.filename"
+                :aria-pressed="
+                  flipItem === other.item && cursorIndex === other.index
+                "
+                @click="selectFlipCursor(other.index)"
+              >
+                <img
+                  :src="other.item.url"
+                  :alt="other.item.filename"
+                  class="size-full object-cover"
+                />
+              </button>
+            </div>
+          </div>
 
-            <!-- Cursor navigation (wipe/flip with 3+ items) -->
-            <template
-              v-if="
-                compareMode !== 'side-by-side' &&
-                compareItems &&
-                compareItems.length > 2
-              "
+          <!-- Cursor navigation (wipe/flip with 3+ items) -->
+          <template
+            v-if="
+              compareMode !== 'side-by-side' &&
+              compareItems &&
+              compareItems.length > 2
+            "
+          >
+            <Button
+              variant="secondary"
+              size="icon-lg"
+              class="absolute top-1/2 left-3 z-10 -translate-y-1/2 rounded-full"
+              :aria-label="$t('g.previous')"
+              @click="advanceCursor(-1)"
             >
-              <Button
-                variant="secondary"
-                size="icon-lg"
-                class="absolute top-1/2 left-3 z-10 -translate-y-1/2 rounded-full"
-                :aria-label="$t('g.previous')"
-                @click="advanceCursor(-1)"
-              >
-                <i class="icon-[lucide--chevron-left] size-6" />
-              </Button>
-              <Button
-                variant="secondary"
-                size="icon-lg"
-                class="absolute top-1/2 right-3 z-10 -translate-y-1/2 rounded-full"
-                :aria-label="$t('g.next')"
-                @click="advanceCursor(1)"
-              >
-                <i class="icon-[lucide--chevron-right] size-6" />
-              </Button>
-            </template>
-          </main>
+              <i class="icon-[lucide--chevron-left] size-6" />
+            </Button>
+            <Button
+              variant="secondary"
+              size="icon-lg"
+              class="absolute top-1/2 right-3 z-10 -translate-y-1/2 rounded-full"
+              :aria-label="$t('g.next')"
+              @click="advanceCursor(1)"
+            >
+              <i class="icon-[lucide--chevron-right] size-6" />
+            </Button>
+          </template>
         </div>
       </template>
     </div>
@@ -655,8 +661,8 @@
 </template>
 
 <script setup lang="ts">
+import { useElementSize } from '@vueuse/core'
 import { computed, nextTick, ref, watch } from 'vue'
-import { useI18n } from 'vue-i18n'
 
 import Button from '@/components/ui/button/Button.vue'
 import AssetFavoriteToggle from '@/platform/assets/components/AssetFavoriteToggle.vue'
@@ -665,8 +671,6 @@ import type { ResultItemImpl } from '@/stores/queueStore'
 import { cn } from '@/utils/tailwindUtil'
 
 import LightboxAssetView from './LightboxAssetView.vue'
-
-const { t } = useI18n()
 
 type CompareMode = 'side-by-side' | 'wipe' | 'flip'
 
@@ -767,18 +771,6 @@ const cursorPositionLabel = computed(() => {
   const total = compareItemsSafe.value.length
   if (total <= 2) return ''
   return `${cursorIndex.value + 1} / ${total}`
-})
-
-const modeHint = computed(() => {
-  const total = compareItemsSafe.value.length
-  const parts: string[] = []
-  if (compareMode.value === 'wipe')
-    parts.push(t('mediaAsset.compare.hint.wipe'))
-  if (compareMode.value === 'flip')
-    parts.push(t('mediaAsset.compare.hint.flip'))
-  if (total > 2 && compareMode.value !== 'side-by-side')
-    parts.push(t('mediaAsset.compare.hint.navigate', { count: total }))
-  return parts.join(' · ')
 })
 
 // Reset compare state on a fresh session (new compare set or new active item),
@@ -905,6 +897,40 @@ function cycleMode() {
 }
 
 const wipeBoxRef = ref<HTMLElement>()
+const wipeAreaRef = ref<HTMLElement | null>(null)
+const { width: wipeAreaW, height: wipeAreaH } = useElementSize(wipeAreaRef)
+const leftAspectRatio = ref<number | null>(null)
+
+function onLeftMediaLoad(event: Event) {
+  const target = event.target as HTMLImageElement | HTMLVideoElement | null
+  if (!target) return
+  const w =
+    target instanceof HTMLImageElement ? target.naturalWidth : target.videoWidth
+  const h =
+    target instanceof HTMLImageElement
+      ? target.naturalHeight
+      : target.videoHeight
+  if (w && h) leftAspectRatio.value = w / h
+}
+
+watch(
+  () => leftItem.value?.url,
+  () => {
+    leftAspectRatio.value = null
+  }
+)
+
+const wipeBoxStyle = computed(() => {
+  const aspect = leftAspectRatio.value
+  const aw = wipeAreaW.value
+  const ah = wipeAreaH.value
+  if (!aspect || aw === 0 || ah === 0) return {} as Record<string, string>
+  const fitWidth = aspect >= aw / ah
+  return fitWidth
+    ? { width: `${aw}px`, height: `${aw / aspect}px` }
+    : { width: `${ah * aspect}px`, height: `${ah}px` }
+})
+
 let wipeDragging = false
 
 function onWipePointerDown(event: PointerEvent) {
