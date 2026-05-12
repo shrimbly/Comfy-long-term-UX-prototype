@@ -66,7 +66,6 @@
         <TabList v-model="activeTab">
           <Tab value="output">{{ $t('sideToolbar.labels.generated') }}</Tab>
           <Tab value="input">{{ $t('sideToolbar.labels.imported') }}</Tab>
-          <Tab value="temp">{{ $t('sideToolbar.labels.temp') }}</Tab>
         </TabList>
       </div>
     </template>
@@ -216,7 +215,6 @@ import { useAssetSelection } from '@/platform/assets/composables/useAssetSelecti
 import { useAssetSelectionStore } from '@/platform/assets/composables/useAssetSelectionStore'
 import { useAssetTags } from '@/platform/assets/composables/useAssetTags'
 import { useMediaAssetActions } from '@/platform/assets/composables/useMediaAssetActions'
-import { useMediaAssetBrowserDialog } from '@/platform/assets/composables/useMediaAssetBrowserDialog'
 import { useMediaAssetFiltering } from '@/platform/assets/composables/useMediaAssetFiltering'
 import { useOutputStacks } from '@/platform/assets/composables/useOutputStacks'
 import type { OutputAssetMetadata } from '@/platform/assets/schemas/assetMetadataSchema'
@@ -229,6 +227,7 @@ import { getAssetDisplayName } from '@/platform/assets/utils/assetMetadataUtils'
 import { resolveOutputAssetItems } from '@/platform/assets/utils/outputAssetUtil'
 import { isCloud } from '@/platform/distribution/types'
 import { useDialogStore } from '@/stores/dialogStore'
+import { useWorkspaceStore } from '@/stores/workspaceStore'
 import type { ResultItemImpl } from '@/stores/queueStore'
 import {
   formatDuration,
@@ -849,8 +848,8 @@ const handleApproachEnd = useDebounceFn(async () => {
   await outputJobsAssets.loadMore()
 }, 300)
 
-const mediaAssetBrowserDialog = useMediaAssetBrowserDialog()
+const workspaceStore = useWorkspaceStore()
 function openMediaAssetBrowser() {
-  mediaAssetBrowserDialog.show()
+  workspaceStore.mediaAssetsTabActive = true
 }
 </script>

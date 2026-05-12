@@ -181,7 +181,7 @@ const workflowToOption = (workflow: ComfyWorkflow): WorkflowOption => ({
 })
 
 const options = computed<TabOption[]>(() => [
-  MEDIA_ASSETS_OPTION,
+  ...(workspaceStore.mediaAssetsTabActive ? [MEDIA_ASSETS_OPTION] : []),
   ...workflowStore.openWorkflows.map(workflowToOption)
 ])
 
