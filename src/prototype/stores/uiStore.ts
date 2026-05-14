@@ -6,7 +6,9 @@ import { defineStore } from 'pinia'
 import { ref, watch } from 'vue'
 
 import { usePrototypePersonaStore } from './personaStore'
-import type { LibrarySection } from '../types'
+import type { AssetStorage, LibrarySection } from '../types'
+
+export type StorageFilter = 'all' | AssetStorage
 
 type ActiveView =
   | { kind: 'drafts' }
@@ -26,6 +28,7 @@ export const usePrototypeUiStore = defineStore('prototype-ui', () => {
   const projectFilter = ref<string>('all')
   const tagFilter = ref<Set<string>>(new Set())
   const folderFilter = ref<string>('all')
+  const storageFilter = ref<StorageFilter>('all')
   const searchQuery = ref<string>('')
 
   function go(view: ActiveView) {
@@ -63,10 +66,15 @@ export const usePrototypeUiStore = defineStore('prototype-ui', () => {
     searchQuery.value = value
   }
 
+  function setStorageFilter(value: StorageFilter) {
+    storageFilter.value = value
+  }
+
   function resetLibraryFilters() {
     projectFilter.value = 'all'
     tagFilter.value = new Set()
     folderFilter.value = 'all'
+    storageFilter.value = 'all'
     searchQuery.value = ''
   }
 
@@ -91,6 +99,7 @@ export const usePrototypeUiStore = defineStore('prototype-ui', () => {
     projectFilter,
     tagFilter,
     folderFilter,
+    storageFilter,
     searchQuery,
     go,
     goHome,
@@ -100,6 +109,7 @@ export const usePrototypeUiStore = defineStore('prototype-ui', () => {
     toggleTagFilter,
     clearTagFilter,
     setSearchQuery,
+    setStorageFilter,
     resetLibraryFilters
   }
 })

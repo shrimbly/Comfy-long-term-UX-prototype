@@ -123,21 +123,23 @@ export interface Project {
   members?: ProjectMember[]
 }
 
+// Storage medium for an asset. Per
+//   decision: ../IA_Plan/wiki/decisions/save-destination-workflow-level.md
+//   decision: ../IA_Plan/wiki/decisions/promoting-local-outputs-to-cloud.md
+// 'local' = stored on the user's disk (Comfy output dir / local FS).
+// 'cloud' = stored under a cloud workspace/project.
+export type AssetStorage = 'local' | 'cloud'
+
 export interface Workflow {
   id: string
   projectId: string
   name: string
   thumbnailUrl?: string
   updatedAt: string
-  // 'workflow' (default) supports both workflow + app run modes per asset
-  // role. 'app' is run-mode-only — Owner can still edit the graph, but
-  // App Runners are confined to app mode and cannot fork.
   kind?: 'workflow' | 'app'
-  // Owner of the asset. Optional for back-compat with simple drafts
-  // entries that inherit the containing project's owner.
   ownerUserId?: string
-  // Non-owner role grants. Owner role is implicit from ownerUserId.
   access?: AssetAccess[]
+  storage?: AssetStorage
 }
 
 export interface LibraryAsset {
@@ -148,6 +150,7 @@ export interface LibraryAsset {
   updatedAt: string
   tags?: string[]
   folder?: string
+  storage?: AssetStorage
 }
 
 export interface Template {

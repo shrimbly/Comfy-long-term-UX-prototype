@@ -21,18 +21,40 @@
         class="flex items-center justify-between gap-2 text-xs text-white/80"
       >
         <span class="truncate">{{ project?.name ?? '—' }}</span>
-        <span
-          v-if="project"
-          :class="
-            cn(
-              'shrink-0 rounded-sm px-1.5 py-0.5 text-xs',
-              project.tier === 'restricted'
-                ? 'bg-warning-background text-button-surface-contrast'
-                : 'bg-white/20 text-white'
-            )
-          "
-        >
-          {{ t(`prototype.projectTier.${project.tier}`) }}
+        <span class="flex shrink-0 items-center gap-1">
+          <span
+            v-if="asset.storage"
+            class="inline-flex items-center gap-1 rounded-sm bg-white/15 px-1.5 py-0.5"
+          >
+            <i
+              :class="
+                cn(
+                  'size-3',
+                  asset.storage === 'local'
+                    ? 'icon-[lucide--hard-drive]'
+                    : 'icon-[lucide--cloud]'
+                )
+              "
+            />
+            {{
+              asset.storage === 'local'
+                ? t('prototype.assetCard.storageLocal')
+                : t('prototype.assetCard.storageCloud')
+            }}
+          </span>
+          <span
+            v-if="project"
+            :class="
+              cn(
+                'rounded-sm px-1.5 py-0.5 text-xs',
+                project.tier === 'restricted'
+                  ? 'bg-warning-background text-button-surface-contrast'
+                  : 'bg-white/20 text-white'
+              )
+            "
+          >
+            {{ t(`prototype.projectTier.${project.tier}`) }}
+          </span>
         </span>
       </span>
     </span>

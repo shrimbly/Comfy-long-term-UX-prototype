@@ -249,6 +249,32 @@ Open question dependency:
 
 Promote? **yes — already promoted.** The wiki decision page is filed. This log entry captures the trail and the open-question follow-ups. Pending PM confirmation: scope of the cloud-cost tooltip; offline behavior; whether the lazy auto-create on cloud-flip should be on chip-flip or first-run-fire (implementation detail, doesn't change the user-facing model).
 
+## [2026-05-13] Promoting locally-saved outputs to cloud — inference, filters, per-card workflow badges
+
+Decision:
+
+- Locally-saved outputs can be **promoted to cloud** after the fact. Destination is inferred from the output's **embedded workflow metadata** — no project picker is shown to the user.
+- Inference cascade: parent workflow's cloud project → actor's My Workflows → lazy-create a cloud workflow record under My Workflows if the workflow has no cloud identity yet. Fallback prompt only when metadata is missing or unreadable.
+- **Media assets grid**: no per-thumbnail badge (noise across many items). Local/cloud is surfaced via (a) a filter control in the toolbar (All / Local only / Cloud only) and (b) the asset details panel.
+- **Workflows grid**: per-card local/cloud badge is acceptable — fewer items, signal is design-relevant. Uses the same `hard-drive` / `cloud` iconography as the editor's project chip.
+- **Promote action**: per-asset (details panel or context menu), bulk-select supported in principle. Additive — does **not** delete the local copy on promote.
+- **Workflow identity in metadata** (whether ComfyUI writes a stable ID into output PNGs that resolves the same parent workflow across machines) is deferred — flagged as engineering open question, out of scope for IA design.
+
+Reason: Two threads converged. (1) Users running locally accumulate outputs on disk; we need a one-way path to lift selected work into the cloud library without forcing them to re-execute cloud-side. (2) The wiki's permission model treats outputs as inheriting from their parent workflow, so the parent workflow is the source of truth for project membership — asking the user to pick at promote time would risk attribution mistakes and re-introduce the cross-project provenance laundering the cloud-local-bridge rule 3 was written to prevent. Embedded metadata closes the loop: output → parent → project, in that order, with no user input needed for the common case.
+
+The per-thumbnail badge decision (no for media, yes for workflows) came from user feedback during design discussion — media-asset views have density that doesn't tolerate per-card chrome; workflow grids do.
+
+Wiki link: New formal decision: [`../IA_Plan/wiki/decisions/promoting-local-outputs-to-cloud.md`](../IA_Plan/wiki/decisions/promoting-local-outputs-to-cloud.md). Extended: [`../IA_Plan/wiki/entities/output.md`](../IA_Plan/wiki/entities/output.md) §"Promoting local outputs to cloud". Index updated.
+
+Open question dependency:
+
+- **`output-workflow-identity-in-metadata`** (new, deferred) — engineering question on whether ComfyUI writes a stable workflow ID into output metadata. Tracked in wiki decision; user marked out of scope for IA design.
+- **Media file promote** (no parent workflow → no inference) — flagged in the wiki decision as needing its own design pass. Working stance: explicit pick required; not yet specced.
+- **Remove-local-copy-after-promote** affordance — not in first cut; revisit.
+- **Bulk-promote UX** — supported in principle; first cut may scope to single-asset promote only.
+
+Promote? **yes — already promoted.** Wiki decision is filed. This entry captures the prototype-side plan: filter on the global media assets page, per-card badge on workflows, details-panel field, promote action stub. Pending PM confirmation: the no-badge-on-media-thumbnails stance, the inference cascade fallbacks (esp. lost-access case), and bulk-promote scope.
+
 ## [2026-05-14] Guest personas — replace "Shared with me" tray with filtered normal nav + cross-workspace notifications
 
 Decision:

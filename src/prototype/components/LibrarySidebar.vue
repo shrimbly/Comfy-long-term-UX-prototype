@@ -91,6 +91,36 @@
           @click="uiStore.selectFolder(folder)"
         />
       </CollapsibleSection>
+
+      <CollapsibleSection
+        v-if="section === 'media'"
+        :label="t('prototype.libraryPage.storageHeading')"
+        :count="null"
+        :default-open="false"
+      >
+        <SidebarItem
+          :label="t('prototype.libraryPage.storageLocal')"
+          icon="icon-[lucide--hard-drive]"
+          :count="countForStorage('local')"
+          :active="storageFilter === 'local'"
+          @click="
+            uiStore.setStorageFilter(
+              storageFilter === 'local' ? 'all' : 'local'
+            )
+          "
+        />
+        <SidebarItem
+          :label="t('prototype.libraryPage.storageCloud')"
+          icon="icon-[lucide--cloud]"
+          :count="countForStorage('cloud')"
+          :active="storageFilter === 'cloud'"
+          @click="
+            uiStore.setStorageFilter(
+              storageFilter === 'cloud' ? 'all' : 'cloud'
+            )
+          "
+        />
+      </CollapsibleSection>
     </nav>
 
     <div class="flex flex-col gap-2">
@@ -112,7 +142,7 @@ import CollapsibleSection from './sidebar/CollapsibleSection.vue'
 import SidebarItem from './sidebar/SidebarItem.vue'
 import { usePrototypePersonaStore } from '../stores/personaStore'
 import { usePrototypeUiStore } from '../stores/uiStore'
-import type { LibrarySection } from '../types'
+import type { AssetStorage, LibrarySection } from '../types'
 
 const { section } = defineProps<{
   section: LibrarySection
@@ -121,7 +151,8 @@ const { section } = defineProps<{
 const { t } = useI18n()
 const uiStore = usePrototypeUiStore()
 const personaStore = usePrototypePersonaStore()
-const { projectFilter, tagFilter, folderFilter } = storeToRefs(uiStore)
+const { projectFilter, tagFilter, folderFilter, storageFilter } =
+  storeToRefs(uiStore)
 const { visibleProjects, fixture } = storeToRefs(personaStore)
 
 const sectionIconMap: Record<LibrarySection, string> = {
@@ -184,5 +215,9 @@ function countForTag(tag: string) {
 }
 function countForFolder(folder: string) {
   return sectionAssets.value.filter((a) => a.folder === folder).length
+}
+function countForStorage(value: AssetStorage) {
+  return sectionAssets.value.filter((a) => (a.storage ?? 'cloud') === value)
+    .length
 }
 </script>

@@ -79,7 +79,7 @@ const { t } = useI18n()
 const personaStore = usePrototypePersonaStore()
 const uiStore = usePrototypeUiStore()
 const { fixture } = storeToRefs(personaStore)
-const { projectFilter, tagFilter, folderFilter, searchQuery } =
+const { projectFilter, tagFilter, folderFilter, storageFilter, searchQuery } =
   storeToRefs(uiStore)
 
 const sectionTitle = computed(() =>
@@ -112,6 +112,12 @@ const filteredAssets = computed(() => {
       return false
     }
     if (folderFilter.value !== 'all' && a.folder !== folderFilter.value) {
+      return false
+    }
+    if (
+      storageFilter.value !== 'all' &&
+      (a.storage ?? 'cloud') !== storageFilter.value
+    ) {
       return false
     }
     if (tagFilter.value.size > 0) {

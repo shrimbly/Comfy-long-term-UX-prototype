@@ -18,6 +18,7 @@
       <BuilderMenu />
       <BuilderFooterToolbar />
     </template>
+    <PrototypeProjectChip v-if="isDevPrototype" />
   </div>
 
   <GlobalToast />
@@ -97,6 +98,10 @@ import BuilderMenu from '@/components/builder/BuilderMenu.vue'
 import BuilderToolbar from '@/components/builder/BuilderToolbar.vue'
 import LinearView from '@/views/LinearView.vue'
 import ManagerProgressToast from '@/workbench/extensions/manager/components/ManagerProgressToast.vue'
+
+import PrototypeProjectChip from '@/prototype/components/PrototypeProjectChip.vue'
+
+const isDevPrototype = true
 
 setupAutoQueueHandler()
 useProgressFavicon()

@@ -81,9 +81,20 @@
       "projectHeading": "Project",
       "tagsHeading": "Tags",
       "foldersHeading": "Folders",
+      "storageHeading": "Storage",
+      "storageLocal": "Local",
+      "storageCloud": "Cloud",
       "allProjects": "All projects",
       "allFolders": "All folders",
       "tagsEmpty": "No tags on assets in this section yet."
+    },
+    "workflowCard": {
+      "storageLocal": "Saved locally",
+      "storageCloud": "Saved to cloud"
+    },
+    "assetCard": {
+      "storageLocal": "Local",
+      "storageCloud": "Cloud"
     },
     "editor": {
       "projectChip": {

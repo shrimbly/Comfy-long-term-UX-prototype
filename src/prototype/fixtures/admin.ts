@@ -132,19 +132,22 @@ export const adminFixture: PersonaFixture = {
       id: 'wf-1',
       projectId: myWorkflows.id,
       name: 'Untitled workflow 1',
-      updatedAt: '2026-05-10'
+      updatedAt: '2026-05-10',
+      storage: 'local'
     },
     {
       id: 'wf-2',
       projectId: myWorkflows.id,
       name: 'Untitled workflow 2',
-      updatedAt: '2026-05-09'
+      updatedAt: '2026-05-09',
+      storage: 'cloud'
     },
     {
       id: 'wf-3',
       projectId: myWorkflows.id,
       name: 'Untitled workflow 3',
-      updatedAt: '2026-05-08'
+      updatedAt: '2026-05-08',
+      storage: 'local'
     },
     // Project-scoped workflows + apps. Owner roles + per-user access
     // grants drive the asset-role test coverage from
@@ -155,7 +158,8 @@ export const adminFixture: PersonaFixture = {
       name: 'Moodboard explorer',
       kind: 'workflow',
       ownerUserId: user.id,
-      updatedAt: '2026-05-11'
+      updatedAt: '2026-05-11',
+      storage: 'cloud'
     },
     {
       id: 'app-clientx-colorize',
@@ -222,7 +226,8 @@ export const adminFixture: PersonaFixture = {
       projectId: 'proj-brand',
       updatedAt: '2026-05-10',
       tags: ['hero', 'brand'],
-      folder: 'finals'
+      folder: 'finals',
+      storage: 'cloud'
     },
     {
       id: 'media-2',
@@ -231,7 +236,8 @@ export const adminFixture: PersonaFixture = {
       projectId: 'proj-marketing',
       updatedAt: '2026-05-09',
       tags: ['banner', 'campaign'],
-      folder: 'finals'
+      folder: 'finals',
+      storage: 'cloud'
     },
     {
       id: 'media-3',
@@ -240,7 +246,8 @@ export const adminFixture: PersonaFixture = {
       projectId: 'proj-cocacola',
       updatedAt: '2026-05-08',
       tags: ['hero', 'product'],
-      folder: 'finals'
+      folder: 'finals',
+      storage: 'local'
     },
     {
       id: 'media-4',
@@ -249,7 +256,8 @@ export const adminFixture: PersonaFixture = {
       projectId: 'proj-launch',
       updatedAt: '2026-05-07',
       tags: ['screenshot'],
-      folder: 'my-workflows'
+      folder: 'my-workflows',
+      storage: 'local'
     },
     {
       id: 'media-5',
@@ -258,7 +266,8 @@ export const adminFixture: PersonaFixture = {
       projectId: 'proj-client-x',
       updatedAt: '2026-05-06',
       tags: ['moodboard'],
-      folder: 'my-workflows'
+      folder: 'my-workflows',
+      storage: 'cloud'
     },
     {
       id: 'media-6',
