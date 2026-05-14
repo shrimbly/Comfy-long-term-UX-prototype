@@ -4,16 +4,17 @@
     decision:  ../IA_Plan/wiki/decisions/drafts-as-default-private-project.md
     log:       ../IA_Plan/wiki/prototype-log.md#flow-01-dashboard
 
-  Dashboard shell. When the active view is the Library media section, the
-  real MediaAssetsView from src/platform/assets/ takes over the entire
-  area below PrototypeTabs (it owns its own sidebar). Other library
-  sections keep the prototype's LibrarySidebar + LibraryView stub.
+  Dashboard shell. Content is driven by the active top-bar tab:
+    - Media-Assets tab active → real MediaAssetsView takes over the area
+      below PrototypeTabs (it owns its own sidebar).
+    - Home tab (and workflow tabs) → prototype dashboard with PrototypeSidebar
+      / LibrarySidebar based on uiStore.activeView.
 -->
 <template>
   <div class="relative flex h-screen w-full flex-col">
     <PrototypeTabs />
 
-    <div v-if="isMediaLibrary" class="relative flex min-h-0 flex-1">
+    <div v-if="isMediaAssetsTabActive" class="relative flex min-h-0 flex-1">
       <MediaAssetsView />
     </div>
     <div v-else class="flex min-h-0 flex-1">
@@ -63,6 +64,7 @@ import LibrarySidebar from '../components/LibrarySidebar.vue'
 import PersonaSwitcher from '../components/PersonaSwitcher.vue'
 import PrototypeSidebar from '../components/PrototypeSidebar.vue'
 import PrototypeTabs from '../components/PrototypeTabs.vue'
+import { MEDIA_ASSETS_TAB_ID, usePrototypeTabsStore } from '../stores/tabsStore'
 import { usePrototypeUiStore } from '../stores/uiStore'
 import DraftsView from '../views/DraftsView.vue'
 import HubView from '../views/HubView.vue'
@@ -74,11 +76,12 @@ import RecentsView from '../views/RecentsView.vue'
 import SettingsView from '../views/SettingsView.vue'
 
 const uiStore = usePrototypeUiStore()
+const tabsStore = usePrototypeTabsStore()
 const { activeView } = storeToRefs(uiStore)
+const { activeTabId } = storeToRefs(tabsStore)
 
-const isMediaLibrary = computed(
-  () =>
-    activeView.value.kind === 'library' && activeView.value.section === 'media'
+const isMediaAssetsTabActive = computed(
+  () => activeTabId.value === MEDIA_ASSETS_TAB_ID
 )
 
 const isDev = import.meta.env.DEV

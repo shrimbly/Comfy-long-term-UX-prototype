@@ -45,7 +45,7 @@
       <div v-if="!compact" class="mt-5 flex flex-col gap-1">
         <button
           type="button"
-          class="flex w-full cursor-pointer items-center-safe gap-3 rounded-md border-none bg-transparent px-4 py-2 text-left text-sm text-base-foreground transition-colors select-none hover:bg-interface-menu-component-surface-hovered"
+          class="flex w-full cursor-pointer items-center-safe gap-2 rounded-md border-none bg-transparent px-2 py-1.5 text-left text-sm text-base-foreground transition-colors select-none hover:bg-interface-menu-component-surface-hovered"
           :aria-expanded="!tagsCollapsed"
           :aria-label="t('sideToolbar.mediaAssets.tagsHeader')"
           @click="toggleTagsCollapsed"
@@ -250,7 +250,7 @@
       >
         <button
           type="button"
-          class="flex w-full cursor-pointer items-center-safe gap-3 rounded-md border-none bg-transparent px-4 py-2 text-left text-sm text-base-foreground transition-colors select-none hover:bg-interface-menu-component-surface-hovered"
+          class="flex w-full cursor-pointer items-center-safe gap-2 rounded-md border-none bg-transparent px-2 py-1.5 text-left text-sm text-base-foreground transition-colors select-none hover:bg-interface-menu-component-surface-hovered"
           :aria-expanded="!directoryCollapsed"
           :aria-label="t('sideToolbar.mediaAssets.directoryHeader')"
           @click="toggleDirectoryCollapsed"

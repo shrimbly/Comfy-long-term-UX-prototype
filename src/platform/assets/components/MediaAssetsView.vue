@@ -80,7 +80,6 @@
             icon="pi pi-question-circle"
             :label="$t('menu.help')"
             :compact="sidebarCollapsed"
-            size="sm"
             @click="toggleHelpCenter"
           />
           <AssetsSidebarItem
@@ -88,7 +87,6 @@
             icon="icon-[lucide--settings]"
             :label="$t('g.settings')"
             :compact="sidebarCollapsed"
-            size="sm"
             @click="openSettings"
           />
         </div>

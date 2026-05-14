@@ -57,6 +57,10 @@
           v-else-if="tab.kind === 'app'"
           class="icon-[lucide--panels-top-left] size-4 shrink-0 text-primary-background"
         />
+        <span
+          v-else-if="tab.kind === 'media-assets'"
+          class="icon-[comfy--image-ai-edit] size-4 shrink-0"
+        />
         <span class="inline-block max-w-[150px] flex-1 truncate text-sm">{{
           tab.label
         }}</span>

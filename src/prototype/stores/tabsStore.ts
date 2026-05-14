@@ -6,7 +6,7 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 
-type TabKind = 'workflow' | 'app' | 'builder'
+type TabKind = 'workflow' | 'app' | 'builder' | 'media-assets'
 
 interface OpenTab {
   id: string
@@ -16,6 +16,7 @@ interface OpenTab {
 }
 
 export const HOME_TAB_ID = 'home'
+export const MEDIA_ASSETS_TAB_ID = 'media-assets'
 
 let counter = 0
 const nextId = () => `tab-${++counter}`
@@ -41,6 +42,20 @@ export const usePrototypeTabsStore = defineStore('prototype-tabs', () => {
     activeTabId.value = id
   }
 
+  function openMediaAssets(label: string) {
+    const existing = openTabs.value.find((t) => t.id === MEDIA_ASSETS_TAB_ID)
+    if (!existing) {
+      openTabs.value.push({
+        id: MEDIA_ASSETS_TAB_ID,
+        label,
+        kind: 'media-assets'
+      })
+    } else if (existing.label !== label) {
+      existing.label = label
+    }
+    activeTabId.value = MEDIA_ASSETS_TAB_ID
+  }
+
   function close(id: string) {
     const idx = openTabs.value.findIndex((t) => t.id === id)
     if (idx < 0) return
@@ -50,5 +65,12 @@ export const usePrototypeTabsStore = defineStore('prototype-tabs', () => {
     activeTabId.value = next?.id ?? HOME_TAB_ID
   }
 
-  return { openTabs, activeTabId, select, addBlank, close }
+  return {
+    openTabs,
+    activeTabId,
+    select,
+    addBlank,
+    openMediaAssets,
+    close
+  }
 })

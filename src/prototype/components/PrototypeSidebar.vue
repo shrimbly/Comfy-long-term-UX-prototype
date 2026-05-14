@@ -93,7 +93,7 @@
           :label="item.label"
           :icon="item.icon"
           :active="isLibrarySectionActive(item.section)"
-          @click="uiStore.go({ kind: 'library', section: item.section })"
+          @click="onLibraryItemClick(item.section, item.label)"
         />
       </SidebarGroup>
 
@@ -150,12 +150,16 @@ import UsageChip from './sidebar/UsageChip.vue'
 import WorkspaceChip from './sidebar/WorkspaceChip.vue'
 import WorkspaceCreateChip from './sidebar/WorkspaceCreateChip.vue'
 import { usePrototypePersonaStore } from '../stores/personaStore'
+import { MEDIA_ASSETS_TAB_ID, usePrototypeTabsStore } from '../stores/tabsStore'
 import { usePrototypeUiStore } from '../stores/uiStore'
 import type { LibrarySection } from '../types'
 
 const { t } = useI18n()
 const personaStore = usePrototypePersonaStore()
+const tabsStore = usePrototypeTabsStore()
 const uiStore = usePrototypeUiStore()
+
+const { activeTabId } = storeToRefs(tabsStore)
 
 const { fixture, currentWorkspace, draftsProject, currentPersonaId } =
   storeToRefs(personaStore)
@@ -218,8 +222,19 @@ const libraryItems = computed<
 })
 
 function isLibrarySectionActive(section: LibrarySection) {
+  if (section === 'media') {
+    return activeTabId.value === MEDIA_ASSETS_TAB_ID
+  }
   return (
     activeView.value.kind === 'library' && activeView.value.section === section
   )
+}
+
+function onLibraryItemClick(section: LibrarySection, label: string) {
+  if (section === 'media') {
+    tabsStore.openMediaAssets(label)
+    return
+  }
+  uiStore.go({ kind: 'library', section })
 }
 </script>

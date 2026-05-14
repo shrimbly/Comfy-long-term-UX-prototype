@@ -56,7 +56,8 @@
       "newTab": "New blank workflow",
       "closeTab": "Close tab",
       "feedback": "Send feedback",
-      "notifications": "Notifications"
+      "notifications": "Notifications",
+      "mediaAssets": "Media Assets"
     },
     "persona": {
       "label": "Persona"
