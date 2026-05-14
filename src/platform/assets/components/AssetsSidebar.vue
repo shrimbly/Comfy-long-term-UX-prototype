@@ -53,7 +53,7 @@
           :aria-label="t('sideToolbar.mediaAssets.directoryHeader')"
           @click="toggleDirectoryCollapsed"
         >
-          <i class="text-neutral icon-[lucide--folder] shrink-0 text-sm" />
+          <i class="text-neutral icon-[lucide--briefcase] shrink-0 text-sm" />
           <span class="min-w-0 flex-1 truncate">
             {{ t('sideToolbar.mediaAssets.directoryHeader') }}
           </span>

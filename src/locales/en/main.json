@@ -1320,7 +1320,7 @@
         "addFolder": "Add folder",
         "newFolderName": "New folder"
       },
-      "directoryHeader": "Folders",
+      "directoryHeader": "Projects",
       "tagsHeader": "Tags",
       "noTagsHint": "Right-click an asset to add tags",
       "tagFilterLabel": "Tag: {tag}",
