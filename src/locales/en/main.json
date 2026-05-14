@@ -3660,9 +3660,9 @@
       "showInFileManager": "Show in file manager",
       "exportAll": "Export all",
       "moveFolderTo": "Move to...",
-      "promoteToCloud": "Promote to cloud",
+      "promoteToCloud": "Save to cloud",
       "promoteToCloudFallbackDestination": "My Workflows",
-      "promotedToCloudSummary": "Promoted to cloud",
+      "promotedToCloudSummary": "Saved to cloud",
       "promotedToCloudDetail": "Now available under {destination}."
     },
     "compare": {

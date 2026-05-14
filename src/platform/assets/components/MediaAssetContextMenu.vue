@@ -63,6 +63,7 @@ import {
   getMediaTypeFromFilename,
   isPreviewableMediaType
 } from '@/utils/formatUtil'
+import { promotePrototypeAssetsToCloud } from '@/prototype/fixtures/mediaAssets'
 import { detectNodeTypeFromFilename } from '@/utils/loaderNodeUtil'
 import { electronAPI } from '@/utils/envUtil'
 import { cn } from '@comfyorg/tailwind-utils'
@@ -380,8 +381,8 @@ const contextMenuItems = computed<MenuItem[]>(() => {
       command: () => emit('bulk-download', selectedAssets)
     })
 
-    // Bulk Promote to cloud (prototype-only stub) — applies to the local
-    // subset of the selection.
+    // Bulk Save to cloud (prototype-only) — applies to the local subset
+    // of the selection. Mutates fixture state so the badge flips live.
     const localSelection = selectedAssets.filter(
       (a) => a.user_metadata?.storage === 'local'
     )
@@ -390,6 +391,7 @@ const contextMenuItems = computed<MenuItem[]>(() => {
         label: t('mediaAsset.selection.promoteSelectedToCloud'),
         icon: 'icon-[lucide--cloud-upload]',
         command: () => {
+          promotePrototypeAssetsToCloud(localSelection.map((a) => a.id))
           toast.add({
             severity: 'success',
             summary: t('mediaAsset.actions.promotedToCloudSummary'),
@@ -460,7 +462,10 @@ const contextMenuItems = computed<MenuItem[]>(() => {
     command: () => actions.downloadAsset(asset)
   })
 
-  // Promote to cloud (only for local-stored assets — prototype-only stub).
+  // Save to cloud (only for local-stored assets — prototype-only).
+  // Mutates fixture state so the badge flips live; destination is
+  // inferred from the asset's parent workflow per
+  //   ../IA_Plan/wiki/decisions/promoting-local-outputs-to-cloud.md
   if (asset.user_metadata?.storage === 'local') {
     const inferredProject =
       (asset.user_metadata?.projectName as string | undefined) ??
@@ -469,6 +474,7 @@ const contextMenuItems = computed<MenuItem[]>(() => {
       label: t('mediaAsset.actions.promoteToCloud'),
       icon: 'icon-[lucide--cloud-upload]',
       command: () => {
+        promotePrototypeAssetsToCloud([asset.id])
         toast.add({
           severity: 'success',
           summary: t('mediaAsset.actions.promotedToCloudSummary'),

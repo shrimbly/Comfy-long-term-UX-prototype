@@ -16,11 +16,23 @@
 // snapshotted (and downscaled to 1024px max edge as JPEG) from a local
 // ComfyUI output dir for authenticity.
 
+import { ref } from 'vue'
+
 import type { AssetItem } from '@/platform/assets/schemas/assetSchema'
 
 import type { PersonaId } from '../types'
 
 type AssetStorage = 'local' | 'cloud'
+
+// In-memory "promoted to cloud" overrides. Mutating this triggers
+// buildPrototypeMediaAssets() re-runs through Vue reactivity.
+const promotedToCloudIds = ref<Set<string>>(new Set())
+
+export function promotePrototypeAssetsToCloud(ids: string[]): void {
+  const next = new Set(promotedToCloudIds.value)
+  for (const id of ids) next.add(id)
+  promotedToCloudIds.value = next
+}
 
 interface PrototypeProject {
   slug: string
@@ -116,6 +128,7 @@ function fileTimestamp(startIso: string, indexInProject: number): string {
 export function buildPrototypeMediaAssets(personaId?: PersonaId): AssetItem[] {
   const grantedAssetIds = personaId ? ASSET_LEVEL_GRANTS[personaId] : undefined
   const grantedSet = grantedAssetIds ? new Set(grantedAssetIds) : null
+  const promoted = promotedToCloudIds.value
 
   const assets: AssetItem[] = []
   for (const project of PROJECTS) {
@@ -129,6 +142,10 @@ export function buildPrototypeMediaAssets(personaId?: PersonaId): AssetItem[] {
       const grantedAtAssetLevel = grantedSet?.has(id) ?? false
 
       if (!hasProjectAccess && !grantedAtAssetLevel) continue
+
+      const effectiveStorage: AssetStorage = promoted.has(id)
+        ? 'cloud'
+        : project.storage
 
       const url = `${FIXTURE_BASE}/${project.slug}/${filename}`
       assets.push({
@@ -144,7 +161,8 @@ export function buildPrototypeMediaAssets(personaId?: PersonaId): AssetItem[] {
           projectId: project.projectId,
           projectName: project.projectName,
           workflowName: project.workflowName,
-          storage: project.storage
+          storage: effectiveStorage,
+          originalStorage: project.storage
         }
       })
     }
