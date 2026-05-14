@@ -18,6 +18,8 @@
     :options="options"
     size="lg"
     class="w-full"
+    :style="{ backgroundColor: 'var(--base-background)' }"
+    trigger-inner-class="pl-2"
     @update:model-value="onChange"
   >
     <template #icon>
@@ -46,7 +48,7 @@ const options = computed(() => [
   },
   ...availableProjects.value.map((p) => ({
     value: p.id,
-    name: `${p.name} (${p.count})`
+    name: p.name
   }))
 ])
 

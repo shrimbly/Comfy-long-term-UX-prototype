@@ -16,7 +16,8 @@
         :class="
           cn(
             'flex flex-1 items-center gap-2 overflow-hidden py-2',
-            size === 'md' ? 'pl-3 text-xs' : 'pl-4 text-sm'
+            size === 'md' ? 'pl-3 text-xs' : 'pl-4 text-sm',
+            triggerInnerClass
           )
         "
       >
@@ -110,7 +111,8 @@ const {
   listMaxHeight = '28rem',
   popoverMinWidth,
   popoverMaxWidth,
-  contentStyle
+  contentStyle,
+  triggerInnerClass
 } = defineProps<{
   label?: string
   options?: SelectOption[]
@@ -129,6 +131,10 @@ const {
   /** Maximum width of the popover (default: auto) */
   popoverMaxWidth?: string
   contentStyle?: StyleValue
+  /** Tailwind classes merged onto the trigger's inner content row (the
+   *  flex row containing icon + value). Use this to override default
+   *  paddings when fitting the dropdown into a tight layout. */
+  triggerInnerClass?: string
 }>()
 
 const selectedItem = defineModel<string | undefined>({ required: true })
