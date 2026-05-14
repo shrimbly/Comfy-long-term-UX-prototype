@@ -15,6 +15,7 @@ import { useAuthStore } from '@/stores/authStore'
 import { useUserStore } from '@/stores/userStore'
 import LayoutDefault from '@/views/layouts/LayoutDefault.vue'
 
+import { prototypeRoutes } from '@/prototype/router'
 import { installPreservedQueryTracker } from '@/platform/navigation/preservedQueryTracker'
 import { PRESERVED_QUERY_NAMESPACES } from '@/platform/navigation/preservedQueryNamespaces'
 
@@ -57,6 +58,7 @@ const router = createRouter({
       createWebHistory(basePath),
   routes: [
     ...(isCloud ? cloudOnboardingRoutes : []),
+    ...prototypeRoutes,
     {
       path: '/',
       component: LayoutDefault,

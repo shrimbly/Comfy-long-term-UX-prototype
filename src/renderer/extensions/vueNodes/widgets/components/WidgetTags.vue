@@ -142,7 +142,7 @@ import {
 } from '@/platform/assets/composables/useAssetTags'
 import { parseTagsFromString } from '@/platform/assets/utils/parseTagsFromString'
 import type { SimplifiedWidget } from '@/types/simplifiedWidget'
-import { cn } from '@/utils/tailwindUtil'
+import { cn } from '@comfyorg/tailwind-utils'
 
 import { WidgetInputBaseClass } from './layout'
 import WidgetLayoutField from './layout/WidgetLayoutField.vue'

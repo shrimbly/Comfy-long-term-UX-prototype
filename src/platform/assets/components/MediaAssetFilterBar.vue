@@ -173,7 +173,7 @@ import Popover from '@/components/ui/Popover.vue'
 import SidebarTopArea from '@/components/sidebar/tabs/SidebarTopArea.vue'
 import type { MetadataFilter } from '@/platform/assets/types/metadataFilter'
 import { isCloud } from '@/platform/distribution/types'
-import { cn } from '@/utils/tailwindUtil'
+import { cn } from '@comfyorg/tailwind-utils'
 
 import MediaAssetFilterButton from './MediaAssetFilterButton.vue'
 import MediaAssetFilterMenu from './MediaAssetFilterMenu.vue'

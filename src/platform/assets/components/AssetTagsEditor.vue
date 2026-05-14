@@ -105,7 +105,7 @@ import { useI18n } from 'vue-i18n'
 import TagsInput from '@/components/ui/tags-input/TagsInput.vue'
 import TagsInputInput from '@/components/ui/tags-input/TagsInputInput.vue'
 import type { AssetItem } from '@/platform/assets/schemas/assetSchema'
-import { cn } from '@/utils/tailwindUtil'
+import { cn } from '@comfyorg/tailwind-utils'
 
 import { isUserTag, useAssetTags } from '../composables/useAssetTags'
 import TagChip from './TagChip.vue'

@@ -64,7 +64,7 @@ import {
 } from '@/utils/formatUtil'
 import { detectNodeTypeFromFilename } from '@/utils/loaderNodeUtil'
 import { electronAPI } from '@/utils/envUtil'
-import { cn } from '@/utils/tailwindUtil'
+import { cn } from '@comfyorg/tailwind-utils'
 
 import { useAssetFavorites } from '../composables/useAssetFavorites'
 import { useMediaAssetActions } from '../composables/useMediaAssetActions'

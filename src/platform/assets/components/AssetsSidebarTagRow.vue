@@ -59,7 +59,7 @@
 import { nextTick, ref, watch } from 'vue'
 
 import type { TagWithCount } from '@/platform/assets/composables/useAssetTags'
-import { cn } from '@/utils/tailwindUtil'
+import { cn } from '@comfyorg/tailwind-utils'
 
 const {
   tag,

@@ -668,7 +668,7 @@ import Button from '@/components/ui/button/Button.vue'
 import AssetFavoriteToggle from '@/platform/assets/components/AssetFavoriteToggle.vue'
 import type { AssetItem } from '@/platform/assets/schemas/assetSchema'
 import type { ResultItemImpl } from '@/stores/queueStore'
-import { cn } from '@/utils/tailwindUtil'
+import { cn } from '@comfyorg/tailwind-utils'
 
 import LightboxAssetView from './LightboxAssetView.vue'
 

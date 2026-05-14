@@ -313,7 +313,7 @@ import { useScroll } from '@vueuse/core'
 import { computed, ref } from 'vue'
 
 import NoResultsPlaceholder from '@/components/common/NoResultsPlaceholder.vue'
-import SingleSelect from '@/components/input/SingleSelect.vue'
+import SingleSelect from '@/components/ui/single-select/SingleSelect.vue'
 import MediaLightbox from '@/components/sidebar/tabs/queue/MediaLightbox.vue'
 import Popover from '@/components/ui/Popover.vue'
 import Button from '@/components/ui/button/Button.vue'
@@ -329,7 +329,7 @@ import MetadataSearchInput from '@/platform/assets/components/MetadataSearchInpu
 import { useMediaAssetsBrowserState } from '@/platform/assets/composables/useMediaAssetsBrowserState'
 import { useHelpCenter } from '@/composables/useHelpCenter'
 import { useCommandStore } from '@/stores/commandStore'
-import { cn } from '@/utils/tailwindUtil'
+import { cn } from '@comfyorg/tailwind-utils'
 
 const { toggleHelpCenter } = useHelpCenter()
 const settingsCommand = useCommandStore().getCommand('Comfy.ShowSettingsDialog')

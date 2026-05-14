@@ -14,7 +14,7 @@
 <script setup lang="ts">
 import ComfyImage from '@/components/common/ComfyImage.vue'
 import type { ResultItemImpl } from '@/stores/queueStore'
-import { cn } from '@/utils/tailwindUtil'
+import { cn } from '@comfyorg/tailwind-utils'
 
 import ResultAudio from './ResultAudio.vue'
 import ResultVideo from './ResultVideo.vue'

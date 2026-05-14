@@ -1,8 +1,8 @@
 <template>
   <router-view />
   <GlobalDialog />
-  <BlockUI full-screen :blocked="isLoading" />
-  <Teleport to="body">
+  <BlockUI v-if="!isPrototypeRoute" full-screen :blocked="isLoading" />
+  <Teleport v-if="!isPrototypeRoute" to="body">
     <div
       ref="dragPreviewWrapperRef"
       class="pointer-events-none fixed -top-[10000px] -left-[10000px]"
@@ -23,6 +23,7 @@
 import { captureException } from '@sentry/vue'
 import BlockUI from 'primevue/blockui'
 import { computed, onMounted, useTemplateRef, watch } from 'vue'
+import { useRoute } from 'vue-router'
 
 import GlobalDialog from '@/components/dialog/GlobalDialog.vue'
 import config from '@/config'
@@ -35,8 +36,21 @@ import { electronAPI } from '@/utils/envUtil'
 import { parsePreloadError } from '@/utils/preloadErrorUtil'
 import { useConflictDetection } from '@/workbench/extensions/manager/composables/useConflictDetection'
 
+const route = useRoute()
+// Initial-load check: route.path is START_LOCATION ('/') during script setup,
+// so we read window.location.pathname for the sync guards. The reactive
+// version (route-based) still drives the template + post-mount behavior.
+const isPrototypePathOnLoad =
+  typeof window !== 'undefined' &&
+  window.location.pathname.startsWith('/prototype')
+const isPrototypeRoute = computed(
+  () => isPrototypePathOnLoad || route.path.startsWith('/prototype')
+)
+
 const workspaceStore = useWorkspaceStore()
-app.extensionManager = useWorkspaceStore()
+if (!isPrototypePathOnLoad) {
+  app.extensionManager = useWorkspaceStore()
+}
 
 const conflictDetection = useConflictDetection()
 const isLoading = computed<boolean>(() => workspaceStore.spinner)
@@ -97,6 +111,11 @@ function handleResourceError(url: string, tagName: string) {
 
 onMounted(() => {
   window['__COMFYUI_FRONTEND_VERSION__'] = config.app_version
+
+  if (isPrototypeRoute.value) {
+    document.getElementById('splash-loader')?.remove()
+    return
+  }
 
   if (isDesktop) {
     document.addEventListener('contextmenu', showContextMenu)

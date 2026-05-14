@@ -170,7 +170,7 @@ import {
   parseTemplateSegments,
   previewResolvedValue
 } from '@/utils/templateVariableResolver'
-import { cn } from '@/utils/tailwindUtil'
+import { cn } from '@comfyorg/tailwind-utils'
 
 import { WidgetInputBaseClass } from './layout'
 import WidgetLayoutField from './layout/WidgetLayoutField.vue'

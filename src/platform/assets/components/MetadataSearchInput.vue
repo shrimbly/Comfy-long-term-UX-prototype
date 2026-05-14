@@ -158,7 +158,7 @@ import {
   MEDIA_TYPE_OPTIONS
 } from '@/platform/assets/types/metadataFilter'
 import { formatMetadataFilterValue } from '@/platform/assets/utils/metadataFilterFormat'
-import { cn } from '@/utils/tailwindUtil'
+import { cn } from '@comfyorg/tailwind-utils'
 
 const { t } = useI18n()
 

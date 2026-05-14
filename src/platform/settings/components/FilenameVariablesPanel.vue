@@ -94,7 +94,7 @@ import { useI18n } from 'vue-i18n'
 import Button from '@/components/ui/button/Button.vue'
 import { useSettingStore } from '@/platform/settings/settingStore'
 import { BUILT_IN_TEMPLATE_VARIABLES } from '@/utils/templateVariableResolver'
-import { cn } from '@/utils/tailwindUtil'
+import { cn } from '@comfyorg/tailwind-utils'
 
 const { t } = useI18n()
 const settingStore = useSettingStore()

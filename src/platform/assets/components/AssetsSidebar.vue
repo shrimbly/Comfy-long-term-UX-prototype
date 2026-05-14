@@ -321,7 +321,7 @@ import { useI18n } from 'vue-i18n'
 import { useAssetTagGroups } from '@/platform/assets/composables/useAssetTagGroups'
 import { useAssetTagSelectionStore } from '@/platform/assets/composables/useAssetTagSelectionStore'
 import type { TagWithCount } from '@/platform/assets/composables/useAssetTags'
-import { cn } from '@/utils/tailwindUtil'
+import { cn } from '@comfyorg/tailwind-utils'
 
 import AssetsSidebarGroupContextMenu from './AssetsSidebarGroupContextMenu.vue'
 import AssetsSidebarTagContextMenu from './AssetsSidebarTagContextMenu.vue'

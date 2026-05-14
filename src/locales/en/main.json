@@ -1,4 +1,463 @@
 {
+  "prototype": {
+    "sidebar": {
+      "drafts": "My Workflows",
+      "recents": "Recents",
+      "projects": "Projects",
+      "libraryMedia": "Media assets",
+      "libraryModels": "Models",
+      "libraryNodes": "Custom nodes",
+      "libraryPrompts": "Prompts",
+      "templates": "Templates",
+      "members": "Members",
+      "settings": "Settings",
+      "help": "Help",
+      "groupYourWork": "Your work",
+      "groupRecents": "Recents",
+      "groupLibrary": "Library",
+      "groupDiscover": "Discover",
+      "groupWorkspace": "Workspace",
+      "groupSharedWithYou": "Shared with you",
+      "searchPlaceholder": "Search",
+      "guestEmptyState": "Tailored guest view coming in a later pass.",
+      "guest": "Guest",
+      "workspaces": "Workspaces",
+      "searchWorkspaces": "Search workspaces",
+      "createWorkspace": "Create a workspace",
+      "createWorkspaceChip": {
+        "title": "Create a workspace",
+        "subtitle": "Sync, collaborate, share"
+      },
+      "accountSettings": "Account settings",
+      "logOut": "Log out",
+      "workspaceSubtitle": "{plan} · {memberCount} members",
+      "workspaceSubtitleGuest": "Guest · {plan} · {memberCount} members",
+      "creditsLeft": "{pct}% credits",
+      "upgrade": "Upgrade →",
+      "upgradeCta": "Upgrade",
+      "plan": {
+        "free": "Free",
+        "professional": "Professional",
+        "enterprise": "Enterprise"
+      },
+      "role": {
+        "owner": "Owner",
+        "admin": "Admin",
+        "member": "Member",
+        "guest": "Guest",
+        "personal": "Personal"
+      }
+    },
+    "topbar": {
+      "userFallback": "User?"
+    },
+    "tabs": {
+      "home": "Home",
+      "newTab": "New blank workflow",
+      "closeTab": "Close tab",
+      "feedback": "Send feedback",
+      "notifications": "Notifications"
+    },
+    "persona": {
+      "label": "Persona"
+    },
+    "dashboard": {
+      "newWorkflow": "+ Workflow",
+      "newProject": "+ Project",
+      "templatesHeading": "Templates"
+    },
+    "projectTier": {
+      "workspace-wide": "Workspace",
+      "restricted": "Restricted",
+      "private": "Private"
+    },
+    "components": {
+      "newWorkflowTile": {
+        "subtitle": "Saves to My Workflows"
+      }
+    },
+    "libraryPage": {
+      "back": "Back",
+      "projectHeading": "Project",
+      "tagsHeading": "Tags",
+      "foldersHeading": "Folders",
+      "storageHeading": "Storage",
+      "storageLocal": "Local",
+      "storageCloud": "Cloud",
+      "allProjects": "All projects",
+      "allFolders": "All folders",
+      "tagsEmpty": "No tags on assets in this section yet."
+    },
+    "workflowCard": {
+      "storageLocal": "Saved locally",
+      "storageCloud": "Saved to cloud"
+    },
+    "assetCard": {
+      "storageLocal": "Local",
+      "storageCloud": "Cloud"
+    },
+    "editor": {
+      "projectChip": {
+        "myWorkflows": "My Workflows",
+        "inProject": "In project",
+        "notInProject": "Not in a project",
+        "moveToProject": "Move to another project…",
+        "promoteToProject": "Promote to project…",
+        "saveOutputs": "Save outputs",
+        "saveLocal": "Local",
+        "saveCloud": "Cloud",
+        "saveLocalHint": "Outputs are written to the Comfy output directory on disk.",
+        "saveCloudProjectHint": "Outputs will be tracked under {project} in your workspace.",
+        "saveCloudMyWorkflowsHint": "Outputs will land in your cloud My Workflows.",
+        "cloudSignInHint": "Sign in to save outputs to the cloud.",
+        "demoLabel": "Demo state",
+        "demoInProject": "In project",
+        "demoMyWorkflows": "My Workflows"
+      }
+    },
+    "views": {
+      "drafts": {
+        "title": "My Workflows",
+        "subtitle": "Your private space for new work",
+        "recentHeading": "Recent",
+        "empty": "Nothing here yet. Tap \"New Workflow\" to start.",
+        "emptyHeading": "Save your first workflow",
+        "emptySubtitle": "My Workflows is the default home for new work. Spin one up or start from a template.",
+        "createWorkflow": "+ Workflow",
+        "templatesHeading": "Starter templates"
+      },
+      "recents": {
+        "title": "Recents",
+        "subtitle": "Workflows you've recently opened across every project",
+        "empty": "Nothing here yet. Open a workflow to see it land in Recents.",
+        "emptyHeading": "Start building your first workflow",
+        "emptySubtitle": "Spin up a blank graph or pick a starter template below.",
+        "createWorkflow": "+ Workflow",
+        "templatesHeading": "Starter templates"
+      },
+      "projects": {
+        "title": "Projects",
+        "newProject": "+ Project",
+        "noAccess": "No access",
+        "filterAll": "All",
+        "empty": "No projects in this view.",
+        "workflowCount": "{count} workflow | {count} workflows",
+        "sort": {
+          "lastModified": "Last modified",
+          "oldest": "Oldest",
+          "az": "A–Z",
+          "za": "Z–A"
+        },
+        "viewMode": {
+          "grid": "Grid view",
+          "list": "List view"
+        }
+      },
+      "project": {
+        "back": "All projects",
+        "notFound": "Project not found in current workspace.",
+        "workflowsHeading": "Workflows",
+        "workflowCount": "{count} workflows",
+        "membersHeading": "Members",
+        "memberCount": "{count} members",
+        "empty": "No workflows in this project yet.",
+        "newWorkflow": "+ Workflow",
+        "viewMediaAssets": "Media assets",
+        "sharing": {
+          "title": "Sharing",
+          "addPlaceholder": "Add people by name or email",
+          "addPickerHeading": "Add to project",
+          "addButton": "Add",
+          "addExternalHint": "Invite {email} as Guest in {workspace}",
+          "noMatches": "No matching workspace members. Press Enter to invite by email.",
+          "peopleHeading": "People with access",
+          "peopleCount": "{count} with access",
+          "generalAccessHeading": "General access",
+          "viaWorkspace": "via workspace",
+          "pending": "Pending",
+          "shareButton": "Share",
+          "close": "Close",
+          "summaryAnyone": "Anyone in {workspace}",
+          "summaryRestricted": "{count} person | {count} people",
+          "summaryMore": "+{count}",
+          "removeFromProject": "Remove from project",
+          "footerNote": "Workflows and apps in this project can also be shared or published individually.",
+          "tier": {
+            "restricted": {
+              "label": "Only invited people",
+              "description": "Only the people listed above can see this project."
+            },
+            "workspace-wide": {
+              "label": "Anyone in {workspace}",
+              "description": "Everyone in this workspace can view and edit assets here."
+            },
+            "private": {
+              "label": "Only you",
+              "description": "Drafts is your personal space — not shareable."
+            }
+          }
+        }
+      },
+      "library": {
+        "filterProject": "Project:",
+        "filterAllProjects": "All projects",
+        "empty": "No items match the current filters.",
+        "count": "{n} items",
+        "searchPlaceholder": "Search by name…",
+        "media": {
+          "title": "Media assets",
+          "subtitle": "Images, videos, and other media produced across your projects."
+        },
+        "models": {
+          "title": "Models",
+          "subtitle": "Model files available in this workspace."
+        },
+        "nodes": {
+          "title": "Custom nodes",
+          "subtitle": "Custom nodes available in this workspace."
+        },
+        "prompts": {
+          "title": "Prompts",
+          "subtitle": "Saved prompts that can be reused across workflows."
+        }
+      },
+      "hub": {
+        "title": "Comfy Hub",
+        "subtitle": "Discover and start from published workflows and templates."
+      },
+      "notifications": {
+        "title": "Notifications",
+        "empty": "You're all caught up.",
+        "markAllRead": "Mark all read",
+        "in": "in {workspace}",
+        "kind": {
+          "asset-grant": "{actor} gave you access to {asset}",
+          "asset-update": "{actor} updated {asset}",
+          "project-grant": "{actor} added you to {project}",
+          "workspace-invite": "{actor} invited you to {workspace}"
+        },
+        "unknownActor": "Someone",
+        "unknownAsset": "an asset",
+        "unknownProject": "a project",
+        "unknownWorkspace": "a workspace"
+      },
+      "assetRole": {
+        "owner": "Owner",
+        "runner": "Runner",
+        "app-runner": "App Runner"
+      },
+      "projectRole": {
+        "owner": "Owner",
+        "collaborator": "Collaborator",
+        "project-guest": "Project Guest"
+      },
+      "members": {
+        "title": "Members",
+        "subtitle": "{count} members in this workspace",
+        "invite": "+ Invite",
+        "tabs": {
+          "members": "Members",
+          "pending": "Pending",
+          "permissions": "Permissions"
+        },
+        "table": {
+          "name": "Name",
+          "email": "Email",
+          "role": "Workspace role",
+          "joined": "Joined",
+          "actions": ""
+        },
+        "actions": {
+          "changeRoleTo": "Change to {role}",
+          "remove": "Remove from workspace",
+          "resend": "Resend",
+          "revoke": "Revoke",
+          "you": "You"
+        },
+        "pendingTab": {
+          "empty": "No pending invites.",
+          "headerEmail": "Email",
+          "headerRole": "Invited as",
+          "headerInvitedBy": "Invited by",
+          "headerInvitedAt": "Invited",
+          "headerActions": ""
+        },
+        "permissionsTab": {
+          "intro": "Set the baseline capabilities Members inherit. Admins always have these capabilities; Guests cannot.",
+          "readOnlyNote": "Only Admins can change these permissions.",
+          "headerCapability": "Capability",
+          "roleAdmin": "Admin",
+          "roleMember": "Member",
+          "roleGuest": "Guest",
+          "always": "Always",
+          "never": "Never",
+          "capability": {
+            "publishDirectLink": {
+              "label": "Publish workflows via shareable link",
+              "description": "Create a public direct link to a workflow snapshot. Recipients can run; recipient's workspace pays."
+            },
+            "submitToHub": {
+              "label": "Submit workflows to Comfy Hub",
+              "description": "Send a workflow for Hub listing. Each submission still requires Admin approval to go live."
+            },
+            "approveHubSubmissions": {
+              "label": "Approve Comfy Hub submissions",
+              "description": "Decide whether a submitted workflow is published to the Hub. Delegating this lets Members act on the approval queue."
+            },
+            "editAllowlists": {
+              "label": "Edit workspace model and custom-node allowlists",
+              "description": "Add or remove entries from the workspace allowlists that constrain cloud assets."
+            },
+            "configureWorkspace": {
+              "label": "Configure workspace settings",
+              "description": "Edit workspace-wide settings such as data and training opt-out. Billing remains Admin-only and is not delegable."
+            }
+          }
+        },
+        "inviteDialog": {
+          "title": "Invite to {workspace}",
+          "subtitle": "We'll send an email invite. They can accept on any device.",
+          "emailLabel": "Email address",
+          "emailPlaceholder": "name@team.com",
+          "roleLabel": "Workspace role",
+          "submit": "Send invite",
+          "cancel": "Cancel",
+          "roleHint": {
+            "admin": "Full workspace control, including billing and member management.",
+            "member": "Standard collaborator. Can invite others, create projects, and use the library.",
+            "guest": "Limited to assets and projects they're explicitly invited to."
+          }
+        },
+        "removeConfirm": "Remove {name} from this workspace?"
+      },
+      "settings": {
+        "title": "Workspace settings",
+        "subtitle": "Identity, allowlists, and other workspace-wide configuration.",
+        "guestEmpty": "Workspace settings are not available to guests.",
+        "tabs": {
+          "general": "General",
+          "allowlists": "Allowlists",
+          "publishing": "Publishing",
+          "billing": "Billing & credit limits",
+          "advanced": "Advanced"
+        },
+        "general": {
+          "heading": "General",
+          "description": "Workspace identity. Visible to all members.",
+          "nameLabel": "Workspace name",
+          "descriptionLabel": "Description",
+          "descriptionPlaceholder": "Add a short description of this workspace.",
+          "typeLabel": "Type",
+          "tierPersonal": "Personal workspace",
+          "tierTeam": "Team workspace",
+          "ownerLabel": "Owner",
+          "readOnly": "Only workspace Admins can edit identity."
+        },
+        "modelAllowlist": {
+          "heading": "Model allowlist",
+          "description": "Models permitted to run in this workspace.",
+          "placeholder": "e.g. sd_xl_base_1.0.safetensors"
+        },
+        "customNodeAllowlist": {
+          "heading": "Custom-node allowlist",
+          "description": "Community custom-node packages permitted to install in this workspace.",
+          "placeholder": "e.g. ComfyUI-Manager"
+        },
+        "partnerNodeAllowlist": {
+          "heading": "Partner-node allowlist",
+          "description": "Vetted partner integrations (e.g. RunwayML, Luma, Black Forest Labs) permitted in this workspace.",
+          "placeholder": "e.g. RunwayML / Gen-3 Alpha"
+        },
+        "allowlist": {
+          "empty": "Nothing on the allowlist yet.",
+          "add": "Add",
+          "remove": "Remove",
+          "addedBy": "Added by {user} on {date}",
+          "delegationHint": "Allowlist editing is Admin-only here. Admins can delegate it on the Members → Permissions tab.",
+          "enforceLabel": "Enforce",
+          "statusEnforced": "Enforced",
+          "statusOff": "Off",
+          "offHint": "Enforcement is off — everything is allowed regardless of the entries below. Turn on Enforce to restrict to the listed items."
+        },
+        "billing": {
+          "heading": "Billing & subscription",
+          "description": "Plan, payment method, credit balance, and invoices for this workspace.",
+          "planLabel": "Plan",
+          "paymentLabel": "Payment method",
+          "creditLabel": "Credit balance",
+          "managePlan": "Manage plan",
+          "updatePayment": "Update payment",
+          "renewsOn": "Renews {date}",
+          "cancelsOn": "Cancels {date}",
+          "resetsOn": "Resets {date}",
+          "expires": "Expires {month}/{year}",
+          "card": "Card",
+          "noPayment": "No payment method on file",
+          "invoicesHeading": "Recent invoices",
+          "noInvoices": "No invoices yet.",
+          "ownershipNote": "Billing stays with the workspace, not the Admin. Transferring ownership does not move the payment method on file.",
+          "status": {
+            "active": "Active",
+            "past-due": "Past due",
+            "cancelled": "Cancelled"
+          },
+          "invoiceStatus": {
+            "paid": "Paid",
+            "open": "Open",
+            "past-due": "Past due"
+          }
+        },
+        "creditLimits": {
+          "heading": "Member credit limits",
+          "description": "Optional per-member ceilings on workspace credit usage.",
+          "mechanismNote": "Enforcement mechanism (hard block vs. soft warn vs. pre-charge reservation) is not yet decided — this surface captures the intent regardless.",
+          "unlimited": "Unlimited",
+          "clear": "Clear",
+          "noMembers": "Invite members to set per-member limits.",
+          "col": {
+            "member": "Member",
+            "limit": "Limit",
+            "period": "Period",
+            "usage": "Usage"
+          },
+          "period": {
+            "monthly": "Monthly",
+            "weekly": "Weekly",
+            "oneTime": "One-time"
+          }
+        },
+        "dataTraining": {
+          "heading": "Data & training policy",
+          "description": "Choose how workspace content interacts with model training.",
+          "toggleLabel": "Opt this workspace out of training",
+          "toggleHint": "When opt-out is on, workspace content and outputs are not used to train Comfy or partner models."
+        },
+        "hubQueue": {
+          "heading": "Hub publishing approval queue",
+          "description": "Submissions from members awaiting approval to list on Comfy Hub.",
+          "empty": "Nothing waiting for approval.",
+          "submittedBy": "Submitted by {user} on {date}",
+          "approve": "Approve",
+          "reject": "Reject"
+        },
+        "ownership": {
+          "heading": "Workspace ownership",
+          "description": "Transfer ownership to another Admin. Billing on file stays with the workspace.",
+          "selectPlaceholder": "Pick an Admin…",
+          "transfer": "Transfer ownership",
+          "noTargets": "No other Admins to transfer to. Promote a Member to Admin first on the Members tab.",
+          "billingNote": "The payment method on file does not transfer. The new owner can update it after the handover.",
+          "confirm": "Transfer ownership of this workspace to {name}?"
+        },
+        "danger": {
+          "heading": "Danger zone",
+          "description": "Permanent actions. Personal workspaces cannot be deleted.",
+          "deleteButton": "Delete workspace",
+          "confirm": "Delete \"{name}\"? This permanently removes the workspace and all its content."
+        }
+      }
+    }
+  },
   "g": {
     "shortcutSuffix": " ({shortcut})",
     "user": "User",
@@ -129,6 +588,8 @@
     "saveAnyway": "Save Anyway",
     "saving": "Saving",
     "no": "No",
+    "on": "On",
+    "off": "Off",
     "cancel": "Cancel",
     "close": "Close",
     "closeDialog": "Close dialog",
@@ -208,6 +669,7 @@
     "filterByType": "Filter by {type}...",
     "mostRelevant": "Most relevant",
     "favorites": "Favorites",
+    "bookmarked": "Bookmarked",
     "essentials": "Essentials",
     "input": "Input",
     "output": "Output",
@@ -227,6 +689,7 @@
     "warning": "Warning",
     "name": "Name",
     "category": "Category",
+    "categories": "Categories",
     "sort": "Sort",
     "source": "Source",
     "filter": "Filter",
@@ -367,6 +830,8 @@
     "preloadErrorTitle": "Loading Error",
     "recents": "Recents",
     "partner": "Partner",
+    "blueprints": "Blueprints",
+    "partnerNodes": "Partner Nodes",
     "collapseAll": "Collapse all",
     "expandAll": "Expand all"
   },
@@ -377,6 +842,10 @@
     "actions": "Actions",
     "selected": "Selected",
     "legacyMenuNotAvailable": "Legacy manager menu is not available, defaulting to the new manager menu.",
+    "incompatibleVersion": {
+      "title": "ComfyUI-Manager upgrade required",
+      "message": "Please upgrade ComfyUI-Manager to version 4.2.1 or higher.\n• Desktop: Update the ComfyUI Desktop app\n• Standalone: Run pip install -U comfyui-manager and restart\nLearn more: https://github.com/Comfy-Org/ComfyUI-Manager"
+    },
     "legacyManagerUI": "Use Legacy UI",
     "legacyManagerUIDescription": "To use the legacy Manager UI, start ComfyUI with --enable-manager-legacy-ui",
     "legacyManagerSearchTip": "Looking for ComfyUI-Manager? You can enable the legacy manager UI by starting ComfyUI with the --enable-manager-legacy-ui flag.",
@@ -1012,6 +1481,7 @@
       "dirtyCloseTitle": "Save Changes?",
       "dirtyClose": "The files below have been changed.  Would you like to save them before closing?",
       "dirtyCloseHint": "Hold Shift to close without prompt",
+      "dirtyCloseAnyway": "Close anyway",
       "confirmOverwriteTitle": "Overwrite existing file?",
       "confirmOverwrite": "The file below already exists. Would you like to overwrite it?",
       "workflowTreeType": {
@@ -1695,6 +2165,7 @@
     "conditioning": "conditioning",
     "loaders": "loaders",
     "guiders": "guiders",
+    "batch": "batch",
     "latent": "latent",
     "mask": "mask",
     "api node": "api node",
@@ -1702,8 +2173,6 @@
     "video": "video",
     "ByteDance": "ByteDance",
     "preprocessors": "preprocessors",
-    "utils": "utils",
-    "string": "string",
     "advanced": "advanced",
     "guidance": "guidance",
     "model_merging": "model_merging",
@@ -1712,6 +2181,8 @@
     "attention_experiments": "attention_experiments",
     "flux": "flux",
     "kandinsky5": "kandinsky5",
+    "utils": "utils",
+    "postprocessing": "postprocessing",
     "hooks": "hooks",
     "combine": "combine",
     "math": "math",
@@ -1740,12 +2211,12 @@
     "gligen": "gligen",
     "shader": "shader",
     "Grok": "Grok",
+    "Wan": "Wan",
     "HitPaw": "HitPaw",
     "sd": "sd",
     "Ideogram": "Ideogram",
-    "postprocessing": "postprocessing",
     "transform": "transform",
-    "batch": "batch",
+    "color": "color",
     "upscaling": "upscaling",
     "instructpix2pix": "instructpix2pix",
     "compositing": "compositing",
@@ -1760,7 +2231,6 @@
     "Meshy": "Meshy",
     "MiniMax": "MiniMax",
     "model_specific": "model_specific",
-    "Moonvalley Marey": "Moonvalley Marey",
     "OpenAI": "OpenAI",
     "Sora": "Sora",
     "cond pair": "cond pair",
@@ -1778,17 +2248,18 @@
     "save": "save",
     "upscale_diffusion": "upscale_diffusion",
     "clip": "clip",
+    "Sonilo": "Sonilo",
     "Stability AI": "Stability AI",
     "stable_cascade": "stable_cascade",
     "3d_models": "3d_models",
     "style_model": "style_model",
+    "supir": "supir",
     "Tencent": "Tencent",
     "textgen": "textgen",
     "Topaz": "Topaz",
     "Tripo": "Tripo",
     "Veo": "Veo",
     "Vidu": "Vidu",
-    "Wan": "Wan",
     "camera": "camera",
     "WaveSpeed": "WaveSpeed",
     "zimage": "zimage"
@@ -1832,6 +2303,7 @@
     "IMAGE": "IMAGE",
     "IMAGECOMPARE": "IMAGECOMPARE",
     "INT": "INT",
+    "INTERP_MODEL": "INTERP_MODEL",
     "LATENT": "LATENT",
     "LATENT_OPERATION": "LATENT_OPERATION",
     "LATENT_UPSCALE_MODEL": "LATENT_UPSCALE_MODEL",
@@ -1851,6 +2323,7 @@
     "NOISE": "NOISE",
     "OPENAI_CHAT_CONFIG": "OPENAI_CHAT_CONFIG",
     "OPENAI_INPUT_FILES": "OPENAI_INPUT_FILES",
+    "OPTICAL_FLOW": "OPTICAL_FLOW",
     "PHOTOMAKER": "PHOTOMAKER",
     "PIXVERSE_TEMPLATE": "PIXVERSE_TEMPLATE",
     "POSE_KEYPOINT": "POSE_KEYPOINT",
@@ -1859,6 +2332,7 @@
     "RECRAFT_V3_STYLE": "RECRAFT_V3_STYLE",
     "RETARGET_TASK_ID": "RETARGET_TASK_ID",
     "RIG_TASK_ID": "RIG_TASK_ID",
+    "SAM3_TRACK_DATA": "SAM3_TRACK_DATA",
     "SAMPLER": "SAMPLER",
     "SIGMAS": "SIGMAS",
     "STRING": "STRING",
@@ -1985,6 +2459,7 @@
     "upDirection": "Up Direction",
     "materialMode": "Material Mode",
     "showSkeleton": "Show Skeleton",
+    "fitToViewer": "Fit to Viewer",
     "scene": "Scene",
     "model": "Model",
     "camera": "Camera",
@@ -2032,7 +2507,24 @@
     "openIn3DViewer": "Open in 3D Viewer",
     "dropToLoad": "Drop 3D model to load",
     "unsupportedFileType": "Unsupported file type (supports .gltf, .glb, .obj, .fbx, .stl, .ply, .spz, .splat, .ksplat)",
-    "uploadingModel": "Uploading 3D model..."
+    "uploadingModel": "Uploading 3D model...",
+    "loadingHDRI": "Loading HDRI...",
+    "hdri": {
+      "label": "HDRI Environment",
+      "uploadFile": "Upload HDRI (.hdr, .exr)",
+      "changeFile": "Change HDRI",
+      "removeFile": "Remove HDRI",
+      "showAsBackground": "Show as Background",
+      "intensity": "Intensity"
+    },
+    "gizmo": {
+      "label": "Gizmo",
+      "toggle": "Gizmo",
+      "translate": "Translate",
+      "rotate": "Rotate",
+      "scale": "Scale",
+      "reset": "Reset Transform"
+    }
   },
   "imageCrop": {
     "loading": "Loading...",
@@ -2093,6 +2585,7 @@
     "failedToDownloadFile": "Failed to download file",
     "updateRequested": "Update requested",
     "nodeDefinitionsUpdated": "Node definitions updated",
+    "nodeDefinitionsUpdateFailed": "Failed to update node definitions",
     "errorSaveSetting": "Error saving setting {id}: {err}",
     "errorCopyImage": "Error copying image: {error}",
     "errorOpenImage": "Error opening image: {error}",
@@ -2127,7 +2620,11 @@
     "failedToUpdateMaterialMode": "Failed to update material mode",
     "failedToUpdateEdgeThreshold": "Failed to update edge threshold",
     "failedToUploadBackgroundImage": "Failed to upload background image",
-    "failedToUpdateBackgroundRenderMode": "Failed to update background render mode to {mode}"
+    "failedToUpdateBackgroundRenderMode": "Failed to update background render mode to {mode}",
+    "failedToLoadHDRI": "Failed to load HDRI file",
+    "unsupportedHDRIFormat": "Unsupported file format. Please upload a .hdr or .exr file.",
+    "failedToToggleGizmo": "Failed to toggle gizmo",
+    "failedToSetGizmoMode": "Failed to set gizmo mode"
   },
   "nodeErrors": {
     "render": "Node Render Error",
@@ -2195,7 +2692,8 @@
       "freeTierBadge": "Eligible for Free Tier",
       "freeTierDescription": "Sign up with Google to get {credits} free credits every month. No card needed.",
       "freeTierDescriptionGeneric": "Sign up with Google to get free credits every month. No card needed.",
-      "backToSocialLogin": "Sign up with Google or Github instead"
+      "backToSocialLogin": "Sign up with Google or Github instead",
+      "backToGithubLogin": "Sign up with Github instead"
     },
     "signup": {
       "title": "Create an account",
@@ -2217,7 +2715,9 @@
       "success": "Signed out successfully",
       "successDetail": "You have been signed out of your account.",
       "unsavedChangesTitle": "Unsaved Changes",
-      "unsavedChangesMessage": "You have unsaved changes that will be lost when you sign out. Do you want to continue?"
+      "unsavedChangesMessage": "You have unsaved changes that will be lost when you sign out. Do you want to continue?",
+      "signOutAnyway": "Sign out anyway",
+      "saveFailed": "Sign-out cancelled because saving \"{workflow}\" failed."
     },
     "passwordUpdate": {
       "success": "Password Updated",
@@ -2746,6 +3246,7 @@
     "noReleaseNotes": "No release notes available."
   },
   "breadcrumbsMenu": {
+    "blueprint": "Blueprint",
     "duplicate": "Duplicate",
     "enterAppMode": "Enter app mode",
     "exitAppMode": "Exit app mode",
@@ -2792,56 +3293,64 @@
     "dontAskAgain": "Don't Ask Again",
     "loadError": "Failed to load survey. Please try again later."
   },
+  "errorPanelSurvey": {
+    "ctaText": "How's the new error panel?",
+    "ctaButton": "Give feedback"
+  },
   "cloudOnboarding": {
     "skipToCloudApp": "Skip to the cloud app",
     "survey": {
       "title": "Cloud Survey",
       "placeholder": "Survey questions placeholder",
-      "steps": {
-        "familiarity": "How familiar are you with ComfyUI?",
-        "purpose": "What will you primarily use ComfyUI for?",
-        "industry": "What's your primary industry?",
-        "making": "What do you plan on making?"
+      "intro": "Help us tailor your ComfyUI experience.",
+      "errors": {
+        "chooseAnOption": "Please choose an option.",
+        "selectAtLeastOne": "Please select at least one option.",
+        "describeAnswer": "Please describe your answer."
       },
-      "questions": {
+      "steps": {
+        "usage": "How do you plan to use ComfyUI?",
         "familiarity": "How familiar are you with ComfyUI?",
-        "purpose": "What will you primarily use ComfyUI for?",
-        "industry": "What's your primary industry?",
-        "making": "What do you plan on making?"
+        "intent": "What do you want to create with ComfyUI?",
+        "source": "Where did you hear about ComfyUI?"
       },
       "options": {
+        "usage": {
+          "personal": "Personal use",
+          "work": "Work",
+          "education": "Education (student or educator)"
+        },
         "familiarity": {
-          "new": "New to ComfyUI (never used it before)",
-          "starting": "Just getting started (following tutorials)",
-          "basics": "Comfortable with basics",
-          "advanced": "Advanced user (custom workflows)",
-          "expert": "Expert (help others)"
+          "new": "New — never used it",
+          "starting": "Beginner — following tutorials",
+          "basics": "Intermediate — comfortable with basics",
+          "advanced": "Advanced — build and edit workflows",
+          "expert": "Expert — I help others"
         },
-        "purpose": {
-          "personal": "Personal projects / hobby",
-          "community": "Community contributions (nodes, workflows, etc.)",
-          "client": "Client work (freelance)",
-          "inhouse": "My own workplace (in-house)",
-          "research": "Academic research"
-        },
-        "industry": {
-          "film_tv_animation": "Film, TV, & animation",
-          "gaming": "Gaming",
-          "marketing": "Marketing & advertising",
-          "architecture": "Architecture",
-          "product_design": "Product & graphic design",
-          "fine_art": "Fine art & illustration",
-          "software": "Software & technology",
-          "education": "Education",
-          "other": "Other",
-          "otherPlaceholder": "Please specify"
-        },
-        "making": {
+        "intent": {
+          "workflows": "Custom workflows or pipelines",
+          "custom_nodes": "Custom nodes",
+          "videos": "Videos",
           "images": "Images",
-          "video": "Video & animation",
-          "3d": "3D assets",
+          "3d_game": "3D assets / game assets",
           "audio": "Audio / music",
-          "custom_nodes": "Custom nodes & workflows"
+          "apps": "Simplified Apps from workflows",
+          "api": "API endpoints to run workflows",
+          "not_sure": "Not sure"
+        },
+        "source": {
+          "youtube": "YouTube",
+          "reddit": "Reddit",
+          "twitter": "Twitter / X",
+          "instagram": "Instagram",
+          "linkedin": "LinkedIn",
+          "friend": "Friend or colleague",
+          "search": "Google / search",
+          "newsletter": "Newsletter or blog",
+          "conference": "Conference or event",
+          "discord": "Discord / community",
+          "github": "GitHub",
+          "other": "Other"
         }
       }
     },
@@ -2911,10 +3420,10 @@
   "cloudForgotPassword_emailRequired": "Email is required",
   "cloudForgotPassword_passwordResetSent": "Password reset sent",
   "cloudForgotPassword_passwordResetError": "Failed to send password reset email",
+  "cloudSurvey_steps_usage": "How do you plan to use ComfyUI?",
   "cloudSurvey_steps_familiarity": "How familiar are you with ComfyUI?",
-  "cloudSurvey_steps_purpose": "What will you primarily use ComfyUI for?",
-  "cloudSurvey_steps_industry": "What's your primary industry?",
-  "cloudSurvey_steps_making": "What do you plan on making?",
+  "cloudSurvey_steps_intent": "What do you want to create with ComfyUI?",
+  "cloudSurvey_steps_source": "Where did you hear about ComfyUI?",
   "assetBrowser": {
     "allCategory": "All {category}",
     "allModels": "All Models",
@@ -2980,7 +3489,9 @@
     "finish": "Finish",
     "importAnother": "Import Another",
     "genericLinkPlaceholder": "Paste link here",
+    "gridView": "Grid view",
     "jobId": "Job ID",
+    "listView": "List view",
     "loadingModels": "Loading {type}...",
     "maxFileSize": "Max file size: {size}",
     "maxFileSizeValue": "1 GB",
@@ -3012,6 +3523,7 @@
     "sortingType": "Sorting Type",
     "sortPopular": "Popular",
     "sortRecent": "Recent",
+    "sortUnsorted": "Unsorted",
     "sortZA": "Z-A",
     "tags": "Tags",
     "tagsHelp": "Separate tags with commas",
@@ -3365,7 +3877,9 @@
     "createProfileToPublish": "Create a profile to publish to ComfyHub",
     "createProfileCta": "Create a profile",
     "publishFailedTitle": "Publish failed",
-    "publishFailedDescription": "Something went wrong while publishing your workflow. Please try again."
+    "publishFailedDescription": "Something went wrong while publishing your workflow. Please try again.",
+    "publishSuccessTitle": "Published successfully",
+    "publishSuccessDescription": "Your workflow is now live on ComfyHub."
   },
   "comfyHubProfile": {
     "checkingAccess": "Checking your publishing access...",
@@ -3554,6 +4068,8 @@
   },
   "rightSidePanel": {
     "togglePanel": "Toggle properties panel",
+    "editTitle": "Edit title",
+    "editSubgraph": "Edit subgraph",
     "noSelection": "Select a node to see its properties and info.",
     "workflowOverview": "Workflow Overview",
     "title": "No item(s) selected | 1 item selected | {count} items selected",
@@ -3679,7 +4195,10 @@
       "unknownCategory": "Unknown",
       "missingModelsTitle": "Missing Models",
       "assetLoadTimeout": "Model detection timed out. Try reloading the workflow.",
-      "downloadAll": "Download all"
+      "downloadAll": "Download all",
+      "refresh": "Refresh",
+      "refreshing": "Refreshing missing models.",
+      "refreshFailed": "Failed to refresh missing models. Please try again."
     },
     "missingMedia": {
       "missingMediaTitle": "Missing Inputs",

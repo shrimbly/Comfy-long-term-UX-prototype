@@ -40,7 +40,10 @@
 
     <template #contentFilter>
       <div class="relative flex flex-wrap justify-between gap-2 px-6 pb-4">
-        <div class="flex flex-wrap gap-2">
+        <div
+          :ref="primeVueOverlay.overlayScopeRef"
+          class="flex flex-wrap gap-2"
+        >
           <!-- Model Filter -->
           <MultiSelect
             v-model="selectedModelObjects"
@@ -48,6 +51,7 @@
             class="w-[250px]"
             :label="modelFilterLabel"
             :options="modelOptions"
+            :content-style="selectContentStyle"
             :show-search-box="true"
             :show-selected-count="true"
             :show-clear-button="true"
@@ -62,6 +66,7 @@
             v-model="selectedUseCaseObjects"
             :label="useCaseFilterLabel"
             :options="useCaseOptions"
+            :content-style="selectContentStyle"
             :show-search-box="true"
             :show-selected-count="true"
             :show-clear-button="true"
@@ -76,6 +81,7 @@
             v-model="selectedRunsOnObjects"
             :label="runsOnFilterLabel"
             :options="runsOnOptions"
+            :content-style="selectContentStyle"
             :show-search-box="true"
             :show-selected-count="true"
             :show-clear-button="true"
@@ -92,6 +98,7 @@
             v-model="sortBy"
             :label="$t('templateWorkflows.sorting', 'Sort by')"
             :options="sortOptions"
+            :content-style="selectContentStyle"
             class="w-62.5"
           >
             <template #icon>
@@ -175,7 +182,6 @@
           <!-- Actual Template Cards -->
           <CardContainer
             v-for="template in isLoading ? [] : displayTemplates"
-            v-show="isTemplateVisibleOnDistribution(template)"
             :key="template.name"
             ref="cardRefs"
             size="tall"
@@ -405,8 +411,8 @@ import CardContainer from '@/components/card/CardContainer.vue'
 import CardTop from '@/components/card/CardTop.vue'
 import Tag from '@/components/chip/Tag.vue'
 import SearchInput from '@/components/ui/search-input/SearchInput.vue'
-import MultiSelect from '@/components/input/MultiSelect.vue'
-import SingleSelect from '@/components/input/SingleSelect.vue'
+import MultiSelect from '@/components/ui/multi-select/MultiSelect.vue'
+import SingleSelect from '@/components/ui/single-select/SingleSelect.vue'
 import AudioThumbnail from '@/components/templates/thumbnails/AudioThumbnail.vue'
 import CompareSliderThumbnail from '@/components/templates/thumbnails/CompareSliderThumbnail.vue'
 import DefaultThumbnail from '@/components/templates/thumbnails/DefaultThumbnail.vue'
@@ -417,14 +423,13 @@ import BaseModalLayout from '@/components/widget/layout/BaseModalLayout.vue'
 import LeftSidePanel from '@/components/widget/panel/LeftSidePanel.vue'
 import { useIntersectionObserver } from '@/composables/useIntersectionObserver'
 import { useLazyPagination } from '@/composables/useLazyPagination'
+import { usePrimeVueOverlayChildStyle } from '@/composables/usePopoverSizing'
 import { useTemplateFiltering } from '@/composables/useTemplateFiltering'
 import { isCloud } from '@/platform/distribution/types'
 import { useTelemetry } from '@/platform/telemetry'
 import { useTemplateWorkflows } from '@/platform/workflow/templates/composables/useTemplateWorkflows'
 import type { TemplateInfo } from '@/platform/workflow/templates/types/template'
 import { useWorkflowTemplatesStore } from '@/platform/workflow/templates/repositories/workflowTemplatesStore'
-import { TemplateIncludeOnDistributionEnum } from '@/platform/workflow/templates/types/template'
-import { useSystemStatsStore } from '@/stores/systemStatsStore'
 import type { NavGroupData, NavItemData } from '@/types/navTypes'
 import { OnCloseKey } from '@/types/widgetTypes'
 import { createGridStyle } from '@/utils/gridUtil'
@@ -442,29 +447,6 @@ const templateWasSelected = ref(false)
 
 onMounted(() => {
   sessionStartTime.value = Date.now()
-})
-
-const systemStatsStore = useSystemStatsStore()
-
-const distributions = computed(() => {
-  switch (__DISTRIBUTION__) {
-    case 'cloud':
-      return [TemplateIncludeOnDistributionEnum.Cloud]
-    case 'localhost':
-      return [TemplateIncludeOnDistributionEnum.Local]
-    case 'desktop':
-    default:
-      if (systemStatsStore.systemStats?.system.os === 'darwin') {
-        return [
-          TemplateIncludeOnDistributionEnum.Desktop,
-          TemplateIncludeOnDistributionEnum.Mac
-        ]
-      }
-      return [
-        TemplateIncludeOnDistributionEnum.Desktop,
-        TemplateIncludeOnDistributionEnum.Windows
-      ]
-  }
 })
 
 // Wrap onClose to track session end
@@ -586,7 +568,7 @@ const {
   totalCount,
   resetFilters,
   loadFuseOptions
-} = useTemplateFiltering(navigationFilteredTemplates, selectedNavItem)
+} = useTemplateFiltering(navigationFilteredTemplates)
 
 /**
  * Coordinates state between the selected navigation item and the sort order to
@@ -658,6 +640,8 @@ const selectedRunsOnObjects = computed({
 const loadingTemplate = ref<string | null>(null)
 const hoveredTemplate = ref<string | null>(null)
 const cardRefs = ref<HTMLElement[]>([])
+const primeVueOverlay = usePrimeVueOverlayChildStyle()
+const selectContentStyle = primeVueOverlay.contentStyle
 
 // Force re-render key for templates when sorting changes
 const templateListKey = ref(0)
@@ -851,14 +835,6 @@ const { isLoading } = useAsyncState(
     immediate: true // Start loading immediately
   }
 )
-
-const isTemplateVisibleOnDistribution = (template: TemplateInfo) => {
-  return (template.includeOnDistributions?.length ?? 0) > 0
-    ? distributions.value.some((d) =>
-        template.includeOnDistributions?.includes(d)
-      )
-    : true
-}
 
 onBeforeUnmount(() => {
   cardRefs.value = [] // Release DOM refs
