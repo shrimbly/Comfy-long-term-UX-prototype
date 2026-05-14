@@ -136,7 +136,8 @@
         </button>
       </Transition>
 
-      <!-- Storage badge (cloud vs local) — sourced from user_metadata.storage -->
+      <!-- Storage badge (cloud vs local) — only on hover, to keep the
+           grid quiet at rest. Sourced from user_metadata.storage. -->
       <div
         v-if="storage"
         :title="
@@ -144,7 +145,12 @@
             ? $t('mediaAsset.storage.cloud')
             : $t('mediaAsset.storage.local')
         "
-        class="pointer-events-none absolute top-2 right-2 inline-flex size-6 items-center justify-center rounded-md bg-black/55 text-white backdrop-blur-sm"
+        :class="
+          cn(
+            'pointer-events-none absolute top-2 right-2 inline-flex size-6 items-center justify-center rounded-md bg-black/55 text-white backdrop-blur-sm transition-opacity duration-150',
+            isHovered ? 'opacity-100' : 'opacity-0'
+          )
+        "
       >
         <i
           :class="
