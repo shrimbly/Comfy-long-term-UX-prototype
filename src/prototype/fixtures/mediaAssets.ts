@@ -18,6 +18,8 @@
 
 import type { AssetItem } from '@/platform/assets/schemas/assetSchema'
 
+import type { PersonaId } from '../types'
+
 type AssetStorage = 'local' | 'cloud'
 
 interface PrototypeProject {
@@ -28,6 +30,9 @@ interface PrototypeProject {
   fileTags: string[]
   startDate: string // ISO date; each file is offset N hours after this
   storage: AssetStorage
+  // Which personas have project-level access. Modeled per
+  // ../IA_Plan/wiki/concepts/three-level-permissions.md.
+  visibleToPersonas: PersonaId[]
 }
 
 const PROJECTS: PrototypeProject[] = [
@@ -38,7 +43,8 @@ const PROJECTS: PrototypeProject[] = [
     workflowName: 'Hero shot v3',
     fileTags: ['output', 'campaign'],
     startDate: '2026-05-10T09:00:00Z',
-    storage: 'cloud'
+    storage: 'cloud',
+    visibleToPersonas: ['workspace-admin', 'workspace-member']
   },
   {
     slug: 'brand-system',
@@ -47,7 +53,8 @@ const PROJECTS: PrototypeProject[] = [
     workflowName: 'Logo render',
     fileTags: ['output', 'brand'],
     startDate: '2026-05-08T10:00:00Z',
-    storage: 'cloud'
+    storage: 'cloud',
+    visibleToPersonas: ['workspace-admin', 'workspace-member', 'solo']
   },
   {
     slug: 'client-x-pitch',
@@ -56,7 +63,8 @@ const PROJECTS: PrototypeProject[] = [
     workflowName: 'Concept board',
     fileTags: ['output', 'pitch'],
     startDate: '2026-05-05T11:00:00Z',
-    storage: 'cloud'
+    storage: 'cloud',
+    visibleToPersonas: ['workspace-admin', 'project-collaborator']
   },
   {
     slug: 'marketing-q3',
@@ -65,7 +73,8 @@ const PROJECTS: PrototypeProject[] = [
     workflowName: 'Banner sweep',
     fileTags: ['output', 'marketing'],
     startDate: '2026-05-03T08:00:00Z',
-    storage: 'local'
+    storage: 'local',
+    visibleToPersonas: ['workspace-admin', 'workspace-member']
   },
   {
     slug: 'personal',
@@ -74,9 +83,26 @@ const PROJECTS: PrototypeProject[] = [
     workflowName: 'Sketchbook',
     fileTags: ['output', 'sketch'],
     startDate: '2026-04-28T19:00:00Z',
-    storage: 'local'
+    storage: 'local',
+    visibleToPersonas: ['workspace-admin', 'solo', 'solo-local']
   }
 ]
+
+// Asset-level grants (the asset tier in three-level-permissions). Used to
+// model the asset-only-guest persona, who has been sent specific files
+// outside of any project membership.
+const ASSET_LEVEL_GRANTS: Record<PersonaId, string[] | undefined> = {
+  solo: undefined,
+  'solo-local': undefined,
+  'workspace-admin': undefined,
+  'workspace-member': undefined,
+  'project-collaborator': undefined,
+  'asset-only-guest': [
+    'media-proj-coca-cola-01.jpg',
+    'media-proj-coca-cola-02.jpg',
+    'media-proj-coca-cola-03.jpg'
+  ]
+}
 
 const FILES_PER_PROJECT = 8
 const FIXTURE_BASE = '/prototype-fixtures/media'
@@ -87,15 +113,26 @@ function fileTimestamp(startIso: string, indexInProject: number): string {
   return new Date(start + offsetMs).toISOString()
 }
 
-export function buildPrototypeMediaAssets(): AssetItem[] {
+export function buildPrototypeMediaAssets(personaId?: PersonaId): AssetItem[] {
+  const grantedAssetIds = personaId ? ASSET_LEVEL_GRANTS[personaId] : undefined
+  const grantedSet = grantedAssetIds ? new Set(grantedAssetIds) : null
+
   const assets: AssetItem[] = []
   for (const project of PROJECTS) {
+    const hasProjectAccess =
+      !personaId || project.visibleToPersonas.includes(personaId)
+
     for (let i = 0; i < FILES_PER_PROJECT; i++) {
       const slot = String(i + 1).padStart(2, '0')
       const filename = `${slot}.jpg`
+      const id = `media-${project.projectId}-${filename}`
+      const grantedAtAssetLevel = grantedSet?.has(id) ?? false
+
+      if (!hasProjectAccess && !grantedAtAssetLevel) continue
+
       const url = `${FIXTURE_BASE}/${project.slug}/${filename}`
       assets.push({
-        id: `media-${project.projectId}-${filename}`,
+        id,
         name: `${project.slug}/${filename}`,
         display_name: filename,
         size: 0,

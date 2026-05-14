@@ -7,6 +7,7 @@
 // Wired in via the factory branch in
 //   src/platform/assets/composables/media/useMediaAssets.ts
 
+import { storeToRefs } from 'pinia'
 import { computed, ref } from 'vue'
 
 import type { AssetItem } from '@/platform/assets/schemas/assetSchema'
@@ -17,13 +18,18 @@ import {
 import type { FolderItem } from '@/utils/directoryPickerUtil'
 
 import { buildPrototypeMediaAssets } from '../fixtures/mediaAssets'
-
-const cachedOutputAssets = buildPrototypeMediaAssets()
+import { usePrototypePersonaStore } from '../stores/personaStore'
 
 export function usePrototypeAssetsProvider(directory: 'input' | 'output') {
-  // The prototype only seeds output assets for now. Inputs return empty.
+  const personaStore = usePrototypePersonaStore()
+  const { currentPersonaId } = storeToRefs(personaStore)
+
+  // Re-derives whenever the persona switcher fires, so the demo can
+  // demonstrate the wiki's three-level permission model live.
   const allMedia = computed<AssetItem[]>(() =>
-    directory === 'output' ? cachedOutputAssets : []
+    directory === 'output'
+      ? buildPrototypeMediaAssets(currentPersonaId.value)
+      : []
   )
 
   const loading = ref(false)
