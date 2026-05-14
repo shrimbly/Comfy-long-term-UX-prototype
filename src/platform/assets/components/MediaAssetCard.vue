@@ -136,6 +136,28 @@
         </button>
       </Transition>
 
+      <!-- Storage badge (cloud vs local) — sourced from user_metadata.storage -->
+      <div
+        v-if="storage"
+        :title="
+          storage === 'cloud'
+            ? $t('mediaAsset.storage.cloud')
+            : $t('mediaAsset.storage.local')
+        "
+        class="pointer-events-none absolute top-2 right-2 inline-flex size-6 items-center justify-center rounded-md bg-black/55 text-white backdrop-blur-sm"
+      >
+        <i
+          :class="
+            cn(
+              'size-3.5',
+              storage === 'cloud'
+                ? 'icon-[lucide--cloud]'
+                : 'icon-[lucide--hard-drive]'
+            )
+          "
+        />
+      </div>
+
       <!-- Hover title overlay (only when footer is hidden) -->
       <div
         v-if="hideFooter && asset && fileName"
@@ -320,6 +342,13 @@ async function handleFavoriteToggle() {
 // Get asset type from tags
 const assetType = computed(() => {
   return getAssetType(asset?.tags)
+})
+
+// Storage origin (prototype fixtures set this via user_metadata; falls back
+// to undefined for real-app assets, where the badge is hidden).
+const storage = computed<'local' | 'cloud' | undefined>(() => {
+  const raw = asset?.user_metadata?.storage
+  return raw === 'local' || raw === 'cloud' ? raw : undefined
 })
 
 // Determine file type from extension

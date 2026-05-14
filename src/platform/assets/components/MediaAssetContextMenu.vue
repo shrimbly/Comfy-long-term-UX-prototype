@@ -50,6 +50,7 @@
 import { useEventListener } from '@vueuse/core'
 import ContextMenu from 'primevue/contextmenu'
 import type { MenuItem } from 'primevue/menuitem'
+import { useToast } from 'primevue/usetoast'
 import { computed, ref, useId } from 'vue'
 import type { CSSProperties } from 'vue'
 import { useI18n } from 'vue-i18n'
@@ -118,6 +119,7 @@ const isVisible = ref(false)
 const actions = useMediaAssetActions()
 const favorites = useAssetFavorites()
 const { t } = useI18n()
+const toast = useToast()
 
 const tagsPopoverVisible = ref(false)
 const tagsPopoverStyle = ref<CSSProperties>({})
@@ -378,6 +380,28 @@ const contextMenuItems = computed<MenuItem[]>(() => {
       command: () => emit('bulk-download', selectedAssets)
     })
 
+    // Bulk Promote to cloud (prototype-only stub) — applies to the local
+    // subset of the selection.
+    const localSelection = selectedAssets.filter(
+      (a) => a.user_metadata?.storage === 'local'
+    )
+    if (localSelection.length > 0) {
+      items.push({
+        label: t('mediaAsset.selection.promoteSelectedToCloud'),
+        icon: 'icon-[lucide--cloud-upload]',
+        command: () => {
+          toast.add({
+            severity: 'success',
+            summary: t('mediaAsset.actions.promotedToCloudSummary'),
+            detail: t('mediaAsset.selection.promotedSelectedDetail', {
+              count: localSelection.length
+            }),
+            life: 4000
+          })
+        }
+      })
+    }
+
     // Bulk Move
     if (allowMoveActions) {
       items.push({
@@ -435,6 +459,27 @@ const contextMenuItems = computed<MenuItem[]>(() => {
     icon: 'icon-[lucide--download]',
     command: () => actions.downloadAsset(asset)
   })
+
+  // Promote to cloud (only for local-stored assets — prototype-only stub).
+  if (asset.user_metadata?.storage === 'local') {
+    const inferredProject =
+      (asset.user_metadata?.projectName as string | undefined) ??
+      t('mediaAsset.actions.promoteToCloudFallbackDestination')
+    items.push({
+      label: t('mediaAsset.actions.promoteToCloud'),
+      icon: 'icon-[lucide--cloud-upload]',
+      command: () => {
+        toast.add({
+          severity: 'success',
+          summary: t('mediaAsset.actions.promotedToCloudSummary'),
+          detail: t('mediaAsset.actions.promotedToCloudDetail', {
+            destination: inferredProject
+          }),
+          life: 4000
+        })
+      }
+    })
+  }
 
   // Move to
   if (allowMoveActions) {

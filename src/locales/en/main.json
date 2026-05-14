@@ -3621,6 +3621,10 @@
     }
   },
   "mediaAsset": {
+    "storage": {
+      "cloud": "Cloud asset",
+      "local": "Local asset"
+    },
     "deleteAssetTitle": "Delete this asset?",
     "deleteAssetDescription": "This asset will be permanently removed.",
     "deleteSelectedTitle": "Delete selected assets?",
@@ -3649,7 +3653,11 @@
       "showInExplorer": "Show in Explorer",
       "showInFileManager": "Show in file manager",
       "exportAll": "Export all",
-      "moveFolderTo": "Move to..."
+      "moveFolderTo": "Move to...",
+      "promoteToCloud": "Promote to cloud",
+      "promoteToCloudFallbackDestination": "My Workflows",
+      "promotedToCloudSummary": "Promoted to cloud",
+      "promotedToCloudDetail": "Now available under {destination}."
     },
     "compare": {
       "action": "Compare",
@@ -3688,6 +3696,8 @@
       "downloadSelectedAll": "Download all",
       "deleteSelected": "Delete",
       "deleteSelectedAll": "Delete all",
+      "promoteSelectedToCloud": "Promote local assets to cloud",
+      "promotedSelectedDetail": "{count} asset promoted to cloud. | {count} assets promoted to cloud.",
       "insertAllAssetsAsNodes": "Insert all assets as nodes",
       "openWorkflowAll": "Open all workflows",
       "exportWorkflowAll": "Export all workflows",
@@ -3751,7 +3761,10 @@
       "vae": "VAE",
       "steps": "Steps",
       "seed": "Seed",
-      "prompt": "Prompt"
+      "prompt": "Prompt",
+      "project": "Project",
+      "workflow": "Workflow",
+      "storage": "Storage"
     },
     "tags": {
       "addPlaceholder": "Add tag...",

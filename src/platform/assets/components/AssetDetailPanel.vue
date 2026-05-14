@@ -62,6 +62,41 @@
           </span>
           <span class="detail-value">{{ formattedSize }}</span>
         </div>
+        <div v-if="projectName" class="detail-row">
+          <span class="detail-label">
+            {{ $t('mediaAsset.details.project') }}
+          </span>
+          <span class="detail-value" :title="projectName">
+            {{ projectName }}
+          </span>
+        </div>
+        <div v-if="workflowName" class="detail-row">
+          <span class="detail-label">
+            {{ $t('mediaAsset.details.workflow') }}
+          </span>
+          <span class="detail-value" :title="workflowName">
+            {{ workflowName }}
+          </span>
+        </div>
+        <div v-if="storage" class="detail-row">
+          <span class="detail-label">
+            {{ $t('mediaAsset.details.storage') }}
+          </span>
+          <span class="detail-value inline-flex items-center gap-1.5">
+            <i
+              :class="
+                storage === 'cloud'
+                  ? 'icon-[lucide--cloud] size-3.5'
+                  : 'icon-[lucide--hard-drive] size-3.5'
+              "
+            />
+            {{
+              storage === 'cloud'
+                ? $t('mediaAsset.storage.cloud')
+                : $t('mediaAsset.storage.local')
+            }}
+          </span>
+        </div>
       </div>
     </div>
 
@@ -183,6 +218,21 @@ const fileType = computed(() => {
   if (!singleAsset.value) return ''
   const mediaType = getMediaTypeFromFilename(singleAsset.value.name)
   return mediaType.charAt(0).toUpperCase() + mediaType.slice(1)
+})
+
+// Prototype-only metadata fields, sourced from user_metadata. Hidden in
+// real-app contexts where these keys aren't set.
+const projectName = computed(() => {
+  const raw = singleAsset.value?.user_metadata?.projectName
+  return typeof raw === 'string' ? raw : undefined
+})
+const workflowName = computed(() => {
+  const raw = singleAsset.value?.user_metadata?.workflowName
+  return typeof raw === 'string' ? raw : undefined
+})
+const storage = computed<'local' | 'cloud' | undefined>(() => {
+  const raw = singleAsset.value?.user_metadata?.storage
+  return raw === 'local' || raw === 'cloud' ? raw : undefined
 })
 
 const dimensions = ref<string | null>(null)

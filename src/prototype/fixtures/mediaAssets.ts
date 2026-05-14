@@ -18,12 +18,16 @@
 
 import type { AssetItem } from '@/platform/assets/schemas/assetSchema'
 
+type AssetStorage = 'local' | 'cloud'
+
 interface PrototypeProject {
   slug: string
   projectId: string
   projectName: string
+  workflowName: string
   fileTags: string[]
   startDate: string // ISO date; each file is offset N hours after this
+  storage: AssetStorage
 }
 
 const PROJECTS: PrototypeProject[] = [
@@ -31,36 +35,46 @@ const PROJECTS: PrototypeProject[] = [
     slug: 'coca-cola',
     projectId: 'proj-coca-cola',
     projectName: 'Coca-Cola Q3 Campaign',
+    workflowName: 'Hero shot v3',
     fileTags: ['output', 'campaign'],
-    startDate: '2026-05-10T09:00:00Z'
+    startDate: '2026-05-10T09:00:00Z',
+    storage: 'cloud'
   },
   {
     slug: 'brand-system',
     projectId: 'proj-brand-system',
     projectName: 'Brand System Refresh',
+    workflowName: 'Logo render',
     fileTags: ['output', 'brand'],
-    startDate: '2026-05-08T10:00:00Z'
+    startDate: '2026-05-08T10:00:00Z',
+    storage: 'cloud'
   },
   {
     slug: 'client-x-pitch',
     projectId: 'proj-client-x-pitch',
     projectName: 'Client X Pitch',
+    workflowName: 'Concept board',
     fileTags: ['output', 'pitch'],
-    startDate: '2026-05-05T11:00:00Z'
+    startDate: '2026-05-05T11:00:00Z',
+    storage: 'cloud'
   },
   {
     slug: 'marketing-q3',
     projectId: 'proj-marketing-q3',
     projectName: 'Marketing Q3',
+    workflowName: 'Banner sweep',
     fileTags: ['output', 'marketing'],
-    startDate: '2026-05-03T08:00:00Z'
+    startDate: '2026-05-03T08:00:00Z',
+    storage: 'local'
   },
   {
     slug: 'personal',
     projectId: 'proj-personal',
     projectName: 'Personal Sketches',
+    workflowName: 'Sketchbook',
     fileTags: ['output', 'sketch'],
-    startDate: '2026-04-28T19:00:00Z'
+    startDate: '2026-04-28T19:00:00Z',
+    storage: 'local'
   }
 ]
 
@@ -91,7 +105,9 @@ export function buildPrototypeMediaAssets(): AssetItem[] {
         preview_url: url,
         user_metadata: {
           projectId: project.projectId,
-          projectName: project.projectName
+          projectName: project.projectName,
+          workflowName: project.workflowName,
+          storage: project.storage
         }
       })
     }
