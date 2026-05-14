@@ -10,6 +10,8 @@
         )
       "
     >
+      <PrototypeProjectFilter v-if="!compact" class="mb-2" />
+
       <SidebarItem
         :active="generatedActive"
         icon="icon-[comfy--image-ai-edit]"
@@ -321,6 +323,7 @@ import { useI18n } from 'vue-i18n'
 import { useAssetTagGroups } from '@/platform/assets/composables/useAssetTagGroups'
 import { useAssetTagSelectionStore } from '@/platform/assets/composables/useAssetTagSelectionStore'
 import type { TagWithCount } from '@/platform/assets/composables/useAssetTags'
+import PrototypeProjectFilter from '@/prototype/components/PrototypeProjectFilter.vue'
 import { cn } from '@comfyorg/tailwind-utils'
 
 import AssetsSidebarGroupContextMenu from './AssetsSidebarGroupContextMenu.vue'

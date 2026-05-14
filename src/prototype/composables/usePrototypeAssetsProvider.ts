@@ -20,17 +20,50 @@ import type { FolderItem } from '@/utils/directoryPickerUtil'
 import { buildPrototypeMediaAssets } from '../fixtures/mediaAssets'
 import { usePrototypePersonaStore } from '../stores/personaStore'
 
+// Shared filter state for the prototype project dropdown. Module-level so
+// every consumer (provider + sidebar dropdown) sees the same ref.
+const selectedProjectId = ref<string | null>(null)
+
+interface ProjectFilterOption {
+  id: string
+  name: string
+  count: number
+}
+
+export function usePrototypeProjectFilter() {
+  const personaStore = usePrototypePersonaStore()
+  const { currentPersonaId } = storeToRefs(personaStore)
+
+  const availableProjects = computed<ProjectFilterOption[]>(() => {
+    const assets = buildPrototypeMediaAssets(currentPersonaId.value)
+    const byId = new Map<string, ProjectFilterOption>()
+    for (const asset of assets) {
+      const id = asset.user_metadata?.projectId as string | undefined
+      const name = asset.user_metadata?.projectName as string | undefined
+      if (!id || !name) continue
+      const existing = byId.get(id)
+      if (existing) existing.count += 1
+      else byId.set(id, { id, name, count: 1 })
+    }
+    return [...byId.values()].sort((a, b) => a.name.localeCompare(b.name))
+  })
+
+  return { selectedProjectId, availableProjects }
+}
+
 export function usePrototypeAssetsProvider(directory: 'input' | 'output') {
   const personaStore = usePrototypePersonaStore()
   const { currentPersonaId } = storeToRefs(personaStore)
 
-  // Re-derives whenever the persona switcher fires, so the demo can
-  // demonstrate the wiki's three-level permission model live.
-  const allMedia = computed<AssetItem[]>(() =>
-    directory === 'output'
-      ? buildPrototypeMediaAssets(currentPersonaId.value)
-      : []
-  )
+  // Re-derives whenever the persona switcher OR the project dropdown changes.
+  const allMedia = computed<AssetItem[]>(() => {
+    if (directory !== 'output') return []
+    const base = buildPrototypeMediaAssets(currentPersonaId.value)
+    if (!selectedProjectId.value) return base
+    return base.filter(
+      (a) => a.user_metadata?.projectId === selectedProjectId.value
+    )
+  })
 
   const loading = ref(false)
   const error = ref<unknown>(null)

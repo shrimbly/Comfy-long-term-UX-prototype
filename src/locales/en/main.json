@@ -77,6 +77,12 @@
         "subtitle": "Saves to My Workflows"
       }
     },
+    "mediaAssets": {
+      "projectFilter": {
+        "placeholder": "All projects",
+        "allProjects": "All projects"
+      }
+    },
     "libraryPage": {
       "back": "Back",
       "projectHeading": "Project",
