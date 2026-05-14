@@ -44,59 +44,6 @@
         @click="emit('selectFavorites')"
       />
 
-      <div
-        v-if="!compact && availableDirectories.length > 0"
-        class="mt-5 flex flex-col gap-1"
-      >
-        <button
-          type="button"
-          class="flex w-full cursor-pointer items-center-safe gap-2 rounded-md border-none bg-transparent px-2 py-1.5 text-left text-sm text-base-foreground transition-colors select-none hover:bg-interface-menu-component-surface-hovered"
-          :aria-expanded="!directoryCollapsed"
-          :aria-label="t('sideToolbar.mediaAssets.directoryHeader')"
-          @click="toggleDirectoryCollapsed"
-        >
-          <i class="text-neutral icon-[lucide--briefcase] shrink-0 text-sm" />
-          <span class="min-w-0 flex-1 truncate">
-            {{ t('sideToolbar.mediaAssets.directoryHeader') }}
-          </span>
-          <i
-            :class="
-              cn(
-                'text-neutral shrink-0 text-sm transition-transform',
-                directoryCollapsed
-                  ? 'icon-[lucide--chevron-right]'
-                  : 'icon-[lucide--chevron-down]'
-              )
-            "
-          />
-        </button>
-        <div
-          v-if="!directoryCollapsed"
-          class="flex max-h-90 flex-col gap-1 overflow-y-auto"
-        >
-          <button
-            v-for="dir in availableDirectories"
-            :key="dir.path"
-            type="button"
-            :class="
-              cn(
-                'flex w-full cursor-pointer items-center gap-3 rounded-md border-none py-1.5 pr-3 pl-7 text-left text-sm text-base-foreground transition-colors select-none',
-                selectedDirectory === dir.path
-                  ? 'bg-interface-menu-component-surface-selected'
-                  : 'bg-transparent hover:bg-interface-menu-component-surface-hovered'
-              )
-            "
-            @click="onDirectoryClick(dir.path)"
-          >
-            <i class="text-neutral icon-[lucide--folder] shrink-0 text-sm" />
-            <span class="min-w-0 flex-1 truncate">{{ dir.name }}</span>
-            <span class="shrink-0 text-xs text-muted-foreground">
-              {{ dir.itemCount }}
-            </span>
-          </button>
-        </div>
-      </div>
-
       <div v-if="!compact" class="mt-3 flex flex-col gap-1">
         <button
           type="button"
@@ -341,9 +288,7 @@ const {
   favoritesActive = false,
   generatedActive = false,
   importedActive = false,
-  compact = false,
-  availableDirectories = [],
-  selectedDirectory = null
+  compact = false
 } = defineProps<{
   availableTags: readonly TagWithCount[]
   tempActive?: boolean
@@ -351,39 +296,17 @@ const {
   generatedActive?: boolean
   importedActive?: boolean
   compact?: boolean
-  availableDirectories?: readonly DirectoryItem[]
-  selectedDirectory?: string | null
 }>()
-
-interface DirectoryItem {
-  name: string
-  path: string
-  itemCount?: number
-}
 
 const emit = defineEmits<{
   selectTemp: []
   selectFavorites: []
   selectGenerated: []
   selectImported: []
-  selectDirectory: [path: string | null]
   selectionChanged: []
   renameTag: [oldName: string, newName: string]
   deleteTags: [tags: string[]]
 }>()
-
-const directoryCollapsed = useStorage<boolean>(
-  'Comfy.Assets.DirectorySectionCollapsed.v1',
-  false
-)
-
-function toggleDirectoryCollapsed() {
-  directoryCollapsed.value = !directoryCollapsed.value
-}
-
-function onDirectoryClick(path: string) {
-  emit('selectDirectory', selectedDirectory === path ? null : path)
-}
 
 const tagSelection = useAssetTagSelectionStore()
 const groups = useAssetTagGroups()

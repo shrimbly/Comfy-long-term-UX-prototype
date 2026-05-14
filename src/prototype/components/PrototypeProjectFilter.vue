@@ -16,12 +16,12 @@
     :model-value="selectedProjectId ?? ALL_OPTION_VALUE"
     :label="t('prototype.mediaAssets.projectFilter.placeholder')"
     :options="options"
-    size="md"
+    size="lg"
     class="w-full"
     @update:model-value="onChange"
   >
     <template #icon>
-      <i class="icon-[lucide--briefcase] size-4 text-muted-foreground" />
+      <i class="text-neutral icon-[lucide--briefcase] shrink-0 text-sm" />
     </template>
   </SingleSelect>
 </template>
