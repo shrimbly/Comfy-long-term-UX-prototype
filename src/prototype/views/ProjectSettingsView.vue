@@ -20,7 +20,7 @@
       >
         {{ t('prototype.views.project.settings.allowlistsHeading') }}
       </h2>
-      <div class="grid gap-4 lg:grid-cols-2">
+      <div class="flex flex-col gap-4">
         <ProjectAllowlistEditor
           :title="t('prototype.views.project.settings.modelAllowlist.heading')"
           :description="
