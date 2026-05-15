@@ -7,8 +7,10 @@
     log:     ../prototype/design-decisions.md (2026-05-15) — strict
              override allowlists, read-only usage, filename-prefix seed.
 
-  Composed inside ProjectDetailView's Settings tab. Three sections, in
-  fixed order: Allowlists -> Usage -> Defaults.
+  Composed inside ProjectDetailView's Settings tab. Two sections, in
+  fixed order: Allowlists -> Defaults. Usage lives on its own sibling
+  tab (../views/ProjectDetailView.vue) so the read-only attribution
+  card doesn't compete with editable settings.
 -->
 <template>
   <div class="flex flex-col gap-6">
@@ -66,18 +68,6 @@
       <h2
         class="m-0 text-sm font-semibold tracking-wide text-muted-foreground uppercase"
       >
-        {{ t('prototype.views.project.settings.usageHeading') }}
-      </h2>
-      <ProjectUsageSection
-        :project-credits="projectCredits"
-        :workspace-credits="workspaceCredits"
-      />
-    </section>
-
-    <section class="flex flex-col gap-4">
-      <h2
-        class="m-0 text-sm font-semibold tracking-wide text-muted-foreground uppercase"
-      >
         {{ t('prototype.views.project.settings.defaultsHeading') }}
       </h2>
       <ProjectDefaultsSection
@@ -96,7 +86,6 @@ import { useI18n } from 'vue-i18n'
 
 import ProjectAllowlistEditor from '../components/ProjectAllowlistEditor.vue'
 import ProjectDefaultsSection from '../components/ProjectDefaultsSection.vue'
-import ProjectUsageSection from '../components/ProjectUsageSection.vue'
 import { usePrototypePersonaStore } from '../stores/personaStore'
 import type {
   Project,
@@ -123,14 +112,6 @@ const customNodeAllowlist = computed<ProjectAllowlistConfig>(
 )
 
 const filenamePrefix = computed(() => project.defaults?.filenamePrefix ?? '')
-
-const projectCredits = computed(() => project.creditsThisMonth ?? 0)
-
-const workspaceCredits = computed(() =>
-  fixture.value.projects
-    .filter((p) => p.workspaceId === project.workspaceId)
-    .reduce((sum, p) => sum + (p.creditsThisMonth ?? 0), 0)
-)
 
 function addedByLabel(userId: string): string {
   if (userId === fixture.value.currentUser.id) {

@@ -172,11 +172,11 @@
         "viewMediaAssets": "Media assets",
         "tabs": {
           "workflows": "Workflows",
-          "settings": "Settings"
+          "settings": "Settings",
+          "usage": "Usage"
         },
         "settings": {
           "allowlistsHeading": "Allowlists",
-          "usageHeading": "Usage",
           "defaultsHeading": "Defaults",
           "allowlist": {
             "overrideLabel": "Override workspace allowlist",

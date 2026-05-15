@@ -157,6 +157,12 @@
         :project="project"
         :can-edit="canEditSettings"
       />
+
+      <ProjectUsageSection
+        v-else-if="activeTab === 'usage'"
+        :project-credits="projectCredits"
+        :workspace-credits="workspaceCredits"
+      />
     </template>
 
     <ProjectSharingDialog
@@ -174,12 +180,13 @@ import { computed, ref, watchEffect } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import ProjectSharingDialog from '../components/ProjectSharingDialog.vue'
+import ProjectUsageSection from '../components/ProjectUsageSection.vue'
 import WorkflowCard from '../components/WorkflowCard.vue'
 import { usePrototypePersonaStore } from '../stores/personaStore'
 import { usePrototypeUiStore } from '../stores/uiStore'
 import ProjectSettingsView from './ProjectSettingsView.vue'
 
-type ProjectTabId = 'workflows' | 'settings'
+type ProjectTabId = 'workflows' | 'settings' | 'usage'
 
 const { projectId } = defineProps<{
   projectId: string
@@ -231,8 +238,22 @@ const visibleTabs = computed(() => {
       id: 'settings',
       label: t('prototype.views.project.tabs.settings')
     })
+    tabs.push({
+      id: 'usage',
+      label: t('prototype.views.project.tabs.usage')
+    })
   }
   return tabs
+})
+
+const projectCredits = computed(() => project.value?.creditsThisMonth ?? 0)
+
+const workspaceCredits = computed(() => {
+  const ws = project.value?.workspaceId
+  if (!ws) return 0
+  return fixture.value.projects
+    .filter((p) => p.workspaceId === ws)
+    .reduce((sum, p) => sum + (p.creditsThisMonth ?? 0), 0)
 })
 
 watchEffect(() => {
