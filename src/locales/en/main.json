@@ -181,8 +181,13 @@
         "empty": "Nothing here yet. Tap \"New Workflow\" to start.",
         "emptyHeading": "Save your first workflow",
         "emptySubtitle": "My Workflows is the default home for new work. Spin one up or start from a template.",
+        "sharedEmpty": "Nothing has been shared with you outside of a project yet.",
         "createWorkflow": "+ Workflow",
-        "templatesHeading": "Starter templates"
+        "templatesHeading": "Starter templates",
+        "tabs": {
+          "private": "Private",
+          "shared": "Shared with me"
+        }
       },
       "recents": {
         "title": "Recents",
@@ -191,7 +196,17 @@
         "emptyHeading": "Start building your first workflow",
         "emptySubtitle": "Spin up a blank graph or pick a starter template below.",
         "createWorkflow": "+ Workflow",
-        "templatesHeading": "Starter templates"
+        "templatesHeading": "Starter templates",
+        "filterAll": "All",
+        "filterMine": "Mine",
+        "filterShared": "Shared with me",
+        "filterEmpty": "No workflows match the current filter.",
+        "sort": {
+          "lastModified": "Last modified",
+          "oldest": "Oldest",
+          "az": "A–Z",
+          "za": "Z–A"
+        }
       },
       "projects": {
         "title": "Projects",

@@ -62,14 +62,41 @@ export const usePrototypePersonaStore = defineStore('prototype-persona', () => {
       .length
   })
 
+  // Workflows shared with me via asset-level grant where the
+  // containing project is NOT one I can reach through project nav —
+  // i.e. workflows that wouldn't surface anywhere else. Per
+  // concepts/three-level-permissions.md, asset-level grants are
+  // independent from project-level access. The set is unioned across
+  // every workspace the persona belongs to (not just the current one),
+  // because share invites span workspaces — see persona personas-and-
+  // flows.md #4 / #5.
+  const sharedWorkflows = computed(() => {
+    const viewerId = fixture.value.currentUser.id
+    const reachableProjectIds = new Set(
+      fixture.value.projects
+        .filter(
+          (p) =>
+            p.isDrafts || p.tier === 'workspace-wide' || p.currentUserHasAccess
+        )
+        .map((p) => p.id)
+    )
+    return fixture.value.workflows
+      .filter((w) => w.access?.some((a) => a.userId === viewerId))
+      .filter((w) => !reachableProjectIds.has(w.projectId))
+      .toSorted((a, b) => b.updatedAt.localeCompare(a.updatedAt))
+  })
+
   const recentWorkflows = computed(() => {
     const accessibleProjectIds = new Set([
       ...visibleProjects.value.map((p) => p.id),
       ...(draftsProject.value ? [draftsProject.value.id] : [])
     ])
-    return fixture.value.workflows
-      .filter((w) => accessibleProjectIds.has(w.projectId))
-      .toSorted((a, b) => b.updatedAt.localeCompare(a.updatedAt))
+    const projectReachable = fixture.value.workflows.filter((w) =>
+      accessibleProjectIds.has(w.projectId)
+    )
+    return [...projectReachable, ...sharedWorkflows.value].toSorted((a, b) =>
+      b.updatedAt.localeCompare(a.updatedAt)
+    )
   })
 
   // --- Notifications ---------------------------------------------------
@@ -603,6 +630,7 @@ export const usePrototypePersonaStore = defineStore('prototype-persona', () => {
     draftsWorkflowCount,
     visibleProjects,
     recentWorkflows,
+    sharedWorkflows,
     sortedNotifications,
     unreadNotificationCount,
     markNotificationRead,

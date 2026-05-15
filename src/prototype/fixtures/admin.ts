@@ -284,6 +284,31 @@ export const adminFixture: PersonaFixture = {
       kind: 'workflow',
       ownerUserId: 'user-jane',
       updatedAt: '2026-05-03'
+    },
+    // Cross-workspace asset-level grants — workflows in Acme Studio
+    // where Willie is a workspace Guest. No project membership, so they
+    // don't surface anywhere except the Shared-with-me view.
+    // Per concepts/three-level-permissions.md §"Asset level" and
+    // concepts/personas-and-flows.md #4/#5.
+    {
+      id: 'wf-acme-titles',
+      projectId: 'proj-acme-titles',
+      name: 'Title-card composer',
+      kind: 'workflow',
+      ownerUserId: 'user-acme-anna',
+      access: [{ userId: user.id, role: 'runner' }],
+      updatedAt: '2026-05-11',
+      storage: 'cloud'
+    },
+    {
+      id: 'app-acme-poster',
+      projectId: 'proj-acme-campaigns',
+      name: 'Poster preview',
+      kind: 'app',
+      ownerUserId: 'user-acme-anna',
+      access: [{ userId: user.id, role: 'app-runner' }],
+      updatedAt: '2026-05-09',
+      storage: 'cloud'
     }
   ],
   libraryAssets: [
