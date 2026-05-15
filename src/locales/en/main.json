@@ -3704,7 +3704,7 @@
       "downloadSelectedAll": "Download all",
       "deleteSelected": "Delete",
       "deleteSelectedAll": "Delete all",
-      "promoteSelectedToCloud": "Promote local assets to cloud",
+      "promoteSelectedToCloud": "Save local assets to cloud",
       "promotedSelectedDetail": "{count} asset promoted to cloud. | {count} assets promoted to cloud.",
       "insertAllAssetsAsNodes": "Insert all assets as nodes",
       "openWorkflowAll": "Open all workflows",

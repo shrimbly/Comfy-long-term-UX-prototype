@@ -22,13 +22,43 @@
          real app; the prototype path doesn't, so any useToast() add()s would
          be dropped. Mounting both default and grouped toast renderers here. -->
     <Toast />
-    <Toast group="save-to-cloud" />
+    <Toast group="save-to-cloud">
+      <template #message>
+        <div
+          v-if="uploadProgress"
+          class="flex w-full items-center gap-3 px-3 py-2"
+        >
+          <i
+            class="icon-[lucide--cloud-upload] size-5 shrink-0 text-primary-background"
+          />
+          <div class="flex min-w-0 flex-col">
+            <span class="text-sm font-semibold">
+              {{ t('mediaAsset.actions.savingToCloudSummary') }}
+            </span>
+            <span class="text-xs text-muted-foreground">
+              {{
+                t('mediaAsset.actions.savingToCloudDetail', {
+                  current: uploadProgress.done,
+                  total: uploadProgress.total,
+                  destination: uploadProgress.destination
+                })
+              }}
+            </span>
+          </div>
+        </div>
+      </template>
+    </Toast>
   </div>
 </template>
 
 <script setup lang="ts">
 import Toast from 'primevue/toast'
 import { onBeforeUnmount, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
+
+import { uploadProgress } from '../composables/useSimulatedSaveToCloud'
+
+const { t } = useI18n()
 
 const DARK_THEME_CLASS = 'dark-theme'
 
