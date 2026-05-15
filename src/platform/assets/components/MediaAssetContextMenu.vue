@@ -20,6 +20,7 @@
         class="w-full justify-start gap-2"
         v-bind="props.action"
         @mouseenter="handleItemMouseEnter($event, item)"
+        @mouseleave="handleItemMouseLeave(item)"
       >
         <i v-if="item.icon" :class="item.icon" class="size-4" />
         <span class="flex-1 text-left">{{
@@ -38,6 +39,8 @@
       ref="tagsPopoverRef"
       class="fixed z-1500 w-64 overscroll-contain rounded-lg border border-border-default bg-secondary-background p-2 text-base-foreground shadow-lg"
       :style="tagsPopoverStyle"
+      @mouseenter="cancelTagsPopoverHide"
+      @mouseleave="scheduleTagsPopoverHide"
       @click.stop
       @wheel.stop
     >
@@ -129,7 +132,26 @@ const tagTargets = computed<AssetItem[]>(() =>
   bulkActive.value && selectedAssets ? selectedAssets : asset ? [asset] : []
 )
 
+const TAGS_POPOVER_HIDE_DELAY_MS = 1000
+let tagsPopoverHideTimer: ReturnType<typeof setTimeout> | null = null
+
+function cancelTagsPopoverHide() {
+  if (tagsPopoverHideTimer) {
+    clearTimeout(tagsPopoverHideTimer)
+    tagsPopoverHideTimer = null
+  }
+}
+
+function scheduleTagsPopoverHide() {
+  cancelTagsPopoverHide()
+  tagsPopoverHideTimer = setTimeout(() => {
+    tagsPopoverVisible.value = false
+    tagsPopoverHideTimer = null
+  }, TAGS_POPOVER_HIDE_DELAY_MS)
+}
+
 function showTagsPopover(anchor: HTMLElement) {
+  cancelTagsPopoverHide()
   const rect = anchor.getBoundingClientRect()
   tagsPopoverStyle.value = {
     left: `${rect.right + 8}px`,
@@ -211,6 +233,12 @@ function handleItemMouseEnter(event: MouseEvent, item: MenuItem) {
   if (!target) return
   if ((item as MenuItemWithSubmenu).isTagsSubmenu) {
     showTagsPopover(target)
+  }
+}
+
+function handleItemMouseLeave(item: MenuItem) {
+  if ((item as MenuItemWithSubmenu).isTagsSubmenu && tagsPopoverVisible.value) {
+    scheduleTagsPopoverHide()
   }
 }
 
