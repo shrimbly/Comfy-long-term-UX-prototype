@@ -1,67 +1,97 @@
 <!--
   Implements:
     entity: ../IA_Plan/wiki/entities/workflow.md
-    Bare thumbnail + caption. No outer fill, no border, no hover wash —
-    the thumbnail is the card.
+    log:    ../prototype/design-decisions.md (2026-05-15 Workflow context menu)
+
+  Bare thumbnail + caption. The thumbnail is the card. Right-clicking
+  anywhere on the card opens a role-gated WorkflowContextMenu.
 -->
 <template>
-  <button
-    type="button"
-    class="group flex cursor-pointer flex-col gap-2 text-left text-base-foreground select-none"
-    @click="emit('open', workflow.id)"
+  <div
+    class="group flex flex-col gap-2 text-base-foreground select-none"
+    @contextmenu.prevent.stop="onContextMenu"
   >
-    <span
-      class="relative block aspect-square w-full overflow-hidden rounded-md"
-      :style="{ background: thumbnail }"
+    <button
+      type="button"
+      class="flex cursor-pointer flex-col gap-2 text-left text-base-foreground"
+      @click="emit('open', workflow.id)"
     >
       <span
-        v-if="workflow.storage"
-        :title="
-          t(
-            workflow.storage === 'local'
-              ? 'prototype.workflowCard.storageLocal'
-              : 'prototype.workflowCard.storageCloud'
-          )
-        "
-        class="absolute top-2 right-2 grid size-6 place-items-center rounded-sm bg-black/40 backdrop-blur-sm"
+        class="relative block aspect-square w-full overflow-hidden rounded-md"
+        :style="{ background: thumbnail }"
       >
-        <i
-          :class="
-            cn(
-              'size-3.5 text-white',
+        <span
+          v-if="workflow.storage"
+          :title="
+            t(
               workflow.storage === 'local'
-                ? 'icon-[lucide--hard-drive]'
-                : 'icon-[lucide--cloud]'
+                ? 'prototype.workflowCard.storageLocal'
+                : 'prototype.workflowCard.storageCloud'
             )
           "
-        />
+          class="absolute top-2 right-2 grid size-6 place-items-center rounded-sm bg-black/40 backdrop-blur-sm"
+        >
+          <i
+            :class="
+              cn(
+                'size-3.5 text-white',
+                workflow.storage === 'local'
+                  ? 'icon-[lucide--hard-drive]'
+                  : 'icon-[lucide--cloud]'
+              )
+            "
+          />
+        </span>
       </span>
-    </span>
-    <span class="flex flex-col">
-      <span class="truncate text-sm/tight">{{ workflow.name }}</span>
-      <span class="text-xs text-muted-foreground">{{
-        workflow.updatedAt
-      }}</span>
-    </span>
-  </button>
+      <span class="flex flex-col">
+        <span class="truncate text-sm/tight">{{ workflow.name }}</span>
+        <span class="text-xs text-muted-foreground">{{
+          workflow.updatedAt
+        }}</span>
+      </span>
+    </button>
+
+    <WorkflowContextMenu
+      ref="menuRef"
+      :workflow="workflow"
+      :viewer-role="viewerRole"
+      :show-open-containing-project="showOpenContainingProject"
+      @open="emit('open', $event)"
+      @open-project="emit('open-project', $event)"
+    />
+  </div>
 </template>
 
 <script setup lang="ts">
 import { cn } from '@comfyorg/tailwind-utils'
-import { computed } from 'vue'
+import { computed, ref, toRef } from 'vue'
 import { useI18n } from 'vue-i18n'
 
+import WorkflowContextMenu from './WorkflowContextMenu.vue'
+import { useViewerWorkflowRole } from '../composables/useViewerWorkflowRole'
 import { thumbnailGradient } from '../utils/thumbnail'
 import type { Workflow } from '../types'
 
-const { workflow } = defineProps<{
+const { workflow, showOpenContainingProject = true } = defineProps<{
   workflow: Workflow
+  showOpenContainingProject?: boolean
 }>()
 
 const emit = defineEmits<{
   open: [workflowId: string]
+  'open-project': [projectId: string]
 }>()
 
 const { t } = useI18n()
 const thumbnail = computed(() => thumbnailGradient(workflow.id))
+
+const workflowRef = toRef(() => workflow)
+const viewerRole = useViewerWorkflowRole(workflowRef)
+
+type MenuHandle = { show: (event: MouseEvent) => void }
+const menuRef = ref<MenuHandle | null>(null)
+
+function onContextMenu(event: MouseEvent) {
+  menuRef.value?.show(event)
+}
 </script>

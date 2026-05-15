@@ -55,6 +55,44 @@ Open question dependency: Three wiki tensions to resolve before promotion:
 
 Promote? yes — if Willie confirms: promote the Library-group restructure + Templates-folded-into-Hub into formal wiki decisions, and resolve the three downstream tensions.
 
+## [2026-05-15] Workflow context menu (My Workflows + Recents + Project detail)
+
+Decision:
+
+- Every `WorkflowCard` gets a right-click context menu via `WorkflowContextMenu.vue`, role-gated by the viewer's effective asset role (resolved in `useViewerWorkflowRole.ts`).
+- **Owner branch** — Open, Rename, Duplicate (fork in place), Move to project…, Save destination ▸ Local/Cloud, Share…, Publish ▸ Direct link / Comfy Hub, View outputs, Open containing project (when applicable), Delete.
+- **Runner branch** — Open (triggers fork-on-open semantics), Fork to My Workflows, View outputs, Open containing project.
+- **App Runner branch** — Run app, View outputs, Open containing project.
+- Verb is **Fork** universally; "Duplicate" appears in the Owner branch as an in-place clone synonym to match the user's mental model, but the underlying op is the same (clone into the actor's My Workflows in the host workspace).
+- Share / Publish / View outputs are **prototype stubs** that toast — the real surfaces live in other flows and aren't wired through the menu in this pass.
+- Move-to-project surfaces a small project picker dialog. The picker lists accessible non-Drafts projects in the _host workspace_, not the viewer's current workspace.
+
+Reason:
+
+- Wiki has no first-class "context menu" concept — operations are spec'd by capability. The role split mirrors the asset-level capability table in `concepts/three-level-permissions.md`.
+- Per `decisions/fork-vs-copy-one-operation.md`, Copy is retired. The menu uses Fork everywhere as the destination-clone verb, with "Duplicate" surfaced only as the Owner-branch label when the user is already in their own My Workflows (familiar verb without contradicting the wiki).
+- Per `decisions/published-workflow-model.md`, forks land in the actor's My Workflows **in the host workspace**, not the actor's home workspace. The fork store action resolves the host workspace from the source workflow's project rather than `currentWorkspace`.
+- Per `open-questions.md#fork-auto-name-default` Proposed answer: new fork name is `"<Original name> (fork)"`.
+- Per `open-questions.md#app-runner-fork-capability`: spec says App Runner cannot fork; FAQ contradicts. The prototype follows the spec — no Fork in the App Runner branch.
+
+Wiki link:
+
+- `wiki/entities/workflow.md` §"Permissions", §"Save destination", §"Published vs forked"
+- `wiki/concepts/three-level-permissions.md` §"Asset level"
+- `wiki/decisions/fork-vs-copy-one-operation.md`
+- `wiki/decisions/save-destination-workflow-level.md`
+- `wiki/decisions/published-workflow-model.md`
+
+Open question dependency:
+
+- `my-workflows-move-permissions` — Proposed answer is "re-confirm asset invitees on promotion". The prototype move dialog **does not** prompt for re-confirmation in this pass; it just moves. Logged here so the gap is visible. If promoted to a wiki decision, add the re-confirm step.
+- `publish-direct-link-admin-gate` — direct-link publishing menu item is gated by `roleGrants['publish-direct-link']`; Hub submission gated by `roleGrants['submit-to-hub']`. Both currently toast stubs; if either becomes a real flow, the gate logic stays.
+- `app-runner-fork-capability` — prototype follows spec stance (no Fork). Confirm with PM before promoting.
+- `fork-auto-name-default` — prototype uses Option (a) `"<Original name> (fork)"`. Promotable if confirmed.
+- **New question raised**: should "Duplicate" appear as a distinct verb in the Owner branch even though the underlying op is Fork? Working stance: yes, the verb matches user expectations for "make a copy of my own thing." Could be revisited if it muddies the wiki's one-verb-only stance.
+
+Promote? maybe — once Willie confirms (a) the Owner / Runner / App-Runner menu shapes, (b) the move dialog can ship without the re-confirm dialog for now, (c) the "Duplicate" vs "Fork" verb split is OK. If confirmed, raise `wiki/decisions/workflow-context-menu-operations.md` documenting the menu shape and folding the open-question Proposed answers above into formal decisions.
+
 ## [2026-05-15] Project Settings — tabs inside ProjectDetailView, three sections
 
 Decision:

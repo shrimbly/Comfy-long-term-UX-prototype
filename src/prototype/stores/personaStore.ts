@@ -374,6 +374,86 @@ export const usePrototypePersonaStore = defineStore('prototype-persona', () => {
     )
   }
 
+  // --- Workflow operations --------------------------------------------
+  //
+  // Owner-only mutations (rename / delete / move) are not store-gated —
+  // callers are expected to gate at the UI. Storage/destination toggle
+  // is workflow-level per
+  // ../IA_Plan/wiki/decisions/save-destination-workflow-level.md.
+  // Fork lands in the actor's My Workflows in the host workspace per
+  // ../IA_Plan/wiki/decisions/published-workflow-model.md.
+
+  function findHostMyWorkflows(workspaceId: string): string | undefined {
+    return fixture.value.projects.find(
+      (p) => p.workspaceId === workspaceId && p.isDrafts
+    )?.id
+  }
+
+  function renameWorkflow(workflowId: string, name: string) {
+    const trimmed = name.trim()
+    if (!trimmed) return
+    const today = new Date().toISOString().slice(0, 10)
+    fixture.value.workflows = fixture.value.workflows.map((w) =>
+      w.id === workflowId ? { ...w, name: trimmed, updatedAt: today } : w
+    )
+  }
+
+  function deleteWorkflow(workflowId: string) {
+    fixture.value.workflows = fixture.value.workflows.filter(
+      (w) => w.id !== workflowId
+    )
+  }
+
+  function setWorkflowStorage(workflowId: string, storage: 'local' | 'cloud') {
+    fixture.value.workflows = fixture.value.workflows.map((w) =>
+      w.id === workflowId ? { ...w, storage } : w
+    )
+  }
+
+  function moveWorkflowToProject(workflowId: string, targetProjectId: string) {
+    const today = new Date().toISOString().slice(0, 10)
+    fixture.value.workflows = fixture.value.workflows.map((w) =>
+      w.id === workflowId
+        ? { ...w, projectId: targetProjectId, updatedAt: today }
+        : w
+    )
+  }
+
+  // Fork = clone into the actor's My Workflows in the host workspace.
+  // The host workspace is the workspace that contains the source
+  // workflow's project — NOT necessarily the current workspace, per
+  // the "forks land in host workspace" rule. Returns the new id so the
+  // caller can route into the fork.
+  function forkWorkflow(workflowId: string): string | undefined {
+    const source = fixture.value.workflows.find((w) => w.id === workflowId)
+    if (!source) return
+    const sourceProject = fixture.value.projects.find(
+      (p) => p.id === source.projectId
+    )
+    if (!sourceProject) return
+    const myWorkflowsId = findHostMyWorkflows(sourceProject.workspaceId)
+    if (!myWorkflowsId) return
+    const newId = `wf-fork-${Date.now()}`
+    const today = new Date().toISOString().slice(0, 10)
+    fixture.value.workflows = [
+      ...fixture.value.workflows,
+      {
+        ...source,
+        id: newId,
+        projectId: myWorkflowsId,
+        // Per ../IA_Plan/wiki/open-questions.md#fork-auto-name-default
+        // Proposed answer: `"<Original name> (fork)"`.
+        name: `${source.name} (fork)`,
+        ownerUserId: fixture.value.currentUser.id,
+        updatedAt: today,
+        // Asset-level grants do not carry to the fork — it's a fresh
+        // private asset in the actor's My Workflows.
+        access: []
+      }
+    ]
+    return newId
+  }
+
   // --- Project settings ------------------------------------------------
   //
   // Per ../IA_Plan/wiki/entities/project.md §"What it contains" +
@@ -539,6 +619,11 @@ export const usePrototypePersonaStore = defineStore('prototype-persona', () => {
     setProjectAllowlistOverride,
     addProjectAllowlistEntry,
     removeProjectAllowlistEntry,
-    setProjectFilenamePrefix
+    setProjectFilenamePrefix,
+    renameWorkflow,
+    deleteWorkflow,
+    setWorkflowStorage,
+    moveWorkflowToProject,
+    forkWorkflow
   }
 })

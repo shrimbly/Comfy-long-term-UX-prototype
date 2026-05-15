@@ -99,6 +99,43 @@
       "storageLocal": "Saved locally",
       "storageCloud": "Saved to cloud"
     },
+    "workflowMenu": {
+      "open": "Open",
+      "runApp": "Run app",
+      "rename": "Rename…",
+      "duplicate": "Duplicate",
+      "fork": "Fork to My Workflows",
+      "moveToProject": "Move to project…",
+      "saveDestination": "Save destination",
+      "share": "Share…",
+      "publishDirectLink": "Publish via direct link…",
+      "publishHub": "Submit to Comfy Hub…",
+      "viewOutputs": "View outputs",
+      "openContainingProject": "Open containing project",
+      "delete": "Delete",
+      "renamePrompt": "New name for this workflow:",
+      "deleteConfirm": "Delete \"{name}\"? This cannot be undone.",
+      "toastStubSummary": "Prototype stub",
+      "toast": {
+        "forkedSummary": "Forked",
+        "forkedDetail": "A copy of \"{name}\" was added to My Workflows.",
+        "movedSummary": "Moved",
+        "movedDetail": "\"{name}\" moved to {project}.",
+        "deletedSummary": "Deleted",
+        "deletedDetail": "\"{name}\" has been deleted.",
+        "shareStub": "Share dialog isn't wired up in this pass.",
+        "publishLinkStub": "Direct-link publishing isn't wired up in this pass.",
+        "publishHubStub": "Hub submission isn't wired up in this pass.",
+        "outputsStub": "Output history isn't wired up in this pass."
+      },
+      "move": {
+        "title": "Move workflow to project",
+        "subtitle": "Pick a project in this workspace to move \"{name}\" into.",
+        "noTargets": "No other projects in this workspace are available.",
+        "cancel": "Cancel",
+        "confirm": "Move"
+      }
+    },
     "assetCard": {
       "storageLocal": "Local",
       "storageCloud": "Cloud"
