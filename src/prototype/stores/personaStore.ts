@@ -15,6 +15,8 @@ import type {
   PersonaDef,
   PersonaId,
   Project,
+  ProjectAllowlistKind,
+  ProjectAllowlists,
   ProjectRole,
   ProjectTier,
   WorkspaceRole
@@ -372,6 +374,107 @@ export const usePrototypePersonaStore = defineStore('prototype-persona', () => {
     )
   }
 
+  // --- Project settings ------------------------------------------------
+  //
+  // Per ../IA_Plan/wiki/entities/project.md §"What it contains" +
+  // prototype/design-decisions.md 2026-05-15: an Owner can toggle the
+  // override flag (strict override of workspace allowlist), curate
+  // entries, and set a filename-prefix default that prefills new
+  // save-node widgets.
+
+  const projectAllowlistKeyByKind = {
+    model: 'models',
+    'custom-node': 'customNodes'
+  } as const
+
+  const projectAllowlistIdPrefixByKind = {
+    model: 'pmdl',
+    'custom-node': 'pcn'
+  } as const
+
+  const emptyProjectAllowlists: ProjectAllowlists = {
+    models: { override: false, entries: [] },
+    customNodes: { override: false, entries: [] }
+  }
+
+  function updateProjectAllowlists(
+    projectId: string,
+    update: (lists: ProjectAllowlists) => ProjectAllowlists
+  ) {
+    fixture.value.projects = fixture.value.projects.map((p) => {
+      if (p.id !== projectId) return p
+      const base = p.allowlists ?? emptyProjectAllowlists
+      return { ...p, allowlists: update(base) }
+    })
+  }
+
+  function setProjectAllowlistOverride(
+    projectId: string,
+    kind: ProjectAllowlistKind,
+    override: boolean
+  ) {
+    const key = projectAllowlistKeyByKind[kind]
+    updateProjectAllowlists(projectId, (lists) => ({
+      ...lists,
+      [key]: { ...lists[key], override }
+    }))
+  }
+
+  function addProjectAllowlistEntry(
+    projectId: string,
+    kind: ProjectAllowlistKind,
+    name: string
+  ) {
+    const trimmed = name.trim()
+    if (!trimmed) return
+    const key = projectAllowlistKeyByKind[kind]
+    const today = new Date().toISOString().slice(0, 10)
+    updateProjectAllowlists(projectId, (lists) => {
+      const existing = lists[key]
+      if (existing.entries.some((e) => e.name === trimmed)) return lists
+      return {
+        ...lists,
+        [key]: {
+          ...existing,
+          entries: [
+            ...existing.entries,
+            {
+              id: `${projectAllowlistIdPrefixByKind[kind]}-${Date.now()}`,
+              name: trimmed,
+              addedAt: today,
+              addedByUserId: fixture.value.currentUser.id
+            }
+          ]
+        }
+      }
+    })
+  }
+
+  function removeProjectAllowlistEntry(
+    projectId: string,
+    kind: ProjectAllowlistKind,
+    entryId: string
+  ) {
+    const key = projectAllowlistKeyByKind[kind]
+    updateProjectAllowlists(projectId, (lists) => ({
+      ...lists,
+      [key]: {
+        ...lists[key],
+        entries: lists[key].entries.filter((e) => e.id !== entryId)
+      }
+    }))
+  }
+
+  function setProjectFilenamePrefix(projectId: string, prefix: string) {
+    fixture.value.projects = fixture.value.projects.map((p) => {
+      if (p.id !== projectId) return p
+      return {
+        ...p,
+        defaults: { ...(p.defaults ?? {}), filenamePrefix: prefix }
+      }
+    })
+  }
+
   // External email invite to a project. Creates a workspace-level Guest
   // pendingInvite + a project member entry keyed by the invite id, so the
   // panel can render the pending row before the recipient accepts.
@@ -432,6 +535,10 @@ export const usePrototypePersonaStore = defineStore('prototype-persona', () => {
     addProjectMember,
     changeProjectMemberRole,
     removeProjectMember,
-    inviteExternalCollaborator
+    inviteExternalCollaborator,
+    setProjectAllowlistOverride,
+    addProjectAllowlistEntry,
+    removeProjectAllowlistEntry,
+    setProjectFilenamePrefix
   }
 })

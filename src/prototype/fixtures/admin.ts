@@ -77,7 +77,13 @@ export const adminFixture: PersonaFixture = {
       tier: 'workspace-wide',
       ownerUserId: user.id,
       isDrafts: false,
-      currentUserHasAccess: true
+      currentUserHasAccess: true,
+      allowlists: {
+        models: { override: false, entries: [] },
+        customNodes: { override: false, entries: [] }
+      },
+      defaults: { filenamePrefix: 'marketing/{date}/' },
+      creditsThisMonth: 1840
     },
     {
       id: 'proj-brand',
@@ -86,7 +92,13 @@ export const adminFixture: PersonaFixture = {
       tier: 'workspace-wide',
       ownerUserId: user.id,
       isDrafts: false,
-      currentUserHasAccess: true
+      currentUserHasAccess: true,
+      allowlists: {
+        models: { override: false, entries: [] },
+        customNodes: { override: false, entries: [] }
+      },
+      defaults: { filenamePrefix: 'brand/' },
+      creditsThisMonth: 420
     },
     {
       id: 'proj-launch',
@@ -97,7 +109,13 @@ export const adminFixture: PersonaFixture = {
       // (Admin auto-owns regardless of who created it).
       ownerUserId: 'user-jane',
       isDrafts: false,
-      currentUserHasAccess: true
+      currentUserHasAccess: true,
+      allowlists: {
+        models: { override: false, entries: [] },
+        customNodes: { override: false, entries: [] }
+      },
+      defaults: {},
+      creditsThisMonth: 980
     },
     {
       id: 'proj-client-x',
@@ -110,7 +128,24 @@ export const adminFixture: PersonaFixture = {
       members: [
         { userId: user.id, role: 'owner' },
         { userId: 'user-mira', role: 'collaborator' }
-      ]
+      ],
+      allowlists: {
+        models: {
+          override: true,
+          entries: [
+            {
+              id: 'pmdl-clientx-sdxl',
+              name: 'sd_xl_base_1.0.safetensors',
+              addedAt: '2026-04-22',
+              addedByUserId: user.id,
+              note: 'Approved for Client X likeness work.'
+            }
+          ]
+        },
+        customNodes: { override: false, entries: [] }
+      },
+      defaults: { filenamePrefix: 'clients/client-x/{workflow}/' },
+      creditsThisMonth: 2240
     },
     {
       id: 'proj-cocacola',
@@ -124,7 +159,40 @@ export const adminFixture: PersonaFixture = {
         { userId: user.id, role: 'owner' },
         { userId: 'user-alex', role: 'collaborator' },
         { userId: 'user-tomas', role: 'project-guest' }
-      ]
+      ],
+      allowlists: {
+        models: {
+          override: true,
+          entries: [
+            {
+              id: 'pmdl-cocacola-flux',
+              name: 'flux1-dev.safetensors',
+              addedAt: '2026-05-02',
+              addedByUserId: user.id
+            },
+            {
+              id: 'pmdl-cocacola-sdxl',
+              name: 'sd_xl_base_1.0.safetensors',
+              addedAt: '2026-05-02',
+              addedByUserId: user.id
+            }
+          ]
+        },
+        customNodes: {
+          override: true,
+          entries: [
+            {
+              id: 'pcn-cocacola-controlnet',
+              name: 'comfyui_controlnet_aux',
+              addedAt: '2026-05-02',
+              addedByUserId: 'user-alex',
+              note: 'Required for the bottle-pose templates.'
+            }
+          ]
+        }
+      },
+      defaults: { filenamePrefix: 'coca-cola/q3-campaign/' },
+      creditsThisMonth: 3620
     }
   ],
   workflows: [

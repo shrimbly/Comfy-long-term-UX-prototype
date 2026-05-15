@@ -170,6 +170,50 @@
         "empty": "No workflows in this project yet.",
         "newWorkflow": "+ Workflow",
         "viewMediaAssets": "Media assets",
+        "tabs": {
+          "workflows": "Workflows",
+          "settings": "Settings"
+        },
+        "settings": {
+          "allowlistsHeading": "Allowlists",
+          "usageHeading": "Usage",
+          "defaultsHeading": "Defaults",
+          "allowlist": {
+            "overrideLabel": "Override workspace allowlist",
+            "inheritHint": "Inheriting from the workspace allowlist. Turn the override on to replace it with a project-specific list.",
+            "fromWorkspace": "From workspace",
+            "workspaceEmpty": "The workspace allowlist is empty.",
+            "overrideHint": "Replacing the workspace allowlist for this project. Only the entries below are permitted.",
+            "emptyOverride": "Override is on but the list is empty — nothing will be permitted in this project until you add at least one entry."
+          },
+          "modelAllowlist": {
+            "heading": "Models",
+            "description": "Which model files can run in this project.",
+            "placeholder": "e.g. flux1-dev.safetensors"
+          },
+          "customNodeAllowlist": {
+            "heading": "Custom nodes",
+            "description": "Which custom-node packages can run in this project.",
+            "placeholder": "e.g. comfyui_controlnet_aux"
+          },
+          "usage": {
+            "heading": "Usage this month",
+            "description": "Read-only attribution of credits used by this project. Billing is managed at the workspace level.",
+            "projectLabel": "This project",
+            "workspaceLabel": "Workspace total",
+            "creditsValue": "{value} credits",
+            "shareLabel": "{pct}% of workspace spend",
+            "periodLabel": "Current month",
+            "note": "The workspace is the single billing entity. Per-project caps are not supported."
+          },
+          "defaults": {
+            "heading": "Save defaults",
+            "description": "Values that prefill widgets when workflows are created or saved inside this project.",
+            "filenamePrefixLabel": "Filename prefix",
+            "filenamePrefixPlaceholder": "e.g. coca-cola/q3-campaign/",
+            "filenamePrefixHint": "Prefills the filename prefix widget on save nodes for new workflows in this project. Users can edit or remove the value in the widget at any time."
+          }
+        },
         "sharing": {
           "title": "Sharing",
           "addPlaceholder": "Add people by name or email",

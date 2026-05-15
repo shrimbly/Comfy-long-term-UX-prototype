@@ -4,10 +4,15 @@
     concept: ../IA_Plan/wiki/concepts/three-level-permissions.md — project level
     persona: ../IA_Plan/wiki/concepts/personas.md — Project Collaborator (#4)
     log:     ../prototype/design-decisions.md (2026-05-13 Sharing panel)
+    log:     ../prototype/design-decisions.md (2026-05-15 Project Settings tab)
 
   Single-project view. Workflows live in the body; the Sharing panel
   lives in a modal accessed from the header (avatar summary + Share
   button), mirroring Google Drive's Share affordance.
+
+  Body tabs: Workflows (always visible) and Settings (Owner-only). The
+  Settings tab is gated by `canEditSettings` so a Collaborator / Guest
+  sees the Workflows view directly and the tab strip collapses.
 -->
 <template>
   <div class="flex flex-col gap-6">
@@ -93,7 +98,32 @@
     </p>
 
     <template v-else>
-      <section class="flex flex-col gap-3">
+      <nav
+        v-if="visibleTabs.length > 1"
+        class="flex gap-1 border-b border-interface-stroke"
+        role="tablist"
+      >
+        <button
+          v-for="tab in visibleTabs"
+          :key="tab.id"
+          type="button"
+          role="tab"
+          :aria-selected="activeTab === tab.id"
+          :class="
+            cn(
+              'inline-flex h-10 cursor-pointer appearance-none items-center gap-2 border-0 border-b-2 bg-transparent px-3 text-sm transition-colors',
+              activeTab === tab.id
+                ? 'border-text-primary text-text-primary'
+                : 'border-transparent text-text-secondary hover:text-text-primary'
+            )
+          "
+          @click="activeTab = tab.id"
+        >
+          <span>{{ tab.label }}</span>
+        </button>
+      </nav>
+
+      <section v-if="activeTab === 'workflows'" class="flex flex-col gap-3">
         <div class="flex items-baseline justify-between">
           <h2
             class="text-sm font-semibold tracking-wide text-muted-foreground uppercase"
@@ -121,6 +151,12 @@
           {{ t('prototype.views.project.empty') }}
         </div>
       </section>
+
+      <ProjectSettingsView
+        v-else-if="activeTab === 'settings'"
+        :project="project"
+        :can-edit="canEditSettings"
+      />
     </template>
 
     <ProjectSharingDialog
@@ -134,13 +170,16 @@
 <script setup lang="ts">
 import { cn } from '@comfyorg/tailwind-utils'
 import { storeToRefs } from 'pinia'
-import { computed, ref } from 'vue'
+import { computed, ref, watchEffect } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import ProjectSharingDialog from '../components/ProjectSharingDialog.vue'
 import WorkflowCard from '../components/WorkflowCard.vue'
 import { usePrototypePersonaStore } from '../stores/personaStore'
 import { usePrototypeUiStore } from '../stores/uiStore'
+import ProjectSettingsView from './ProjectSettingsView.vue'
+
+type ProjectTabId = 'workflows' | 'settings'
 
 const { projectId } = defineProps<{
   projectId: string
@@ -153,6 +192,7 @@ const { fixture, currentWorkspace, currentPersonaId } =
   storeToRefs(personaStore)
 
 const isSharingOpen = ref(false)
+const activeTab = ref<ProjectTabId>('workflows')
 
 const project = computed(() =>
   fixture.value.projects.find((p) => p.id === projectId)
@@ -164,6 +204,42 @@ const project = computed(() =>
 const isAssetOnlyGuest = computed(
   () => currentPersonaId.value === 'asset-only-guest'
 )
+
+// Owner-only settings access per
+// ../IA_Plan/wiki/concepts/three-level-permissions.md §"Project level".
+// Workspace Admins auto-act as Owner on workspace-wide projects only.
+const canEditSettings = computed(() => {
+  const p = project.value
+  if (!p || p.isDrafts) return false
+  const viewerId = fixture.value.currentUser.id
+  if (p.ownerUserId === viewerId) return true
+  return (
+    p.tier === 'workspace-wide' &&
+    currentWorkspace.value?.currentUserRole === 'admin'
+  )
+})
+
+const visibleTabs = computed(() => {
+  const tabs: Array<{ id: ProjectTabId; label: string }> = [
+    {
+      id: 'workflows',
+      label: t('prototype.views.project.tabs.workflows')
+    }
+  ]
+  if (canEditSettings.value) {
+    tabs.push({
+      id: 'settings',
+      label: t('prototype.views.project.tabs.settings')
+    })
+  }
+  return tabs
+})
+
+watchEffect(() => {
+  if (!visibleTabs.value.some((tab) => tab.id === activeTab.value)) {
+    activeTab.value = visibleTabs.value[0]?.id ?? 'workflows'
+  }
+})
 
 const backLabel = computed(() => t('prototype.views.project.back'))
 

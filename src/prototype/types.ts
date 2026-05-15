@@ -108,6 +108,34 @@ export interface WorkspaceAllowlists {
   partnerNodes: AllowlistConfig
 }
 
+// Project-level allowlists per
+// ../IA_Plan/wiki/entities/project.md §"What it contains"
+// ("Settings — model allowlist, custom-node allowlist") combined with
+// the prototype's strict-override rule (see design-decisions.md
+// 2026-05-15): `override = false` inherits the workspace allowlist
+// read-only; `override = true` replaces it entirely (workspace entries
+// are not unioned in). The `entries` list is curatable while
+// `override` is off so an Owner can stage a list before flipping it on.
+export type ProjectAllowlistKind = 'model' | 'custom-node'
+
+export interface ProjectAllowlistConfig {
+  override: boolean
+  entries: AllowlistEntry[]
+}
+
+export interface ProjectAllowlists {
+  models: ProjectAllowlistConfig
+  customNodes: ProjectAllowlistConfig
+}
+
+// Project-level defaults per prototype/design-decisions.md 2026-05-15.
+// filenamePrefix prefills new save-node `filename_prefix` widgets;
+// edits inside the widget always win — it is a seed value, not a
+// runtime constraint.
+export interface ProjectDefaults {
+  filenamePrefix?: string
+}
+
 export interface Project {
   id: string
   workspaceId: string
@@ -121,6 +149,16 @@ export interface Project {
   // projects may leave this sparse since Members are implicit via
   // workspace role.
   members?: ProjectMember[]
+  // Owner-editable settings surfaced through the Settings tab on
+  // ProjectDetailView. Optional because the auto-created Drafts /
+  // My Workflows project has no Owner-managed settings surface.
+  allowlists?: ProjectAllowlists
+  defaults?: ProjectDefaults
+  // Read-only spend attribution for the current calendar month, in
+  // credits. The workspace total is derived by summing across projects
+  // in the workspace — workspace remains the single billing entity per
+  // ../IA_Plan/wiki/entities/workspace.md.
+  creditsThisMonth?: number
 }
 
 // Storage medium for an asset. Per

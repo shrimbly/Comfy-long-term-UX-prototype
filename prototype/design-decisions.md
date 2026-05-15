@@ -55,6 +55,37 @@ Open question dependency: Three wiki tensions to resolve before promotion:
 
 Promote? yes — if Willie confirms: promote the Library-group restructure + Templates-folded-into-Hub into formal wiki decisions, and resolve the three downstream tensions.
 
+## [2026-05-15] Project Settings — tabs inside ProjectDetailView, three sections
+
+Decision:
+
+- ProjectDetailView gains tabs in its body: **Workflows** (existing) and **Settings** (new). Members stays behind the existing header Share button for now.
+- The Settings tab has three sections:
+  1. **Allowlists** — Models and Custom Nodes, side by side. Each list has an "Override workspace allowlist" toggle. Off (default) = inherits workspace, shown read-only with a link to the workspace list. On = the project list **strictly overrides** workspace; workspace entries are not unioned in. Empty project list with override-on means "nothing is allowed in this project."
+  2. **Usage** — read-only attribution. This-month project spend rendered as a slice of the workspace total; no per-project budget setting, no per-project cap.
+  3. **Defaults** — a single field for now: `filenamePrefix`. When set, new save-node `filename_prefix` widgets are **prefilled** with this string; the user can freely edit or clear the value in the widget as normal. The project default is a _seed value_, not a runtime constraint.
+- Tab visibility: Settings tab is shown to project **Owner** only (per `entities/project.md` "Owner-only operations: rename, edit settings"). Other roles see Workflows only.
+
+Reason:
+
+- **Strict override** (vs union/intersection) was chosen by Willie. Union/intersection would let a project Owner widen workspace policy unilaterally, which contradicts the workspace Admin's authority over workspace-level allowlists. Strict override is still bounded — a workspace Admin can lock the workspace allowlist into projects by _also_ removing the project Owner's ability to override (a follow-on delegation question, not in this pass).
+- **Read-only attribution** keeps the wiki invariant intact: workspace remains the single billing entity. Per-project budgets would introduce a new constraint axis the wiki hasn't authored.
+- **Filename prefix as a prefill seed** matches the `save-destination-workflow-level` precedent: save nodes carry no behavioral control of their own, but here the project provides a _starting value_ for a per-node widget rather than a per-workflow runtime setting. Crucially, edits in the widget always win — the project never overrides what the user typed.
+- Tabs (vs sub-route / drawer) keep the project hero one click from settings without committing to a sub-route, and reuse the Settings primitives (`SettingsPanel`, `SettingsSubCard`, `AllowlistEditor`) from `SettingsView`.
+
+Wiki link:
+
+- Allowlists: `../IA_Plan/wiki/entities/project.md` §"What it contains" (model + custom-node allowlists are settled project state). `../IA_Plan/wiki/concepts/three-level-permissions.md` §"Project level" (Owner-only to edit). Strict override resolves the wiki-silent combine rule with workspace allowlists.
+- Usage: `../IA_Plan/wiki/entities/workspace.md` §"Identity" (workspace = single billing entity). Project view is read-only slice; no new wiki claims.
+- Defaults: extends `../IA_Plan/wiki/decisions/save-destination-workflow-level.md` with a new project-level prefill field. Wiki currently silent.
+
+Open question dependency:
+
+- **New question raised**: can a workspace Admin lock project allowlist overrides (a per-role delegable capability like "edit project allowlists")? Out of scope for this pass; would slot into the same `delegation-surface-in-ui` matrix as workspace-level grants if pursued.
+- **New question raised**: does the project filename-prefix template support placeholder tokens (`{date}`, `{project-slug}`, `{workflow-name}`)? This pass treats the value as a plain string; tokenization is a v2 concern.
+
+Promote? yes — once Willie confirms (a) strict-override is the right combine rule with workspace allowlists, (b) read-only attribution is the right billing posture, (c) the filename-prefix-as-prefill seed pattern is acceptable. If confirmed, raise three small decision pages: `wiki/decisions/project-allowlist-strict-override.md`, `wiki/decisions/project-usage-read-only.md`, `wiki/decisions/project-default-filename-prefix.md`.
+
 ## [2026-05-13] Workspace Members surface — three tabs, per-role delegation, multiple Admins
 
 Decision:
