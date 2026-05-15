@@ -18,10 +18,16 @@
     class="prototype-root size-full bg-base-background text-sm text-base-foreground"
   >
     <router-view />
+    <!-- PrimeVue Toast targets. GraphView.vue mounts <GlobalToast /> for the
+         real app; the prototype path doesn't, so any useToast() add()s would
+         be dropped. Mounting both default and grouped toast renderers here. -->
+    <Toast />
+    <Toast group="save-to-cloud" />
   </div>
 </template>
 
 <script setup lang="ts">
+import Toast from 'primevue/toast'
 import { onBeforeUnmount, onMounted } from 'vue'
 
 const DARK_THEME_CLASS = 'dark-theme'
