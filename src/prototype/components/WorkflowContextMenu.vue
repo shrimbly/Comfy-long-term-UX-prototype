@@ -190,9 +190,21 @@ function onMoved(targetProjectId: string) {
   })
 }
 
-function onSetStorage(value: 'local' | 'cloud') {
-  if (workflow.storage === value) return
-  personaStore.setWorkflowStorage(workflow.id, value)
+function onSaveToCloud() {
+  if (workflow.storage === 'cloud') return
+  personaStore.setWorkflowStorage(workflow.id, 'cloud')
+  toast.add({
+    severity: 'success',
+    summary: t('prototype.workflowMenu.toast.savedToCloudSummary'),
+    detail: t('prototype.workflowMenu.toast.savedToCloudDetail', {
+      name: workflow.name
+    }),
+    life: 2800
+  })
+}
+
+function onExport() {
+  toastStub('prototype.workflowMenu.toast.exportStub')
 }
 
 function onDelete() {
@@ -257,28 +269,19 @@ const items = computed<MenuItem[]>(() => {
       icon: 'icon-[lucide--folder-input]',
       command: onMove
     })
-    out.push({
-      label: t('prototype.workflowMenu.saveDestination'),
-      icon: 'icon-[lucide--save]',
-      items: [
-        {
-          label: t('prototype.workflowCard.storageLocal'),
-          icon:
-            workflow.storage === 'local'
-              ? 'icon-[lucide--check]'
-              : 'icon-[lucide--hard-drive]',
-          command: () => onSetStorage('local')
-        },
-        {
-          label: t('prototype.workflowCard.storageCloud'),
-          icon:
-            workflow.storage === 'cloud'
-              ? 'icon-[lucide--check]'
-              : 'icon-[lucide--cloud]',
-          command: () => onSetStorage('cloud')
-        }
-      ]
-    })
+    if (workflow.storage === 'cloud') {
+      out.push({
+        label: t('prototype.workflowMenu.export'),
+        icon: 'icon-[lucide--download]',
+        command: onExport
+      })
+    } else {
+      out.push({
+        label: t('prototype.workflowMenu.saveToCloud'),
+        icon: 'icon-[lucide--cloud-upload]',
+        command: onSaveToCloud
+      })
+    }
   }
 
   // Runner: fork-into-My-Workflows is the explicit way to get a working
