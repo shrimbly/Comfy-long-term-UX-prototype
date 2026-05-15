@@ -132,6 +132,16 @@
         "publishHubStub": "Hub submission isn't wired up in this pass.",
         "outputsStub": "Output history isn't wired up in this pass."
       },
+      "saveToCloudPrompt": {
+        "title": "Save to cloud first?",
+        "body": {
+          "share": "Sharing requires \"{name}\" to be saved to the cloud so collaborators can access it.",
+          "publish-link": "Publishing a direct link requires \"{name}\" to be saved to the cloud first.",
+          "publish-hub": "Submitting to Comfy Hub requires \"{name}\" to be saved to the cloud first."
+        },
+        "cancel": "Cancel",
+        "confirm": "Save & continue"
+      },
       "move": {
         "title": "Move workflow to project",
         "subtitle": "Pick a project in this workspace to move \"{name}\" into.",

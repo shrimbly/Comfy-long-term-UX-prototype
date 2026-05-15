@@ -42,13 +42,22 @@
     <template #item="{ item, props }">
       <Button
         variant="secondary"
-        class="w-full justify-start gap-2"
+        :class="
+          cn(
+            'w-full justify-start gap-2',
+            (item as InactiveMenuItem).inactive && 'opacity-50'
+          )
+        "
         v-bind="props.action"
       >
         <i v-if="item.icon" :class="cn('size-4', item.icon)" />
         <span class="flex-1 text-left">{{ item.label }}</span>
         <i
-          v-if="item.items?.length"
+          v-if="(item as InactiveMenuItem).inactive"
+          class="icon-[lucide--lock] size-3.5 opacity-60"
+        />
+        <i
+          v-else-if="item.items?.length"
           class="icon-[lucide--chevron-right] size-4 opacity-60"
         />
       </Button>
@@ -61,6 +70,49 @@
     @close="moveDialogOpen = false"
     @moved="onMoved"
   />
+
+  <Teleport v-if="saveToCloudPrompt" to="body">
+    <div
+      class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+      role="dialog"
+      aria-modal="true"
+      @click.self="saveToCloudPrompt = null"
+    >
+      <div
+        class="flex w-full max-w-sm flex-col gap-4 rounded-2xl border border-border-subtle bg-base-background p-6 shadow-2xl"
+      >
+        <header class="flex flex-col gap-1">
+          <h2 class="text-lg font-semibold">
+            {{ t('prototype.workflowMenu.saveToCloudPrompt.title') }}
+          </h2>
+          <p class="text-sm text-muted-foreground">
+            {{
+              t(
+                `prototype.workflowMenu.saveToCloudPrompt.body.${saveToCloudPrompt}`,
+                { name: workflow.name }
+              )
+            }}
+          </p>
+        </header>
+        <footer class="flex justify-end gap-2">
+          <button
+            type="button"
+            class="inline-flex h-9 cursor-pointer items-center rounded-lg bg-secondary-background px-3 text-sm transition-colors hover:bg-secondary-background-hover"
+            @click="saveToCloudPrompt = null"
+          >
+            {{ t('prototype.workflowMenu.saveToCloudPrompt.cancel') }}
+          </button>
+          <button
+            type="button"
+            class="inline-flex h-9 cursor-pointer items-center rounded-lg bg-primary-background px-3 text-sm font-medium text-button-surface-contrast transition-colors hover:bg-primary-background-hover"
+            @click="confirmSaveAndContinue"
+          >
+            {{ t('prototype.workflowMenu.saveToCloudPrompt.confirm') }}
+          </button>
+        </footer>
+      </div>
+    </div>
+  </Teleport>
 </template>
 
 <script setup lang="ts">
@@ -108,6 +160,19 @@ type ContextMenuHandle = {
 const contextMenu = ref<ContextMenuHandle | null>(null)
 
 const moveDialogOpen = ref(false)
+
+// Share / Publish / Submit assume a cloud-resident workflow per
+// concepts/sharing-vs-publishing.md ("Recipients access a canonical
+// workflow inside the host workspace"). When the workflow is local, we
+// surface the menu items as inactive and intercept the click with a
+// "Save to cloud first?" prompt — matching the wiki's "auto-created
+// lazily" language in decisions/save-destination-workflow-level.md.
+type SaveToCloudIntent = 'share' | 'publish-link' | 'publish-hub'
+const saveToCloudPrompt = ref<SaveToCloudIntent | null>(null)
+
+type InactiveMenuItem = MenuItem & { inactive?: boolean }
+
+const isLocal = computed(() => workflow.storage !== 'cloud')
 
 const isOwner = computed(() => viewerRole === 'owner')
 const isRunner = computed(() => viewerRole === 'runner')
@@ -207,6 +272,40 @@ function onExport() {
   toastStub('prototype.workflowMenu.toast.exportStub')
 }
 
+function runShareIntent(intent: SaveToCloudIntent) {
+  if (intent === 'share') {
+    toastStub('prototype.workflowMenu.toast.shareStub')
+  } else if (intent === 'publish-link') {
+    toastStub('prototype.workflowMenu.toast.publishLinkStub')
+  } else {
+    toastStub('prototype.workflowMenu.toast.publishHubStub')
+  }
+}
+
+function onShareIntent(intent: SaveToCloudIntent) {
+  if (isLocal.value) {
+    saveToCloudPrompt.value = intent
+    return
+  }
+  runShareIntent(intent)
+}
+
+function confirmSaveAndContinue() {
+  const intent = saveToCloudPrompt.value
+  saveToCloudPrompt.value = null
+  if (!intent) return
+  personaStore.setWorkflowStorage(workflow.id, 'cloud')
+  toast.add({
+    severity: 'success',
+    summary: t('prototype.workflowMenu.toast.savedToCloudSummary'),
+    detail: t('prototype.workflowMenu.toast.savedToCloudDetail', {
+      name: workflow.name
+    }),
+    life: 2200
+  })
+  runShareIntent(intent)
+}
+
 function onDelete() {
   const ok = window.confirm(
     t('prototype.workflowMenu.deleteConfirm', { name: workflow.name })
@@ -296,27 +395,33 @@ const items = computed<MenuItem[]>(() => {
     })
   }
 
-  // Sharing / publishing — Owner only.
+  // Sharing / publishing — Owner only. All three require cloud
+  // residency per concepts/sharing-vs-publishing.md, so when storage
+  // is local the items render inactive and clicking opens the
+  // save-to-cloud prompt instead of running the action.
   if (isOwner.value) {
     out.push({ separator: true })
     out.push({
       label: t('prototype.workflowMenu.share'),
       icon: 'icon-[lucide--users-round]',
-      command: () => toastStub('prototype.workflowMenu.toast.shareStub')
-    })
+      inactive: isLocal.value,
+      command: () => onShareIntent('share')
+    } satisfies InactiveMenuItem)
     if (canPublishDirectLink.value) {
       out.push({
         label: t('prototype.workflowMenu.publishDirectLink'),
         icon: 'icon-[lucide--link]',
-        command: () => toastStub('prototype.workflowMenu.toast.publishLinkStub')
-      })
+        inactive: isLocal.value,
+        command: () => onShareIntent('publish-link')
+      } satisfies InactiveMenuItem)
     }
     if (canSubmitToHub.value) {
       out.push({
         label: t('prototype.workflowMenu.publishHub'),
         icon: 'icon-[lucide--upload]',
-        command: () => toastStub('prototype.workflowMenu.toast.publishHubStub')
-      })
+        inactive: isLocal.value,
+        command: () => onShareIntent('publish-hub')
+      } satisfies InactiveMenuItem)
     }
   }
 
