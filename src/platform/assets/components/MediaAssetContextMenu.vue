@@ -50,7 +50,6 @@
 import { useEventListener } from '@vueuse/core'
 import ContextMenu from 'primevue/contextmenu'
 import type { MenuItem } from 'primevue/menuitem'
-import { useToast } from 'primevue/usetoast'
 import { computed, ref, useId } from 'vue'
 import type { CSSProperties } from 'vue'
 import { useI18n } from 'vue-i18n'
@@ -63,7 +62,7 @@ import {
   getMediaTypeFromFilename,
   isPreviewableMediaType
 } from '@/utils/formatUtil'
-import { promotePrototypeAssetsToCloud } from '@/prototype/fixtures/mediaAssets'
+import { useSimulatedSaveToCloud } from '@/prototype/composables/useSimulatedSaveToCloud'
 import { detectNodeTypeFromFilename } from '@/utils/loaderNodeUtil'
 import { electronAPI } from '@/utils/envUtil'
 import { cn } from '@comfyorg/tailwind-utils'
@@ -120,7 +119,7 @@ const isVisible = ref(false)
 const actions = useMediaAssetActions()
 const favorites = useAssetFavorites()
 const { t } = useI18n()
-const toast = useToast()
+const { saveToCloud } = useSimulatedSaveToCloud()
 
 const tagsPopoverVisible = ref(false)
 const tagsPopoverStyle = ref<CSSProperties>({})
@@ -382,24 +381,25 @@ const contextMenuItems = computed<MenuItem[]>(() => {
     })
 
     // Bulk Save to cloud (prototype-only) — applies to the local subset
-    // of the selection. Mutates fixture state so the badge flips live.
+    // of the selection. Streams progress through a sticky toast.
     const localSelection = selectedAssets.filter(
       (a) => a.user_metadata?.storage === 'local'
     )
     if (localSelection.length > 0) {
+      const destinations = new Set(
+        localSelection
+          .map((a) => a.user_metadata?.projectName as string | undefined)
+          .filter((n): n is string => Boolean(n))
+      )
+      const destinationLabel =
+        destinations.size === 1
+          ? [...destinations][0]
+          : t('mediaAsset.actions.promoteToCloudFallbackDestination')
       items.push({
         label: t('mediaAsset.selection.promoteSelectedToCloud'),
         icon: 'icon-[lucide--cloud-upload]',
         command: () => {
-          promotePrototypeAssetsToCloud(localSelection.map((a) => a.id))
-          toast.add({
-            severity: 'success',
-            summary: t('mediaAsset.actions.promotedToCloudSummary'),
-            detail: t('mediaAsset.selection.promotedSelectedDetail', {
-              count: localSelection.length
-            }),
-            life: 4000
-          })
+          void saveToCloud(localSelection, destinationLabel)
         }
       })
     }
@@ -463,8 +463,8 @@ const contextMenuItems = computed<MenuItem[]>(() => {
   })
 
   // Save to cloud (only for local-stored assets — prototype-only).
-  // Mutates fixture state so the badge flips live; destination is
-  // inferred from the asset's parent workflow per
+  // Streams progress through a sticky toast then mutates fixture state;
+  // destination is inferred from the asset's parent workflow per
   //   ../IA_Plan/wiki/decisions/promoting-local-outputs-to-cloud.md
   if (asset.user_metadata?.storage === 'local') {
     const inferredProject =
@@ -474,15 +474,7 @@ const contextMenuItems = computed<MenuItem[]>(() => {
       label: t('mediaAsset.actions.promoteToCloud'),
       icon: 'icon-[lucide--cloud-upload]',
       command: () => {
-        promotePrototypeAssetsToCloud([asset.id])
-        toast.add({
-          severity: 'success',
-          summary: t('mediaAsset.actions.promotedToCloudSummary'),
-          detail: t('mediaAsset.actions.promotedToCloudDetail', {
-            destination: inferredProject
-          }),
-          life: 4000
-        })
+        void saveToCloud([asset], inferredProject)
       }
     })
   }

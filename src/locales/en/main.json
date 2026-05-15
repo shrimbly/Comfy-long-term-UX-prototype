@@ -3662,6 +3662,8 @@
       "moveFolderTo": "Move to...",
       "promoteToCloud": "Save to cloud",
       "promoteToCloudFallbackDestination": "My Workflows",
+      "savingToCloudSummary": "Saving to cloud…",
+      "savingToCloudDetail": "Uploading {current}/{total} to {destination}…",
       "promotedToCloudSummary": "Saved to cloud",
       "promotedToCloudDetail": "Now available under {destination}."
     },
