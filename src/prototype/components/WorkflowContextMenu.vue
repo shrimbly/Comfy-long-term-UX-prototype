@@ -53,11 +53,7 @@
         <i v-if="item.icon" :class="cn('size-4', item.icon)" />
         <span class="flex-1 text-left">{{ item.label }}</span>
         <i
-          v-if="(item as InactiveMenuItem).inactive"
-          class="icon-[lucide--lock] size-3.5 opacity-60"
-        />
-        <i
-          v-else-if="item.items?.length"
+          v-if="item.items?.length"
           class="icon-[lucide--chevron-right] size-4 opacity-60"
         />
       </Button>
@@ -172,7 +168,10 @@ const saveToCloudPrompt = ref<SaveToCloudIntent | null>(null)
 
 type InactiveMenuItem = MenuItem & { inactive?: boolean }
 
-const isLocal = computed(() => workflow.storage !== 'cloud')
+const effectiveStorage = computed(() =>
+  personaStore.getEffectiveWorkflowStorage(workflow.id, workflow.storage)
+)
+const isLocal = computed(() => effectiveStorage.value !== 'cloud')
 
 const isOwner = computed(() => viewerRole === 'owner')
 const isRunner = computed(() => viewerRole === 'runner')
@@ -256,7 +255,7 @@ function onMoved(targetProjectId: string) {
 }
 
 function onSaveToCloud() {
-  if (workflow.storage === 'cloud') return
+  if (effectiveStorage.value === 'cloud') return
   personaStore.setWorkflowStorage(workflow.id, 'cloud')
   toast.add({
     severity: 'success',
@@ -368,7 +367,7 @@ const items = computed<MenuItem[]>(() => {
       icon: 'icon-[lucide--folder-input]',
       command: onMove
     })
-    if (workflow.storage === 'cloud') {
+    if (effectiveStorage.value === 'cloud') {
       out.push({
         label: t('prototype.workflowMenu.export'),
         icon: 'icon-[lucide--download]',

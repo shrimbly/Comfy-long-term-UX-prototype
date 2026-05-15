@@ -21,10 +21,10 @@
         :style="{ background: thumbnail }"
       >
         <span
-          v-if="workflow.storage"
+          v-if="effectiveStorage"
           :title="
             t(
-              workflow.storage === 'local'
+              effectiveStorage === 'local'
                 ? 'prototype.workflowCard.storageLocal'
                 : 'prototype.workflowCard.storageCloud'
             )
@@ -35,7 +35,7 @@
             :class="
               cn(
                 'size-3.5 text-white',
-                workflow.storage === 'local'
+                effectiveStorage === 'local'
                   ? 'icon-[lucide--hard-drive]'
                   : 'icon-[lucide--cloud]'
               )
@@ -69,6 +69,7 @@ import { useI18n } from 'vue-i18n'
 
 import WorkflowContextMenu from './WorkflowContextMenu.vue'
 import { useViewerWorkflowRole } from '../composables/useViewerWorkflowRole'
+import { usePrototypePersonaStore } from '../stores/personaStore'
 import { thumbnailGradient } from '../utils/thumbnail'
 import type { Workflow } from '../types'
 
@@ -83,7 +84,11 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
+const personaStore = usePrototypePersonaStore()
 const thumbnail = computed(() => thumbnailGradient(workflow.id))
+const effectiveStorage = computed(() =>
+  personaStore.getEffectiveWorkflowStorage(workflow.id, workflow.storage)
+)
 
 const workflowRef = toRef(() => workflow)
 const viewerRole = useViewerWorkflowRole(workflowRef)

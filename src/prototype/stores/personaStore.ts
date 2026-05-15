@@ -404,10 +404,27 @@ export const usePrototypePersonaStore = defineStore('prototype-persona', () => {
     )
   }
 
+  // Workflow-storage overrides live in a sibling ref because the
+  // persona fixture isn't deeply reactive — mutating fixture.workflows
+  // doesn't propagate through the WorkflowCard's `workflow` prop. This
+  // mirrors fixtures/mediaAssets.ts's promotedToCloudIds pattern.
+  const workflowStorageOverrides = ref<Record<string, 'local' | 'cloud'>>({})
+
   function setWorkflowStorage(workflowId: string, storage: 'local' | 'cloud') {
+    workflowStorageOverrides.value = {
+      ...workflowStorageOverrides.value,
+      [workflowId]: storage
+    }
     fixture.value.workflows = fixture.value.workflows.map((w) =>
       w.id === workflowId ? { ...w, storage } : w
     )
+  }
+
+  function getEffectiveWorkflowStorage(
+    workflowId: string,
+    fallback: 'local' | 'cloud' | undefined
+  ): 'local' | 'cloud' | undefined {
+    return workflowStorageOverrides.value[workflowId] ?? fallback
   }
 
   function moveWorkflowToProject(workflowId: string, targetProjectId: string) {
@@ -623,6 +640,7 @@ export const usePrototypePersonaStore = defineStore('prototype-persona', () => {
     renameWorkflow,
     deleteWorkflow,
     setWorkflowStorage,
+    getEffectiveWorkflowStorage,
     moveWorkflowToProject,
     forkWorkflow
   }
