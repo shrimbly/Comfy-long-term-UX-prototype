@@ -2,6 +2,7 @@
   "prototype": {
     "sidebar": {
       "drafts": "My Workflows",
+      "explore": "Explore",
       "recents": "Recents",
       "projects": "Projects",
       "libraryMedia": "Media assets",
@@ -174,6 +175,10 @@
       }
     },
     "views": {
+      "explore": {
+        "title": "Explore",
+        "subtitle": "What the community is making with ComfyUI right now."
+      },
       "drafts": {
         "title": "My Workflows",
         "subtitle": "Your private space for new work",

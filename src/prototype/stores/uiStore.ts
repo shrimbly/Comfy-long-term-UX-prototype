@@ -11,6 +11,7 @@ import type { AssetStorage, LibrarySection } from '../types'
 export type StorageFilter = 'all' | AssetStorage
 
 type ActiveView =
+  | { kind: 'explore' }
   | { kind: 'drafts' }
   | { kind: 'projects' }
   | { kind: 'project'; projectId: string }
@@ -21,7 +22,9 @@ type ActiveView =
   | { kind: 'settings' }
 
 export const usePrototypeUiStore = defineStore('prototype-ui', () => {
-  const activeView = ref<ActiveView>({ kind: 'drafts' })
+  // Explore is the dashboard home — every dashboard mount lands here
+  // regardless of where the user navigated previously.
+  const activeView = ref<ActiveView>({ kind: 'explore' })
 
   // Library page filters. 'all' = no filter applied. Click the active
   // project/folder again to deselect (toggle back to 'all').
@@ -36,7 +39,7 @@ export const usePrototypeUiStore = defineStore('prototype-ui', () => {
   }
 
   function goHome() {
-    activeView.value = { kind: 'drafts' }
+    activeView.value = { kind: 'explore' }
   }
 
   function selectProject(id: string) {
@@ -82,14 +85,14 @@ export const usePrototypeUiStore = defineStore('prototype-ui', () => {
   watch(
     () => personaStore.currentPersonaId,
     () => {
-      activeView.value = { kind: 'drafts' }
+      activeView.value = { kind: 'explore' }
       resetLibraryFilters()
     }
   )
   watch(
     () => personaStore.fixture.currentWorkspaceId,
     () => {
-      activeView.value = { kind: 'drafts' }
+      activeView.value = { kind: 'explore' }
       resetLibraryFilters()
     }
   )

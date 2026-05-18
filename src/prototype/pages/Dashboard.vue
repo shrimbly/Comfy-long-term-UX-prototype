@@ -32,7 +32,8 @@
           <LibraryView :section="activeView.section" />
         </template>
         <template v-else>
-          <DraftsView v-if="activeView.kind === 'drafts'" />
+          <ExploreView v-if="activeView.kind === 'explore'" />
+          <DraftsView v-else-if="activeView.kind === 'drafts'" />
           <ProjectsView v-else-if="activeView.kind === 'projects'" />
           <ProjectDetailView
             v-else-if="activeView.kind === 'project'"
@@ -67,6 +68,7 @@ import PrototypeTabs from '../components/PrototypeTabs.vue'
 import { MEDIA_ASSETS_TAB_ID, usePrototypeTabsStore } from '../stores/tabsStore'
 import { usePrototypeUiStore } from '../stores/uiStore'
 import DraftsView from '../views/DraftsView.vue'
+import ExploreView from '../views/ExploreView.vue'
 import HubView from '../views/HubView.vue'
 import LibraryView from '../views/LibraryView.vue'
 import MembersView from '../views/MembersView.vue'

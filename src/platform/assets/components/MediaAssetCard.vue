@@ -164,6 +164,27 @@
         />
       </div>
 
+      <!-- Creator chip (Explore-feed attribution). Gated on
+           user_metadata.creator so it only renders for prototype
+           fixtures. Hover-revealed alongside the title overlay. -->
+      <div
+        v-if="creator"
+        :class="
+          cn(
+            'pointer-events-none absolute top-2 left-2 inline-flex items-center gap-1.5 rounded-full bg-black/55 py-1 pr-2.5 pl-1 text-white backdrop-blur-sm transition-opacity duration-150',
+            isHovered ? 'opacity-100' : 'opacity-0'
+          )
+        "
+      >
+        <span
+          class="grid size-5 place-items-center rounded-full text-[10px] font-semibold"
+          :style="{ backgroundColor: creator.avatarColor ?? '#7c7c7c' }"
+        >
+          {{ creatorInitial }}
+        </span>
+        <span class="text-xs/none">@{{ creator.username }}</span>
+      </div>
+
       <!-- Hover title overlay (only when footer is hidden) -->
       <div
         v-if="hideFooter && asset && fileName"
@@ -356,6 +377,29 @@ const storage = computed<'local' | 'cloud' | undefined>(() => {
   const raw = asset?.user_metadata?.storage
   return raw === 'local' || raw === 'cloud' ? raw : undefined
 })
+
+// Creator attribution. Only prototype Explore-feed fixtures set this;
+// gating on the metadata shape keeps the overlay invisible in the
+// real ComfyUI media browser path.
+interface CreatorMeta {
+  username: string
+  avatarColor?: string
+}
+const creator = computed<CreatorMeta | undefined>(() => {
+  const raw = asset?.user_metadata?.creator as
+    | { username?: unknown; avatarColor?: unknown }
+    | undefined
+  if (!raw || typeof raw.username !== 'string') return undefined
+  return {
+    username: raw.username,
+    avatarColor:
+      typeof raw.avatarColor === 'string' ? raw.avatarColor : undefined
+  }
+})
+
+const creatorInitial = computed(
+  () => creator.value?.username.trim().charAt(0).toUpperCase() ?? ''
+)
 
 // Determine file type from extension
 const fileKind = computed((): MediaKind => {

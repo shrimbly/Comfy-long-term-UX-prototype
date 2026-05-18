@@ -45,6 +45,12 @@
 
     <div class="flex flex-col gap-1">
       <SidebarItem
+        :label="t('prototype.sidebar.explore')"
+        icon="icon-[lucide--compass]"
+        :active="activeView.kind === 'explore'"
+        @click="uiStore.go({ kind: 'explore' })"
+      />
+      <SidebarItem
         :label="t('prototype.sidebar.recents')"
         icon="icon-[lucide--clock]"
         :active="activeView.kind === 'recents'"

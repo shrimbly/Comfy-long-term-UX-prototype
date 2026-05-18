@@ -45,6 +45,11 @@ interface PrototypeProject {
   // Which personas have project-level access. Modeled per
   // ../IA_Plan/wiki/concepts/three-level-permissions.md.
   visibleToPersonas: PersonaId[]
+  // Surfaced through user_metadata.creator on every asset in the
+  // project. Drives the hover-revealed author chip on the Explore page;
+  // also useful anywhere else that wants to attribute an asset to a
+  // user (post-MVP attribution requirements TBD).
+  creator: { username: string; avatarColor: string }
 }
 
 const PROJECTS: PrototypeProject[] = [
@@ -56,7 +61,8 @@ const PROJECTS: PrototypeProject[] = [
     fileTags: ['output', 'campaign'],
     startDate: '2026-05-10T09:00:00Z',
     storage: 'cloud',
-    visibleToPersonas: ['workspace-admin', 'workspace-member']
+    visibleToPersonas: ['workspace-admin', 'workspace-member'],
+    creator: { username: 'anna.k', avatarColor: '#f97316' }
   },
   {
     slug: 'brand-system',
@@ -66,7 +72,8 @@ const PROJECTS: PrototypeProject[] = [
     fileTags: ['output', 'brand'],
     startDate: '2026-05-08T10:00:00Z',
     storage: 'cloud',
-    visibleToPersonas: ['workspace-admin', 'workspace-member', 'solo']
+    visibleToPersonas: ['workspace-admin', 'workspace-member', 'solo'],
+    creator: { username: 'pablo', avatarColor: '#3b82f6' }
   },
   {
     slug: 'client-x-pitch',
@@ -76,7 +83,8 @@ const PROJECTS: PrototypeProject[] = [
     fileTags: ['output', 'pitch'],
     startDate: '2026-05-05T11:00:00Z',
     storage: 'cloud',
-    visibleToPersonas: ['workspace-admin', 'project-collaborator']
+    visibleToPersonas: ['workspace-admin', 'project-collaborator'],
+    creator: { username: 'mira.v', avatarColor: '#a855f7' }
   },
   {
     slug: 'marketing-q3',
@@ -86,7 +94,8 @@ const PROJECTS: PrototypeProject[] = [
     fileTags: ['output', 'marketing'],
     startDate: '2026-05-03T08:00:00Z',
     storage: 'local',
-    visibleToPersonas: ['workspace-admin', 'workspace-member']
+    visibleToPersonas: ['workspace-admin', 'workspace-member'],
+    creator: { username: 'tomas.r', avatarColor: '#10b981' }
   },
   {
     slug: 'personal',
@@ -96,7 +105,8 @@ const PROJECTS: PrototypeProject[] = [
     fileTags: ['output', 'sketch'],
     startDate: '2026-04-28T19:00:00Z',
     storage: 'local',
-    visibleToPersonas: ['workspace-admin', 'solo', 'solo-local']
+    visibleToPersonas: ['workspace-admin', 'solo', 'solo-local'],
+    creator: { username: 'willie', avatarColor: '#facc15' }
   }
 ]
 
@@ -162,7 +172,8 @@ export function buildPrototypeMediaAssets(personaId?: PersonaId): AssetItem[] {
           projectName: project.projectName,
           workflowName: project.workflowName,
           storage: effectiveStorage,
-          originalStorage: project.storage
+          originalStorage: project.storage,
+          creator: project.creator
         }
       })
     }
