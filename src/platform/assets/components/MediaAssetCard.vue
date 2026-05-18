@@ -64,7 +64,9 @@
         <i class="icon-[lucide--trash-2] size-5" />
       </LoadingOverlay>
 
-      <!-- Action buttons overlay (top-left) -->
+      <!-- Action buttons overlay (top-left of the image). Prototype
+           context disables favoriting per design-decisions 2026-05-18 —
+           only the more-options handle is exposed. -->
       <Transition
         enter-active-class="transition-[transform,opacity] duration-150 ease-out"
         leave-active-class="transition-[transform,opacity] duration-100 ease-in"
@@ -77,31 +79,6 @@
         >
           <IconGroup background-class="bg-white">
             <Button
-              v-if="canFavorite"
-              variant="overlay-white"
-              size="icon"
-              :aria-label="
-                $t(
-                  isFavorited
-                    ? 'mediaAsset.actions.unfavorite'
-                    : 'mediaAsset.actions.favorite'
-                )
-              "
-              :aria-pressed="isFavorited"
-              @click.stop="handleFavoriteToggle"
-            >
-              <i
-                :class="
-                  cn(
-                    'size-4',
-                    isFavorited
-                      ? 'icon-[ph--star-fill] text-citrine-400'
-                      : 'icon-[ph--star]'
-                  )
-                "
-              />
-            </Button>
-            <Button
               variant="overlay-white"
               size="icon"
               :aria-label="$t('mediaAsset.actions.moreOptions')"
@@ -113,27 +90,6 @@
             </Button>
           </IconGroup>
         </div>
-      </Transition>
-
-      <!-- Compact favorited indicator (shown when not hovered) -->
-      <Transition
-        enter-active-class="transition-[transform,opacity] duration-150 ease-out"
-        leave-active-class="transition-[transform,opacity] duration-100 ease-in"
-        enter-from-class="scale-75 opacity-0"
-        leave-to-class="scale-75 opacity-0"
-      >
-        <button
-          v-if="!showActionsOverlay && canFavorite && isFavorited"
-          type="button"
-          class="absolute top-2 left-2 inline-flex origin-center cursor-pointer items-center justify-center rounded-md border-none bg-transparent p-0"
-          :aria-label="$t('mediaAsset.actions.unfavorite')"
-          :aria-pressed="true"
-          @click.stop="handleFavoriteToggle"
-        >
-          <i
-            class="icon-[ph--star-fill] size-3.5 text-citrine-400 drop-shadow-[0_1px_3px_rgba(0,0,0,0.85)]"
-          />
-        </button>
       </Transition>
 
       <!-- Storage badge (cloud vs local) — only on hover, to keep the
@@ -164,14 +120,15 @@
         />
       </div>
 
-      <!-- Creator chip (Explore-feed attribution). Gated on
-           user_metadata.creator so it only renders for prototype
-           fixtures. Hover-revealed alongside the title overlay. -->
+      <!-- Creator chip (Explore-feed attribution). Bottom-left,
+           hover-revealed. Gated on user_metadata.creator so it only
+           renders for prototype fixtures — the real ComfyUI media
+           browser path leaves the corner empty. -->
       <div
         v-if="creator"
         :class="
           cn(
-            'pointer-events-none absolute top-2 left-2 inline-flex items-center gap-1.5 rounded-full bg-black/55 py-1 pr-2.5 pl-1 text-white backdrop-blur-sm transition-opacity duration-150',
+            'pointer-events-none absolute bottom-2 left-2 inline-flex items-center gap-1.5 rounded-full bg-black/55 py-1 pr-2.5 pl-1 text-white backdrop-blur-sm transition-opacity duration-150',
             isHovered ? 'opacity-100' : 'opacity-0'
           )
         "
@@ -183,20 +140,6 @@
           {{ creatorInitial }}
         </span>
         <span class="text-xs/none">@{{ creator.username }}</span>
-      </div>
-
-      <!-- Hover title overlay (only when footer is hidden) -->
-      <div
-        v-if="hideFooter && asset && fileName"
-        class="pointer-events-none absolute inset-x-0 bottom-0 bg-linear-to-t from-black/70 via-black/40 to-transparent px-3 pt-6 pb-2 transition-opacity duration-150"
-        :class="isHovered ? 'opacity-100' : 'opacity-0'"
-      >
-        <p
-          class="m-0 line-clamp-2 text-sm/tight break-all text-white"
-          :title="fileName"
-        >
-          {{ fileName }}
-        </p>
       </div>
     </div>
 
@@ -277,7 +220,6 @@ import {
   ASSET_DRAG_MIME,
   useAssetDragPreview
 } from '../composables/useAssetDragPreview'
-import { useAssetFavorites } from '../composables/useAssetFavorites'
 import { useMediaAssetActions } from '../composables/useMediaAssetActions'
 import type { AssetItem } from '../schemas/assetSchema'
 import { getAssetDisplayName } from '../utils/assetMetadataUtils'
@@ -309,7 +251,6 @@ const {
   selectedIds,
   showOutputCount,
   outputCount,
-  restrictStackFavorites = false,
   naturalAspect = false,
   hideFooter = false
 } = defineProps<{
@@ -319,7 +260,6 @@ const {
   selectedIds?: ReadonlySet<string>
   showOutputCount?: boolean
   outputCount?: number
-  restrictStackFavorites?: boolean
   naturalAspect?: boolean
   hideFooter?: boolean
 }>()
@@ -349,22 +289,7 @@ const imageDimensions = ref<{ width: number; height: number } | undefined>()
 const isHovered = useElementHover(cardContainerRef)
 
 const actions = useMediaAssetActions()
-const favorites = useAssetFavorites()
 const dimensionsCache = useAssetDimensionsCache()
-
-const canFavorite = computed(() => {
-  if (loading || !asset || isDeleting.value) return false
-  if (restrictStackFavorites && showOutputCount) return false
-  return true
-})
-
-const isFavorited = computed(() =>
-  asset ? favorites.isFavorited(asset) : false
-)
-
-async function handleFavoriteToggle() {
-  if (asset) await favorites.toggleFavorite(asset)
-}
 
 // Get asset type from tags
 const assetType = computed(() => {

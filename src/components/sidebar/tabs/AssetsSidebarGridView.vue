@@ -53,7 +53,6 @@
           :selected-ids="selectedIds"
           :show-output-count="showOutputCount(item.asset)"
           :output-count="getOutputCount(item.asset)"
-          :restrict-stack-favorites="restrictStackFavorites"
           @click="emit('select-asset', item.asset)"
           @context-menu="emit('context-menu', $event, item.asset)"
           @zoom="emit('zoom', item.asset)"
@@ -116,8 +115,7 @@ const {
   selectedIds,
   showOutputCount,
   getOutputCount,
-  gridSize = 'sm',
-  restrictStackFavorites = false
+  gridSize = 'sm'
 } = defineProps<{
   assets: AssetItem[]
   folders?: FolderItem[]
@@ -126,7 +124,6 @@ const {
   showOutputCount: (asset: AssetItem) => boolean
   getOutputCount: (asset: AssetItem) => number
   gridSize?: 'sm' | 'lg'
-  restrictStackFavorites?: boolean
 }>()
 
 const emit = defineEmits<{
