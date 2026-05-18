@@ -100,6 +100,51 @@
       "storageLocal": "Saved locally",
       "storageCloud": "Saved to cloud"
     },
+    "commandPalette": {
+      "inputPlaceholder": "Search commands, projects, settings…",
+      "empty": "No matches.",
+      "navigate": "Navigate",
+      "select": "Select",
+      "escKey": "esc",
+      "runStub": "Would run this command — wiring TBD.",
+      "groups": {
+        "generate": "Generate",
+        "search": "Search",
+        "navigate": "Navigate",
+        "settings": "Settings"
+      },
+      "cmd": {
+        "generateImage": {
+          "label": "Generate an image",
+          "hint": "Start a new generation from a prompt"
+        },
+        "searchMedia": {
+          "label": "Search media assets",
+          "hint": "Browse outputs, uploads and shared media"
+        },
+        "searchTemplates": {
+          "label": "Search templates",
+          "hint": "Starter workflows and presets"
+        },
+        "searchProjects": {
+          "label": "Search projects",
+          "hint": "Find a project by name"
+        },
+        "searchWorkflows": {
+          "label": "Search workflows",
+          "hint": "Find a workflow across projects"
+        },
+        "openDrafts": { "label": "Open My Workflows" },
+        "openRecents": { "label": "Open Recents" },
+        "openHub": { "label": "Open Hub" },
+        "openSettings": { "label": "Open Settings" },
+        "settingsGeneral": { "label": "Settings → General" },
+        "settingsAllowlists": { "label": "Settings → Allowlists" },
+        "settingsPublishing": { "label": "Settings → Publishing" },
+        "settingsBilling": { "label": "Settings → Billing" },
+        "settingsAdvanced": { "label": "Settings → Advanced" }
+      }
+    },
     "workflowMenu": {
       "open": "Open",
       "runApp": "Run app",
@@ -176,10 +221,7 @@
     },
     "views": {
       "explore": {
-        "title": "Explore",
-        "filterAll": "All",
-        "filterImages": "Images",
-        "filterVideos": "Videos"
+        "searchPlaceholder": "Search or press ⌘K"
       },
       "drafts": {
         "title": "My Workflows",
