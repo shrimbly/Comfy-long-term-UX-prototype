@@ -13,7 +13,10 @@
 -->
 <template>
   <div class="flex flex-col gap-3">
-    <div class="flex items-center justify-end">
+    <div class="flex items-center justify-between gap-4">
+      <h1 class="m-0 text-2xl font-semibold">
+        {{ t('prototype.views.explore.title') }}
+      </h1>
       <div class="flex items-center gap-2">
         <button
           v-for="opt in filterOptions"
@@ -21,7 +24,7 @@
           type="button"
           :class="
             cn(
-              'inline-flex cursor-pointer items-center gap-1.5 rounded-full px-3 py-1 text-sm transition-colors',
+              'inline-flex cursor-pointer items-center rounded-full px-3 py-1 text-sm transition-colors',
               filter === opt.value
                 ? 'bg-base-foreground text-base-background'
                 : 'bg-secondary-background text-base-foreground hover:bg-secondary-background-hover'
@@ -29,19 +32,7 @@
           "
           @click="filter = opt.value"
         >
-          <span>{{ opt.label }}</span>
-          <span
-            :class="
-              cn(
-                'rounded-full px-1.5 text-xs',
-                filter === opt.value
-                  ? 'bg-base-background text-base-foreground'
-                  : 'bg-secondary-background-hover text-muted-foreground'
-              )
-            "
-          >
-            {{ opt.count }}
-          </span>
+          {{ opt.label }}
         </button>
       </div>
     </div>
@@ -78,36 +69,13 @@ const assets = computed(() => buildExploreAssets())
 const filter = ref<ExploreFilter>('all')
 const selectedIds = ref<Set<string>>(new Set())
 
-const imageCount = computed(
-  () =>
-    assets.value.filter((a) => getMediaTypeFromFilename(a.name) === 'image')
-      .length
+const filterOptions = computed<Array<{ value: ExploreFilter; label: string }>>(
+  () => [
+    { value: 'all', label: t('prototype.views.explore.filterAll') },
+    { value: 'image', label: t('prototype.views.explore.filterImages') },
+    { value: 'video', label: t('prototype.views.explore.filterVideos') }
+  ]
 )
-const videoCount = computed(
-  () =>
-    assets.value.filter((a) => getMediaTypeFromFilename(a.name) === 'video')
-      .length
-)
-
-const filterOptions = computed<
-  Array<{ value: ExploreFilter; label: string; count: number }>
->(() => [
-  {
-    value: 'all',
-    label: t('prototype.views.explore.filterAll'),
-    count: assets.value.length
-  },
-  {
-    value: 'image',
-    label: t('prototype.views.explore.filterImages'),
-    count: imageCount.value
-  },
-  {
-    value: 'video',
-    label: t('prototype.views.explore.filterVideos'),
-    count: videoCount.value
-  }
-])
 
 const filteredAssets = computed(() => {
   if (filter.value === 'all') return assets.value

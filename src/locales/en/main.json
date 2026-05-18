@@ -176,6 +176,7 @@
     },
     "views": {
       "explore": {
+        "title": "Explore",
         "filterAll": "All",
         "filterImages": "Images",
         "filterVideos": "Videos"
