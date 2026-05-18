@@ -62,7 +62,7 @@ import { useI18n } from 'vue-i18n'
 import AssetMasonryGrid from '@/platform/assets/components/AssetMasonryGrid.vue'
 import { getMediaTypeFromFilename } from '@/utils/formatUtil'
 
-import { buildPrototypeMediaAssets } from '../fixtures/mediaAssets'
+import { buildExploreAssets } from '../fixtures/exploreAssets'
 
 type ExploreFilter = 'all' | 'image' | 'video'
 
@@ -70,9 +70,10 @@ const COLUMN_WIDTH = 240
 
 const { t } = useI18n()
 
-// Pass no persona so we get every fixture asset — Explore is meant to
-// feel like a community feed, not a workspace-scoped browser.
-const assets = computed(() => buildPrototypeMediaAssets())
+// Community-feed fixtures live under public/prototype-fixtures/explore.
+// Distinct from buildPrototypeMediaAssets() — that source models a
+// workspace's own outputs, this one is the public discover surface.
+const assets = computed(() => buildExploreAssets())
 
 const filter = ref<ExploreFilter>('all')
 const selectedIds = ref<Set<string>>(new Set())
