@@ -176,8 +176,9 @@
     },
     "views": {
       "explore": {
-        "title": "Explore",
-        "subtitle": "What the community is making with ComfyUI right now."
+        "filterAll": "All",
+        "filterImages": "Images",
+        "filterVideos": "Videos"
       },
       "drafts": {
         "title": "My Workflows",

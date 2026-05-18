@@ -64,9 +64,7 @@
         <i class="icon-[lucide--trash-2] size-5" />
       </LoadingOverlay>
 
-      <!-- Action buttons overlay (top-left of the image). Prototype
-           context disables favoriting per design-decisions 2026-05-18 —
-           only the more-options handle is exposed. -->
+      <!-- Action buttons overlay (top-left of the image). -->
       <Transition
         enter-active-class="transition-[transform,opacity] duration-150 ease-out"
         leave-active-class="transition-[transform,opacity] duration-100 ease-in"
@@ -78,6 +76,31 @@
           class="absolute top-2 left-2 flex origin-top-left flex-wrap justify-start gap-2"
         >
           <IconGroup background-class="bg-white">
+            <Button
+              v-if="canFavorite"
+              variant="overlay-white"
+              size="icon"
+              :aria-label="
+                $t(
+                  isFavorited
+                    ? 'mediaAsset.actions.unfavorite'
+                    : 'mediaAsset.actions.favorite'
+                )
+              "
+              :aria-pressed="isFavorited"
+              @click.stop="handleFavoriteToggle"
+            >
+              <i
+                :class="
+                  cn(
+                    'size-4',
+                    isFavorited
+                      ? 'icon-[ph--star-fill] text-citrine-400'
+                      : 'icon-[ph--star]'
+                  )
+                "
+              />
+            </Button>
             <Button
               variant="overlay-white"
               size="icon"
@@ -92,33 +115,26 @@
         </div>
       </Transition>
 
-      <!-- Storage badge (cloud vs local) — only on hover, to keep the
-           grid quiet at rest. Sourced from user_metadata.storage. -->
-      <div
-        v-if="storage"
-        :title="
-          storage === 'cloud'
-            ? $t('mediaAsset.storage.cloud')
-            : $t('mediaAsset.storage.local')
-        "
-        :class="
-          cn(
-            'pointer-events-none absolute top-2 right-2 inline-flex size-6 items-center justify-center rounded-md bg-black/55 text-white backdrop-blur-sm transition-opacity duration-150',
-            isHovered ? 'opacity-100' : 'opacity-0'
-          )
-        "
+      <!-- Compact favorited indicator (shown when not hovered) -->
+      <Transition
+        enter-active-class="transition-[transform,opacity] duration-150 ease-out"
+        leave-active-class="transition-[transform,opacity] duration-100 ease-in"
+        enter-from-class="scale-75 opacity-0"
+        leave-to-class="scale-75 opacity-0"
       >
-        <i
-          :class="
-            cn(
-              'size-3.5',
-              storage === 'cloud'
-                ? 'icon-[lucide--cloud]'
-                : 'icon-[lucide--hard-drive]'
-            )
-          "
-        />
-      </div>
+        <button
+          v-if="!showActionsOverlay && canFavorite && isFavorited"
+          type="button"
+          class="absolute top-2 left-2 inline-flex origin-center cursor-pointer items-center justify-center rounded-md border-none bg-transparent p-0"
+          :aria-label="$t('mediaAsset.actions.unfavorite')"
+          :aria-pressed="true"
+          @click.stop="handleFavoriteToggle"
+        >
+          <i
+            class="icon-[ph--star-fill] size-3.5 text-citrine-400 drop-shadow-[0_1px_3px_rgba(0,0,0,0.85)]"
+          />
+        </button>
+      </Transition>
 
       <!-- Creator chip (Explore-feed attribution). Bottom-left,
            hover-revealed. Gated on user_metadata.creator so it only
@@ -220,6 +236,7 @@ import {
   ASSET_DRAG_MIME,
   useAssetDragPreview
 } from '../composables/useAssetDragPreview'
+import { useAssetFavorites } from '../composables/useAssetFavorites'
 import { useMediaAssetActions } from '../composables/useMediaAssetActions'
 import type { AssetItem } from '../schemas/assetSchema'
 import { getAssetDisplayName } from '../utils/assetMetadataUtils'
@@ -251,6 +268,7 @@ const {
   selectedIds,
   showOutputCount,
   outputCount,
+  restrictStackFavorites = false,
   naturalAspect = false,
   hideFooter = false
 } = defineProps<{
@@ -260,6 +278,7 @@ const {
   selectedIds?: ReadonlySet<string>
   showOutputCount?: boolean
   outputCount?: number
+  restrictStackFavorites?: boolean
   naturalAspect?: boolean
   hideFooter?: boolean
 }>()
@@ -289,18 +308,26 @@ const imageDimensions = ref<{ width: number; height: number } | undefined>()
 const isHovered = useElementHover(cardContainerRef)
 
 const actions = useMediaAssetActions()
+const favorites = useAssetFavorites()
 const dimensionsCache = useAssetDimensionsCache()
+
+const canFavorite = computed(() => {
+  if (loading || !asset || isDeleting.value) return false
+  if (restrictStackFavorites && showOutputCount) return false
+  return true
+})
+
+const isFavorited = computed(() =>
+  asset ? favorites.isFavorited(asset) : false
+)
+
+async function handleFavoriteToggle() {
+  if (asset) await favorites.toggleFavorite(asset)
+}
 
 // Get asset type from tags
 const assetType = computed(() => {
   return getAssetType(asset?.tags)
-})
-
-// Storage origin (prototype fixtures set this via user_metadata; falls back
-// to undefined for real-app assets, where the badge is hidden).
-const storage = computed<'local' | 'cloud' | undefined>(() => {
-  const raw = asset?.user_metadata?.storage
-  return raw === 'local' || raw === 'cloud' ? raw : undefined
 })
 
 // Creator attribution. Only prototype Explore-feed fixtures set this;
