@@ -66,7 +66,7 @@ import { buildExploreAssets } from '../fixtures/exploreAssets'
 
 type ExploreFilter = 'all' | 'image' | 'video'
 
-const COLUMN_WIDTH = 240
+const COLUMN_WIDTH = 360
 
 const { t } = useI18n()
 
