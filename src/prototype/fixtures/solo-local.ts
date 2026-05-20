@@ -80,5 +80,18 @@ export const soloLocalFixture: PersonaFixture = {
   billing: null,
   memberCreditLimits: [],
   hubSubmissions: [],
-  notifications: []
+  notifications: [],
+  // Persona 1b surfaces a single local install (the implicit one). Per
+  // ../IA_Plan/wiki/concepts/install-switcher.md the indicator still
+  // renders when only one install exists — the popover just shows nothing
+  // to switch to.
+  installs: [
+    {
+      id: 'install-local-default',
+      displayName: 'Local',
+      comfyUIVersion: '0.4.0',
+      registeredAt: '2026-01-10'
+    }
+  ],
+  activeInstallId: 'install-local-default'
 }

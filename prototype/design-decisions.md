@@ -370,3 +370,140 @@ Recommended wiki updates (for IA_Plan, not made from this repo):
 5. **`wiki/open-questions.md#zero-state-for-asset-only-guest`** — the prior "multi-workspace asset tray" framing is superseded; either close the question or rephrase it around the project-shell zero state (what does Tomás see when he opens a project where his only accessible asset has been revoked?).
 
 Promote? maybe — once PM confirms (a) the project-shell-with-filtered-interior position for Asset-only Guest, (b) auto-switch routing on notification click, and (c) the v1 notification kind set. If confirmed, promote the persona revisions to formal wiki edits and add a `wiki/decisions/notifications-cross-workspace-alerts.md` page.
+
+## [2026-05-18] Arc A1 — Multi-install foundation (Install type, switcher chip, three new personas)
+
+Decision:
+
+- New `Install` type per `../IA_Plan/wiki/entities/install.md` — `{ id, displayName, comfyUIVersion, packageSetTag?, registeredAt }`. Lives on `PersonaFixture` as `installs: Install[]` + `activeInstallId?: string`. Empty list means cloud-only (the chip hides).
+- Active-install state lives **inside the persona fixture**, not a separate Pinia store. Mutations go through `personaStore.setActiveInstall(id)`. Persona-switching naturally resets the state.
+- Three new switcher entries:
+  - **Install Governor (Sasha Lin)** — persona 2a. Two installs (personal dev + VFX team build); active = VFX team build.
+  - **Managed Artist (Jonah Park)** — persona 3a. One install (VFX team build). Switcher rarely engaged — matches Journey 2's success state.
+  - **Freelancer (Reza Khalid)** — persona 4a. One install (personal dev on ComfyUI 0.4.0, deliberately outside the team project's allowed-install set). The fixture A2's compat-gate UX will trip against.
+- **Install indicator placement: top bar, between the feedback button and `TopBarNotifications` bell.** This is the prototype's working answer to wiki open question `install-indicator-placement` — the design team had left placement deliberately open. Reinforces that install is global/cross-workspace, mirrors the notifications bell pattern.
+- **Switching behavior in A1 is informational only.** The switcher updates `activeInstallId`; no tab-set swap, no compat re-evaluation, no dirty-tab prompt. Those land with Arc A2 (compat gate + attribution) and A3 (allowed-install set authoring + version bump).
+
+Reason: Arc A1 establishes the foundation for the whole multi-install / VFX-team narrative — types, fixtures, indicator, switching mechanic. Keeping switching informational defers the higher-friction UX decisions (dirty-state handling, gate behavior, attribution) to the arcs where they're the focus, rather than half-implementing them upfront. The top-bar placement was chosen via design preview against two alternatives (sidebar-under-workspace-chip; sidebar-footer-near-settings); the wiki's principle that the install is the runtime — global and cross-workspace, not workspace-scoped — pointed to the top bar.
+
+Wiki link:
+
+- New: `concepts/install-switcher.md` (the switcher behavior this implements).
+- New: `entities/install.md` (the type definition).
+- New: `concepts/install-journeys.md` (the personas this fixture set serves, esp. Journeys 2, 3, 6).
+- New: `decisions/team-locked-install.md` (the allowed-install set as a hard lock — referenced by Freelancer fixture's deliberately-off-set install).
+- Updated: `concepts/personas.md` §2a, §3a, §4a — the new personas.
+
+Open question dependency:
+
+- **`install-indicator-placement`** (open) — working answer recorded here is **top bar**. If a future round picks differently, the chip relocates without changing the underlying store.
+- **`install-switch-dirty-state`** (open) — deferred to A2. Working answer in the wiki: prompt before swap if any tab has unsaved changes. Not implemented in A1 because the prototype doesn't model tab-level dirty state yet.
+- **`default-active-install`** (open) — working answer in the wiki: most-recently-used, falling back to most-recently-added. Honored in fixtures (Admin defaults to Personal dev; Install Governor to the VFX build they live on).
+- **`project-install-allowed-set`** expression form (open) — working answer in the wiki: version range + package-set tag. Freelancer's fixture exercises the _negative_ case (their install lacks the `vfx-team-q2-2026` tag) so A2 can render the compat-gate against a clear miss.
+
+Promote? **no, not yet.** Arc A1 surfaces the install model in the UI; promotion (to a formal wiki decision on placement, or to closing the relevant open questions) waits for the A2/A3 work to confirm the foundations hold up against the harder flows.
+
+## [2026-05-18] Arc A2 — Compat gate + install attribution (Journey 6 load-bearing UX)
+
+Decision:
+
+- **Workflow + project compat are layered.** Compat resolves against a two-layer rule per `concepts/install-switcher.md` §"Workflow version compatibility" + §"Project install constraints":
+  1. Project's `allowedInstallSet` (hard lock per `decisions/team-locked-install.md`) — fails first.
+  2. Workflow's own `requiredInstallSet` — fails next.
+  3. Workflow's `recommendedComfyUIVersion` — soft, surfaces only an advisory badge.
+- **Compat result shape:** `{ status: 'compatible' | 'recommended-mismatch' | 'blocked' | 'no-install', reason?, required?, current? }`. Implemented in `composables/useWorkflowCompat.ts`. The composable is reactive against active-install + persona switches.
+- **`no-install` is gate-free** in the prototype. Cloud-runtime personas (Mira Project Collaborator, Asset-only Guest) see no badge and no gate even on workflows in projects with `allowedInstallSet` — this matches the wiki's Journey 4 framing (cloud BE advertises its own compat identity). Wiring the cloud runtime as a compat-set member is an engineering question deferred per the wiki's open-q.
+- **Visual surface — `WorkflowCard.vue`:**
+  - **Blocked:** dark/danger lock badge in the top-left corner of the thumbnail.
+  - **Recommended-mismatch:** amber/warning triangle badge.
+  - **Compatible / no-install:** nothing.
+- **Interception model:** the gate intercepts `Open` at the `WorkflowCard` level — both the click-the-thumbnail path and the right-click menu's Open action funnel through one `onOpen` handler. Blocked workflows open the gate dialog instead of emitting `open`. Compatible workflows behave as before.
+- **Gate dialog (`InstallGateDialog.vue`) shape — Journey 6's load-bearing UX:**
+  - Header: "This workflow needs a different runtime" + workflow name.
+  - Required block: version range + package set tag (if present) + a one-line reason matched to the failure (`project-allowed-set` / `workflow-required-set` / `recommended`).
+  - Current block: the active install's version + tag.
+  - Two stub remediation actions: **Install the team build** (Journey 6 step 5 — additive new install) and **Use cloud runtime** (Journey 6 §"Cloud-runtime as an alternative" — Comfy Cloud BE for the host workspace).
+  - Both stubs just close the gate in A1/A2; the real installer / cloud-runtime swap is a separate workstream.
+- **Install attribution on the asset details panel** — the platform `AssetDetailPanel.vue` got a single new row, "Generated by `<install name> · ComfyUI <version> · <packageSetTag>`", sourced from `user_metadata.installAttribution`. Imported / pre-attribution assets omit the row, matching `entities/output.md` §"Install attribution" (which states _"imported media files carry no install attribution"_). Two fixture projects now seed attribution (Client X Pitch → VFX build, Personal Sketches → Personal dev) so the row exercises both cloud and local cases; Marketing Q3 / Coca-Cola intentionally omit attribution to validate the hidden-row case.
+
+Reason: Journey 6 is the persona 4a Freelancer's load-bearing flow; in product reality it's the first thing they see when opening a team workflow. The gate's job per the wiki is _informative_, not just blocking — surface (a) the constraint, (b) the actual diff vs the contractor's install, (c) the next step. The dialog hews to that contract.
+
+Touching the platform `AssetDetailPanel.vue` to add the attribution row is a small departure from the WORKSPACE-UX-PROTO.md guidance of "prototype code only under `src/prototype/`" — chosen because:
+
+1. The same prototype-only-metadata pattern is already established in the file (`projectName`, `workflowName`, `storage` are all prototype-injected fields with the same hidden-when-absent treatment).
+2. A single computed + a single row keeps the upstream-divergence cost minimal.
+3. Attribution is a first-class output property per `entities/output.md`; it's reasonable for the production AssetDetailPanel to eventually carry it. The prototype validates the surface.
+
+Wiki link:
+
+- New formal decision target: none yet — the gate + attribution shape are direct implementations of `concepts/install-switcher.md` and `entities/output.md` §"Install attribution"; no promotion needed unless the design changes during use.
+- Implements: `concepts/install-journeys.md` §6 (freelancer install gate); `entities/workflow.md` §"Runtime compatibility"; `entities/project.md` §"Install constraints"; `entities/output.md` §"Install attribution"; `decisions/team-locked-install.md`.
+
+Open question dependency:
+
+- **`workflow-runtime-compat-mechanisms`** (open) — whether soft + hard collapse to one mechanism later. The prototype keeps both flavors active (recommended badge + required gate) to let designers see them side by side.
+- **`cloud-runtime-as-compat-set-member`** (open / engineering) — the prototype's `no-install` short-circuit assumes cloud personas pass the gate. Whether the cloud BE actually satisfies a `vfx-team-q2-2026` constraint at run time is an eng question outside A2.
+- **`output-workflow-identity-in-metadata`** (open / engineering) — referenced by `decisions/promoting-local-outputs-to-cloud.md`. Attribution carries an `installId` independently of workflow identity, so this open-q doesn't gate A2.
+
+Promote? **no, not yet.** A2 is direct implementation of settled wiki positions; the design-decisions worth promoting (gate shape, attribution row) wait for review of the running prototype + Willie sign-off.
+
+## [2026-05-19] Arc A2 pivot — install gate is by _identity_, not by version-range + tag
+
+Decision:
+
+- **The project allowed-install set is a list of install identities, not a decomposed predicate.** Replaces the earlier prototype shape `{ versionRange, packageSetTag }` with `Project.allowedInstallIds: string[]`. The gate checks `activeInstall.id ∈ allowedInstallIds`. No version arithmetic, no tag matching.
+- **The workspace-canonical install name** lives on the project (`Project.installLockDisplayName`) and is the string the gate dialog renders for the Required line. Per-user install `displayName` values are labels chosen by each user and are not used for the gate's required-name rendering.
+- **Per-user install display names diverge.** The Managed Artist persona's fixture intentionally names the team build `"Comfy team"` while the Install Governor's fixture names the same bundle (same `id`) `"VFX team Q2 2026"`. This exercises the "names are user-chosen, identity is the bundle" invariant in the persona switcher.
+- **`Install.packageSetTag` is removed.** Same for `InstallAttribution.packageSetTag`. The build-name-as-tag idea is dropped — display names are labels; identity is the install ID.
+- **`Workflow.requiredInstallSet` is removed.** A workflow's hard runtime requirement, if there is one, is expressed via its containing project's allowed-install set. Workflow-level hard requirements layered on top of project-level hard requirements is double-counting; the project owns the lock.
+- **`Workflow.recommendedComfyUIVersion` is preserved** as the soft / advisory path. Use case: a workflow author who knows their workflow uses node packs requiring ComfyUI ≥ X.Y.Z and wants to label that for users running the workflow _outside_ a locked project (e.g., Hub-published workflows where no team install applies). This is labeling, not blocking — surfaces a triangle-alert badge, doesn't open the gate dialog.
+
+Reason: Desktop team confirmed (in conversation) that an install is one indivisible unit: ComfyUI version + Python deps + custom nodes + filesystem layout, all together. Custom nodes live _inside_ the install — switching installs swaps the node set. The "package-set tag" framing the wiki had proposed for `project-install-allowed-set` was conceived before this clarification and effectively tried to decompose the bundle. The right shape is: an install is identified by its bundle (in product, a manifest/content hash; for the prototype, the existing `id` string), and the project-level lock lists which bundle identities may run its workflows.
+
+Names are intentionally not portable across users — Sasha calls the bundle "VFX team Q2 2026"; Jonah calls the same bundle "Comfy team"; Reza might never install it. The bundle's identity is what travels across machines; the names are local.
+
+Wiki link:
+
+- Closes the wiki's `project-install-allowed-set` open question's _proposed_ answer (version range + package-set tag). New proposed answer to log to the wiki: **list of install identities (bundle/manifest hashes); user-chosen display names are labels, not part of the identity.**
+- Reinforces `decisions/custom-nodes-as-configuration.md` — the install gate doesn't need to express which custom nodes are allowed because they're already bundled in the install (and the workspace/project custom-node allowlist enforces per-workflow validation independently).
+- Consistent with `decisions/team-locked-install.md` (still a hard lock, just expressed differently) and `decisions/install-is-runtime-not-permission-entity.md` (install stays out of the permission spine).
+
+Open question dependency:
+
+- **`project-install-allowed-set`** (open) — the prototype's working answer is now "list of install IDs." The wiki should update its proposed answer to match.
+- **Cross-user install identity discoverability** (new, surfaced by this pivot) — if Sasha pins her local install ID into the project's allowed list, how do Jonah's, Reza's, and the cloud BE's installs end up with the same ID? In product, this is the desktop team's bundle-hash story (same bundle = same hash on any machine). For the prototype, we just use a shared string `install-vfx-team-q2-2026` across the fixtures of personas that have that bundle.
+
+Recommended wiki updates (for IA_Plan, not made from this repo):
+
+1. **`open-questions.md` §`project-install-allowed-set`** — replace the current proposed answer with: "list of install identities (bundle / manifest hashes); user-chosen display names are labels, not identifiers."
+2. **`concepts/install-switcher.md` §"Project install constraints"** — replace the "compat predicate" language with identity-list language. The portable identity is the bundle hash, supplied by the desktop installer.
+3. **`entities/project.md` §"Install constraints"** — same.
+4. **`entities/install.md`** — clarify that `id` is the install's stable identity (bundle hash in product) and `displayName` is a user-chosen label.
+
+Promote? **yes — promoted to wiki on 2026-05-19.** Landed as:
+
+- New: [`wiki/decisions/workspace-install-registry.md`](../../IA_Plan/wiki/decisions/workspace-install-registry.md)
+- New: [`wiki/concepts/workspace-install-registry.md`](../../IA_Plan/wiki/concepts/workspace-install-registry.md)
+- Updated: `wiki/decisions/team-locked-install.md` (identity-based match), `wiki/entities/project.md` (`allowedInstallIds` + `installLockDisplayName`), `wiki/entities/install.md` (identity vs display name), `wiki/entities/workspace.md` (`blessedInstalls`), `wiki/concepts/install-switcher.md`, `wiki/concepts/install-journeys.md` (Journeys 1, 4, 5, 6, 7), `wiki/concepts/personas.md` §2a, `wiki/open-questions.md` (`project-install-allowed-set` closed), `wiki/index.md`.
+
+## [2026-05-20] Workspace install registry — local-install state is desktop-only
+
+Decision:
+
+- **Installs are entirely a desktop-application concept.** The cloud-side workspace does not track which bundles any user has installed on which machine. The registry is purely cloud-side configuration metadata (bundle identity + canonical name + lock + publisher + bundle version); the _user has this bundle locally_ fact lives only on the desktop client.
+- **The "Install on this machine" affordance on a registry row is a desktop-only surface.** When the desktop client renders Workspace Settings → Installs, it joins the registry with the local `installs[]` list and shows the button on entries the user doesn't have locally. In a cloud-only context (cloud.comfy.org), the button can still appear but must **deep-link to the desktop application** to complete the install — the cloud cannot install bundles on someone else's machine.
+- **No personalized status pill in the registry row.** Earlier we discussed "Installed" / "Not installed" / "Active" labels. Dropping them — the _presence or absence_ of the Install button is the signal. Users who want to know what they have can check the install switcher. Avoids making per-device claims that don't generalize to cloud surfaces.
+- **`BlessedInstall.comfyUIVersion`** added to the registry entry shape so the desktop client can show the bundle's version before installing and so a freshly-installed local Install starts with the right version stamped. Mirrors the bundled version; not an identifier (the bundle hash still is).
+
+Reason: Willie clarified (2026-05-20) that installs are a desktop-only feature; the cloud workspace deliberately does not know about a user's local install state. Surfacing per-device "Installed / Not installed" labels in the workspace registry view would have implied cloud knowledge the IA explicitly does not include. The action-only model keeps the surface honest in both contexts (desktop joins locally; cloud deep-links to the desktop).
+
+Wiki link:
+
+- Extends [`wiki/concepts/workspace-install-registry.md`](../../IA_Plan/wiki/concepts/workspace-install-registry.md) — currently silent on _where_ the registry is rendered. Needs a new §"Where the registry is shown" section calling out (a) desktop-client view does the local-join + Install action, (b) cloud-only view shows registry metadata only and deep-links to desktop to install.
+- Reinforces [`wiki/decisions/install-is-runtime-not-permission-entity.md`](../../IA_Plan/wiki/decisions/install-is-runtime-not-permission-entity.md) — install state stays out of the IA permission/cloud-tracking spine.
+
+Open question dependency: none — this clarifies an under-specified part of the registry concept rather than depending on a Proposed answer.
+
+Promote? **yes — promoted to wiki on 2026-05-20.** Updated:
+
+- [`wiki/concepts/workspace-install-registry.md`](../../IA_Plan/wiki/concepts/workspace-install-registry.md) — added `comfyUIVersion` to the registry-entry shape note, added new §"Where the registry is shown" calling out the desktop-join vs cloud-deep-link split.

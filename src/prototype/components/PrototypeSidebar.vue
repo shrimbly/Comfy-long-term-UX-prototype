@@ -184,7 +184,8 @@ const isSoloPersona = computed(
 const isGuestPersona = computed(
   () =>
     currentPersonaId.value === 'project-collaborator' ||
-    currentPersonaId.value === 'asset-only-guest'
+    currentPersonaId.value === 'asset-only-guest' ||
+    currentPersonaId.value === 'freelancer'
 )
 
 const showDiscover = computed(() => true)

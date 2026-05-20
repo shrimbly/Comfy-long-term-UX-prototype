@@ -98,7 +98,48 @@
     },
     "workflowCard": {
       "storageLocal": "Saved locally",
-      "storageCloud": "Saved to cloud"
+      "storageCloud": "Saved to cloud",
+      "compatBlocked": "Requires install: {required}. You're on: {current}.",
+      "compatRecommendedMismatch": "Recommended: ComfyUI {recommended}. You're on: ComfyUI {current}."
+    },
+    "installChip": {
+      "tooltip": "Active install",
+      "ariaLabel": "Active install — open switcher",
+      "title": "Installs",
+      "versionLine": "ComfyUI {version}",
+      "noActive": "No active install",
+      "aggregationHint": "Switching the active install changes the runtime, not what content you see.",
+      "publish": "Publish to workspace",
+      "publishHint": "Add this install to the workspace registry so projects can pin to it.",
+      "publishPrompt": "Workspace-canonical name for this install in {workspace}:",
+      "workspaceAvatarTitle": "Part of the {workspace} install registry",
+      "lockedTooltip": "Locked by {workspace} — node + version updates are disabled.",
+      "activeLockedNote": "This install is locked by {workspace}. Adding custom nodes, updating ComfyUI, and changing node versions are disabled while you're running on it."
+    },
+    "runtimeRecommendation": {
+      "title": "This workflow expects a newer runtime",
+      "subtitle": "“{workflow}” was authored against a newer ComfyUI version. It may still run; some features could behave unexpectedly.",
+      "recommendedLabel": "Recommended",
+      "currentLabel": "Your active install",
+      "versionLine": "ComfyUI {version} or newer",
+      "currentLine": "{name} · ComfyUI {version}",
+      "currentNone": "No active install",
+      "body": "This is a soft recommendation — nothing is blocked. The workflow author flagged a minimum runtime version they tested against.",
+      "acknowledge": "Got it"
+    },
+    "installGate": {
+      "title": "This workflow needs a different install",
+      "subtitle": "“{workflow}” is in a project locked to a specific install.",
+      "requiredLabel": "Required install",
+      "requiredFallback": "Team-locked install",
+      "requiredReason": "Set by the project owner as a hard runtime lock.",
+      "currentLabel": "Your active install",
+      "currentNone": "No active install",
+      "remediationLabel": "What you can do",
+      "remediationHint": "Install the team's build alongside your current install — your personal install stays untouched. Or run on Comfy Cloud BE for the host workspace.",
+      "actionInstallTeamBuild": "Install the team build",
+      "actionUseCloudRuntime": "Use cloud runtime",
+      "close": "Not now"
     },
     "commandPalette": {
       "inputPlaceholder": "Search commands, projects, settings…",
@@ -293,6 +334,20 @@
         "settings": {
           "allowlistsHeading": "Allowlists",
           "defaultsHeading": "Defaults",
+          "installLock": {
+            "heading": "Install lock",
+            "description": "Pin this project to specific installs from the workspace registry. Workflows run only if the active install matches one of the entries below.",
+            "canonicalNameLabel": "Lock display name",
+            "canonicalNamePlaceholder": "e.g., VFX team Q2 2026",
+            "canonicalNameHint": "Shown to users when the install gate blocks their workflow. Defaults to the registry entry's name if left blank.",
+            "allowedHeading": "Allowed installs",
+            "noneAllowed": "No installs allowed yet — workflows in this project will run on any install. Add at least one entry to enforce the lock.",
+            "pickerPlaceholder": "Choose an install from the workspace registry…",
+            "addAction": "Add",
+            "removeInstallAria": "Remove {name} from allowed installs",
+            "lockedHint": "Locked by the workspace — node + version updates are disabled on this install.",
+            "registryEmpty": "The workspace registry is empty. Publish an install to the workspace first."
+          },
           "allowlist": {
             "overrideLabel": "Override workspace allowlist",
             "inheritHint": "Inheriting from the workspace allowlist. Turn the override on to replace it with a project-specific list.",
@@ -503,9 +558,24 @@
         "tabs": {
           "general": "General",
           "allowlists": "Allowlists",
+          "installs": "Installs",
           "publishing": "Publishing",
           "billing": "Billing & credit limits",
           "advanced": "Advanced"
+        },
+        "installs": {
+          "heading": "{workspace} installs",
+          "description": "The workspace's curated list of approved install bundles. Projects pin to entries from this list as their hard runtime lock.",
+          "empty": "No installs published yet. Publish an install from the install switcher to add it here.",
+          "publishedBy": "ComfyUI {version} · Published by {user} · {date}",
+          "lockedStatus": "Locked",
+          "lockAction": "Lock",
+          "unlockAction": "Unlock",
+          "installAction": "Install",
+          "unpublish": "Unpublish",
+          "unpublishConfirm": "Unpublish {name} from the workspace registry? Projects that reference it will continue to do so until you remove it from their allowed-install set.",
+          "publishHint": "To add an install: switch to it in the install switcher, then choose “Publish to workspace.”",
+          "delegationHint": "Editing the install registry requires the allowlist-management delegation."
         },
         "general": {
           "heading": "General",
@@ -3931,7 +4001,9 @@
       "prompt": "Prompt",
       "project": "Project",
       "workflow": "Workflow",
-      "storage": "Storage"
+      "storage": "Storage",
+      "generatedBy": "Generated by",
+      "installAttribution": "{name} · ComfyUI {version}"
     },
     "tags": {
       "addPlaceholder": "Add tag...",

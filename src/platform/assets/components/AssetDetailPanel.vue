@@ -97,6 +97,17 @@
             }}
           </span>
         </div>
+        <div v-if="installAttribution" class="detail-row">
+          <span class="detail-label">
+            {{ $t('mediaAsset.details.generatedBy') }}
+          </span>
+          <span class="detail-value inline-flex items-center gap-1.5">
+            <i class="icon-[lucide--monitor] size-3.5" />
+            <span :title="installAttribution.installId">
+              {{ installAttributionLine }}
+            </span>
+          </span>
+        </div>
       </div>
     </div>
 
@@ -188,6 +199,7 @@
 
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 
 import AssetTagsEditor from '@/platform/assets/components/AssetTagsEditor.vue'
 import type { AssetItem } from '@/platform/assets/schemas/assetSchema'
@@ -199,6 +211,8 @@ const { assets, promptMetadata = null } = defineProps<{
   assets: readonly AssetItem[]
   promptMetadata?: PromptMetadata | null
 }>()
+
+const { t } = useI18n()
 
 const isSingle = computed(() => assets.length === 1)
 const singleAsset = computed<AssetItem | null>(() =>
@@ -233,6 +247,36 @@ const workflowName = computed(() => {
 const storage = computed<'local' | 'cloud' | undefined>(() => {
   const raw = singleAsset.value?.user_metadata?.storage
   return raw === 'local' || raw === 'cloud' ? raw : undefined
+})
+
+// Install attribution per ../IA_Plan/wiki/entities/output.md
+// §"Install attribution". Prototype-only: imported / pre-attribution
+// assets carry no installAttribution and the row is hidden.
+interface InstallAttribution {
+  installId: string
+  displayName: string
+  comfyUIVersion: string
+}
+const installAttribution = computed<InstallAttribution | undefined>(() => {
+  const raw = singleAsset.value?.user_metadata?.installAttribution
+  if (!raw || typeof raw !== 'object') return undefined
+  const candidate = raw as Partial<InstallAttribution>
+  if (
+    typeof candidate.installId !== 'string' ||
+    typeof candidate.displayName !== 'string' ||
+    typeof candidate.comfyUIVersion !== 'string'
+  )
+    return undefined
+  return candidate as InstallAttribution
+})
+
+const installAttributionLine = computed(() => {
+  const a = installAttribution.value
+  if (!a) return ''
+  return t('mediaAsset.details.installAttribution', {
+    name: a.displayName,
+    version: a.comfyUIVersion
+  })
 })
 
 const dimensions = ref<string | null>(null)

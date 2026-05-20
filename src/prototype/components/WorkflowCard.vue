@@ -14,7 +14,7 @@
     <button
       type="button"
       class="flex cursor-pointer flex-col gap-2 text-left text-base-foreground"
-      @click="emit('open', workflow.id)"
+      @click="onOpen"
     >
       <span
         class="relative block aspect-square w-full overflow-hidden rounded-md"
@@ -42,6 +42,23 @@
             "
           />
         </span>
+        <button
+          v-if="compatBadge"
+          type="button"
+          :title="compatBadge.tooltip"
+          :aria-label="compatBadge.tooltip"
+          :class="
+            cn(
+              'absolute top-2 left-2 grid size-6 cursor-pointer appearance-none place-items-center rounded-sm border-0 backdrop-blur-sm',
+              compatBadge.tone === 'danger'
+                ? 'text-danger-foreground bg-black/60'
+                : 'bg-warning-background text-button-surface-contrast'
+            )
+          "
+          @click.stop="onBadgeClick"
+        >
+          <i :class="cn('size-3.5', compatBadge.icon)" />
+        </button>
       </span>
       <span class="flex flex-col">
         <span class="truncate text-sm/tight">{{ workflow.name }}</span>
@@ -56,8 +73,24 @@
       :workflow="workflow"
       :viewer-role="viewerRole"
       :show-open-containing-project="showOpenContainingProject"
-      @open="emit('open', $event)"
+      @open="onOpen"
       @open-project="emit('open-project', $event)"
+    />
+
+    <InstallGateDialog
+      v-if="isGateOpen && gateCompat"
+      :workflow="workflow"
+      :compat="gateCompat"
+      @close="closeGate"
+      @install-team-build="onInstallTeamBuild"
+      @use-cloud-runtime="onUseCloudRuntime"
+    />
+
+    <RuntimeRecommendationDialog
+      v-if="isAdvisoryOpen && advisoryCompat"
+      :workflow="workflow"
+      :compat="advisoryCompat"
+      @close="closeAdvisory"
     />
   </div>
 </template>
@@ -67,8 +100,12 @@ import { cn } from '@comfyorg/tailwind-utils'
 import { computed, ref, toRef } from 'vue'
 import { useI18n } from 'vue-i18n'
 
+import InstallGateDialog from './InstallGateDialog.vue'
+import RuntimeRecommendationDialog from './RuntimeRecommendationDialog.vue'
 import WorkflowContextMenu from './WorkflowContextMenu.vue'
+import type { WorkflowCompatResult } from '../composables/useWorkflowCompat'
 import { useViewerWorkflowRole } from '../composables/useViewerWorkflowRole'
+import { useWorkflowCompat } from '../composables/useWorkflowCompat'
 import { usePrototypePersonaStore } from '../stores/personaStore'
 import { thumbnailGradient } from '../utils/thumbnail'
 import type { Workflow } from '../types'
@@ -93,10 +130,98 @@ const effectiveStorage = computed(() =>
 const workflowRef = toRef(() => workflow)
 const viewerRole = useViewerWorkflowRole(workflowRef)
 
+const { resolve: resolveCompat } = useWorkflowCompat()
+const compatResult = computed(() => resolveCompat(workflow))
+const compatBadge = computed<{
+  tone: 'danger' | 'warning'
+  icon: string
+  tooltip: string
+} | null>(() => {
+  const result = compatResult.value
+  if (result.status === 'blocked') {
+    return {
+      tone: 'danger',
+      icon: 'icon-[lucide--lock]',
+      tooltip: t('prototype.workflowCard.compatBlocked', {
+        required: result.requiredInstallName ?? '—',
+        current: result.current?.displayName ?? '—'
+      })
+    }
+  }
+  if (result.status === 'recommended-mismatch') {
+    return {
+      tone: 'warning',
+      icon: 'icon-[lucide--triangle-alert]',
+      tooltip: t('prototype.workflowCard.compatRecommendedMismatch', {
+        recommended: result.recommendedComfyUIVersion ?? '—',
+        current: result.current?.comfyUIVersion ?? '—'
+      })
+    }
+  }
+  return null
+})
+
 type MenuHandle = { show: (event: MouseEvent) => void }
 const menuRef = ref<MenuHandle | null>(null)
 
 function onContextMenu(event: MouseEvent) {
   menuRef.value?.show(event)
+}
+
+// Gate Open when the workflow's compat is blocked. Same interception
+// applies whether Open came from a card click or the context-menu Open
+// action — both funnel through `onOpen`.
+const isGateOpen = ref(false)
+const gateCompat = ref<WorkflowCompatResult | null>(null)
+
+function onOpen() {
+  const result = resolveCompat(workflow)
+  if (result.status === 'blocked') {
+    gateCompat.value = result
+    isGateOpen.value = true
+    return
+  }
+  emit('open', workflow.id)
+}
+
+function closeGate() {
+  isGateOpen.value = false
+}
+
+function onInstallTeamBuild() {
+  // Stub — in product this kicks off the install-the-team-build path
+  // (per Journey 6 step 5). The prototype just closes the gate; the
+  // wiring to a real installer surface lives outside A2.
+  isGateOpen.value = false
+}
+
+function onUseCloudRuntime() {
+  // Stub — in product this swaps the workflow's active runtime to the
+  // host workspace's cloud BE. Same close-and-defer treatment as the
+  // team-build action.
+  isGateOpen.value = false
+}
+
+// Advisory dialog — opened by clicking the recommended-mismatch badge.
+// Non-blocking; pure information. Click on the badge stops propagation
+// so the workflow's regular Open action doesn't also fire.
+const isAdvisoryOpen = ref(false)
+const advisoryCompat = ref<WorkflowCompatResult | null>(null)
+
+function onBadgeClick() {
+  const result = compatResult.value
+  if (result.status === 'blocked') {
+    gateCompat.value = result
+    isGateOpen.value = true
+    return
+  }
+  if (result.status === 'recommended-mismatch') {
+    advisoryCompat.value = result
+    isAdvisoryOpen.value = true
+  }
+}
+
+function closeAdvisory() {
+  isAdvisoryOpen.value = false
 }
 </script>

@@ -93,5 +93,17 @@ export const workspaceMemberFixture: PersonaFixture = {
   workspaces: [comfyOrgForAlex, alexPersonal],
   currentWorkspaceId: comfyOrgForAlex.id,
   projects: projectsForAlex,
-  workflows: workflowsForAlex
+  workflows: workflowsForAlex,
+  // Alex runs on her own local install — not the team's VFX build, since
+  // Comfy Org isn't a VFX-locked workspace in this fixture. The Managed
+  // Artist persona (3a) is the dedicated VFX-team flavor.
+  installs: [
+    {
+      id: 'install-alex-local',
+      displayName: 'Alex local',
+      comfyUIVersion: '0.4.0',
+      registeredAt: '2026-03-02'
+    }
+  ],
+  activeInstallId: 'install-alex-local'
 }

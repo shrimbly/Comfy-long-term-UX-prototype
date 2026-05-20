@@ -28,7 +28,60 @@ const comfyOrg = {
   memberCount: 12,
   currentUserRole: 'admin' as const,
   description: 'Production workflows + shared assets for the Comfy team.',
-  dataTrainingOptOut: true
+  dataTrainingOptOut: true,
+  // Workspace install registry per
+  // ../IA_Plan/wiki/concepts/workspace-install-registry.md — the
+  // Install Governor (Sasha) has blessed the team's VFX build. Locked
+  // for the Q2 production crunch so artists can't mutate node
+  // versions out from under in-flight shots.
+  blessedInstalls: [
+    // Current production build — pinned by Client X and other team
+    // projects. Locked during the Q2 crunch so nodes / Comfy versions
+    // don't shift under in-flight shots.
+    {
+      installId: 'install-vfx-team-q2-2026',
+      canonicalDisplayName: 'VFX team Q2 2026',
+      comfyUIVersion: '0.3.5',
+      publishedByUserId: 'user-sasha',
+      publishedAt: '2026-04-22',
+      isLocked: true
+    },
+    // Cloud runtime — blessed so projects can target Comfy Cloud BE the
+    // same way they target a local team build (per install-journeys.md
+    // Journey 4). Unlocked because the cloud BE manages its own
+    // mutability; client-side lock is meaningless against it.
+    {
+      installId: 'install-cloud-comfy-be',
+      canonicalDisplayName: 'Comfy Cloud BE',
+      comfyUIVersion: '0.4.0',
+      publishedByUserId: 'user-willie',
+      publishedAt: '2026-04-22',
+      isLocked: false
+    },
+    // Candidate for the next bump (Journey 5). Sasha is validating it
+    // and intentionally hasn't locked yet — locking happens after
+    // canonical workflows have been re-run end-to-end.
+    {
+      installId: 'install-vfx-team-q3-2026-rc',
+      canonicalDisplayName: 'VFX team Q3 2026 (RC)',
+      comfyUIVersion: '0.3.6',
+      publishedByUserId: 'user-sasha',
+      publishedAt: '2026-05-12',
+      isLocked: false
+    },
+    // Retired prior build — kept blessed so historical outputs'
+    // attribution still resolves to a canonical name. No project
+    // currently pins to it. Demonstrates the "blessed but not in any
+    // active allowed-install set" state.
+    {
+      installId: 'install-vfx-team-q1-2026',
+      canonicalDisplayName: 'VFX team Q1 2026',
+      comfyUIVersion: '0.3.0',
+      publishedByUserId: 'user-sasha',
+      publishedAt: '2026-02-04',
+      isLocked: false
+    }
+  ]
 }
 
 const personal = {
@@ -145,7 +198,15 @@ export const adminFixture: PersonaFixture = {
         customNodes: { override: false, entries: [] }
       },
       defaults: { filenamePrefix: 'clients/client-x/{workflow}/' },
-      creditsThisMonth: 2240
+      creditsThisMonth: 2240,
+      // Team-locked install per
+      // ../IA_Plan/wiki/decisions/team-locked-install.md — hard lock by
+      // install identity. The Install Governor named the lock at config
+      // time; that workspace-canonical name is what the gate dialog
+      // renders, regardless of what each user has named the same bundle
+      // locally.
+      allowedInstallIds: ['install-vfx-team-q2-2026'],
+      installLockDisplayName: 'VFX team Q2 2026'
     },
     {
       id: 'proj-cocacola',
@@ -259,7 +320,15 @@ export const adminFixture: PersonaFixture = {
       // workspace role are independent.
       ownerUserId: 'user-alex',
       access: [{ userId: user.id, role: 'runner' }],
-      updatedAt: '2026-05-07'
+      updatedAt: '2026-05-07',
+      // Soft recommendation per ../IA_Plan/wiki/entities/workflow.md
+      // §"Runtime compatibility". A plain minimum version — anything
+      // below this surfaces a caution badge but never blocks. Setting
+      // 0.4.0 means the Managed Artist (on the 0.3.5 team build) sees
+      // the badge as a heads-up that this workflow expects a newer
+      // runtime — even though their install satisfies the project's
+      // hard lock.
+      recommendedComfyUIVersion: '0.4.0'
     },
     {
       id: 'wf-marketing-banner',
@@ -769,5 +838,23 @@ export const adminFixture: PersonaFixture = {
       submittedAt: '2026-05-12'
     }
   ],
-  notifications: []
+  notifications: [],
+  // Admin owns two installs — a personal dev sandbox and the team-blessed
+  // VFX build referenced by Comfy Org's projects. Active is the personal
+  // one (most-recent-used per open-q `default-active-install`).
+  installs: [
+    {
+      id: 'install-willie-personal',
+      displayName: 'Personal dev',
+      comfyUIVersion: '0.4.0',
+      registeredAt: '2026-02-14'
+    },
+    {
+      id: 'install-vfx-team-q2-2026',
+      displayName: 'VFX team Q2 2026',
+      comfyUIVersion: '0.3.5',
+      registeredAt: '2026-04-22'
+    }
+  ],
+  activeInstallId: 'install-willie-personal'
 }

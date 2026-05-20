@@ -13,6 +13,9 @@ export type PersonaId =
   | 'workspace-member'
   | 'project-collaborator'
   | 'asset-only-guest'
+  | 'install-governor'
+  | 'managed-artist'
+  | 'freelancer'
 
 export type WorkspaceTier = 'personal' | 'team'
 export type WorkspacePlan = 'free' | 'professional' | 'enterprise'
@@ -66,6 +69,30 @@ export interface Workspace {
   // ../IA_Plan/wiki/entities/workspace.md §"What it contains" and
   // ../IA_Plan/wiki/concepts/three-level-permissions.md §"Workspace level".
   dataTrainingOptOut?: boolean
+  // Workspace install registry per
+  // ../IA_Plan/wiki/concepts/workspace-install-registry.md and
+  // ../IA_Plan/wiki/decisions/workspace-install-registry.md — the
+  // curated list of blessed install identities + workspace-canonical
+  // metadata. Project allowed-install sets pick identities from here.
+  blessedInstalls?: BlessedInstall[]
+}
+
+// Workspace install registry entry per
+// ../IA_Plan/wiki/concepts/workspace-install-registry.md §"What a
+// 'blessed install' is". References a bundle by its identity; carries
+// workspace-canonical metadata (name, publish provenance, lock,
+// bundle version). `comfyUIVersion` is metadata about the referenced
+// bundle so the desktop client can show the version before the user
+// installs it locally and so a freshly-installed bundle starts with
+// the right version stamped on its local Install entry.
+export interface BlessedInstall {
+  installId: string
+  canonicalDisplayName: string
+  comfyUIVersion: string
+  publishedByUserId: string
+  publishedAt: string
+  isLocked: boolean
+  description?: string
 }
 
 // Hub publishing approval queue item. Per
@@ -159,6 +186,23 @@ export interface Project {
   // in the workspace — workspace remains the single billing entity per
   // ../IA_Plan/wiki/entities/workspace.md.
   creditsThisMonth?: number
+  // Allowed-install set per ../IA_Plan/wiki/entities/project.md §"Install
+  // constraints (allowed-install set)" and
+  // decisions/team-locked-install.md — a hard lock by install IDENTITY.
+  //
+  // Per the desktop team (clarified in prototype/design-decisions.md
+  // 2026-05-19 entry): an install is one indivisible bundle (ComfyUI
+  // version + Python deps + custom nodes + ...). The only stable
+  // identity for "this install" is the install's id / bundle hash.
+  // User-chosen display names are labels, not identifiers — Sasha's
+  // "VFX team Q2 2026" can be Reza's "Titanic v1" referring to the same
+  // bundle on different machines.
+  //
+  // `installLockDisplayName` is the *workspace-canonical* name chosen
+  // by the Install Governor when they set the lock; the gate dialog
+  // renders this rather than whatever local label any user has applied.
+  allowedInstallIds?: string[]
+  installLockDisplayName?: string
 }
 
 // Storage medium for an asset. Per
@@ -167,6 +211,16 @@ export interface Project {
 // 'local' = stored on the user's disk (Comfy output dir / local FS).
 // 'cloud' = stored under a cloud workspace/project.
 export type AssetStorage = 'local' | 'cloud'
+
+// Snapshot of the install that generated an output. Captured at run
+// time and embedded in the output's metadata so attribution survives
+// even if the install is later removed. Per ../IA_Plan/wiki/entities/
+// output.md §"Install attribution".
+export interface InstallAttribution {
+  installId: string
+  displayName: string
+  comfyUIVersion: string
+}
 
 export interface Workflow {
   id: string
@@ -178,6 +232,13 @@ export interface Workflow {
   ownerUserId?: string
   access?: AssetAccess[]
   storage?: AssetStorage
+  // Recommended-minimum runtime version per ../IA_Plan/wiki/entities/
+  // workflow.md §"Runtime compatibility". A plain dotted version string
+  // ("0.4.0"), not a range expression — active installs older than this
+  // surface a caution badge. Soft / advisory only; doesn't block. The
+  // hard gate lives at the project level (`Project.allowedInstallIds`)
+  // by install identity. See prototype/design-decisions.md 2026-05-19.
+  recommendedComfyUIVersion?: string
 }
 
 export interface LibraryAsset {
@@ -300,6 +361,25 @@ export type RoleGrants = Record<DelegableCapability, boolean>
 // filesystem-backed library (Outputs replaces Prompts).
 export type PersonaMode = 'cloud' | 'local'
 
+// Install per ../IA_Plan/wiki/entities/install.md. Runtime entity — owns
+// a ComfyUI version + locally installed packages and models. NOT in the
+// permission spine per
+//   decision: ../IA_Plan/wiki/decisions/install-is-runtime-not-permission-entity.md
+// Cardinality: many installs per user; many installs per workspace; one
+// install shared across workspaces (all at the user level).
+//
+// `id` is the install's stable identity (in product, a bundle/manifest
+// hash assigned by the desktop installer; for the prototype, a string).
+// `displayName` is the user-chosen label and is NOT an identifier — two
+// users can give the same bundle different names. Identity comparisons
+// for the project-level allowed-install set go through `id` only.
+export interface Install {
+  id: string
+  displayName: string
+  comfyUIVersion: string
+  registeredAt: string
+}
+
 // Cross-workspace activity surfaced through the top-bar notifications
 // popover. Drives the alert path for Guest personas who otherwise have
 // no in-workspace cue that something changed in another workspace.
@@ -347,6 +427,12 @@ export interface PersonaFixture {
   memberCreditLimits: MemberCreditLimit[]
   hubSubmissions: HubSubmission[]
   notifications: Notification[]
+  // Multi-install state per ../IA_Plan/wiki/concepts/install-switcher.md.
+  // Empty for cloud-only personas — they have no install presence. The
+  // active install determines runtime (not visibility); content is
+  // aggregated across `installs`, not scoped to active.
+  installs: Install[]
+  activeInstallId?: string
 }
 
 export interface PersonaDef {

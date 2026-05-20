@@ -10,6 +10,7 @@ import { computed, ref } from 'vue'
 import { personas } from '../fixtures/personas'
 import type {
   AllowlistKind,
+  BlessedInstall,
   CreditLimitPeriod,
   DelegableCapability,
   PersonaDef,
@@ -137,6 +138,26 @@ export const usePrototypePersonaStore = defineStore('prototype-persona', () => {
 
   function setCurrentWorkspace(id: string) {
     fixture.value.currentWorkspaceId = id
+  }
+
+  // --- Active install ---------------------------------------------------
+  //
+  // Multi-install state per ../IA_Plan/wiki/concepts/install-switcher.md.
+  // Switching the active install changes the runtime, NOT the content
+  // visibility (Media / Models / Nodes views aggregate across installs).
+  // Per the wiki, switching swaps the workflow tab set — tab-set swap is
+  // out of scope for A1 and tracked under open-q `install-switch-dirty-
+  // state`; the indicator just records the choice for now.
+
+  const activeInstall = computed(() => {
+    const id = fixture.value.activeInstallId
+    if (!id) return undefined
+    return fixture.value.installs.find((i) => i.id === id)
+  })
+
+  function setActiveInstall(id: string) {
+    if (!fixture.value.installs.some((i) => i.id === id)) return
+    fixture.value.activeInstallId = id
   }
 
   // --- Member management (workspace level) ----------------------------
@@ -599,6 +620,113 @@ export const usePrototypePersonaStore = defineStore('prototype-persona', () => {
     })
   }
 
+  // Project allowed-install set mutations per
+  // ../IA_Plan/wiki/concepts/workspace-install-registry.md §"Sourcing for
+  // project allowed-install sets". `allowedInstallIds` is the project's
+  // hard-lock list of install identities; `installLockDisplayName` is the
+  // workspace-canonical name rendered in the install gate dialog.
+  function addProjectAllowedInstall(projectId: string, installId: string) {
+    fixture.value.projects = fixture.value.projects.map((p) => {
+      if (p.id !== projectId) return p
+      const current = p.allowedInstallIds ?? []
+      if (current.includes(installId)) return p
+      return { ...p, allowedInstallIds: [...current, installId] }
+    })
+  }
+
+  function removeProjectAllowedInstall(projectId: string, installId: string) {
+    fixture.value.projects = fixture.value.projects.map((p) => {
+      if (p.id !== projectId) return p
+      const next = (p.allowedInstallIds ?? []).filter((id) => id !== installId)
+      return { ...p, allowedInstallIds: next }
+    })
+  }
+
+  function setProjectInstallLockDisplayName(projectId: string, name: string) {
+    fixture.value.projects = fixture.value.projects.map((p) => {
+      if (p.id !== projectId) return p
+      return { ...p, installLockDisplayName: name }
+    })
+  }
+
+  // Workspace install registry mutations per
+  // ../IA_Plan/wiki/concepts/workspace-install-registry.md. All mutate
+  // the *current* workspace's `blessedInstalls`.
+  function withCurrentWorkspace(
+    fn: (entries: BlessedInstall[]) => BlessedInstall[]
+  ) {
+    const wsId = fixture.value.currentWorkspaceId
+    fixture.value.workspaces = fixture.value.workspaces.map((w) => {
+      if (w.id !== wsId) return w
+      return { ...w, blessedInstalls: fn(w.blessedInstalls ?? []) }
+    })
+  }
+
+  function publishInstallToWorkspace(installId: string, canonicalName: string) {
+    const sourceVersion = fixture.value.installs.find(
+      (i) => i.id === installId
+    )?.comfyUIVersion
+    if (!sourceVersion) return
+    withCurrentWorkspace((entries) => {
+      if (entries.some((e) => e.installId === installId)) return entries
+      const entry: BlessedInstall = {
+        installId,
+        canonicalDisplayName: canonicalName,
+        comfyUIVersion: sourceVersion,
+        publishedByUserId: fixture.value.currentUser.id,
+        publishedAt: new Date().toISOString().slice(0, 10),
+        isLocked: false
+      }
+      return [...entries, entry]
+    })
+  }
+
+  function unpublishInstallFromWorkspace(installId: string) {
+    withCurrentWorkspace((entries) =>
+      entries.filter((e) => e.installId !== installId)
+    )
+  }
+
+  function setBlessedInstallLocked(installId: string, locked: boolean) {
+    withCurrentWorkspace((entries) =>
+      entries.map((e) =>
+        e.installId === installId ? { ...e, isLocked: locked } : e
+      )
+    )
+  }
+
+  function setBlessedInstallDisplayName(installId: string, name: string) {
+    const trimmed = name.trim()
+    if (!trimmed) return
+    withCurrentWorkspace((entries) =>
+      entries.map((e) =>
+        e.installId === installId ? { ...e, canonicalDisplayName: trimmed } : e
+      )
+    )
+  }
+
+  // Install a blessed bundle to the user's local machine. In product
+  // this triggers the desktop installer; here it just adds a local
+  // Install entry mirroring the registry entry's name + version. Per
+  // ../IA_Plan/wiki/concepts/workspace-install-registry.md
+  // §"Where the registry is shown" — only the desktop client can
+  // perform this action; cloud-only surfaces deep-link to it.
+  function installBlessedToLocal(installId: string) {
+    const ws = currentWorkspace.value
+    const entry = ws?.blessedInstalls?.find((b) => b.installId === installId)
+    if (!entry) return
+    if (fixture.value.installs.some((i) => i.id === installId)) return
+    fixture.value.installs = [
+      ...fixture.value.installs,
+      {
+        id: entry.installId,
+        displayName: entry.canonicalDisplayName,
+        comfyUIVersion: entry.comfyUIVersion,
+        registeredAt: new Date().toISOString().slice(0, 10)
+      }
+    ]
+  }
+
   // External email invite to a project. Creates a workspace-level Guest
   // pendingInvite + a project member entry keyed by the invite id, so the
   // panel can render the pending row before the recipient accepts.
@@ -638,6 +766,8 @@ export const usePrototypePersonaStore = defineStore('prototype-persona', () => {
     personas,
     setPersona,
     setCurrentWorkspace,
+    activeInstall,
+    setActiveInstall,
     inviteMember,
     revokeInvite,
     resendInvite,
@@ -665,6 +795,14 @@ export const usePrototypePersonaStore = defineStore('prototype-persona', () => {
     addProjectAllowlistEntry,
     removeProjectAllowlistEntry,
     setProjectFilenamePrefix,
+    addProjectAllowedInstall,
+    removeProjectAllowedInstall,
+    setProjectInstallLockDisplayName,
+    publishInstallToWorkspace,
+    unpublishInstallFromWorkspace,
+    setBlessedInstallLocked,
+    setBlessedInstallDisplayName,
+    installBlessedToLocal,
     renameWorkflow,
     deleteWorkflow,
     setWorkflowStorage,

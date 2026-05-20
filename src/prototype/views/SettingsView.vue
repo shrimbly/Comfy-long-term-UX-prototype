@@ -223,6 +223,13 @@
         </p>
       </template>
 
+      <template v-if="activeTab === 'installs'">
+        <WorkspaceInstallsSection :can-edit="canEditInstalls" />
+        <p v-if="!canEditInstalls" class="m-0 text-xs text-muted italic">
+          {{ t('prototype.views.settings.installs.delegationHint') }}
+        </p>
+      </template>
+
       <template v-if="activeTab === 'publishing'">
         <SettingsPanel
           :title="t('prototype.views.settings.hubQueue.heading')"
@@ -373,10 +380,17 @@ import BillingSection from '../components/BillingSection.vue'
 import MemberCreditLimitsSection from '../components/MemberCreditLimitsSection.vue'
 import SettingsPanel from '../components/settings/SettingsPanel.vue'
 import SettingsSubCard from '../components/settings/SettingsSubCard.vue'
+import WorkspaceInstallsSection from '../components/WorkspaceInstallsSection.vue'
 import { usePrototypePersonaStore } from '../stores/personaStore'
 import type { WorkspaceRole } from '../types'
 
-type TabId = 'general' | 'allowlists' | 'publishing' | 'billing' | 'advanced'
+type TabId =
+  | 'general'
+  | 'allowlists'
+  | 'installs'
+  | 'publishing'
+  | 'billing'
+  | 'advanced'
 
 const inputClass =
   'h-10 rounded-lg border border-interface-stroke bg-base-background px-3 text-sm text-text-primary outline-none focus:border-text-primary disabled:cursor-not-allowed disabled:opacity-60'
@@ -403,6 +417,13 @@ const canEditAllowlists = computed(
     (viewerRole.value === 'member' &&
       fixture.value.roleGrants['edit-allowlists'])
 )
+// Install registry authority per
+// ../IA_Plan/wiki/concepts/workspace-install-registry.md §"Authority" —
+// Admin-only by default, delegable to Members. Reuses the
+// `edit-allowlists` grant since registry curation parallels allowlist
+// curation; if delegation needs to split later, introduce a separate
+// capability.
+const canEditInstalls = canEditAllowlists
 const canConfigureWorkspace = computed(
   () =>
     viewerRole.value === 'admin' ||
@@ -439,6 +460,12 @@ const visibleTabs = computed(() => {
       label: t('prototype.views.settings.tabs.allowlists')
     }
   ]
+  if (workspace.value?.tier === 'team') {
+    tabs.push({
+      id: 'installs',
+      label: t('prototype.views.settings.tabs.installs')
+    })
+  }
   if (canApproveHub.value) {
     tabs.push({
       id: 'publishing',

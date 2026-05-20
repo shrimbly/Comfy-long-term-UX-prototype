@@ -7,6 +7,9 @@
 
 import { adminFixture } from './admin'
 import { assetOnlyGuestFixture } from './asset-only-guest'
+import { freelancerFixture } from './freelancer'
+import { installGovernorFixture } from './install-governor'
+import { managedArtistFixture } from './managed-artist'
 import { projectCollaboratorFixture } from './project-collaborator'
 import { soloLocalFixture } from './solo-local'
 import { soloFixture } from './solo'
@@ -54,5 +57,26 @@ export const personas: PersonaDef[] = [
     description:
       'Tomás Reyes (cocacola-creative.com). Workspace Guest in Comfy Org + Studio Atlas with asset-only access. Runner on one workflow, App Runner on one app.',
     fixture: assetOnlyGuestFixture
+  },
+  {
+    id: 'install-governor',
+    label: 'Install Governor (VFX lead)',
+    description:
+      'Persona 2a — Workspace Admin whose mindset is locking the team to a known-good runtime. Default active install is the team-blessed VFX build.',
+    fixture: installGovernorFixture
+  },
+  {
+    id: 'managed-artist',
+    label: 'Managed Artist (VFX)',
+    description:
+      'Persona 3a — Workspace Member on a team-locked install. Active install matches the project; no compat machinery in their everyday flow.',
+    fixture: managedArtistFixture
+  },
+  {
+    id: 'freelancer',
+    label: 'Freelance contractor',
+    description:
+      'Persona 4a — Project Collaborator on their own personal install, deliberately outside the team project’s allowed-install set. The compat-gate fixture for A2.',
+    fixture: freelancerFixture
   }
 ]

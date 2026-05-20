@@ -195,5 +195,10 @@ export const assetOnlyGuestFixture: PersonaFixture = {
       createdAt: '2026-04-30',
       readAt: '2026-05-01'
     }
-  ]
+  ],
+  // Asset-only Guest has no install presence — they're browser/cloud-only
+  // in this fixture. If they ever switch to a local install, the indicator
+  // would appear; for now the top-bar chip is hidden.
+  installs: [],
+  activeInstallId: undefined
 }

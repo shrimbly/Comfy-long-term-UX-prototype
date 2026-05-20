@@ -20,7 +20,7 @@ import { ref } from 'vue'
 
 import type { AssetItem } from '@/platform/assets/schemas/assetSchema'
 
-import type { PersonaId } from '../types'
+import type { InstallAttribution, PersonaId } from '../types'
 
 type AssetStorage = 'local' | 'cloud'
 
@@ -50,6 +50,11 @@ interface PrototypeProject {
   // also useful anywhere else that wants to attribute an asset to a
   // user (post-MVP attribution requirements TBD).
   creator: { username: string; avatarColor: string }
+  // Install attribution per ../IA_Plan/wiki/entities/output.md
+  // §"Install attribution". Optional — projects without attribution
+  // model imported / pre-attribution assets where the install field
+  // is omitted from the details panel.
+  installAttribution?: InstallAttribution
 }
 
 const PROJECTS: PrototypeProject[] = [
@@ -84,7 +89,15 @@ const PROJECTS: PrototypeProject[] = [
     startDate: '2026-05-05T11:00:00Z',
     storage: 'cloud',
     visibleToPersonas: ['workspace-admin', 'project-collaborator'],
-    creator: { username: 'mira.v', avatarColor: '#a855f7' }
+    creator: { username: 'mira.v', avatarColor: '#a855f7' },
+    // Generated on the team's locked VFX build — install identity is
+    // captured so a downstream auditor can answer "which install
+    // produced this?". Display name is the snapshot at generation time.
+    installAttribution: {
+      installId: 'install-vfx-team-q2-2026',
+      displayName: 'VFX team Q2 2026',
+      comfyUIVersion: '0.3.5'
+    }
   },
   {
     slug: 'marketing-q3',
@@ -106,7 +119,14 @@ const PROJECTS: PrototypeProject[] = [
     startDate: '2026-04-28T19:00:00Z',
     storage: 'local',
     visibleToPersonas: ['workspace-admin', 'solo', 'solo-local'],
-    creator: { username: 'willie', avatarColor: '#facc15' }
+    creator: { username: 'willie', avatarColor: '#facc15' },
+    // Generated on Willie's personal-dev install — local outputs carry
+    // the same shape, so the details panel surfaces it identically.
+    installAttribution: {
+      installId: 'install-willie-personal',
+      displayName: 'Personal dev',
+      comfyUIVersion: '0.4.0'
+    }
   }
 ]
 
@@ -123,7 +143,10 @@ const ASSET_LEVEL_GRANTS: Record<PersonaId, string[] | undefined> = {
     'media-proj-coca-cola-01.jpg',
     'media-proj-coca-cola-02.jpg',
     'media-proj-coca-cola-03.jpg'
-  ]
+  ],
+  'install-governor': undefined,
+  'managed-artist': undefined,
+  freelancer: undefined
 }
 
 const FILES_PER_PROJECT = 8
@@ -173,7 +196,8 @@ export function buildPrototypeMediaAssets(personaId?: PersonaId): AssetItem[] {
           workflowName: project.workflowName,
           storage: effectiveStorage,
           originalStorage: project.storage,
-          creator: project.creator
+          creator: project.creator,
+          installAttribution: project.installAttribution
         }
       })
     }

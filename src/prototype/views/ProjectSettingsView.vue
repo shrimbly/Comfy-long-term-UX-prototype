@@ -64,6 +64,8 @@
       </div>
     </section>
 
+    <InstallLockEditor :project="project" :can-edit="canEdit" />
+
     <section class="flex flex-col gap-4">
       <h2
         class="m-0 text-sm font-semibold tracking-wide text-muted-foreground uppercase"
@@ -84,6 +86,7 @@ import { storeToRefs } from 'pinia'
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 
+import InstallLockEditor from '../components/InstallLockEditor.vue'
 import ProjectAllowlistEditor from '../components/ProjectAllowlistEditor.vue'
 import ProjectDefaultsSection from '../components/ProjectDefaultsSection.vue'
 import { usePrototypePersonaStore } from '../stores/personaStore'

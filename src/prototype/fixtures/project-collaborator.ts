@@ -95,5 +95,13 @@ export const projectCollaboratorFixture: PersonaFixture = {
       createdAt: '2026-05-09',
       readAt: '2026-05-10'
     }
-  ]
+  ],
+  // Cloud-runtime collaborator — install-agnostic. The canonical §4
+  // Project Collaborator in the wiki is defined purely by permission
+  // position; the install dimension belongs to §4a Freelancer, which
+  // owns the BYO-install + compat-gate story. The install chip stays
+  // hidden for Mira so the persona switcher visibly differentiates
+  // her from Reza.
+  installs: [],
+  activeInstallId: undefined
 }
