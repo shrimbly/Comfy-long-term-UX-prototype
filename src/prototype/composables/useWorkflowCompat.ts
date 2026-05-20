@@ -53,7 +53,7 @@ function compareVersions(a: string, b: string): number {
   return 0
 }
 
-export function evaluateCompat(
+function evaluateCompat(
   workflow: Workflow,
   project: Project | undefined,
   activeInstall: Install | undefined

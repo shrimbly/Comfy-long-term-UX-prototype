@@ -8,7 +8,7 @@ import { ref, watch } from 'vue'
 import { usePrototypePersonaStore } from './personaStore'
 import type { AssetStorage, LibrarySection } from '../types'
 
-export type StorageFilter = 'all' | AssetStorage
+type StorageFilter = 'all' | AssetStorage
 
 type ActiveView =
   | { kind: 'explore' }

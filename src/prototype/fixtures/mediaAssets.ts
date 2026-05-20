@@ -204,10 +204,3 @@ export function buildPrototypeMediaAssets(personaId?: PersonaId): AssetItem[] {
   }
   return assets
 }
-
-export function listPrototypeProjects(): {
-  id: string
-  name: string
-}[] {
-  return PROJECTS.map((p) => ({ id: p.projectId, name: p.projectName }))
-}
