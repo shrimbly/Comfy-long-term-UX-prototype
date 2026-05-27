@@ -94,21 +94,24 @@
           <Button variant="textonly" size="lg" @click="emit('close')">
             {{ t('prototype.installGate.close') }}
           </Button>
-          <Button
-            variant="secondary"
-            size="lg"
-            @click="emit('use-cloud-runtime')"
-          >
-            <i class="icon-[lucide--cloud]" aria-hidden="true" />
-            {{ t('prototype.installGate.actionUseCloudRuntime') }}
-          </Button>
-          <Button
-            variant="primary"
-            size="lg"
-            @click="emit('install-team-build')"
-          >
-            <i class="icon-[lucide--download]" aria-hidden="true" />
-            {{ t('prototype.installGate.actionInstallTeamBuild') }}
+          <Button variant="primary" size="lg" @click="onSatisfy">
+            <i
+              :class="
+                alreadyHasInstall
+                  ? 'icon-[lucide--arrow-right]'
+                  : 'icon-[lucide--download]'
+              "
+              aria-hidden="true"
+            />
+            {{
+              alreadyHasInstall
+                ? t('prototype.installGate.actionSwitchTo', {
+                    name: targetInstallName
+                  })
+                : t('prototype.installGate.actionInstall', {
+                    name: targetInstallName
+                  })
+            }}
           </Button>
         </footer>
       </div>
@@ -117,12 +120,14 @@
 </template>
 
 <script setup lang="ts">
+import { storeToRefs } from 'pinia'
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import Button from '@/components/ui/button/Button.vue'
 
 import type { WorkflowCompatResult } from '../composables/useWorkflowCompat'
+import { usePrototypePersonaStore } from '../stores/personaStore'
 import type { Workflow } from '../types'
 
 const { workflow, compat } = defineProps<{
@@ -132,17 +137,53 @@ const { workflow, compat } = defineProps<{
 
 const emit = defineEmits<{
   close: []
-  'install-team-build': []
-  'use-cloud-runtime': []
+  satisfy: [installId: string]
 }>()
 
 const { t } = useI18n()
 
-const requiredName = computed(
-  () =>
+const personaStore = usePrototypePersonaStore()
+const { fixture, currentWorkspace } = storeToRefs(personaStore)
+
+// The target install to install / switch to in order to satisfy the
+// gate. Picks the first ID in the project's allowed-install set — for a
+// single-pin project that's "the team build"; during a version-bump
+// transition where the set carries multiple identities, this resolves
+// to the first one, which is fine for the prototype's narrative.
+const targetInstallId = computed(() => compat.allowedInstallIds?.[0])
+
+// Canonical name to render on the action button. Prefer the workspace
+// registry entry's canonical name; fall back to the project's
+// `installLockDisplayName`; finally the i18n fallback. The registry
+// entry is the source of truth for the name once an install has been
+// blessed (per workspace-install-registry concept).
+const targetInstallName = computed(() => {
+  const id = targetInstallId.value
+  if (id) {
+    const blessed = currentWorkspace.value?.blessedInstalls?.find(
+      (b) => b.installId === id
+    )
+    if (blessed) return blessed.canonicalDisplayName
+  }
+  return (
     compat.requiredInstallName ?? t('prototype.installGate.requiredFallback')
-)
+  )
+})
+
+const alreadyHasInstall = computed(() => {
+  const id = targetInstallId.value
+  if (!id) return false
+  return fixture.value.installs.some((i) => i.id === id)
+})
+
+const requiredName = computed(() => targetInstallName.value)
 const currentName = computed(
   () => compat.current?.displayName ?? t('prototype.installGate.currentNone')
 )
+
+function onSatisfy() {
+  const id = targetInstallId.value
+  if (!id) return
+  emit('satisfy', id)
+}
 </script>

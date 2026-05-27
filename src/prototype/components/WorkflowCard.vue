@@ -82,8 +82,7 @@
       :workflow="workflow"
       :compat="gateCompat"
       @close="closeGate"
-      @install-team-build="onInstallTeamBuild"
-      @use-cloud-runtime="onUseCloudRuntime"
+      @satisfy="onSatisfyGate"
     />
 
     <RuntimeRecommendationDialog
@@ -188,18 +187,20 @@ function closeGate() {
   isGateOpen.value = false
 }
 
-function onInstallTeamBuild() {
-  // Stub — in product this kicks off the install-the-team-build path
-  // (per Journey 6 step 5). The prototype just closes the gate; the
-  // wiring to a real installer surface lives outside A2.
+function onSatisfyGate(installId: string) {
+  // Journey 6 step 5–6: install the team build if missing (additively;
+  // user's personal install stays), then switch active install to it,
+  // then re-open the workflow. The bundle metadata for the install
+  // (canonical name + version) comes from the workspace install
+  // registry — keeps gate dialog and workspace settings in sync per
+  // ../IA_Plan/wiki/concepts/workspace-install-registry.md.
+  const hasIt = personaStore.fixture.installs.some((i) => i.id === installId)
+  if (!hasIt) {
+    personaStore.installBlessedToLocal(installId)
+  }
+  personaStore.setActiveInstall(installId)
   isGateOpen.value = false
-}
-
-function onUseCloudRuntime() {
-  // Stub — in product this swaps the workflow's active runtime to the
-  // host workspace's cloud BE. Same close-and-defer treatment as the
-  // team-build action.
-  isGateOpen.value = false
+  emit('open', workflow.id)
 }
 
 // Advisory dialog — opened by clicking the recommended-mismatch badge.

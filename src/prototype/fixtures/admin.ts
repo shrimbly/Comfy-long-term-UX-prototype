@@ -46,18 +46,6 @@ const comfyOrg = {
       publishedAt: '2026-04-22',
       isLocked: true
     },
-    // Cloud runtime — blessed so projects can target Comfy Cloud BE the
-    // same way they target a local team build (per install-journeys.md
-    // Journey 4). Unlocked because the cloud BE manages its own
-    // mutability; client-side lock is meaningless against it.
-    {
-      installId: 'install-cloud-comfy-be',
-      canonicalDisplayName: 'Comfy Cloud BE',
-      comfyUIVersion: '0.4.0',
-      publishedByUserId: 'user-willie',
-      publishedAt: '2026-04-22',
-      isLocked: false
-    },
     // Candidate for the next bump (Journey 5). Sasha is validating it
     // and intentionally hasn't locked yet — locking happens after
     // canonical workflows have been re-run end-to-end.

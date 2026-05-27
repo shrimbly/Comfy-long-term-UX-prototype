@@ -136,9 +136,9 @@
       "currentLabel": "Your active install",
       "currentNone": "No active install",
       "remediationLabel": "What you can do",
-      "remediationHint": "Install the team's build alongside your current install — your personal install stays untouched. Or run on Comfy Cloud BE for the host workspace.",
-      "actionInstallTeamBuild": "Install the team build",
-      "actionUseCloudRuntime": "Use cloud runtime",
+      "remediationHint": "Install the team's build alongside your current install — your personal install stays untouched.",
+      "actionInstall": "Install {name}",
+      "actionSwitchTo": "Switch to {name}",
       "close": "Not now"
     },
     "commandPalette": {

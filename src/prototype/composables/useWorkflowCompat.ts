@@ -32,6 +32,11 @@ export interface WorkflowCompatResult {
   // For blocked: the project-canonical name of the required install
   // (set by the Install Governor when they configured the lock).
   requiredInstallName?: string
+  // For blocked: the install identities the project's allowed-install
+  // set permits. The gate dialog uses these to drive the install /
+  // switch action against the workspace registry. Usually a single
+  // entry; multiple during a version-bump transition (additive).
+  allowedInstallIds?: string[]
   // For recommended-mismatch: the version string the workflow author
   // advised. Soft signal only.
   recommendedComfyUIVersion?: string
@@ -74,6 +79,7 @@ function evaluateCompat(
     return {
       status: 'blocked',
       requiredInstallName: project?.installLockDisplayName,
+      allowedInstallIds: allowed,
       current
     }
   }

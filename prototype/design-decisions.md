@@ -507,3 +507,27 @@ Open question dependency: none — this clarifies an under-specified part of the
 Promote? **yes — promoted to wiki on 2026-05-20.** Updated:
 
 - [`wiki/concepts/workspace-install-registry.md`](../../IA_Plan/wiki/concepts/workspace-install-registry.md) — added `comfyUIVersion` to the registry-entry shape note, added new §"Where the registry is shown" calling out the desktop-join vs cloud-deep-link split.
+
+## [2026-05-20] Cloud runtime is not an install-gate satisfier
+
+Decision:
+
+- **Removed the "Use cloud runtime" button from the install gate dialog.** The dialog now offers two paths: dismiss, or install/switch to the project's required install. Cloud is no longer presented as a way to bypass the gate.
+- **Removed the Comfy Cloud BE entry from the Comfy Org workspace registry fixture.** Cloud BE is no longer treated as a blessable install identity.
+- The install gate is, by construction, a check against a fixed bundle identity (manifest hash). A cloud runtime is a service, not a bundle — it can be upgraded by the cloud team at any time, and the identity of "what's running in cloud right now" can shift under the user. That's incompatible with the hard-lock semantics the gate enforces.
+
+Reason: Willie's IA call (2026-05-20). Putting cloud in the install identity space replicates the same category error the version-range pivot fixed — letting an inherently-changing satisfier sit alongside fixed bundles. If cloud were blessed as an install, the workspace would be making a claim about cloud's identity it cannot enforce.
+
+Wiki link:
+
+- Updates needed in [`wiki/concepts/install-journeys.md`](../../IA_Plan/wiki/concepts/install-journeys.md):
+  - **Journey 4 (Cloud-runtime variant)** needs rewriting or removing. As written it assumes the cloud BE has a stable bundle identity that the workspace can bless and that satisfies the project's allowed-install set. Under this decision, that's no longer true.
+  - **Journey 6 (Freelancer hits the install gate)** — the "cloud-runtime fallback for contractors whose local hardware can't run the team build" footnote should be removed or restated. Same reasoning.
+- [`wiki/concepts/workspace-install-registry.md`](../../IA_Plan/wiki/concepts/workspace-install-registry.md) — the §"Where the registry is shown" mentions cloud-only surfaces; that's still fine (they show the registry read-only and deep-link to desktop). But the broader "blessable identities" framing should explicitly exclude cloud runtimes. Add a §"Not in scope" or expand "What this is not" in the decision page.
+- [`wiki/decisions/team-locked-install.md`](../../IA_Plan/wiki/decisions/team-locked-install.md) §"What 'hard' means in practice" — the bullet about cloud-runtime satisfying via bundle identity should be retracted.
+
+Open question this raises:
+
+- **How do cloud-only users access a hard-locked team project?** Working stance to log alongside Journey 4 rewrite: they can read the project's content + structure, but workflows in it cannot execute from the cloud surface. If the team wants cloud-runnable workflows, that's a separate per-project flag ("allows cloud runtime: yes/no") orthogonal to the allowed-install set — not a bless-the-cloud workaround. Capturing as an open-question rather than settling here.
+
+Promote? **yes — recommended for wiki promotion.** Three targeted edits (journeys page Journey 4 + Journey 6, decision page for team-locked-install, concept page for registry). Plus a new open question on cloud-only access to locked projects.
