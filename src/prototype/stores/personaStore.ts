@@ -511,12 +511,77 @@ export const usePrototypePersonaStore = defineStore('prototype-persona', () => {
         name: `${source.name} (fork)`,
         ownerUserId: fixture.value.currentUser.id,
         updatedAt: today,
+        // Lineage per ../IA_Plan/wiki/decisions/published-workflow-model.md
+        // — records the source so the fork can later Publish to workspace
+        // (overwrite the canonical). Forking a fork points at the source
+        // fork; publish is only offered when this resolves to a canonical
+        // in a shared project.
+        forkedFrom: { workflowId: source.id },
         // Asset-level grants do not carry to the fork — it's a fresh
         // private asset in the actor's My Workflows.
         access: []
       }
     ]
     return newId
+  }
+
+  // Fork-on-open per ../IA_Plan/wiki/decisions/published-workflow-model.md.
+  // Opening a workflow that lives in a SHARED project (not the user's My
+  // Workflows / Drafts) yields a working copy in My Workflows — editing
+  // a shared workflow is never in-place; every actor works on a fork and
+  // contributes back via Publish to workspace. A workflow already in My
+  // Workflows is edited directly (returned as-is).
+  //
+  // Reuse: if the user already has a fork of this canonical in My
+  // Workflows, return it rather than spawning duplicates (the wiki's
+  // transient-until-saved fork is approximated here by a single reused
+  // working copy). Returns the id to open.
+  function openForWork(workflowId: string): string | undefined {
+    const source = fixture.value.workflows.find((w) => w.id === workflowId)
+    if (!source) return
+    const sourceProject = fixture.value.projects.find(
+      (p) => p.id === source.projectId
+    )
+    if (!sourceProject || sourceProject.isDrafts) return workflowId
+    const myWorkflowsId = findHostMyWorkflows(sourceProject.workspaceId)
+    if (!myWorkflowsId) return workflowId
+    const existing = fixture.value.workflows.find(
+      (w) =>
+        w.projectId === myWorkflowsId &&
+        w.ownerUserId === fixture.value.currentUser.id &&
+        w.forkedFrom?.workflowId === workflowId
+    )
+    if (existing) return existing.id
+    return forkWorkflow(workflowId)
+  }
+
+  // Publish a fork to workspace — overwrite the canonical workflow it was
+  // forked from with the fork's contents, in place (stable id). Per
+  // ../IA_Plan/wiki/decisions/published-workflow-model.md: no diff/merge;
+  // canonical becomes whatever was most recently published. Gate checks
+  // (overwrite permission + install identity) live in useWorkflowPublish;
+  // this action assumes they passed. Returns true if a canonical was
+  // overwritten.
+  function publishToWorkspace(forkId: string): boolean {
+    const fork = fixture.value.workflows.find((w) => w.id === forkId)
+    if (!fork?.forkedFrom) return false
+    const canonicalId = fork.forkedFrom.workflowId
+    const today = new Date().toISOString().slice(0, 10)
+    let overwritten = false
+    fixture.value.workflows = fixture.value.workflows.map((w) => {
+      if (w.id !== canonicalId) return w
+      overwritten = true
+      // Overwrite canonical content with the fork's. Name + identity +
+      // project membership of the canonical are preserved; the fork's
+      // working state (thumbnail here as a stand-in for graph contents)
+      // and a fresh updatedAt land on the canonical.
+      return {
+        ...w,
+        updatedAt: today,
+        thumbnailUrl: fork.thumbnailUrl ?? w.thumbnailUrl
+      }
+    })
+    return overwritten
   }
 
   // --- Project settings ------------------------------------------------
@@ -808,6 +873,8 @@ export const usePrototypePersonaStore = defineStore('prototype-persona', () => {
     setWorkflowStorage,
     getEffectiveWorkflowStorage,
     moveWorkflowToProject,
-    forkWorkflow
+    forkWorkflow,
+    openForWork,
+    publishToWorkspace
   }
 })

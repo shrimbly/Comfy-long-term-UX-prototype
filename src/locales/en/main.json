@@ -100,7 +100,9 @@
       "storageLocal": "Saved locally",
       "storageCloud": "Saved to cloud",
       "compatBlocked": "Requires install: {required}. You're on: {current}.",
-      "compatRecommendedMismatch": "Recommended: ComfyUI {recommended}. You're on: ComfyUI {current}."
+      "compatRecommendedMismatch": "Recommended: ComfyUI {recommended}. You're on: ComfyUI {current}.",
+      "forkOnOpenSummary": "Working copy in My Workflows",
+      "forkOnOpenDetail": "You're editing a copy of \"{name}\". Publish to workspace to update the team version."
     },
     "installChip": {
       "tooltip": "Active install",
@@ -126,6 +128,20 @@
       "currentNone": "No active install",
       "body": "This is a soft recommendation — nothing is blocked. The workflow author flagged a minimum runtime version they tested against.",
       "acknowledge": "Got it"
+    },
+    "publishToWorkspace": {
+      "title": "Publish to workspace",
+      "target": "Overwrites the team's “{workflow}” in {project}. The current version is replaced — there's no merge.",
+      "confirmBody": "Your copy becomes the team's canonical version of this workflow. Teammates who open it will fork from your published version.",
+      "permissionTitle": "You can't overwrite this workflow",
+      "permissionBody": "Only the project owner or a workspace admin can publish over the team's version. Keep your changes in My Workflows, or ask an owner to publish them.",
+      "permissionBodyOwner": "Only the project owner ({owner}) or a workspace admin can publish over the team's version. Keep your changes in My Workflows, or ask {owner} to publish them.",
+      "installTitle": "Publishing requires the team install",
+      "installBody": "This project is locked to {required}. You're on {current}. Switch to the required install, or update the project's allowed installs, then publish.",
+      "noInstall": "no local install",
+      "cancel": "Keep in My Workflows",
+      "askOwner": "Ask an owner to publish",
+      "publish": "Publish to workspace"
     },
     "installGate": {
       "title": "This project is locked to a specific install",
@@ -199,6 +215,7 @@
       "share": "Share…",
       "publishDirectLink": "Publish via direct link…",
       "publishHub": "Submit to Comfy Hub…",
+      "publishToWorkspace": "Publish to workspace…",
       "viewOutputs": "View outputs",
       "openContainingProject": "Open containing project",
       "delete": "Delete",
@@ -218,7 +235,10 @@
         "shareStub": "Share dialog isn't wired up in this pass.",
         "publishLinkStub": "Direct-link publishing isn't wired up in this pass.",
         "publishHubStub": "Hub submission isn't wired up in this pass.",
-        "outputsStub": "Output history isn't wired up in this pass."
+        "outputsStub": "Output history isn't wired up in this pass.",
+        "publishedSummary": "Published to workspace",
+        "publishedDetail": "\"{workflow}\" in {project} now reflects your changes.",
+        "askOwnerStub": "Requesting an owner to publish isn't wired up in this pass."
       },
       "saveToCloudPrompt": {
         "title": "Save to cloud first?",

@@ -67,6 +67,14 @@
     @moved="onMoved"
   />
 
+  <PublishToWorkspaceDialog
+    v-if="publishDialogOpen"
+    :state="publishState"
+    @close="publishDialogOpen = false"
+    @publish="onPublishConfirmed"
+    @ask-owner="onAskOwner"
+  />
+
   <Teleport v-if="saveToCloudPrompt" to="body">
     <div
       class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
@@ -122,10 +130,12 @@ import { useI18n } from 'vue-i18n'
 
 import Button from '@/components/ui/button/Button.vue'
 
+import PublishToWorkspaceDialog from './PublishToWorkspaceDialog.vue'
 import WorkflowMoveDialog from './WorkflowMoveDialog.vue'
 import { usePrototypePersonaStore } from '../stores/personaStore'
 import { usePrototypeUiStore } from '../stores/uiStore'
 import type { ViewerWorkflowRole } from '../composables/useViewerWorkflowRole'
+import { useWorkflowPublish } from '../composables/useWorkflowPublish'
 import type { Workflow } from '../types'
 
 const {
@@ -156,6 +166,13 @@ type ContextMenuHandle = {
 const contextMenu = ref<ContextMenuHandle | null>(null)
 
 const moveDialogOpen = ref(false)
+const publishDialogOpen = ref(false)
+
+// Publish-to-workspace gate state for this workflow. `isPublishable` is
+// true only for forks whose source resolves to a canonical in a shared
+// project — that's when the menu item appears.
+const workflowRef = computed(() => workflow)
+const publishState = useWorkflowPublish(workflowRef)
 
 // Share / Publish / Submit assume a cloud-resident workflow per
 // concepts/sharing-vs-publishing.md ("Recipients access a canonical
@@ -321,6 +338,31 @@ function onDelete() {
   })
 }
 
+function onPublishToWorkspace() {
+  publishDialogOpen.value = true
+}
+
+function onPublishConfirmed() {
+  const ok = personaStore.publishToWorkspace(workflow.id)
+  publishDialogOpen.value = false
+  if (!ok) return
+  toast.add({
+    severity: 'success',
+    summary: t('prototype.workflowMenu.toast.publishedSummary'),
+    detail: t('prototype.workflowMenu.toast.publishedDetail', {
+      workflow: publishState.value.targetWorkflowName ?? workflow.name,
+      project: publishState.value.targetProjectName ?? ''
+    }),
+    life: 2800
+  })
+}
+
+function onAskOwner() {
+  // member-overwrite-request-flow is not MVP (open question) — stub.
+  publishDialogOpen.value = false
+  toastStub('prototype.workflowMenu.toast.askOwnerStub')
+}
+
 function onOpenContainingProject() {
   if (!sourceProject.value) return
   uiStore.go({ kind: 'project', projectId: sourceProject.value.id })
@@ -422,6 +464,20 @@ const items = computed<MenuItem[]>(() => {
         command: () => onShareIntent('publish-hub')
       } satisfies InactiveMenuItem)
     }
+  }
+
+  // Publish to workspace — appears on any fork whose source resolves to
+  // a canonical in a shared project. The dialog handles the gate (publish
+  // permission + install identity); the menu item is always enabled so
+  // the user can see *why* it's blocked (production home is the node-
+  // graph menu — this is the dashboard stand-in).
+  if (publishState.value.isPublishable) {
+    out.push({ separator: true })
+    out.push({
+      label: t('prototype.workflowMenu.publishToWorkspace'),
+      icon: 'icon-[lucide--upload]',
+      command: onPublishToWorkspace
+    })
   }
 
   // Outputs + navigation — available to everyone who can see the asset.

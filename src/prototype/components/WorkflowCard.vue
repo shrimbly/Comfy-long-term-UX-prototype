@@ -97,6 +97,7 @@
 
 <script setup lang="ts">
 import { cn } from '@comfyorg/tailwind-utils'
+import { useToast } from 'primevue/usetoast'
 import { computed, ref, toRef } from 'vue'
 import { useI18n } from 'vue-i18n'
 
@@ -121,6 +122,7 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
+const toast = useToast()
 const personaStore = usePrototypePersonaStore()
 const thumbnail = computed(() => thumbnailGradient(workflow.id))
 const effectiveStorage = computed(() =>
@@ -181,7 +183,26 @@ function onOpen() {
     isGateOpen.value = true
     return
   }
-  emit('open', workflow.id)
+  // Fork-on-open (published-workflow-model): opening a shared-project
+  // workflow yields a working copy in My Workflows; a workflow already
+  // in My Workflows opens in place. openForWork reuses an existing fork.
+  openWorkingCopy()
+}
+
+function openWorkingCopy() {
+  const targetId = personaStore.openForWork(workflow.id)
+  if (!targetId) return
+  if (targetId !== workflow.id) {
+    toast.add({
+      severity: 'info',
+      summary: t('prototype.workflowCard.forkOnOpenSummary'),
+      detail: t('prototype.workflowCard.forkOnOpenDetail', {
+        name: workflow.name
+      }),
+      life: 3200
+    })
+  }
+  emit('open', targetId)
 }
 
 function closeGate() {
@@ -201,7 +222,8 @@ function onSatisfyGate(installId: string) {
   }
   personaStore.setActiveInstall(installId)
   isGateOpen.value = false
-  emit('open', workflow.id)
+  // Now on a blessed install — fork-on-open as usual.
+  openWorkingCopy()
 }
 
 function onSaveToMyWorkflows() {
@@ -210,9 +232,9 @@ function onSaveToMyWorkflows() {
   // carries no allowed-install set — so the fork opens on the current
   // install without re-tripping the gate. The user can work freely;
   // they just can't publish back to the team until on a blessed install.
-  const forkId = personaStore.forkWorkflow(workflow.id)
+  // openForWork reuses an existing working copy rather than duplicating.
   isGateOpen.value = false
-  if (forkId) emit('open', forkId)
+  openWorkingCopy()
 }
 
 // Advisory dialog — opened by clicking the recommended-mismatch badge.

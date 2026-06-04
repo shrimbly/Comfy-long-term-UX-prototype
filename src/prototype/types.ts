@@ -239,6 +239,14 @@ export interface Workflow {
   // hard gate lives at the project level (`Project.allowedInstallIds`)
   // by install identity. See prototype/design-decisions.md 2026-05-19.
   recommendedComfyUIVersion?: string
+  // Fork lineage per ../IA_Plan/wiki/decisions/published-workflow-model.md.
+  // Set when this workflow was created by forking another (fork-on-open,
+  // explicit Fork, or the install gate's "Save to My Workflows"). Points
+  // at the source workflow's id. A fork whose source resolves to a
+  // canonical workflow in a shared project is eligible for Publish to
+  // workspace (overwrite the canonical). Absent on directly-authored
+  // workflows and on canonical workflows themselves.
+  forkedFrom?: { workflowId: string }
 }
 
 export interface LibraryAsset {
