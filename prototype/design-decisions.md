@@ -557,4 +557,16 @@ Open questions this raises:
 - **Does running a fork on a non-blessed install carry any persistent marker on its outputs?** (e.g. "generated on a non-blessed install" attribution badge, so if those outputs are later promoted the divergence is visible.) Working stance: outputs already carry install attribution; no extra marker needed for MVP.
 - **Where exactly is the publish-time identity gate surfaced?** The publish action in the prototype is currently a context-menu stub. When the real publish flow is built, it must check active-install identity and block with a parallel explanation ("Publish requires the {name} install — switch installs or update the allowed-install set"). Logged for whenever the publish surface is built; not wired in this pass.
 
-Promote? **yes — recommended.** Net wiki effect: revise `team-locked-install.md` (run→publish framing), extend `published-workflow-model.md` (publish requires blessed install), update the install-journeys gate narrative, and fold the cloud-only-access question into "resolved by fork-on-open." Larger than the 2026-05-20 entry — worth doing as one promotion pass after the prototype UX lands.
+Promote? **yes — promoted to wiki on 2026-05-27.** Revised `team-locked-install.md` (run→publish framing), extended `published-workflow-model.md` (publish requires blessed install), updated `install-journeys.md` (Journeys 4 + 6, open questions), `install-switcher.md`, `personas.md`, `entities/project.md`.
+
+### Follow-up clarification (2026-05-27) — the lock is desktop-only; cloud cannot publish to a locked project
+
+Willie clarified the intent behind the publish gate: it targets **desktop users running a local install**. Reproducibility means "produced on the blessed _local_ bundle." The cloud BE is always-latest and dynamic, so it is outside the reproducibility world by nature — it cannot be blessed.
+
+Resolution of the cloud-access question (which the 2026-05-20 + 2026-05-27 entries had left as an open "per-project allow-cloud flag"):
+
+- **There is no cloud-publish path into a locked project, and no waiver flag.** A cloud-only user can open + Save to My Workflows (use is never gated), but cannot publish to a locked project because publishing requires a blessed _local_ install they don't have. The limitation falls directly out of the lock being a local-install concept — nothing to toggle.
+- Cloud-only contributors route through hand-off: share the fork, a teammate on the blessed local install validates and publishes it. The cloud run is a proposal, never canonical.
+- The prospective "allow cloud runtime: yes/no" per-project flag is **dropped** — it was a misframing (it implied cloud could be a publish source for a reproducibility lock, which contradicts the lock's purpose).
+
+Wiki effect: removed the per-project-cloud-flag open question from `install-journeys.md` and `team-locked-install.md`; reframed those + `personas.md` cloud-only artist to "desktop/local-install mechanism; cloud users keep Save to My Workflows, hand off to publish." Promoted 2026-05-27.
