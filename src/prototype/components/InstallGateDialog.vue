@@ -5,14 +5,17 @@
     concept:  ../IA_Plan/wiki/concepts/install-switcher.md §"Project install
               constraints"
     decision: ../IA_Plan/wiki/decisions/team-locked-install.md — allowed-set
-              is a hard lock, not advisory
-    log:      ../prototype/design-decisions.md 2026-05-19 — install gate is
-              identity-based; recommended-version is a separate soft signal.
+              is a hard lock on publish, not on use
+    log:      ../prototype/design-decisions.md 2026-05-27 — install lock
+              gates publish, not use; "Save to My Workflows" escape hatch.
 
   Modal intercepting workflow Open when the active install's identity is
-  not in the project's allowed-install set. Per Journey 6 the gate must
-  surface (a) what's required, (b) what the active install is, (c) the
-  remediation path.
+  not in the project's allowed-install set. The lock no longer blocks
+  use — per fork-on-open (published-workflow-model) the user can always
+  work on their own copy. What the lock blocks is publishing back to the
+  team. So the gate WARNS and offers two paths: take a private copy
+  ("Save to My Workflows", primary), or get onto the team build so a
+  later publish is possible (install / switch, secondary).
 
   The "Required" line renders the *workspace-canonical* install name set
   by the Install Governor when the lock was configured — not whatever
@@ -34,7 +37,7 @@
             class="grid size-9 shrink-0 place-items-center rounded-full bg-warning-background"
           >
             <i
-              class="icon-[lucide--lock] size-4.5 text-button-surface-contrast"
+              class="icon-[lucide--triangle-alert] size-4.5 text-button-surface-contrast"
             />
           </span>
           <div class="flex flex-col gap-1">
@@ -90,29 +93,41 @@
           </p>
         </section>
 
-        <footer class="flex flex-nowrap justify-end gap-2 pt-2">
+        <footer
+          class="flex flex-nowrap items-center justify-between gap-2 pt-2"
+        >
           <Button variant="textonly" size="lg" @click="emit('close')">
             {{ t('prototype.installGate.close') }}
           </Button>
-          <Button variant="primary" size="lg" @click="onSatisfy">
-            <i
-              :class="
+          <div class="flex flex-nowrap gap-2">
+            <Button
+              variant="secondary"
+              size="lg"
+              @click="emit('save-to-my-workflows')"
+            >
+              <i class="icon-[lucide--copy-plus]" aria-hidden="true" />
+              {{ t('prototype.installGate.actionSaveToMyWorkflows') }}
+            </Button>
+            <Button variant="primary" size="lg" @click="onSatisfy">
+              <i
+                :class="
+                  alreadyHasInstall
+                    ? 'icon-[lucide--arrow-right]'
+                    : 'icon-[lucide--download]'
+                "
+                aria-hidden="true"
+              />
+              {{
                 alreadyHasInstall
-                  ? 'icon-[lucide--arrow-right]'
-                  : 'icon-[lucide--download]'
-              "
-              aria-hidden="true"
-            />
-            {{
-              alreadyHasInstall
-                ? t('prototype.installGate.actionSwitchTo', {
-                    name: targetInstallName
-                  })
-                : t('prototype.installGate.actionInstall', {
-                    name: targetInstallName
-                  })
-            }}
-          </Button>
+                  ? t('prototype.installGate.actionSwitchTo', {
+                      name: targetInstallName
+                    })
+                  : t('prototype.installGate.actionInstall', {
+                      name: targetInstallName
+                    })
+              }}
+            </Button>
+          </div>
         </footer>
       </div>
     </div>
@@ -138,6 +153,7 @@ const { workflow, compat } = defineProps<{
 const emit = defineEmits<{
   close: []
   satisfy: [installId: string]
+  'save-to-my-workflows': []
 }>()
 
 const { t } = useI18n()

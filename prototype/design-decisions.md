@@ -531,3 +531,30 @@ Open question this raises:
 - **How do cloud-only users access a hard-locked team project?** Working stance to log alongside Journey 4 rewrite: they can read the project's content + structure, but workflows in it cannot execute from the cloud surface. If the team wants cloud-runnable workflows, that's a separate per-project flag ("allows cloud runtime: yes/no") orthogonal to the allowed-install set — not a bless-the-cloud workaround. Capturing as an open-question rather than settling here.
 
 Promote? **yes — recommended for wiki promotion.** Three targeted edits (journeys page Journey 4 + Journey 6, decision page for team-locked-install, concept page for registry). Plus a new open question on cloud-only access to locked projects.
+
+## [2026-05-27] Install lock gates publish, not use — "Save to My Workflows" escape hatch
+
+Decision (Willie + team consensus, 2026-05-27):
+
+- **The install lock moves from a use-time wall to a contribution-time gate.** A user whose active install is outside a project's allowed-install set may still **open and run** the workflow — but only as a fork in their own My Workflows (which is already the universal behaviour per [`decisions/published-workflow-model.md`](../../IA_Plan/wiki/decisions/published-workflow-model.md): fork-on-open). What they cannot do is **publish** changes (or push assets) back to the team.
+- **The gate dialog stays — it still warns.** It is NOT silently dropped. When the active install is outside the allowed set, opening a locked workflow surfaces the gate, which now explains: you can work on your own copy with your current install, but you can't publish back until you're on the team build. Primary action becomes **"Save to My Workflows"** (fork + open on the current install); secondary actions remain _Install the team build_ / _Switch to {name}_ and _Not now_.
+- **Publish-to-workspace gates on install IDENTITY, for everyone — including Owners and Admins.** There is no permission-based escape hatch. To overwrite the canonical team workflow, the actor must be running on an install in the project's allowed set. An Owner/Admin on a divergent install must either switch to a blessed install or change the project's allowed-install set first. This is _in addition to_ the existing permission gate (Owner/Admin-only) from the published-workflow-model — publish now requires **both** publish permission **and** a blessed active install.
+
+Reason:
+
+- The team's reproducibility guarantee is about _what becomes canonical_, not about every private experiment. A fork run on a non-blessed install produces outputs that live only in the actor's My Workflows; they never enter team space unless published, and publish is gated. So reproducibility of the team's source of truth is preserved without blocking people from working.
+- This dissolves the cloud-only-access open question raised on 2026-05-20: a cloud-only user simply opens a fork and works; they cannot publish back. No "bless the cloud" workaround needed, consistent with the [2026-05-20 cloud-runtime decision](#).
+- Identity-gating publish even for Owners/Admins keeps the lock meaningful: if an Owner could publish from any install, the lock would be advisory in practice. The deliberate act to change what the team runs on is "change the allowed-install set," not "publish from whatever I happen to have."
+
+Relationship to existing wiki:
+
+- **Extends [`decisions/published-workflow-model.md`](../../IA_Plan/wiki/decisions/published-workflow-model.md)** — fork-on-open is unchanged; this adds an install-identity precondition to the Publish-to-workspace act, alongside the existing permission precondition.
+- **Revises [`decisions/team-locked-install.md`](../../IA_Plan/wiki/decisions/team-locked-install.md)** — the "hard lock blocks run" framing softens to "hard lock blocks publish; run is permitted on a fork." The §"What 'hard' means in practice" bullet that blocks the run button needs rewriting: the gate warns + offers Save to My Workflows rather than disabling run outright.
+- **Touches [`open-questions.md#member-overwrite-request-flow`](../../IA_Plan/wiki/open-questions.md)** — the "ask an Owner to publish on my behalf" flow now also has to account for the install-identity precondition (the Owner they ask must themselves be on a blessed install).
+
+Open questions this raises:
+
+- **Does running a fork on a non-blessed install carry any persistent marker on its outputs?** (e.g. "generated on a non-blessed install" attribution badge, so if those outputs are later promoted the divergence is visible.) Working stance: outputs already carry install attribution; no extra marker needed for MVP.
+- **Where exactly is the publish-time identity gate surfaced?** The publish action in the prototype is currently a context-menu stub. When the real publish flow is built, it must check active-install identity and block with a parallel explanation ("Publish requires the {name} install — switch installs or update the allowed-install set"). Logged for whenever the publish surface is built; not wired in this pass.
+
+Promote? **yes — recommended.** Net wiki effect: revise `team-locked-install.md` (run→publish framing), extend `published-workflow-model.md` (publish requires blessed install), update the install-journeys gate narrative, and fold the cloud-only-access question into "resolved by fork-on-open." Larger than the 2026-05-20 entry — worth doing as one promotion pass after the prototype UX lands.

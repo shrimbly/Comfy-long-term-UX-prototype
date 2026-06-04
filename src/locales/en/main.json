@@ -128,17 +128,18 @@
       "acknowledge": "Got it"
     },
     "installGate": {
-      "title": "This workflow needs a different install",
-      "subtitle": "“{workflow}” is in a project locked to a specific install.",
-      "requiredLabel": "Required install",
+      "title": "This project is locked to a specific install",
+      "subtitle": "“{workflow}” lives in a project locked to a specific install. You can work on your own copy, but you can't publish changes back to the team until you're on the required install.",
+      "requiredLabel": "Required to publish",
       "requiredFallback": "Team-locked install",
-      "requiredReason": "Set by the project owner as a hard runtime lock.",
+      "requiredReason": "Set by the project owner. Publishing back to the team requires this install.",
       "currentLabel": "Your active install",
       "currentNone": "No active install",
       "remediationLabel": "What you can do",
-      "remediationHint": "Install the team's build alongside your current install — your personal install stays untouched.",
+      "remediationHint": "Save a copy to My Workflows to work freely on your current install. Or install/switch to the team build so you can publish back later.",
       "actionInstall": "Install {name}",
       "actionSwitchTo": "Switch to {name}",
+      "actionSaveToMyWorkflows": "Save to My Workflows",
       "close": "Not now"
     },
     "commandPalette": {

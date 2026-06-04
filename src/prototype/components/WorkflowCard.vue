@@ -83,6 +83,7 @@
       :compat="gateCompat"
       @close="closeGate"
       @satisfy="onSatisfyGate"
+      @save-to-my-workflows="onSaveToMyWorkflows"
     />
 
     <RuntimeRecommendationDialog
@@ -201,6 +202,17 @@ function onSatisfyGate(installId: string) {
   personaStore.setActiveInstall(installId)
   isGateOpen.value = false
   emit('open', workflow.id)
+}
+
+function onSaveToMyWorkflows() {
+  // Install lock gates publish, not use (design-decisions 2026-05-27).
+  // Forking lands a private copy in the actor's My Workflows, which
+  // carries no allowed-install set — so the fork opens on the current
+  // install without re-tripping the gate. The user can work freely;
+  // they just can't publish back to the team until on a blessed install.
+  const forkId = personaStore.forkWorkflow(workflow.id)
+  isGateOpen.value = false
+  if (forkId) emit('open', forkId)
 }
 
 // Advisory dialog — opened by clicking the recommended-mismatch badge.
