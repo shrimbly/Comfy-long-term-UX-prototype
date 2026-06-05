@@ -41,10 +41,10 @@
             />
           </span>
           <div class="flex flex-col gap-1">
-            <h2 class="text-lg font-semibold">
+            <h2 class="m-0 text-lg font-semibold">
               {{ t('prototype.installGate.title') }}
             </h2>
-            <p class="text-sm text-muted-foreground">
+            <p class="m-0 text-sm text-muted-foreground">
               {{
                 t('prototype.installGate.subtitle', {
                   workflow: workflow.name
@@ -88,7 +88,7 @@
           >
             {{ t('prototype.installGate.remediationLabel') }}
           </span>
-          <p class="text-sm text-muted-foreground">
+          <p class="m-0 text-sm text-muted-foreground">
             {{ t('prototype.installGate.remediationHint') }}
           </p>
         </section>
