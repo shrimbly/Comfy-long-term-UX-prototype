@@ -131,7 +131,7 @@
     },
     "publishToWorkspace": {
       "title": "Publish to workspace",
-      "target": "Overwrites the team's “{workflow}” in {project}. The current version is replaced — there's no merge.",
+      "target": "Overwrites the team's “{workflow}” in {project}. The current version is replaced.",
       "confirmBody": "Your copy becomes the team's canonical version of this workflow. Teammates who open it will fork from your published version.",
       "permissionTitle": "You can't overwrite this workflow",
       "permissionBody": "Only the project owner or a workspace admin can publish over the team's version. Keep your changes in My Workflows, or ask an owner to publish them.",
