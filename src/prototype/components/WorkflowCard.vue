@@ -45,9 +45,16 @@
       </span>
       <span class="flex flex-col">
         <span class="truncate text-sm/tight">{{ workflow.name }}</span>
-        <span class="text-xs text-muted-foreground">{{
-          workflow.updatedAt
-        }}</span>
+        <span class="text-xs text-muted-foreground">
+          {{
+            ownerName
+              ? t('prototype.workflowCard.meta', {
+                  date: workflow.updatedAt,
+                  user: ownerName
+                })
+              : workflow.updatedAt
+          }}
+        </span>
       </span>
     </button>
 
@@ -69,6 +76,7 @@ import { useI18n } from 'vue-i18n'
 
 import WorkflowContextMenu from './WorkflowContextMenu.vue'
 import { useViewerWorkflowRole } from '../composables/useViewerWorkflowRole'
+import { usePrototypePersonaStore } from '../stores/personaStore'
 import { thumbnailGradient } from '../utils/thumbnail'
 import type { Workflow } from '../types'
 
@@ -83,7 +91,16 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
+const personaStore = usePrototypePersonaStore()
 const thumbnail = computed(() => thumbnailGradient(workflow.id))
+
+// Branch cards show whose branch it is next to the date.
+const ownerName = computed(() => {
+  if (!workflow.forkedFrom) return null
+  const id = workflow.ownerUserId
+  if (!id) return null
+  return personaStore.fixture.members.find((m) => m.id === id)?.name ?? null
+})
 
 const workflowRef = computed(() => workflow)
 const viewerRole = useViewerWorkflowRole(workflowRef)

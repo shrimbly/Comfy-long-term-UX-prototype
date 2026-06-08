@@ -99,6 +99,7 @@
     "workflowCard": {
       "storageLocal": "Saved locally",
       "storageCloud": "Saved to cloud",
+      "meta": "{date} · {user}",
       "compatBlocked": "Requires install: {required}. You're on: {current}.",
       "compatRecommendedMismatch": "Recommended: ComfyUI {recommended}. You're on: ComfyUI {current}.",
       "forkOnOpenSummary": "Branch in this project",

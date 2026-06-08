@@ -27,7 +27,7 @@
 
     <header class="flex items-start justify-between gap-4">
       <div class="flex items-center gap-3">
-        <h1 class="text-2xl font-semibold">{{ project?.name }}</h1>
+        <h1 class="m-0 text-2xl font-semibold">{{ project?.name }}</h1>
         <span
           v-if="project"
           class="rounded-sm bg-secondary-background-hover px-2 py-0.5 text-xs text-muted-foreground"
@@ -146,7 +146,7 @@
         </div>
         <div
           v-if="workflows.length"
-          class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4"
+          class="grid grid-cols-[repeat(auto-fill,minmax(10rem,14rem))] gap-4"
         >
           <WorkflowCard
             v-for="wf in workflows"

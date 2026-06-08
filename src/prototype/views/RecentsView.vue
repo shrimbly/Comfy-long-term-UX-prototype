@@ -87,7 +87,7 @@
 
       <div
         v-if="sortedWorkflows.length"
-        class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4"
+        class="grid grid-cols-[repeat(auto-fill,minmax(10rem,14rem))] gap-4"
       >
         <WorkflowCard
           v-for="wf in sortedWorkflows"
@@ -131,7 +131,9 @@
             {{ t('prototype.views.recents.templatesHeading') }}
           </h2>
         </header>
-        <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+        <div
+          class="grid grid-cols-[repeat(auto-fill,minmax(10rem,14rem))] gap-4"
+        >
           <TemplateCard
             v-for="tpl in starterTemplates"
             :key="tpl.id"

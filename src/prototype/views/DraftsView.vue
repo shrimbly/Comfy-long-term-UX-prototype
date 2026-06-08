@@ -65,7 +65,7 @@
 
     <div
       v-if="activeWorkflows.length"
-      class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4"
+      class="grid grid-cols-[repeat(auto-fill,minmax(10rem,14rem))] gap-4"
     >
       <WorkflowCard v-for="wf in activeWorkflows" :key="wf.id" :workflow="wf" />
     </div>
@@ -96,7 +96,9 @@
         >
           {{ t('prototype.views.drafts.templatesHeading') }}
         </h2>
-        <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+        <div
+          class="grid grid-cols-[repeat(auto-fill,minmax(10rem,14rem))] gap-4"
+        >
           <TemplateCard
             v-for="tpl in starterTemplates"
             :key="tpl.id"
