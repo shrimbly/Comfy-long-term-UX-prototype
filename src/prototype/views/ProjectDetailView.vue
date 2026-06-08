@@ -191,15 +191,22 @@
       :project="project"
       @close="isSharingOpen = false"
     />
+
+    <ProjectAccessInstallNotice
+      v-if="installNoticeOpen && project"
+      :project="project"
+      @close="installNoticeOpen = false"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { cn } from '@comfyorg/tailwind-utils'
 import { storeToRefs } from 'pinia'
-import { computed, ref, watchEffect } from 'vue'
+import { computed, ref, watch, watchEffect } from 'vue'
 import { useI18n } from 'vue-i18n'
 
+import ProjectAccessInstallNotice from '../components/ProjectAccessInstallNotice.vue'
 import ProjectSharingDialog from '../components/ProjectSharingDialog.vue'
 import SubmissionReviewList from '../components/SubmissionReviewList.vue'
 import ProjectUsageSection from '../components/ProjectUsageSection.vue'
@@ -323,6 +330,19 @@ function onOpenWorkflow(workflowId: string) {
 function onOpenProject(id: string) {
   uiStore.go({ kind: 'project', projectId: id })
 }
+
+// Touchpoint 1: warn on entering an install-locked project. Shown to every
+// actor with a local install (cloud-only personas have none and are out of
+// scope). Re-fires on each project change.
+const installNoticeOpen = ref(false)
+watch(
+  () => projectId,
+  () => {
+    const locked = !!project.value?.allowedInstallIds?.length
+    installNoticeOpen.value = locked && fixture.value.installs.length > 0
+  },
+  { immediate: true }
+)
 
 // Canonicals only. Branches now live in the project too, but they belong
 // on the per-workflow detail page, not the project grid.

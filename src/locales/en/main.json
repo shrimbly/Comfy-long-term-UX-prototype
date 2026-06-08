@@ -119,6 +119,14 @@
       "current": "Current",
       "versionMeta": "{date} · {user}"
     },
+    "installNotice": {
+      "title": "Install-locked project",
+      "bodyLocked": "{project} runs on {install}. Switch to it to create and publish branches.",
+      "bodyCompliant": "{project} is locked to {install} — you're on it, so you're set to branch and publish.",
+      "switch": "Switch to {install}",
+      "continue": "Continue",
+      "requiredFallback": "the required install"
+    },
     "installChip": {
       "tooltip": "Active install",
       "ariaLabel": "Active install — open switcher",
