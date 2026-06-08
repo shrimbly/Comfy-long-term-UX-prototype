@@ -154,6 +154,7 @@
       "versionLine": "ComfyUI {version} or newer",
       "currentLine": "{name} · ComfyUI {version}",
       "currentNone": "No active install",
+      "body": "You can keep working on your current install. To match what this workflow was built for, switch to the recommended ComfyUI version.",
       "acknowledge": "Got it"
     },
     "submissionReview": {
@@ -189,10 +190,15 @@
       "subtitle": "You're not on this project's install. Open a copy now — publish back once you switch.",
       "requiredLabel": "Required to publish",
       "requiredFallback": "Team-locked install",
+      "requiredReason": "This project is locked to a specific install so everyone publishes from the same runtime.",
       "currentLabel": "Your install",
       "currentNone": "No active install",
+      "remediationLabel": "To publish back",
+      "remediationHint": "Switch to the team install, or keep working on your own copy.",
       "actionInstall": "Install {name}",
       "actionSwitchTo": "Switch to {name}",
+      "actionInstallTeamBuild": "Install the team build",
+      "actionUseCloudRuntime": "Use cloud runtime",
       "actionSaveToMyWorkflows": "Save to My Workflows",
       "close": "Not now"
     },
@@ -250,6 +256,7 @@
       "branch": "Branch",
       "saveToMyWorkflows": "Save to My Workflows",
       "moveToProject": "Move to project…",
+      "saveDestination": "Save location",
       "saveToCloud": "Save to cloud",
       "export": "Export…",
       "share": "Share…",
@@ -333,6 +340,19 @@
         "filterImages": "Images",
         "filterVideos": "Videos"
       },
+      "exploreV2": {
+        "title": "Explore",
+        "experimentBadge": "Experiment",
+        "searchPlaceholder": "Search or press ⌘K",
+        "chip": {
+          "generate": "Generate",
+          "media": "Media",
+          "templates": "Templates",
+          "projects": "Projects",
+          "workflows": "Workflows",
+          "settings": "Settings"
+        }
+      },
       "drafts": {
         "title": "My Workflows",
         "subtitle": "Your private space for new work",
@@ -405,6 +425,7 @@
         "settings": {
           "allowlistsHeading": "Allowlists",
           "defaultsHeading": "Defaults",
+          "usageHeading": "Usage",
           "installLock": {
             "heading": "Install lock",
             "description": "Pin this project to specific installs from the workspace registry. Workflows run only if the active install matches one of the entries below.",
@@ -648,6 +669,7 @@
           "empty": "No installs published yet. Publish an install from the install switcher to add it here.",
           "publishedBy": "ComfyUI {version} · Published by {user} · {date}",
           "lockedStatus": "Locked",
+          "lockedToggle": "Locked",
           "lockAction": "Lock",
           "unlockAction": "Unlock",
           "installAction": "Install",
