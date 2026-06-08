@@ -503,7 +503,45 @@ export const usePrototypePersonaStore = defineStore('prototype-persona', () => {
   // workflow's project — NOT necessarily the current workspace, per
   // the "forks land in host workspace" rule. Returns the new id so the
   // caller can route into the fork.
-  function forkWorkflow(workflowId: string): string | undefined {
+  // Create a BRANCH of a workflow per
+  // ../IA_Plan/wiki/decisions/published-workflow-model.md +
+  // ../IA_Plan/wiki/decisions/branch-vs-personal-copy.md. A branch lives in
+  // the SAME project as its canonical (not in My Workflows) so it stays
+  // under the project's governance and is visible to all collaborators. It
+  // carries `forkedFrom` lineage so it can Publish to workspace (overwrite
+  // the canonical). Branching a branch points at the original canonical.
+  function branchWorkflow(workflowId: string): string | undefined {
+    const source = fixture.value.workflows.find((w) => w.id === workflowId)
+    if (!source) return
+    const canonicalId = source.forkedFrom?.workflowId ?? source.id
+    const canonical =
+      fixture.value.workflows.find((w) => w.id === canonicalId) ?? source
+    const newId = `wf-branch-${Date.now()}`
+    const today = new Date().toISOString().slice(0, 10)
+    const atVersion = canonical.publishedVersions?.at(-1)?.at
+    fixture.value.workflows = [
+      ...fixture.value.workflows,
+      {
+        ...source,
+        id: newId,
+        // Lives in the canonical's project — visible to all collaborators.
+        projectId: canonical.projectId,
+        // Branch auto-name default per the wiki: "<Name> — <username>".
+        name: `${canonical.name} — ${fixture.value.currentUser.name}`,
+        ownerUserId: fixture.value.currentUser.id,
+        updatedAt: today,
+        forkedFrom: { workflowId: canonicalId, atVersion },
+        access: []
+      }
+    ]
+    return newId
+  }
+
+  // Detached personal copy in My Workflows per
+  // ../IA_Plan/wiki/decisions/branch-vs-personal-copy.md. No lineage — it
+  // cannot be published/merged back. Always available, free of project
+  // governance.
+  function saveToMyWorkflows(workflowId: string): string | undefined {
     const source = fixture.value.workflows.find((w) => w.id === workflowId)
     if (!source) return
     const sourceProject = fixture.value.projects.find(
@@ -512,7 +550,7 @@ export const usePrototypePersonaStore = defineStore('prototype-persona', () => {
     if (!sourceProject) return
     const myWorkflowsId = findHostMyWorkflows(sourceProject.workspaceId)
     if (!myWorkflowsId) return
-    const newId = `wf-fork-${Date.now()}`
+    const newId = `wf-copy-${Date.now()}`
     const today = new Date().toISOString().slice(0, 10)
     fixture.value.workflows = [
       ...fixture.value.workflows,
@@ -520,36 +558,21 @@ export const usePrototypePersonaStore = defineStore('prototype-persona', () => {
         ...source,
         id: newId,
         projectId: myWorkflowsId,
-        // Per ../IA_Plan/wiki/open-questions.md#fork-auto-name-default
-        // Proposed answer: `"<Original name> (fork)"`.
-        name: `${source.name} (fork)`,
+        name: `${source.name} (copy)`,
         ownerUserId: fixture.value.currentUser.id,
         updatedAt: today,
-        // Lineage per ../IA_Plan/wiki/decisions/published-workflow-model.md
-        // — records the source so the fork can later Publish to workspace
-        // (overwrite the canonical). Forking a fork points at the source
-        // fork; publish is only offered when this resolves to a canonical
-        // in a shared project.
-        forkedFrom: { workflowId: source.id },
-        // Asset-level grants do not carry to the fork — it's a fresh
-        // private asset in the actor's My Workflows.
+        forkedFrom: undefined,
         access: []
       }
     ]
     return newId
   }
 
-  // Fork-on-open per ../IA_Plan/wiki/decisions/published-workflow-model.md.
-  // Opening a workflow that lives in a SHARED project (not the user's My
-  // Workflows / Drafts) yields a working copy in My Workflows — editing
-  // a shared workflow is never in-place; every actor works on a fork and
-  // contributes back via Publish to workspace. A workflow already in My
-  // Workflows is edited directly (returned as-is).
-  //
-  // Reuse: if the user already has a fork of this canonical in My
-  // Workflows, return it rather than spawning duplicates (the wiki's
-  // transient-until-saved fork is approximated here by a single reused
-  // working copy). Returns the id to open.
+  // Branch-on-open per ../IA_Plan/wiki/decisions/published-workflow-model.md.
+  // Opening a workflow in a SHARED project yields a branch in that project —
+  // editing a shared workflow is never in-place. A workflow already in My
+  // Workflows is edited directly. Reuses the user's existing branch of the
+  // canonical rather than spawning duplicates. Returns the id to open.
   function openForWork(workflowId: string): string | undefined {
     const source = fixture.value.workflows.find((w) => w.id === workflowId)
     if (!source) return
@@ -557,16 +580,13 @@ export const usePrototypePersonaStore = defineStore('prototype-persona', () => {
       (p) => p.id === source.projectId
     )
     if (!sourceProject || sourceProject.isDrafts) return workflowId
-    const myWorkflowsId = findHostMyWorkflows(sourceProject.workspaceId)
-    if (!myWorkflowsId) return workflowId
     const existing = fixture.value.workflows.find(
       (w) =>
-        w.projectId === myWorkflowsId &&
         w.ownerUserId === fixture.value.currentUser.id &&
         w.forkedFrom?.workflowId === workflowId
     )
     if (existing) return existing.id
-    return forkWorkflow(workflowId)
+    return branchWorkflow(workflowId)
   }
 
   // Publish a fork to workspace — overwrite the canonical workflow it was
@@ -968,7 +988,8 @@ export const usePrototypePersonaStore = defineStore('prototype-persona', () => {
     setWorkflowStorage,
     getEffectiveWorkflowStorage,
     moveWorkflowToProject,
-    forkWorkflow,
+    branchWorkflow,
+    saveToMyWorkflows,
     openForWork,
     publishToWorkspace,
     pendingWorkflowSubmissions,

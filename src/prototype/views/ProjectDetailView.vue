@@ -324,9 +324,11 @@ function onOpenProject(id: string) {
   uiStore.go({ kind: 'project', projectId: id })
 }
 
+// Canonicals only. Branches now live in the project too, but they belong
+// on the per-workflow detail page, not the project grid.
 const workflows = computed(() =>
   fixture.value.workflows
-    .filter((w) => w.projectId === projectId)
+    .filter((w) => w.projectId === projectId && !w.forkedFrom)
     .toSorted((a, b) => b.updatedAt.localeCompare(a.updatedAt))
 )
 

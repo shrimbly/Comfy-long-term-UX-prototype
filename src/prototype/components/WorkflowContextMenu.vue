@@ -158,13 +158,26 @@ function onRename() {
   personaStore.renameWorkflow(workflow.id, next)
 }
 
-function onFork() {
-  const newId = personaStore.forkWorkflow(workflow.id)
+function onBranch() {
+  const newId = personaStore.branchWorkflow(workflow.id)
   if (!newId) return
   toast.add({
     severity: 'success',
-    summary: t('prototype.workflowMenu.toast.forkedSummary'),
-    detail: t('prototype.workflowMenu.toast.forkedDetail', {
+    summary: t('prototype.workflowMenu.toast.branchedSummary'),
+    detail: t('prototype.workflowMenu.toast.branchedDetail', {
+      name: workflow.name
+    }),
+    life: 2800
+  })
+}
+
+function onSaveToMyWorkflows() {
+  const newId = personaStore.saveToMyWorkflows(workflow.id)
+  if (!newId) return
+  toast.add({
+    severity: 'success',
+    summary: t('prototype.workflowMenu.toast.savedCopySummary'),
+    detail: t('prototype.workflowMenu.toast.savedCopyDetail', {
       name: workflow.name
     }),
     life: 2800
@@ -245,9 +258,14 @@ const items = computed<MenuItem[]>(() => {
       command: onRename
     })
     out.push({
-      label: t('prototype.workflowMenu.duplicate'),
+      label: t('prototype.workflowMenu.branch'),
+      icon: 'icon-[lucide--git-branch]',
+      command: onBranch
+    })
+    out.push({
+      label: t('prototype.workflowMenu.saveToMyWorkflows'),
       icon: 'icon-[lucide--copy]',
-      command: onFork
+      command: onSaveToMyWorkflows
     })
     out.push({
       label: t('prototype.workflowMenu.moveToProject'),
@@ -284,9 +302,14 @@ const items = computed<MenuItem[]>(() => {
   if (isRunner.value) {
     out.push({ separator: true })
     out.push({
-      label: t('prototype.workflowMenu.fork'),
-      icon: 'icon-[lucide--git-fork]',
-      command: onFork
+      label: t('prototype.workflowMenu.branch'),
+      icon: 'icon-[lucide--git-branch]',
+      command: onBranch
+    })
+    out.push({
+      label: t('prototype.workflowMenu.saveToMyWorkflows'),
+      icon: 'icon-[lucide--copy]',
+      command: onSaveToMyWorkflows
     })
   }
 

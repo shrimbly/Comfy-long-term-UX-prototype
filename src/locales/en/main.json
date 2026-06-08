@@ -101,15 +101,15 @@
       "storageCloud": "Saved to cloud",
       "compatBlocked": "Requires install: {required}. You're on: {current}.",
       "compatRecommendedMismatch": "Recommended: ComfyUI {recommended}. You're on: ComfyUI {current}.",
-      "forkOnOpenSummary": "Working copy in My Workflows",
-      "forkOnOpenDetail": "You're editing a copy of \"{name}\". Publish to workspace to update the team version."
+      "forkOnOpenSummary": "Branch in this project",
+      "forkOnOpenDetail": "You're editing a branch of \"{name}\". Publish to workspace to update the team version."
     },
     "workflowDetail": {
       "workflowTag": "Workflow",
       "appTag": "App",
       "open": "Open",
-      "forksHeading": "Forks ({count})",
-      "noForks": "No forks yet. Open to create one.",
+      "forksHeading": "Branches ({count})",
+      "noForks": "No branches yet. Open to create one.",
       "yours": "You"
     },
     "history": {
@@ -234,6 +234,8 @@
       "rename": "Rename…",
       "duplicate": "Duplicate",
       "fork": "Fork to My Workflows",
+      "branch": "Branch",
+      "saveToMyWorkflows": "Save to My Workflows",
       "moveToProject": "Move to project…",
       "saveToCloud": "Save to cloud",
       "export": "Export…",
@@ -250,6 +252,10 @@
       "toast": {
         "forkedSummary": "Forked",
         "forkedDetail": "A copy of \"{name}\" was added to My Workflows.",
+        "branchedSummary": "Branched",
+        "branchedDetail": "A branch of \"{name}\" was created in the project.",
+        "savedCopySummary": "Saved to My Workflows",
+        "savedCopyDetail": "A personal copy of \"{name}\" is in My Workflows.",
         "movedSummary": "Moved",
         "movedDetail": "\"{name}\" moved to {project}.",
         "deletedSummary": "Deleted",
