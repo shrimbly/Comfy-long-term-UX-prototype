@@ -11,7 +11,7 @@
 // least Runner.
 
 import { computed } from 'vue'
-import type { ComputedRef, Ref } from 'vue'
+import type { ComputedRef } from 'vue'
 
 import type { Workflow } from '../types'
 import { usePrototypePersonaStore } from '../stores/personaStore'
@@ -19,7 +19,7 @@ import { usePrototypePersonaStore } from '../stores/personaStore'
 export type ViewerWorkflowRole = 'owner' | 'runner' | 'app-runner' | 'none'
 
 export function useViewerWorkflowRole(
-  workflow: Ref<Workflow | undefined> | ComputedRef<Workflow | undefined>
+  workflow: ComputedRef<Workflow | undefined>
 ): ComputedRef<ViewerWorkflowRole> {
   const personaStore = usePrototypePersonaStore()
 

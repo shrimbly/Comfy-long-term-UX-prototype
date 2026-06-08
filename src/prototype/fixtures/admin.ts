@@ -197,6 +197,24 @@ export const adminFixture: PersonaFixture = {
       installLockDisplayName: 'VFX team Q2 2026'
     },
     {
+      // Restricted by membership, but NOT install-gated — no
+      // allowedInstallIds. A collaborator (Mira) can open, work on a
+      // copy, and submit it for publishing; she hits only the permission
+      // gate, never an install gate. Contrast with Client X (restricted
+      // AND install-locked) — this isolates the permission dimension.
+      id: 'proj-indie-short',
+      workspaceId: comfyOrg.id,
+      name: 'Indie Short Film',
+      tier: 'restricted',
+      ownerUserId: user.id,
+      isDrafts: false,
+      currentUserHasAccess: true,
+      members: [
+        { userId: user.id, role: 'owner' },
+        { userId: 'user-mira', role: 'collaborator' }
+      ]
+    },
+    {
       id: 'proj-cocacola',
       workspaceId: comfyOrg.id,
       name: 'Coca-Cola Ad',
@@ -276,7 +294,59 @@ export const adminFixture: PersonaFixture = {
       kind: 'workflow',
       ownerUserId: user.id,
       updatedAt: '2026-05-11',
-      storage: 'cloud'
+      storage: 'cloud',
+      // Busy history to exercise the version-history graph.
+      publishedVersions: [
+        { byUserId: user.id, at: '2026-03-02' },
+        { byUserId: 'user-jane', at: '2026-03-18' },
+        { byUserId: user.id, at: '2026-04-06' },
+        { byUserId: 'user-mira', at: '2026-04-14' },
+        { byUserId: 'user-jane', at: '2026-04-28' },
+        { byUserId: 'user-mira', at: '2026-05-04' },
+        { byUserId: 'user-alex', at: '2026-05-08' },
+        { byUserId: user.id, at: '2026-05-11' }
+      ]
+    },
+    {
+      // Mira's fork of the Moodboard canonical (lives in her My Workflows;
+      // surfaced on the canonical's detail page as a collaborator fork).
+      id: 'wf-fork-mira-moodboard',
+      projectId: 'proj-drafts',
+      name: 'Moodboard explorer (fork)',
+      kind: 'workflow',
+      ownerUserId: 'user-mira',
+      updatedAt: '2026-05-12',
+      storage: 'cloud',
+      forkedFrom: {
+        workflowId: 'wf-clientx-moodboard',
+        atVersion: '2026-05-04'
+      }
+    },
+    {
+      id: 'wf-fork-alex-moodboard',
+      projectId: 'proj-drafts',
+      name: 'Moodboard explorer (fork)',
+      kind: 'workflow',
+      ownerUserId: 'user-alex',
+      updatedAt: '2026-05-12',
+      storage: 'cloud',
+      forkedFrom: {
+        workflowId: 'wf-clientx-moodboard',
+        atVersion: '2026-05-08'
+      }
+    },
+    {
+      id: 'wf-fork-admin-moodboard',
+      projectId: 'proj-drafts',
+      name: 'Moodboard explorer (fork)',
+      kind: 'workflow',
+      ownerUserId: user.id,
+      updatedAt: '2026-05-13',
+      storage: 'cloud',
+      forkedFrom: {
+        workflowId: 'wf-clientx-moodboard',
+        atVersion: '2026-05-11'
+      }
     },
     {
       id: 'app-clientx-colorize',
@@ -286,6 +356,18 @@ export const adminFixture: PersonaFixture = {
       ownerUserId: user.id,
       access: [{ userId: 'user-mira', role: 'app-runner' }],
       updatedAt: '2026-05-09'
+    },
+    {
+      // Canonical workflow in the restricted-but-unlocked project. Mira
+      // (collaborator) opens → fork-on-open → can submit for publishing
+      // but is permission-blocked (not owner/admin); no install gate.
+      id: 'wf-indie-establishing',
+      projectId: 'proj-indie-short',
+      name: 'Establishing shot generator',
+      kind: 'workflow',
+      ownerUserId: user.id,
+      access: [{ userId: 'user-mira', role: 'runner' }],
+      updatedAt: '2026-05-11'
     },
     {
       id: 'wf-cocacola-hero',
@@ -826,7 +908,36 @@ export const adminFixture: PersonaFixture = {
       submittedAt: '2026-05-12'
     }
   ],
-  notifications: [],
+  // Pending submission: Mira (project Collaborator on Indie Short Film,
+  // a restricted-but-unlocked project) submitted her working copy of the
+  // establishing-shot workflow for an owner to publish. Willie (owner)
+  // sees it in the project Review tab + the workspace queue.
+  workflowSubmissions: [
+    {
+      id: 'wfsub-indie-establishing',
+      forkWorkflowId: 'wf-fork-mira-establishing',
+      canonicalWorkflowId: 'wf-indie-establishing',
+      workflowName: 'Establishing shot generator',
+      projectId: 'proj-indie-short',
+      submittedByUserId: 'user-mira',
+      submittedAt: '2026-05-12',
+      status: 'pending',
+      note: 'Tweaked the sky gradient + added a depth pass.'
+    }
+  ],
+  notifications: [
+    {
+      id: 'note-admin-sub-1',
+      kind: 'submission-received',
+      actorUserId: 'user-mira',
+      target: {
+        workspaceId: comfyOrg.id,
+        projectId: 'proj-indie-short',
+        assetId: 'wf-indie-establishing'
+      },
+      createdAt: '2026-05-12'
+    }
+  ],
   // Admin owns two installs — a personal dev sandbox and the team-blessed
   // VFX build referenced by Comfy Org's projects. Active is the personal
   // one (most-recent-used per open-q `default-active-install`).

@@ -20,15 +20,13 @@ export const managedArtistFixture: PersonaFixture = {
     name: 'Jonah Park',
     email: 'jonah@comfy.org'
   },
-  // One install — the team build. The `id` is the bundle identity
-  // (same as on Sasha's machine + the project's allowed-install list);
-  // the `displayName` is Jonah's own label and intentionally differs
-  // from the workspace-canonical name to illustrate that install names
-  // are user-chosen — see prototype/design-decisions.md 2026-05-19.
+  // One install — the team build. Switcher popover shows nothing to
+  // switch to, matching the Journey 2 expectation that this artist
+  // rarely engages the install surface.
   installs: [
     {
       id: 'install-vfx-team-q2-2026',
-      displayName: 'Comfy team',
+      displayName: 'VFX team Q2 2026',
       comfyUIVersion: '0.3.5',
       registeredAt: '2026-04-08'
     }

@@ -38,22 +38,29 @@ const miraDrafts: Project = {
   currentUserHasAccess: true
 }
 
-// Only Client X is visible. Workspace-wide projects are hidden (Mira is a
-// workspace-level Guest, not a Member — auto-Owner rule does not apply,
-// and workspace-wide visibility requires Member+).
+// Two restricted projects Mira collaborates on, chosen to isolate the
+// two gate dimensions:
+//   - Client X        — restricted AND install-locked (permission + install)
+//   - Indie Short Film — restricted, NOT install-gated (permission only)
+// Workspace-wide projects stay hidden (Mira is a workspace Guest, not a
+// Member — auto-Owner / workspace-wide visibility require Member+).
 const projectsForMira: Project[] = [
   miraDrafts,
   {
     ...(adminFixture.projects.find((p) => p.id === 'proj-client-x') ??
       adminFixture.projects[0]),
     currentUserHasAccess: true
+  },
+  {
+    ...(adminFixture.projects.find((p) => p.id === 'proj-indie-short') ??
+      adminFixture.projects[0]),
+    currentUserHasAccess: true
   }
 ]
 
-const workflowsForMira: Workflow[] = adminFixture.workflows.filter((w) => {
-  if (w.projectId === 'proj-client-x') return true
-  return false
-})
+const workflowsForMira: Workflow[] = adminFixture.workflows.filter(
+  (w) => w.projectId === 'proj-client-x' || w.projectId === 'proj-indie-short'
+)
 
 export const projectCollaboratorFixture: PersonaFixture = {
   ...adminFixture,
@@ -94,8 +101,25 @@ export const projectCollaboratorFixture: PersonaFixture = {
       target: { workspaceId: 'ws-comfy-org', projectId: 'proj-client-x' },
       createdAt: '2026-05-09',
       readAt: '2026-05-10'
+    },
+    {
+      // Submitter side of the review flow: an earlier submission of
+      // Mira's was published by an owner. Demonstrates the notification
+      // the submitter receives (the reviewer side is seeded in admin.ts).
+      id: 'note-mira-sub-approved',
+      kind: 'submission-approved',
+      actorUserId: 'user-admin',
+      target: {
+        workspaceId: 'ws-comfy-org',
+        projectId: 'proj-indie-short',
+        assetId: 'wf-indie-establishing'
+      },
+      createdAt: '2026-05-11'
     }
   ],
+  // Mira collaborates on Indie Short Film (restricted, not install-gated)
+  // in addition to Client X — surfaced via projectsForMira/workflowsForMira.
+  workflowSubmissions: adminFixture.workflowSubmissions,
   // Cloud-runtime collaborator — install-agnostic. The canonical §4
   // Project Collaborator in the wiki is defined purely by permission
   // position; the install dimension belongs to §4a Freelancer, which

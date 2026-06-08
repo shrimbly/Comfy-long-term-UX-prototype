@@ -104,6 +104,21 @@
       "forkOnOpenSummary": "Working copy in My Workflows",
       "forkOnOpenDetail": "You're editing a copy of \"{name}\". Publish to workspace to update the team version."
     },
+    "workflowDetail": {
+      "workflowTag": "Workflow",
+      "appTag": "App",
+      "open": "Open",
+      "forksHeading": "Forks ({count})",
+      "noForks": "No forks yet. Open to create one.",
+      "yours": "You"
+    },
+    "history": {
+      "heading": "Published versions",
+      "empty": "Not published yet.",
+      "version": "V{number}",
+      "current": "Current",
+      "versionMeta": "{date} · {user}"
+    },
     "installChip": {
       "tooltip": "Active install",
       "ariaLabel": "Active install — open switcher",
@@ -119,40 +134,50 @@
       "activeLockedNote": "This install is locked by {workspace}. Adding custom nodes, updating ComfyUI, and changing node versions are disabled while you're running on it."
     },
     "runtimeRecommendation": {
-      "title": "This workflow expects a newer runtime",
-      "subtitle": "“{workflow}” was authored against a newer ComfyUI version. It may still run; some features could behave unexpectedly.",
+      "title": "Built for a newer version",
+      "subtitle": "“{workflow}” was made for a newer ComfyUI. It'll still run — some nodes may behave differently.",
       "recommendedLabel": "Recommended",
-      "currentLabel": "Your active install",
+      "currentLabel": "Your install",
       "versionLine": "ComfyUI {version} or newer",
       "currentLine": "{name} · ComfyUI {version}",
       "currentNone": "No active install",
-      "body": "This is a soft recommendation — nothing is blocked. The workflow author flagged a minimum runtime version they tested against.",
       "acknowledge": "Got it"
+    },
+    "submissionReview": {
+      "empty": "No submissions to review.",
+      "meta": "Submitted by {user} · {date}",
+      "approve": "Publish",
+      "reject": "Decline",
+      "lockedToApprove": "Publishing needs the {required} install — switch to it to approve.",
+      "teamInstall": "team install",
+      "toast": {
+        "approvedSummary": "Published",
+        "approvedDetail": "Published {user}'s changes to “{workflow}”.",
+        "rejectedSummary": "Declined",
+        "rejectedDetail": "Declined {user}'s changes to “{workflow}”."
+      }
     },
     "publishToWorkspace": {
       "title": "Publish to workspace",
-      "target": "Overwrites the team's “{workflow}” in {project}. The current version is replaced.",
-      "confirmBody": "Your copy becomes the team's canonical version of this workflow. Teammates who open it will fork from your published version.",
-      "permissionTitle": "You can't overwrite this workflow",
-      "permissionBody": "Only the project owner or a workspace admin can publish over the team's version. Keep your changes in My Workflows, or ask an owner to publish them.",
-      "permissionBodyOwner": "Only the project owner ({owner}) or a workspace admin can publish over the team's version. Keep your changes in My Workflows, or ask {owner} to publish them.",
-      "installTitle": "Publishing requires the team install",
-      "installBody": "This project is locked to {required}. You're on {current}. Switch to the required install, or update the project's allowed installs, then publish.",
+      "target": "“{workflow}” · {project}",
+      "confirmBody": "This replaces the team's version with your copy. Teammates will fork from yours.",
+      "permissionTitle": "Only owners can publish",
+      "permissionBody": "Keep working in My Workflows, or ask a project owner to publish for you.",
+      "permissionBodyOwner": "Keep working in My Workflows, or ask {owner} to publish for you.",
+      "installTitle": "Switch to the team install",
+      "installBody": "Publishing needs {required}. You're on {current}.",
       "noInstall": "no local install",
       "cancel": "Keep in My Workflows",
-      "askOwner": "Ask an owner to publish",
-      "publish": "Publish to workspace"
+      "askOwner": "Submit",
+      "publish": "Publish"
     },
     "installGate": {
-      "title": "This project is locked to a specific install",
-      "subtitle": "“{workflow}” lives in a project locked to a specific install. You can work on your own copy, but you can't publish changes back to the team until you're on the required install.",
+      "title": "Work on your own copy",
+      "subtitle": "You're not on this project's install. Open a copy now — publish back once you switch.",
       "requiredLabel": "Required to publish",
       "requiredFallback": "Team-locked install",
-      "requiredReason": "Set by the project owner. Publishing back to the team requires this install.",
-      "currentLabel": "Your active install",
+      "currentLabel": "Your install",
       "currentNone": "No active install",
-      "remediationLabel": "What you can do",
-      "remediationHint": "Save a copy to My Workflows to work freely on your current install. Or install/switch to the team build so you can publish back later.",
       "actionInstall": "Install {name}",
       "actionSwitchTo": "Switch to {name}",
       "actionSaveToMyWorkflows": "Save to My Workflows",
@@ -238,7 +263,8 @@
         "outputsStub": "Output history isn't wired up in this pass.",
         "publishedSummary": "Published to workspace",
         "publishedDetail": "\"{workflow}\" in {project} now reflects your changes.",
-        "askOwnerStub": "Requesting an owner to publish isn't wired up in this pass."
+        "submittedSummary": "Submitted for review",
+        "submittedDetail": "\"{workflow}\" was sent to the project owners to publish."
       },
       "saveToCloudPrompt": {
         "title": "Save to cloud first?",
@@ -349,9 +375,11 @@
         "viewMediaAssets": "Media assets",
         "tabs": {
           "workflows": "Workflows",
+          "review": "Review",
           "settings": "Settings",
           "usage": "Usage"
         },
+        "reviewHeading": "Submitted for review",
         "settings": {
           "allowlistsHeading": "Allowlists",
           "defaultsHeading": "Defaults",
@@ -476,7 +504,10 @@
           "asset-grant": "{actor} gave you access to {asset}",
           "asset-update": "{actor} updated {asset}",
           "project-grant": "{actor} added you to {project}",
-          "workspace-invite": "{actor} invited you to {workspace}"
+          "workspace-invite": "{actor} invited you to {workspace}",
+          "submission-received": "{actor} submitted {asset} for review",
+          "submission-approved": "{actor} published your changes to {asset}",
+          "submission-rejected": "{actor} declined your changes to {asset}"
         },
         "unknownActor": "Someone",
         "unknownAsset": "an asset",
@@ -580,9 +611,14 @@
           "general": "General",
           "allowlists": "Allowlists",
           "installs": "Installs",
+          "review": "Review",
           "publishing": "Publishing",
           "billing": "Billing & credit limits",
           "advanced": "Advanced"
+        },
+        "review": {
+          "heading": "Submitted workflows",
+          "description": "Working copies submitted by collaborators for publishing. Approve to publish over the team version, or decline."
         },
         "installs": {
           "heading": "{workspace} installs",

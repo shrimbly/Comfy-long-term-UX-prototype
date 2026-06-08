@@ -157,7 +157,13 @@ const kindKey: Record<NotificationKind, string> = {
   'asset-grant': 'prototype.views.notifications.kind.asset-grant',
   'asset-update': 'prototype.views.notifications.kind.asset-update',
   'project-grant': 'prototype.views.notifications.kind.project-grant',
-  'workspace-invite': 'prototype.views.notifications.kind.workspace-invite'
+  'workspace-invite': 'prototype.views.notifications.kind.workspace-invite',
+  'submission-received':
+    'prototype.views.notifications.kind.submission-received',
+  'submission-approved':
+    'prototype.views.notifications.kind.submission-approved',
+  'submission-rejected':
+    'prototype.views.notifications.kind.submission-rejected'
 }
 
 function messageFor(n: Notification) {

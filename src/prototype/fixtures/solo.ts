@@ -117,6 +117,7 @@ export const soloFixture: PersonaFixture = {
   },
   memberCreditLimits: [],
   hubSubmissions: [],
+  workflowSubmissions: [],
   notifications: [],
   // Solo cloud has no install presence — they run on Comfy Cloud BE only.
   installs: [],

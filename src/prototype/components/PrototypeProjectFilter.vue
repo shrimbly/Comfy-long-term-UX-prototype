@@ -16,14 +16,12 @@
     :model-value="selectedProjectId ?? ALL_OPTION_VALUE"
     :label="t('prototype.mediaAssets.projectFilter.placeholder')"
     :options="options"
-    size="lg"
+    size="md"
     class="w-full"
-    :style="{ backgroundColor: 'var(--base-background)' }"
-    trigger-inner-class="pl-2"
     @update:model-value="onChange"
   >
     <template #icon>
-      <i class="text-neutral icon-[lucide--briefcase] shrink-0 text-sm" />
+      <i class="icon-[lucide--briefcase] size-4 text-muted-foreground" />
     </template>
   </SingleSelect>
 </template>
@@ -48,7 +46,7 @@ const options = computed(() => [
   },
   ...availableProjects.value.map((p) => ({
     value: p.id,
-    name: p.name
+    name: `${p.name} (${p.count})`
   }))
 ])
 

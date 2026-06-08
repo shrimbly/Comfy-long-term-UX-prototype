@@ -42,12 +42,7 @@
     <template #item="{ item, props }">
       <Button
         variant="secondary"
-        :class="
-          cn(
-            'w-full justify-start gap-2',
-            (item as InactiveMenuItem).inactive && 'opacity-50'
-          )
-        "
+        class="w-full justify-start gap-2"
         v-bind="props.action"
       >
         <i v-if="item.icon" :class="cn('size-4', item.icon)" />
@@ -66,57 +61,6 @@
     @close="moveDialogOpen = false"
     @moved="onMoved"
   />
-
-  <PublishToWorkspaceDialog
-    v-if="publishDialogOpen"
-    :state="publishState"
-    @close="publishDialogOpen = false"
-    @publish="onPublishConfirmed"
-    @ask-owner="onAskOwner"
-  />
-
-  <Teleport v-if="saveToCloudPrompt" to="body">
-    <div
-      class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
-      role="dialog"
-      aria-modal="true"
-      @click.self="saveToCloudPrompt = null"
-    >
-      <div
-        class="flex w-full max-w-sm flex-col gap-4 rounded-2xl border border-border-subtle bg-base-background p-6 shadow-2xl"
-      >
-        <header class="flex flex-col gap-1">
-          <h2 class="text-lg font-semibold">
-            {{ t('prototype.workflowMenu.saveToCloudPrompt.title') }}
-          </h2>
-          <p class="text-sm text-muted-foreground">
-            {{
-              t(
-                `prototype.workflowMenu.saveToCloudPrompt.body.${saveToCloudPrompt}`,
-                { name: workflow.name }
-              )
-            }}
-          </p>
-        </header>
-        <footer class="flex justify-end gap-2">
-          <button
-            type="button"
-            class="inline-flex h-9 cursor-pointer items-center rounded-lg bg-secondary-background px-3 text-sm transition-colors hover:bg-secondary-background-hover"
-            @click="saveToCloudPrompt = null"
-          >
-            {{ t('prototype.workflowMenu.saveToCloudPrompt.cancel') }}
-          </button>
-          <button
-            type="button"
-            class="inline-flex h-9 cursor-pointer items-center rounded-lg bg-primary-background px-3 text-sm font-medium text-button-surface-contrast transition-colors hover:bg-primary-background-hover"
-            @click="confirmSaveAndContinue"
-          >
-            {{ t('prototype.workflowMenu.saveToCloudPrompt.confirm') }}
-          </button>
-        </footer>
-      </div>
-    </div>
-  </Teleport>
 </template>
 
 <script setup lang="ts">
@@ -130,12 +74,9 @@ import { useI18n } from 'vue-i18n'
 
 import Button from '@/components/ui/button/Button.vue'
 
-import PublishToWorkspaceDialog from './PublishToWorkspaceDialog.vue'
 import WorkflowMoveDialog from './WorkflowMoveDialog.vue'
 import { usePrototypePersonaStore } from '../stores/personaStore'
-import { usePrototypeUiStore } from '../stores/uiStore'
 import type { ViewerWorkflowRole } from '../composables/useViewerWorkflowRole'
-import { useWorkflowPublish } from '../composables/useWorkflowPublish'
 import type { Workflow } from '../types'
 
 const {
@@ -156,7 +97,6 @@ const emit = defineEmits<{
 const { t } = useI18n()
 const toast = useToast()
 const personaStore = usePrototypePersonaStore()
-const uiStore = usePrototypeUiStore()
 const { fixture } = storeToRefs(personaStore)
 
 type ContextMenuHandle = {
@@ -166,29 +106,6 @@ type ContextMenuHandle = {
 const contextMenu = ref<ContextMenuHandle | null>(null)
 
 const moveDialogOpen = ref(false)
-const publishDialogOpen = ref(false)
-
-// Publish-to-workspace gate state for this workflow. `isPublishable` is
-// true only for forks whose source resolves to a canonical in a shared
-// project — that's when the menu item appears.
-const workflowRef = computed(() => workflow)
-const publishState = useWorkflowPublish(workflowRef)
-
-// Share / Publish / Submit assume a cloud-resident workflow per
-// concepts/sharing-vs-publishing.md ("Recipients access a canonical
-// workflow inside the host workspace"). When the workflow is local, we
-// surface the menu items as inactive and intercept the click with a
-// "Save to cloud first?" prompt — matching the wiki's "auto-created
-// lazily" language in decisions/save-destination-workflow-level.md.
-type SaveToCloudIntent = 'share' | 'publish-link' | 'publish-hub'
-const saveToCloudPrompt = ref<SaveToCloudIntent | null>(null)
-
-type InactiveMenuItem = MenuItem & { inactive?: boolean }
-
-const effectiveStorage = computed(() =>
-  personaStore.getEffectiveWorkflowStorage(workflow.id, workflow.storage)
-)
-const isLocal = computed(() => effectiveStorage.value !== 'cloud')
 
 const isOwner = computed(() => viewerRole === 'owner')
 const isRunner = computed(() => viewerRole === 'runner')
@@ -219,11 +136,11 @@ function show(event: MouseEvent) {
 }
 defineExpose({ show })
 
-function toastStub(key: string) {
+function toastStub(key: string, params?: Record<string, unknown>) {
   toast.add({
     severity: 'info',
     summary: t('prototype.workflowMenu.toastStubSummary'),
-    detail: t(key),
+    detail: params ? t(key, params) : t(key),
     life: 2200
   })
 }
@@ -271,55 +188,9 @@ function onMoved(targetProjectId: string) {
   })
 }
 
-function onSaveToCloud() {
-  if (effectiveStorage.value === 'cloud') return
-  personaStore.setWorkflowStorage(workflow.id, 'cloud')
-  toast.add({
-    severity: 'success',
-    summary: t('prototype.workflowMenu.toast.savedToCloudSummary'),
-    detail: t('prototype.workflowMenu.toast.savedToCloudDetail', {
-      name: workflow.name
-    }),
-    life: 2800
-  })
-}
-
-function onExport() {
-  toastStub('prototype.workflowMenu.toast.exportStub')
-}
-
-function runShareIntent(intent: SaveToCloudIntent) {
-  if (intent === 'share') {
-    toastStub('prototype.workflowMenu.toast.shareStub')
-  } else if (intent === 'publish-link') {
-    toastStub('prototype.workflowMenu.toast.publishLinkStub')
-  } else {
-    toastStub('prototype.workflowMenu.toast.publishHubStub')
-  }
-}
-
-function onShareIntent(intent: SaveToCloudIntent) {
-  if (isLocal.value) {
-    saveToCloudPrompt.value = intent
-    return
-  }
-  runShareIntent(intent)
-}
-
-function confirmSaveAndContinue() {
-  const intent = saveToCloudPrompt.value
-  saveToCloudPrompt.value = null
-  if (!intent) return
-  personaStore.setWorkflowStorage(workflow.id, 'cloud')
-  toast.add({
-    severity: 'success',
-    summary: t('prototype.workflowMenu.toast.savedToCloudSummary'),
-    detail: t('prototype.workflowMenu.toast.savedToCloudDetail', {
-      name: workflow.name
-    }),
-    life: 2200
-  })
-  runShareIntent(intent)
+function onSetStorage(value: 'local' | 'cloud') {
+  if (workflow.storage === value) return
+  personaStore.setWorkflowStorage(workflow.id, value)
 }
 
 function onDelete() {
@@ -338,34 +209,8 @@ function onDelete() {
   })
 }
 
-function onPublishToWorkspace() {
-  publishDialogOpen.value = true
-}
-
-function onPublishConfirmed() {
-  const ok = personaStore.publishToWorkspace(workflow.id)
-  publishDialogOpen.value = false
-  if (!ok) return
-  toast.add({
-    severity: 'success',
-    summary: t('prototype.workflowMenu.toast.publishedSummary'),
-    detail: t('prototype.workflowMenu.toast.publishedDetail', {
-      workflow: publishState.value.targetWorkflowName ?? workflow.name,
-      project: publishState.value.targetProjectName ?? ''
-    }),
-    life: 2800
-  })
-}
-
-function onAskOwner() {
-  // member-overwrite-request-flow is not MVP (open question) — stub.
-  publishDialogOpen.value = false
-  toastStub('prototype.workflowMenu.toast.askOwnerStub')
-}
-
 function onOpenContainingProject() {
   if (!sourceProject.value) return
-  uiStore.go({ kind: 'project', projectId: sourceProject.value.id })
   emit('open-project', sourceProject.value.id)
 }
 
@@ -409,19 +254,28 @@ const items = computed<MenuItem[]>(() => {
       icon: 'icon-[lucide--folder-input]',
       command: onMove
     })
-    if (effectiveStorage.value === 'cloud') {
-      out.push({
-        label: t('prototype.workflowMenu.export'),
-        icon: 'icon-[lucide--download]',
-        command: onExport
-      })
-    } else {
-      out.push({
-        label: t('prototype.workflowMenu.saveToCloud'),
-        icon: 'icon-[lucide--cloud-upload]',
-        command: onSaveToCloud
-      })
-    }
+    out.push({
+      label: t('prototype.workflowMenu.saveDestination'),
+      icon: 'icon-[lucide--save]',
+      items: [
+        {
+          label: t('prototype.workflowCard.storageLocal'),
+          icon:
+            workflow.storage === 'local'
+              ? 'icon-[lucide--check]'
+              : 'icon-[lucide--hard-drive]',
+          command: () => onSetStorage('local')
+        },
+        {
+          label: t('prototype.workflowCard.storageCloud'),
+          icon:
+            workflow.storage === 'cloud'
+              ? 'icon-[lucide--check]'
+              : 'icon-[lucide--cloud]',
+          command: () => onSetStorage('cloud')
+        }
+      ]
+    })
   }
 
   // Runner: fork-into-My-Workflows is the explicit way to get a working
@@ -436,48 +290,28 @@ const items = computed<MenuItem[]>(() => {
     })
   }
 
-  // Sharing / publishing — Owner only. All three require cloud
-  // residency per concepts/sharing-vs-publishing.md, so when storage
-  // is local the items render inactive and clicking opens the
-  // save-to-cloud prompt instead of running the action.
+  // Sharing / publishing — Owner only.
   if (isOwner.value) {
     out.push({ separator: true })
     out.push({
       label: t('prototype.workflowMenu.share'),
       icon: 'icon-[lucide--users-round]',
-      inactive: isLocal.value,
-      command: () => onShareIntent('share')
-    } satisfies InactiveMenuItem)
+      command: () => toastStub('prototype.workflowMenu.toast.shareStub')
+    })
     if (canPublishDirectLink.value) {
       out.push({
         label: t('prototype.workflowMenu.publishDirectLink'),
         icon: 'icon-[lucide--link]',
-        inactive: isLocal.value,
-        command: () => onShareIntent('publish-link')
-      } satisfies InactiveMenuItem)
+        command: () => toastStub('prototype.workflowMenu.toast.publishLinkStub')
+      })
     }
     if (canSubmitToHub.value) {
       out.push({
         label: t('prototype.workflowMenu.publishHub'),
         icon: 'icon-[lucide--upload]',
-        inactive: isLocal.value,
-        command: () => onShareIntent('publish-hub')
-      } satisfies InactiveMenuItem)
+        command: () => toastStub('prototype.workflowMenu.toast.publishHubStub')
+      })
     }
-  }
-
-  // Publish to workspace — appears on any fork whose source resolves to
-  // a canonical in a shared project. The dialog handles the gate (publish
-  // permission + install identity); the menu item is always enabled so
-  // the user can see *why* it's blocked (production home is the node-
-  // graph menu — this is the dashboard stand-in).
-  if (publishState.value.isPublishable) {
-    out.push({ separator: true })
-    out.push({
-      label: t('prototype.workflowMenu.publishToWorkspace'),
-      icon: 'icon-[lucide--upload]',
-      command: onPublishToWorkspace
-    })
   }
 
   // Outputs + navigation — available to everyone who can see the asset.

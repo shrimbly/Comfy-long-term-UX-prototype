@@ -105,6 +105,30 @@ export interface HubSubmission {
   submittedAt: string
 }
 
+// A request from a collaborator to publish their working copy over a
+// team canonical workflow they lack overwrite permission for. Per
+// ../IA_Plan/wiki/decisions/published-workflow-model.md §"member-overwrite
+// -request-flow" (promoted from open question 2026-05-27). Reviewed by
+// the project Owner / workspace Admin, who publishes (approve) or
+// declines (reject). Denormalized name fields so the review queue
+// renders without the submitter's fork being present in the reviewer's
+// fixture (per-persona fixtures don't share state).
+export type WorkflowSubmissionStatus = 'pending' | 'approved' | 'rejected'
+
+export interface WorkflowSubmission {
+  id: string
+  // The submitter's working copy (may not exist in a reviewer's fixture).
+  forkWorkflowId: string
+  // The canonical workflow this would overwrite, + its project.
+  canonicalWorkflowId: string
+  workflowName: string
+  projectId: string
+  submittedByUserId: string
+  submittedAt: string
+  status: WorkflowSubmissionStatus
+  note?: string
+}
+
 // Workspace-level allowlists per
 // ../IA_Plan/wiki/concepts/three-level-permissions.md §Workspace level.
 // "Set workspace-level model + custom-node allowlists (delegable to Members)".
@@ -245,8 +269,20 @@ export interface Workflow {
   // at the source workflow's id. A fork whose source resolves to a
   // canonical workflow in a shared project is eligible for Publish to
   // workspace (overwrite the canonical). Absent on directly-authored
-  // workflows and on canonical workflows themselves.
-  forkedFrom?: { workflowId: string }
+  // workflows and on canonical workflows themselves. `atVersion` is the
+  // canonical published-version date this fork diverged from — drives the
+  // history graph's offshoot point.
+  forkedFrom?: { workflowId: string; atVersion?: string }
+  // On a canonical: the full Publish-to-workspace timeline (who/when).
+  // Display/audit record; the latest publish is the current content. Per
+  // ../IA_Plan/wiki/decisions/published-workflow-model.md §"Published-
+  // version history".
+  publishedVersions?: PublishedVersion[]
+}
+
+export interface PublishedVersion {
+  byUserId: string
+  at: string
 }
 
 export interface LibraryAsset {
@@ -401,6 +437,10 @@ export type NotificationKind =
   | 'project-grant'
   | 'workspace-invite'
   | 'asset-update'
+  // Submission lifecycle (member-overwrite-request-flow):
+  | 'submission-received' // → owner/admin: a workflow was submitted for review
+  | 'submission-approved' // → submitter: their submission was published
+  | 'submission-rejected' // → submitter: their submission was declined
 
 export interface NotificationTarget {
   workspaceId: string
@@ -434,6 +474,7 @@ export interface PersonaFixture {
   billing: WorkspaceBilling | null
   memberCreditLimits: MemberCreditLimit[]
   hubSubmissions: HubSubmission[]
+  workflowSubmissions: WorkflowSubmission[]
   notifications: Notification[]
   // Multi-install state per ../IA_Plan/wiki/concepts/install-switcher.md.
   // Empty for cloud-only personas — they have no install presence. The

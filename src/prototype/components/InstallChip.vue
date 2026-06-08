@@ -26,33 +26,10 @@
       @click="isOpen = !isOpen"
     >
       <span
-        v-if="activeIsBlessed && currentWorkspace"
-        :title="
-          t('prototype.installChip.workspaceAvatarTitle', {
-            workspace: currentWorkspace.name
-          })
-        "
-        class="grid size-4 shrink-0 place-items-center rounded-sm text-[10px] font-semibold text-button-surface-contrast"
-        :style="{ backgroundColor: currentWorkspace.avatarColor }"
-      >
-        {{ currentWorkspace.name.charAt(0) }}
-      </span>
-      <span
-        v-else
         class="icon-[lucide--monitor] size-4 shrink-0 text-muted-foreground"
         aria-hidden="true"
       />
       <span class="max-w-32 truncate text-xs">{{ activeName }}</span>
-      <i
-        v-if="activeIsLocked"
-        :title="
-          t('prototype.installChip.lockedTooltip', {
-            workspace: currentWorkspace?.name ?? ''
-          })
-        "
-        class="icon-[lucide--lock] size-3 shrink-0 text-muted-foreground"
-        aria-hidden="true"
-      />
       <span
         class="icon-[lucide--chevron-down] size-3.5 shrink-0 text-muted-foreground"
         aria-hidden="true"
@@ -73,106 +50,45 @@
 
       <ul class="m-0 flex list-none flex-col p-0">
         <li
-          v-for="row in installRows"
-          :key="row.install.id"
+          v-for="install in installs"
+          :key="install.id"
           class="border-b border-border-default last:border-b-0"
         >
-          <div
+          <button
+            type="button"
             :class="
               cn(
-                'flex w-full items-start gap-2 px-3 py-2',
-                row.install.id === activeId &&
+                'flex w-full cursor-pointer appearance-none items-start gap-2 border-0 bg-transparent px-3 py-2 text-left transition-colors hover:bg-interface-menu-component-surface-hovered focus:bg-interface-menu-component-surface-hovered focus:outline-none',
+                install.id === activeId &&
                   'bg-interface-menu-component-surface-hovered'
               )
             "
+            :aria-current="install.id === activeId ? 'true' : undefined"
+            @click="onSelect(install.id)"
           >
-            <button
-              type="button"
-              class="flex flex-1 cursor-pointer appearance-none items-start gap-2 border-0 bg-transparent p-0 text-left focus:outline-none"
-              :aria-current="row.install.id === activeId ? 'true' : undefined"
-              @click="onSelect(row.install.id)"
-            >
-              <span
-                v-if="row.install.id === activeId"
-                class="mt-0.5 icon-[lucide--check] size-3.5 shrink-0 text-primary-background"
-                aria-hidden="true"
-              />
-              <span
-                v-else
-                class="mt-0.5 size-3.5 shrink-0"
-                aria-hidden="true"
-              />
-              <span class="flex min-w-0 flex-1 flex-col gap-0.5">
-                <span class="flex items-center gap-1.5 truncate text-sm">
-                  <span
-                    v-if="row.blessed && currentWorkspace"
-                    :title="
-                      t('prototype.installChip.workspaceAvatarTitle', {
-                        workspace: currentWorkspace.name
-                      })
-                    "
-                    class="grid size-4 shrink-0 place-items-center rounded-sm text-[10px] font-semibold text-button-surface-contrast"
-                    :style="{ backgroundColor: currentWorkspace.avatarColor }"
-                    :aria-label="
-                      t('prototype.installChip.workspaceAvatarTitle', {
-                        workspace: currentWorkspace.name
-                      })
-                    "
-                  >
-                    {{ currentWorkspace.name.charAt(0) }}
-                  </span>
-                  <span class="truncate">{{ row.install.displayName }}</span>
-                  <i
-                    v-if="row.blessed?.isLocked"
-                    :title="
-                      t('prototype.installChip.lockedTooltip', {
-                        workspace: currentWorkspace?.name ?? ''
-                      })
-                    "
-                    class="icon-[lucide--lock] size-3 shrink-0 text-muted-foreground"
-                    aria-hidden="true"
-                  />
-                </span>
-                <span class="truncate text-xs text-muted-foreground">
-                  {{
-                    t('prototype.installChip.versionLine', {
-                      version: row.install.comfyUIVersion
-                    })
-                  }}
-                </span>
+            <span
+              v-if="install.id === activeId"
+              class="mt-0.5 icon-[lucide--check] size-3.5 shrink-0 text-primary-background"
+              aria-hidden="true"
+            />
+            <span v-else class="mt-0.5 size-3.5 shrink-0" aria-hidden="true" />
+            <span class="flex min-w-0 flex-1 flex-col gap-0.5">
+              <span class="truncate text-sm">
+                {{ install.displayName }}
               </span>
-            </button>
-            <button
-              v-if="row.canPublish"
-              type="button"
-              :title="t('prototype.installChip.publishHint')"
-              class="shrink-0 cursor-pointer appearance-none rounded-sm border-0 bg-transparent px-2 py-1 text-xs text-muted-foreground hover:bg-interface-menu-component-surface-hovered hover:text-base-foreground"
-              @click.stop="onPublish(row.install.id, row.install.displayName)"
-            >
-              {{ t('prototype.installChip.publish') }}
-            </button>
-          </div>
+              <span class="truncate text-xs text-muted-foreground">
+                {{
+                  t('prototype.installChip.versionLine', {
+                    version: install.comfyUIVersion
+                  })
+                }}
+              </span>
+            </span>
+          </button>
         </li>
       </ul>
 
       <footer
-        v-if="activeIsLocked"
-        class="flex items-start gap-2 border-t border-border-default bg-warning-background/30 px-3 py-2 text-xs text-base-foreground"
-      >
-        <i
-          class="mt-0.5 icon-[lucide--lock] size-3.5 shrink-0"
-          aria-hidden="true"
-        />
-        <span>
-          {{
-            t('prototype.installChip.activeLockedNote', {
-              workspace: currentWorkspace?.name ?? ''
-            })
-          }}
-        </span>
-      </footer>
-      <footer
-        v-else
         class="border-t border-border-default px-3 py-2 text-xs text-muted-foreground"
       >
         {{ t('prototype.installChip.aggregationHint') }}
@@ -192,7 +108,7 @@ import { usePrototypePersonaStore } from '../stores/personaStore'
 
 const { t } = useI18n()
 const personaStore = usePrototypePersonaStore()
-const { fixture, activeInstall, currentWorkspace } = storeToRefs(personaStore)
+const { fixture, activeInstall } = storeToRefs(personaStore)
 
 const isOpen = ref(false)
 const containerRef = useTemplateRef<HTMLElement>('containerRef')
@@ -207,57 +123,9 @@ const activeId = computed(() => fixture.value.activeInstallId)
 const activeName = computed(
   () => activeInstall.value?.displayName ?? t('prototype.installChip.noActive')
 )
-const activeBlessed = computed(() => {
-  const active = activeInstall.value
-  if (!active) return undefined
-  return currentWorkspace.value?.blessedInstalls?.find(
-    (b) => b.installId === active.id
-  )
-})
-const activeIsBlessed = computed(() => !!activeBlessed.value)
-const activeIsLocked = computed(() => !!activeBlessed.value?.isLocked)
-
-// Publish authority follows the workspace install registry decision —
-// Admin-only by default, delegable via `edit-allowlists`. The
-// "Publish to workspace" affordance only shows on team workspaces for
-// installs not yet in the registry.
-const canPublishToWorkspace = computed(() => {
-  const ws = currentWorkspace.value
-  if (!ws || ws.tier !== 'team') return false
-  const role = ws.currentUserRole
-  if (role === 'admin') return true
-  if (role === 'member' && fixture.value.roleGrants['edit-allowlists'])
-    return true
-  return false
-})
-
-const installRows = computed(() =>
-  installs.value.map((install) => {
-    const blessed = currentWorkspace.value?.blessedInstalls?.find(
-      (b) => b.installId === install.id
-    )
-    return {
-      install,
-      blessed,
-      canPublish: canPublishToWorkspace.value && !blessed
-    }
-  })
-)
 
 function onSelect(id: string) {
   personaStore.setActiveInstall(id)
-  isOpen.value = false
-}
-
-function onPublish(installId: string, defaultName: string) {
-  const name = window.prompt(
-    t('prototype.installChip.publishPrompt', {
-      workspace: currentWorkspace.value?.name ?? ''
-    }),
-    defaultName
-  )
-  if (!name) return
-  personaStore.publishInstallToWorkspace(installId, name.trim())
   isOpen.value = false
 }
 </script>

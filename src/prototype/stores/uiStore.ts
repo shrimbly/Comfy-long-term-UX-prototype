@@ -15,6 +15,7 @@ type ActiveView =
   | { kind: 'drafts' }
   | { kind: 'projects' }
   | { kind: 'project'; projectId: string }
+  | { kind: 'workflow'; workflowId: string }
   | { kind: 'library'; section: LibrarySection }
   | { kind: 'recents' }
   | { kind: 'hub' }

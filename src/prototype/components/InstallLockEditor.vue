@@ -76,16 +76,24 @@
             :key="entry.installId"
             class="flex items-center justify-between gap-3 rounded-md border border-border-subtle bg-base-background px-3 py-2 text-sm"
           >
-            <span class="flex min-w-0 items-center gap-2 truncate">
-              <span class="truncate">{{ entry.label }}</span>
-              <i
-                v-if="entry.isLocked"
-                :title="
-                  t('prototype.views.project.settings.installLock.lockedHint')
-                "
-                class="icon-[lucide--lock] size-3.5 text-muted-foreground"
-                aria-hidden="true"
-              />
+            <span class="flex min-w-0 flex-col gap-0.5">
+              <span class="flex items-center gap-2 truncate">
+                <span class="truncate">{{ entry.label }}</span>
+                <i
+                  v-if="entry.isLocked"
+                  :title="
+                    t('prototype.views.project.settings.installLock.lockedHint')
+                  "
+                  class="icon-[lucide--lock] size-3.5 text-muted-foreground"
+                  aria-hidden="true"
+                />
+              </span>
+              <span
+                v-if="entry.description"
+                class="truncate text-xs text-muted-foreground"
+              >
+                {{ entry.description }}
+              </span>
             </span>
             <button
               v-if="canEdit"
@@ -182,6 +190,7 @@ const registry = computed<BlessedInstall[]>(
 interface AllowedEntry {
   installId: string
   label: string
+  description?: string
   isLocked: boolean
 }
 
@@ -191,6 +200,7 @@ const allowedEntries = computed<AllowedEntry[]>(() =>
     return {
       installId: id,
       label: entry?.canonicalDisplayName ?? id,
+      description: entry?.description,
       isLocked: entry?.isLocked ?? false
     }
   })

@@ -31,10 +31,10 @@
             />
           </span>
           <div class="flex flex-col gap-1">
-            <h2 class="m-0 text-lg font-semibold">
+            <h2 class="text-lg font-semibold">
               {{ t('prototype.runtimeRecommendation.title') }}
             </h2>
-            <p class="m-0 text-sm text-muted-foreground">
+            <p class="text-sm text-muted-foreground">
               {{
                 t('prototype.runtimeRecommendation.subtitle', {
                   workflow: workflow.name
@@ -73,7 +73,7 @@
           </div>
         </section>
 
-        <p class="m-0 text-sm text-muted-foreground">
+        <p class="text-sm text-muted-foreground">
           {{ t('prototype.runtimeRecommendation.body') }}
         </p>
 

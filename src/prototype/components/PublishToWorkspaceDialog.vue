@@ -48,10 +48,10 @@
             />
           </span>
           <div class="flex flex-col gap-1">
-            <h2 class="m-0 text-lg font-semibold">
+            <h2 class="text-lg font-semibold">
               {{ t('prototype.publishToWorkspace.title') }}
             </h2>
-            <p class="m-0 text-sm text-muted-foreground">
+            <p class="text-sm text-muted-foreground">
               {{
                 t('prototype.publishToWorkspace.target', {
                   workflow: state.targetWorkflowName ?? '',
@@ -62,7 +62,7 @@
           </div>
         </header>
 
-        <p v-if="state.canPublish" class="m-0 text-sm text-muted-foreground">
+        <p v-if="state.canPublish" class="text-sm text-muted-foreground">
           {{ t('prototype.publishToWorkspace.confirmBody') }}
         </p>
 

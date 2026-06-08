@@ -230,6 +230,15 @@
         </p>
       </template>
 
+      <template v-if="activeTab === 'review'">
+        <SettingsPanel
+          :title="t('prototype.views.settings.review.heading')"
+          :description="t('prototype.views.settings.review.description')"
+        >
+          <SubmissionReviewList :show-project="true" />
+        </SettingsPanel>
+      </template>
+
       <template v-if="activeTab === 'publishing'">
         <SettingsPanel
           :title="t('prototype.views.settings.hubQueue.heading')"
@@ -380,6 +389,7 @@ import BillingSection from '../components/BillingSection.vue'
 import MemberCreditLimitsSection from '../components/MemberCreditLimitsSection.vue'
 import SettingsPanel from '../components/settings/SettingsPanel.vue'
 import SettingsSubCard from '../components/settings/SettingsSubCard.vue'
+import SubmissionReviewList from '../components/SubmissionReviewList.vue'
 import WorkspaceInstallsSection from '../components/WorkspaceInstallsSection.vue'
 import { usePrototypePersonaStore } from '../stores/personaStore'
 import type { WorkspaceRole } from '../types'
@@ -388,6 +398,7 @@ type TabId =
   | 'general'
   | 'allowlists'
   | 'installs'
+  | 'review'
   | 'publishing'
   | 'billing'
   | 'advanced'
@@ -464,6 +475,13 @@ const visibleTabs = computed(() => {
     tabs.push({
       id: 'installs',
       label: t('prototype.views.settings.tabs.installs')
+    })
+  }
+  if (isAdmin.value && workspace.value?.tier === 'team') {
+    tabs.push({
+      id: 'review',
+      label: t('prototype.views.settings.tabs.review'),
+      count: personaStore.pendingWorkflowSubmissions.length || undefined
     })
   }
   if (canApproveHub.value) {

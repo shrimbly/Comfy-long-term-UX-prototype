@@ -13,11 +13,7 @@
 -->
 <template>
   <SettingsPanel
-    :title="
-      t('prototype.views.settings.installs.heading', {
-        workspace: currentWorkspace?.name ?? ''
-      })
-    "
+    :title="t('prototype.views.settings.installs.heading')"
     :description="t('prototype.views.settings.installs.description')"
   >
     <p v-if="!entries.length" class="m-0 text-sm text-text-secondary">
@@ -54,62 +50,46 @@
                 {{
                   t('prototype.views.settings.installs.publishedBy', {
                     user: publisherLabel(entry.publishedByUserId),
-                    date: entry.publishedAt,
-                    version: entry.comfyUIVersion
+                    date: entry.publishedAt
                   })
                 }}
               </span>
               <span
-                v-if="entry.isLocked"
-                class="inline-flex items-center gap-1 text-xs text-text-secondary"
+                v-if="entry.description"
+                class="text-xs text-text-secondary"
               >
-                <i class="icon-[lucide--lock] size-3" aria-hidden="true" />
-                {{ t('prototype.views.settings.installs.lockedStatus') }}
+                {{ entry.description }}
               </span>
             </div>
             <div class="inline-flex shrink-0 items-center gap-2">
-              <Button
-                v-if="!isInstalledLocally(entry.installId)"
-                variant="secondary"
-                size="md"
-                @click="personaStore.installBlessedToLocal(entry.installId)"
+              <label
+                class="inline-flex cursor-pointer items-center gap-2 text-xs text-text-secondary"
               >
-                <i class="icon-[lucide--download]" aria-hidden="true" />
-                {{ t('prototype.views.settings.installs.installAction') }}
-              </Button>
-              <template v-if="canEdit">
-                <Button
-                  variant="secondary"
-                  size="md"
-                  @click="
+                <input
+                  type="checkbox"
+                  :checked="entry.isLocked"
+                  :disabled="!canEdit"
+                  class="size-4 cursor-pointer appearance-auto accent-base-foreground"
+                  @change="
                     personaStore.setBlessedInstallLocked(
                       entry.installId,
-                      !entry.isLocked
+                      ($event.target as HTMLInputElement).checked
                     )
                   "
-                >
-                  <i
-                    :class="
-                      entry.isLocked
-                        ? 'icon-[lucide--unlock]'
-                        : 'icon-[lucide--lock]'
-                    "
-                    aria-hidden="true"
-                  />
-                  {{
-                    entry.isLocked
-                      ? t('prototype.views.settings.installs.unlockAction')
-                      : t('prototype.views.settings.installs.lockAction')
-                  }}
-                </Button>
-                <Button
-                  variant="secondary"
-                  size="md"
-                  @click="onUnpublish(entry)"
-                >
-                  {{ t('prototype.views.settings.installs.unpublish') }}
-                </Button>
-              </template>
+                />
+                <span class="inline-flex items-center gap-1">
+                  <i class="icon-[lucide--lock] size-3.5" aria-hidden="true" />
+                  {{ t('prototype.views.settings.installs.lockedToggle') }}
+                </span>
+              </label>
+              <Button
+                v-if="canEdit"
+                variant="secondary"
+                size="md"
+                @click="onUnpublish(entry)"
+              >
+                {{ t('prototype.views.settings.installs.unpublish') }}
+              </Button>
             </div>
           </div>
         </li>
@@ -146,14 +126,6 @@ const { fixture, currentWorkspace } = storeToRefs(personaStore)
 const entries = computed<BlessedInstall[]>(
   () => currentWorkspace.value?.blessedInstalls ?? []
 )
-
-// Whether the current user has the bundle on this machine. Pure
-// client-local computation; the cloud-side registry doesn't track
-// per-user install state — that's a desktop-only fact. Per
-// prototype/design-decisions.md 2026-05-20.
-function isInstalledLocally(installId: string): boolean {
-  return fixture.value.installs.some((i) => i.id === installId)
-}
 
 function publisherLabel(userId: string): string {
   if (userId === fixture.value.currentUser.id) {

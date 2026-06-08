@@ -80,6 +80,7 @@ export const soloLocalFixture: PersonaFixture = {
   billing: null,
   memberCreditLimits: [],
   hubSubmissions: [],
+  workflowSubmissions: [],
   notifications: [],
   // Persona 1b surfaces a single local install (the implicit one). Per
   // ../IA_Plan/wiki/concepts/install-switcher.md the indicator still

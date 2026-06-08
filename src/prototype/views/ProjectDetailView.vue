@@ -120,6 +120,12 @@
           @click="activeTab = tab.id"
         >
           <span>{{ tab.label }}</span>
+          <span
+            v-if="tab.count"
+            class="rounded-full bg-secondary-background px-2 py-0.5 text-xs text-text-secondary"
+          >
+            {{ tab.count }}
+          </span>
         </button>
       </nav>
 
@@ -142,7 +148,13 @@
           v-if="workflows.length"
           class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4"
         >
-          <WorkflowCard v-for="wf in workflows" :key="wf.id" :workflow="wf" />
+          <WorkflowCard
+            v-for="wf in workflows"
+            :key="wf.id"
+            :workflow="wf"
+            @open="onOpenWorkflow"
+            @open-project="onOpenProject"
+          />
         </div>
         <div
           v-else
@@ -150,6 +162,15 @@
         >
           {{ t('prototype.views.project.empty') }}
         </div>
+      </section>
+
+      <section v-else-if="activeTab === 'review'" class="flex flex-col gap-3">
+        <h2
+          class="m-0 text-sm font-semibold tracking-wide text-muted-foreground uppercase"
+        >
+          {{ t('prototype.views.project.reviewHeading') }}
+        </h2>
+        <SubmissionReviewList :project-id="projectId" />
       </section>
 
       <ProjectSettingsView
@@ -180,13 +201,14 @@ import { computed, ref, watchEffect } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import ProjectSharingDialog from '../components/ProjectSharingDialog.vue'
+import SubmissionReviewList from '../components/SubmissionReviewList.vue'
 import ProjectUsageSection from '../components/ProjectUsageSection.vue'
 import WorkflowCard from '../components/WorkflowCard.vue'
 import { usePrototypePersonaStore } from '../stores/personaStore'
 import { usePrototypeUiStore } from '../stores/uiStore'
 import ProjectSettingsView from './ProjectSettingsView.vue'
 
-type ProjectTabId = 'workflows' | 'settings' | 'usage'
+type ProjectTabId = 'workflows' | 'review' | 'settings' | 'usage'
 
 const { projectId } = defineProps<{
   projectId: string
@@ -226,13 +248,37 @@ const canEditSettings = computed(() => {
   )
 })
 
+// Who can review submissions = who can publish over the canonical:
+// project Owner, or workspace Admin (any project in their workspace).
+// Broader than canEditSettings, which limits Admin to workspace-wide.
+const canReviewSubmissions = computed(() => {
+  const p = project.value
+  if (!p || p.isDrafts) return false
+  if (p.ownerUserId === fixture.value.currentUser.id) return true
+  return currentWorkspace.value?.currentUserRole === 'admin'
+})
+
+const pendingReviewCount = computed(
+  () =>
+    personaStore.pendingWorkflowSubmissions.filter(
+      (s) => s.projectId === projectId
+    ).length
+)
+
 const visibleTabs = computed(() => {
-  const tabs: Array<{ id: ProjectTabId; label: string }> = [
+  const tabs: Array<{ id: ProjectTabId; label: string; count?: number }> = [
     {
       id: 'workflows',
       label: t('prototype.views.project.tabs.workflows')
     }
   ]
+  if (canReviewSubmissions.value) {
+    tabs.push({
+      id: 'review',
+      label: t('prototype.views.project.tabs.review'),
+      count: pendingReviewCount.value || undefined
+    })
+  }
   if (canEditSettings.value) {
     tabs.push({
       id: 'settings',
@@ -266,6 +312,16 @@ const backLabel = computed(() => t('prototype.views.project.back'))
 
 function onBack() {
   uiStore.go({ kind: 'projects' })
+}
+
+// Clicking a project workflow opens its detail page (forks + version
+// history). Forking-on-open happens from there via the Open action.
+function onOpenWorkflow(workflowId: string) {
+  uiStore.go({ kind: 'workflow', workflowId })
+}
+
+function onOpenProject(id: string) {
+  uiStore.go({ kind: 'project', projectId: id })
 }
 
 const workflows = computed(() =>

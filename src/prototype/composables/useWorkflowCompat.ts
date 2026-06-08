@@ -1,19 +1,18 @@
 // Implements:
 //   concept: ../IA_Plan/wiki/concepts/install-switcher.md
-//            §"Workflow version compatibility", §"Project install constraints"
 //   entity:  ../IA_Plan/wiki/entities/workflow.md §"Runtime compatibility"
 //   entity:  ../IA_Plan/wiki/entities/project.md  §"Install constraints"
+//   decision: ../IA_Plan/wiki/decisions/workspace-install-registry.md
 //   journey: ../IA_Plan/wiki/concepts/install-journeys.md §6 — freelancer gate
-//   log:     ../prototype/design-decisions.md 2026-05-19 — install gate is
-//            identity-based; recommended-version is soft / advisory.
 //
-// Two layers:
+// Resolves workflow runtime compatibility for the *currently active install*.
 //
-//   1. Project allowed-install set — hard, by install identity. The
-//      project carries a list of install IDs that may run its workflows.
-//      `activeInstall.id ∈ allowedInstallIds` → pass.
-//   2. Workflow recommended-minimum ComfyUI version — soft, advisory
-//      only. Surfaces a labeling badge but never blocks.
+// Identity-based, per the retired-version-range decision: a project locks by
+// install IDENTITY (`allowedInstallIds`), not a portable version predicate —
+// an install is one indivisible bundle, so the only stable test is "is the
+// active install's id in the allowed set?". The per-workflow
+// `recommendedComfyUIVersion` survives as a SOFT advisory (a plain minimum
+// version string) that surfaces a caution badge but never blocks.
 
 import { storeToRefs } from 'pinia'
 import { computed } from 'vue'
@@ -29,23 +28,16 @@ export type WorkflowCompatStatus =
 
 export interface WorkflowCompatResult {
   status: WorkflowCompatStatus
-  // For blocked: the project-canonical name of the required install
-  // (set by the Install Governor when they configured the lock).
+  reason?: 'project-allowed-set' | 'recommended'
+  // For `blocked`: the workspace-canonical name of the project's required
+  // install (the lock display name).
   requiredInstallName?: string
-  // For blocked: the install identities the project's allowed-install
-  // set permits. The gate dialog uses these to drive the install /
-  // switch action against the workspace registry. Usually a single
-  // entry; multiple during a version-bump transition (additive).
-  allowedInstallIds?: string[]
-  // For recommended-mismatch: the version string the workflow author
-  // advised. Soft signal only.
+  // For `recommended-mismatch`: the workflow's recommended minimum version.
   recommendedComfyUIVersion?: string
-  // The active install's display name + version, for both blocked and
-  // recommended-mismatch cases.
+  // The active install, for the gate/badge "you're on …" line.
   current?: { displayName: string; comfyUIVersion: string }
 }
 
-// Compare two dotted version strings. Returns -1 / 0 / 1.
 function compareVersions(a: string, b: string): number {
   const partsA = a.split('.').map((n) => parseInt(n, 10) || 0)
   const partsB = b.split('.').map((n) => parseInt(n, 10) || 0)
@@ -58,14 +50,13 @@ function compareVersions(a: string, b: string): number {
   return 0
 }
 
-function evaluateCompat(
+export function evaluateCompat(
   workflow: Workflow,
   project: Project | undefined,
   activeInstall: Install | undefined
 ): WorkflowCompatResult {
   if (!activeInstall) {
-    // Cloud-runtime / no local install. The install gate is out of
-    // scope here — cloud BE handles its own runtime story.
+    // Cloud-runtime / no local install — out of the install gate's scope.
     return { status: 'no-install' }
   }
 
@@ -74,16 +65,20 @@ function evaluateCompat(
     comfyUIVersion: activeInstall.comfyUIVersion
   }
 
-  const allowed = project?.allowedInstallIds
-  if (allowed && allowed.length > 0 && !allowed.includes(activeInstall.id)) {
+  // Hard gate: project install identity lock.
+  if (
+    project?.allowedInstallIds?.length &&
+    !project.allowedInstallIds.includes(activeInstall.id)
+  ) {
     return {
       status: 'blocked',
-      requiredInstallName: project?.installLockDisplayName,
-      allowedInstallIds: allowed,
+      reason: 'project-allowed-set',
+      requiredInstallName: project.installLockDisplayName,
       current
     }
   }
 
+  // Soft advisory: workflow recommended minimum version.
   if (
     workflow.recommendedComfyUIVersion &&
     compareVersions(
@@ -93,12 +88,13 @@ function evaluateCompat(
   ) {
     return {
       status: 'recommended-mismatch',
+      reason: 'recommended',
       recommendedComfyUIVersion: workflow.recommendedComfyUIVersion,
       current
     }
   }
 
-  return { status: 'compatible' }
+  return { status: 'compatible', current }
 }
 
 export function useWorkflowCompat() {

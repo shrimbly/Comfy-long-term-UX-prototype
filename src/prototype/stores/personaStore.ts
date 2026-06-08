@@ -118,6 +118,20 @@ export const usePrototypePersonaStore = defineStore('prototype-persona', () => {
     () => fixture.value.notifications.filter((n) => !n.readAt).length
   )
 
+  // Pending workflow submissions in the current workspace (the reviewer's
+  // queue). Filtered to projects in the active workspace.
+  const pendingWorkflowSubmissions = computed(() => {
+    const wsId = fixture.value.currentWorkspaceId
+    const wsProjectIds = new Set(
+      fixture.value.projects
+        .filter((p) => p.workspaceId === wsId)
+        .map((p) => p.id)
+    )
+    return fixture.value.workflowSubmissions.filter(
+      (s) => s.status === 'pending' && wsProjectIds.has(s.projectId)
+    )
+  })
+
   function markNotificationRead(id: string) {
     const today = new Date().toISOString().slice(0, 10)
     fixture.value.notifications = fixture.value.notifications.map((n) =>
@@ -584,6 +598,87 @@ export const usePrototypePersonaStore = defineStore('prototype-persona', () => {
     return overwritten
   }
 
+  // --- Workflow submissions (member-overwrite-request-flow) ------------
+  //
+  // When a collaborator can't publish a fork (no overwrite permission),
+  // they Submit it for an owner/admin to review. Per
+  // ../IA_Plan/wiki/decisions/published-workflow-model.md (promoted from
+  // open question 2026-05-27). Cross-persona note: fixtures don't share
+  // state, so the submitter recording a submission and the reviewer
+  // acting on it happen in different persona fixtures; seeds bridge the
+  // demo. These actions operate on the *current* fixture only.
+
+  function submitWorkflowForReview(forkId: string): boolean {
+    const fork = fixture.value.workflows.find((w) => w.id === forkId)
+    if (!fork?.forkedFrom) return false
+    const canonical = fixture.value.workflows.find(
+      (w) => w.id === fork.forkedFrom?.workflowId
+    )
+    if (!canonical) return false
+    const project = fixture.value.projects.find(
+      (p) => p.id === canonical.projectId
+    )
+    if (!project || project.isDrafts) return false
+    if (
+      fixture.value.workflowSubmissions.some(
+        (s) => s.forkWorkflowId === forkId && s.status === 'pending'
+      )
+    ) {
+      return true
+    }
+    fixture.value.workflowSubmissions = [
+      ...fixture.value.workflowSubmissions,
+      {
+        id: `wfsub-${Date.now()}`,
+        forkWorkflowId: forkId,
+        canonicalWorkflowId: canonical.id,
+        workflowName: canonical.name,
+        projectId: project.id,
+        submittedByUserId: fixture.value.currentUser.id,
+        submittedAt: new Date().toISOString().slice(0, 10),
+        status: 'pending'
+      }
+    ]
+    return true
+  }
+
+  function resolveSubmission(
+    submissionId: string,
+    status: 'approved' | 'rejected'
+  ) {
+    const today = new Date().toISOString().slice(0, 10)
+    const submission = fixture.value.workflowSubmissions.find(
+      (s) => s.id === submissionId
+    )
+    if (!submission) return
+    if (status === 'approved') {
+      // Overwrite the canonical in place (the fork itself may not live in
+      // this reviewer's fixture, so bump the canonical's updatedAt).
+      fixture.value.workflows = fixture.value.workflows.map((w) =>
+        w.id === submission.canonicalWorkflowId ? { ...w, updatedAt: today } : w
+      )
+    }
+    fixture.value.workflowSubmissions = fixture.value.workflowSubmissions.map(
+      (s) => (s.id === submissionId ? { ...s, status } : s)
+    )
+    // Clear the reviewer's "submission-received" cue for this asset.
+    fixture.value.notifications = fixture.value.notifications.map((n) =>
+      n.kind === 'submission-received' &&
+      n.target.assetId === submission.canonicalWorkflowId &&
+      !n.readAt
+        ? { ...n, readAt: today }
+        : n
+    )
+  }
+
+  function approveSubmission(submissionId: string) {
+    resolveSubmission(submissionId, 'approved')
+  }
+
+  function rejectSubmission(submissionId: string) {
+    resolveSubmission(submissionId, 'rejected')
+  }
+
   // --- Project settings ------------------------------------------------
   //
   // Per ../IA_Plan/wiki/entities/project.md §"What it contains" +
@@ -875,6 +970,10 @@ export const usePrototypePersonaStore = defineStore('prototype-persona', () => {
     moveWorkflowToProject,
     forkWorkflow,
     openForWork,
-    publishToWorkspace
+    publishToWorkspace,
+    pendingWorkflowSubmissions,
+    submitWorkflowForReview,
+    approveSubmission,
+    rejectSubmission
   }
 })
