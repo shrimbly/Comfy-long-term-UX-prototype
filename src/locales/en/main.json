@@ -109,8 +109,12 @@
       "workflowTag": "Workflow",
       "appTag": "App",
       "open": "Open",
+      "saveToMyWorkflows": "Save to My Workflows",
       "forksHeading": "Branches ({count})",
       "noForks": "No branches yet. Open to create one.",
+      "myBranches": "My branches",
+      "otherBranches": "Other collaborators' branches",
+      "noMyBranches": "You don't have a branch yet. Open to create one.",
       "yours": "You"
     },
     "history": {
@@ -324,7 +328,10 @@
     },
     "views": {
       "explore": {
-        "searchPlaceholder": "Search or press ⌘K"
+        "searchPlaceholder": "Search or press ⌘K",
+        "filterAll": "All",
+        "filterImages": "Images",
+        "filterVideos": "Videos"
       },
       "drafts": {
         "title": "My Workflows",
