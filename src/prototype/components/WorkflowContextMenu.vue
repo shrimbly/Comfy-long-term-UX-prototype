@@ -141,6 +141,11 @@ const sourceProject = computed(() =>
   fixture.value.projects.find((p) => p.id === workflow.projectId)
 )
 
+// A workflow already in My Workflows is private and edited in place —
+// no branching (that's for shared canonicals) and no "Save to My
+// Workflows" (it's already there). Per published-workflow-model.md.
+const isInDrafts = computed(() => !!sourceProject.value?.isDrafts)
+
 const canPublishDirectLink = computed(() => {
   const role = personaStore.currentWorkspace?.currentUserRole
   if (role === 'admin') return true
@@ -335,16 +340,18 @@ const items = computed<MenuItem[]>(() => {
       icon: 'icon-[lucide--pencil]',
       command: onRename
     })
-    out.push({
-      label: t('prototype.workflowMenu.branch'),
-      icon: 'icon-[lucide--git-branch]',
-      command: onBranch
-    })
-    out.push({
-      label: t('prototype.workflowMenu.saveToMyWorkflows'),
-      icon: 'icon-[lucide--copy]',
-      command: onSaveToMyWorkflows
-    })
+    if (!isInDrafts.value) {
+      out.push({
+        label: t('prototype.workflowMenu.branch'),
+        icon: 'icon-[lucide--git-branch]',
+        command: onBranch
+      })
+      out.push({
+        label: t('prototype.workflowMenu.saveToMyWorkflows'),
+        icon: 'icon-[lucide--copy]',
+        command: onSaveToMyWorkflows
+      })
+    }
     if (isPromotable.value) {
       out.push({
         label: t('prototype.workflowMenu.promoteToProject'),
@@ -379,7 +386,7 @@ const items = computed<MenuItem[]>(() => {
   // Runner: fork-into-My-Workflows is the explicit way to get a working
   // copy without going through Open (which also forks per
   // published-workflow-model). App Runner can't fork per spec.
-  if (isRunner.value) {
+  if (isRunner.value && !isInDrafts.value) {
     out.push({ separator: true })
     out.push({
       label: t('prototype.workflowMenu.branch'),
