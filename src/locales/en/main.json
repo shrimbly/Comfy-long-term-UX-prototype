@@ -159,6 +159,8 @@
       "lockedToApprove": "Publishing needs the {required} install — switch to it to approve.",
       "teamInstall": "team install",
       "toast": {
+        "openedSummary": "Opened workflow",
+        "openedDetail": "Opened “{workflow}”.",
         "approvedSummary": "Published",
         "approvedDetail": "Published {user}'s changes to “{workflow}”.",
         "rejectedSummary": "Declined",

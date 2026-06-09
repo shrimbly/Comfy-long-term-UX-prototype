@@ -203,16 +203,20 @@ function onOpen(sub: WorkflowSubmission) {
   uiStore.go({ kind: 'workflow', workflowId: sub.canonicalWorkflowId })
 }
 
-// On the detail page: open the submitted branch itself so the reviewer
-// can inspect it (the canonical is already the page they're on). Falls
-// back to the canonical if the branch isn't in this fixture.
+// On the detail page: open the submitted branch to inspect it. No editor
+// in the prototype, so this confirms via toast (same pattern as opening a
+// published version from the history graph).
 function onOpenBranch(sub: WorkflowSubmission) {
-  const hasBranch = fixture.value.workflows.some(
+  const branch = fixture.value.workflows.find(
     (w) => w.id === sub.forkWorkflowId
   )
-  uiStore.go({
-    kind: 'workflow',
-    workflowId: hasBranch ? sub.forkWorkflowId : sub.canonicalWorkflowId
+  toast.add({
+    severity: 'info',
+    summary: t('prototype.submissionReview.toast.openedSummary'),
+    detail: t('prototype.submissionReview.toast.openedDetail', {
+      workflow: branch?.name ?? sub.workflowName
+    }),
+    life: 2200
   })
 }
 
