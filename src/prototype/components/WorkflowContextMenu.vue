@@ -73,6 +73,13 @@
     @publish="onPublish"
     @ask-owner="onAskOwner"
   />
+
+  <PromoteToProjectDialog
+    v-if="promoteDialogOpen"
+    :workflow="workflow"
+    @close="promoteDialogOpen = false"
+    @promote="onPromoted"
+  />
 </template>
 
 <script setup lang="ts">
@@ -86,10 +93,12 @@ import { useI18n } from 'vue-i18n'
 
 import Button from '@/components/ui/button/Button.vue'
 
+import PromoteToProjectDialog from './PromoteToProjectDialog.vue'
 import PublishToWorkspaceDialog from './PublishToWorkspaceDialog.vue'
 import WorkflowMoveDialog from './WorkflowMoveDialog.vue'
 import { useWorkflowPublish } from '../composables/useWorkflowPublish'
 import { usePrototypePersonaStore } from '../stores/personaStore'
+import { usePrototypeUiStore } from '../stores/uiStore'
 import type { ViewerWorkflowRole } from '../composables/useViewerWorkflowRole'
 import type { Workflow } from '../types'
 
@@ -121,6 +130,8 @@ const contextMenu = ref<ContextMenuHandle | null>(null)
 
 const moveDialogOpen = ref(false)
 const publishDialogOpen = ref(false)
+const promoteDialogOpen = ref(false)
+const uiStore = usePrototypeUiStore()
 
 // Publish to workspace targets a branch whose canonical lives in a shared
 // project. The composable resolves publishability + permission/install
@@ -152,6 +163,16 @@ const canSubmitToHub = computed(() => {
   if (role === 'member') return fixture.value.roleGrants['submit-to-hub']
   return false
 })
+
+// A standalone My Workflows workflow the viewer owns can be promoted into
+// a shared project as a canonical (the workflow-promotion-flow path),
+// provided there's a project to publish into.
+const isPromotable = computed(
+  () =>
+    isOwner.value &&
+    !!sourceProject.value?.isDrafts &&
+    personaStore.visibleProjects.length > 0
+)
 
 function show(event: MouseEvent) {
   contextMenu.value?.show(event)
@@ -212,6 +233,28 @@ function onMove() {
 
 function onPublishToWorkspace() {
   publishDialogOpen.value = true
+}
+
+function onPromoteToProject() {
+  promoteDialogOpen.value = true
+}
+
+function onPromoted(targetProjectId: string) {
+  const ok = personaStore.promoteWorkflowToProject(workflow.id, targetProjectId)
+  promoteDialogOpen.value = false
+  if (!ok) return
+  const project = fixture.value.projects.find((p) => p.id === targetProjectId)
+  toast.add({
+    severity: 'success',
+    summary: t('prototype.promoteToProject.toastSummary'),
+    detail: t('prototype.promoteToProject.toastDetail', {
+      workflow: workflow.name,
+      project: project?.name ?? ''
+    }),
+    life: 2800
+  })
+  // Land on the now-canonical's detail page so its fresh V1 is visible.
+  uiStore.go({ kind: 'workflow', workflowId: workflow.id })
 }
 
 function onPublish() {
@@ -327,6 +370,13 @@ const items = computed<MenuItem[]>(() => {
       icon: 'icon-[lucide--folder-input]',
       command: onMove
     })
+    if (isPromotable.value) {
+      out.push({
+        label: t('prototype.workflowMenu.promoteToProject'),
+        icon: 'icon-[lucide--folder-up]',
+        command: onPromoteToProject
+      })
+    }
     out.push({
       label: t('prototype.workflowMenu.saveDestination'),
       icon: 'icon-[lucide--save]',

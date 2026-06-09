@@ -583,3 +583,18 @@ Rationale: a submission is "this branch wants to overwrite this canonical" — i
 Implementation: `SubmissionReviewList` gained a `variant` (`queue` | `review`) + a `canonicalWorkflowId` filter; the detail page renders `variant="review"`, the two queues default to `variant="queue"`.
 
 Promote? **candidate** — `published-workflow-model.md` names the project Review tab + workspace queue but doesn't pin where the act happens. Worth a one-line addition that the review acting surface is the workflow detail page, with the queues as indexes.
+
+### Workflow promotion — My Workflows → project canonical (2026-06-09)
+
+Built the third lifecycle path (the first two — branch→publish, write-private — were already wired). Closes the prototype side of open question [`workflow-promotion-flow`](../../IA_Plan/wiki/open-questions.md). Working decisions made (wiki was silent / flagged-for-exploration):
+
+- **Entry point.** A "Publish to project…" item in the workflow context menu, shown only on a workflow the viewer **owns** that lives in **My Workflows** (a Drafts/private project) — i.e. a standalone draft or a detached copy, not a branch (branches publish over their canonical instead).
+- **Permission.** Anyone who owns a draft and has at least one accessible shared project can promote — matching the wiki's "publish a _new_ workflow to a shared project = any Member with access to the target" row (vs. overwrite, which is Owner/Admin only).
+- **Semantics = move, not copy.** The workflow **moves** into the target project and becomes its canonical (stable id, `forkedFrom` cleared). The author no longer keeps a private duplicate; to edit further they branch like everyone else. Chosen over copy to avoid two-canonicals ambiguity.
+- **Seeds V1.** Promotion IS the initial publish, so it seeds `publishedVersions = [{ byUserId: promoter, at: today }]` if the workflow had none — the canonical's timeline starts at promotion.
+- **Install lock.** Publishing into an install-locked project needs the blessed active install (same gate as Publish to workspace). The promote dialog lists locked targets but disables selecting them with a hint.
+- **Landing.** After promoting, navigate to the workflow detail page so the fresh V1 + the (now empty) branch list are visible in context.
+
+Implementation: `personaStore.promoteWorkflowToProject`, `components/PromoteToProjectDialog.vue`, wired in `WorkflowContextMenu.vue` (`isPromotable`).
+
+Promote? **candidate** — this is a concrete proposal for `workflow-promotion-flow`. If accepted, fold the six decisions above into `published-workflow-model.md` (or a new `workflow-promotion.md`) and resolve the open question.

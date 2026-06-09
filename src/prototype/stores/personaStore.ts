@@ -524,6 +524,39 @@ export const usePrototypePersonaStore = defineStore('prototype-persona', () => {
     )
   }
 
+  // Promote a standalone My Workflows workflow into a shared project as a
+  // canonical — the "write privately, then share to the team" path. Per
+  // open-question workflow-promotion-flow (working decisions logged in
+  // prototype/design-decisions.md): the workflow MOVES into the project
+  // (it becomes the team version; the author branches to edit it
+  // afterward like everyone else) and the promotion IS the initial
+  // publish, so it seeds V1 of the published-version timeline. Install
+  // gating for locked targets is enforced in the promote dialog.
+  function promoteWorkflowToProject(
+    workflowId: string,
+    targetProjectId: string
+  ): boolean {
+    const source = fixture.value.workflows.find((w) => w.id === workflowId)
+    const target = fixture.value.projects.find((p) => p.id === targetProjectId)
+    if (!source || !target || target.isDrafts) return false
+    const today = new Date().toISOString().slice(0, 10)
+    fixture.value.workflows = fixture.value.workflows.map((w) =>
+      w.id === workflowId
+        ? {
+            ...w,
+            projectId: targetProjectId,
+            updatedAt: today,
+            // It's a canonical now — no upstream lineage.
+            forkedFrom: undefined,
+            publishedVersions: w.publishedVersions?.length
+              ? w.publishedVersions
+              : [{ byUserId: fixture.value.currentUser.id, at: today }]
+          }
+        : w
+    )
+    return true
+  }
+
   // Fork = clone into the actor's My Workflows in the host workspace.
   // The host workspace is the workspace that contains the source
   // workflow's project — NOT necessarily the current workspace, per
@@ -1070,6 +1103,7 @@ export const usePrototypePersonaStore = defineStore('prototype-persona', () => {
     setWorkflowStorage,
     getEffectiveWorkflowStorage,
     moveWorkflowToProject,
+    promoteWorkflowToProject,
     branchWorkflow,
     saveToMyWorkflows,
     openForWork,
