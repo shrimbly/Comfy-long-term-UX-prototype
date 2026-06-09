@@ -26,6 +26,25 @@ import type {
 export const usePrototypePersonaStore = defineStore('prototype-persona', () => {
   const currentPersonaId = ref<PersonaId>('workspace-admin')
 
+  // Every published canonical (a non-branch workflow living in a shared,
+  // non-Drafts project) reached the project via an initial Publish, so it
+  // has at least V1 in its history. Backfill that baseline for fixtures
+  // that didn't seed it explicitly, so a later publish bumps to V2.
+  for (const persona of personas) {
+    const { workflows, projects } = persona.fixture
+    for (const wf of workflows) {
+      if (wf.forkedFrom || wf.publishedVersions?.length) continue
+      const project = projects.find((p) => p.id === wf.projectId)
+      if (!project || project.isDrafts) continue
+      wf.publishedVersions = [
+        {
+          byUserId: wf.ownerUserId ?? persona.fixture.currentUser.id,
+          at: wf.updatedAt
+        }
+      ]
+    }
+  }
+
   // Reactive so in-place fixture mutations (publish, approve, rename, …)
   // trigger re-renders even without a subsequent navigation.
   const reactivePersonas = reactive(personas)
