@@ -29,14 +29,14 @@
             <Button
               v-for="p in candidates"
               :key="p.id"
-              variant="textonly"
+              variant="secondary"
               size="unset"
               :disabled="!!lockedReason(p)"
               :class="
                 cn(
                   'w-full justify-start gap-2 rounded-lg px-3 py-2 text-sm',
                   selectedId === p.id &&
-                    'bg-interface-menu-component-surface-selected'
+                    'bg-interface-menu-component-surface-selected hover:bg-interface-menu-component-surface-selected'
                 )
               "
               @click="selectedId = p.id"
@@ -59,13 +59,13 @@
 
           <div class="flex flex-col">
             <Button
-              variant="textonly"
+              variant="secondary"
               size="unset"
               :class="
                 cn(
                   'w-full justify-start gap-1.5 rounded-lg px-3 py-2 text-sm',
                   selectedId === NEW_PROJECT &&
-                    'bg-interface-menu-component-surface-selected'
+                    'bg-interface-menu-component-surface-selected hover:bg-interface-menu-component-surface-selected'
                 )
               "
               @click="selectedId = NEW_PROJECT"
