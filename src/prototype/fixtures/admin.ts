@@ -291,6 +291,8 @@ export const adminFixture: PersonaFixture = {
       id: 'wf-clientx-moodboard',
       projectId: 'proj-client-x',
       name: 'Moodboard explorer',
+      description:
+        'Generates style-consistent moodboard tiles from a brand brief, then upscales the picks for client review.',
       kind: 'workflow',
       ownerUserId: user.id,
       updatedAt: '2026-05-11',
@@ -312,7 +314,7 @@ export const adminFixture: PersonaFixture = {
       // surfaced on the canonical's detail page as a collaborator fork).
       id: 'wf-fork-mira-moodboard',
       projectId: 'proj-drafts',
-      name: 'Moodboard explorer (fork)',
+      name: 'Moodboard explorer — Mira Voss',
       kind: 'workflow',
       ownerUserId: 'user-mira',
       updatedAt: '2026-05-12',
@@ -325,7 +327,7 @@ export const adminFixture: PersonaFixture = {
     {
       id: 'wf-fork-alex-moodboard',
       projectId: 'proj-drafts',
-      name: 'Moodboard explorer (fork)',
+      name: 'Moodboard explorer — Alex Carmoid',
       kind: 'workflow',
       ownerUserId: 'user-alex',
       updatedAt: '2026-05-12',
@@ -338,7 +340,7 @@ export const adminFixture: PersonaFixture = {
     {
       id: 'wf-fork-admin-moodboard',
       projectId: 'proj-drafts',
-      name: 'Moodboard explorer (fork)',
+      name: 'Moodboard explorer — Willie',
       kind: 'workflow',
       ownerUserId: user.id,
       updatedAt: '2026-05-13',
@@ -352,6 +354,8 @@ export const adminFixture: PersonaFixture = {
       id: 'app-clientx-colorize',
       projectId: 'proj-client-x',
       name: 'Brand-safe colorize',
+      description:
+        'Recolors line art to the approved brand palette, with guardrails that reject out-of-gamut results.',
       kind: 'app',
       ownerUserId: user.id,
       access: [{ userId: 'user-mira', role: 'app-runner' }],
@@ -364,6 +368,8 @@ export const adminFixture: PersonaFixture = {
       id: 'wf-indie-establishing',
       projectId: 'proj-indie-short',
       name: 'Establishing shot generator',
+      description:
+        'Builds wide cinematic establishing shots from a scene prompt and reference lighting.',
       kind: 'workflow',
       ownerUserId: user.id,
       access: [{ userId: 'user-mira', role: 'runner' }],
@@ -373,6 +379,8 @@ export const adminFixture: PersonaFixture = {
       id: 'wf-cocacola-hero',
       projectId: 'proj-cocacola',
       name: 'Coke can hero',
+      description:
+        'Hero product render for the can, with studio reflections and configurable background sweeps.',
       kind: 'workflow',
       ownerUserId: user.id,
       access: [
@@ -385,6 +393,8 @@ export const adminFixture: PersonaFixture = {
       id: 'wf-cocacola-upscale',
       projectId: 'proj-cocacola',
       name: 'Campaign upscale',
+      description:
+        'Upscales approved campaign frames to print resolution with detail-preserving refinement passes.',
       kind: 'workflow',
       // Member-owned asset visible to Admin — validates ownership and
       // workspace role are independent.
@@ -404,6 +414,8 @@ export const adminFixture: PersonaFixture = {
       id: 'wf-marketing-banner',
       projectId: 'proj-marketing',
       name: 'Banner v3 pipeline',
+      description:
+        'Produces the full banner ad set across placements and aspect ratios from one source layout.',
       kind: 'workflow',
       ownerUserId: 'user-jane',
       updatedAt: '2026-05-06'
@@ -412,6 +424,8 @@ export const adminFixture: PersonaFixture = {
       id: 'wf-brand-logo',
       projectId: 'proj-brand',
       name: 'Logo variation generator',
+      description:
+        'Explores logo variations across colorways and lockups while keeping the mark on-brand.',
       kind: 'workflow',
       ownerUserId: 'user-pablo',
       updatedAt: '2026-05-04'
@@ -420,6 +434,8 @@ export const adminFixture: PersonaFixture = {
       id: 'wf-launch-hero',
       projectId: 'proj-launch',
       name: 'Landing hero render',
+      description:
+        'Renders the landing-page hero image from the campaign concept, sized for web and retina.',
       kind: 'workflow',
       ownerUserId: 'user-jane',
       updatedAt: '2026-05-03'
@@ -433,6 +449,8 @@ export const adminFixture: PersonaFixture = {
       id: 'wf-acme-titles',
       projectId: 'proj-acme-titles',
       name: 'Title-card composer',
+      description:
+        'Composes animated title cards from a script line, with typography and motion presets.',
       kind: 'workflow',
       ownerUserId: 'user-acme-anna',
       access: [{ userId: user.id, role: 'runner' }],
@@ -443,6 +461,8 @@ export const adminFixture: PersonaFixture = {
       id: 'app-acme-poster',
       projectId: 'proj-acme-campaigns',
       name: 'Poster preview',
+      description:
+        'Generates quick poster mockups from a headline and key art for stakeholder previews.',
       kind: 'app',
       ownerUserId: 'user-acme-anna',
       access: [{ userId: user.id, role: 'app-runner' }],

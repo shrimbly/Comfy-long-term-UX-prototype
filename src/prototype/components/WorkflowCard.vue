@@ -44,7 +44,15 @@
         </span>
       </span>
       <span class="flex flex-col">
-        <span class="truncate text-sm/tight">{{ workflow.name }}</span>
+        <span class="flex items-center gap-1.5">
+          <span class="truncate text-sm/tight">{{ workflow.name }}</span>
+          <span
+            v-if="isBranch"
+            class="shrink-0 rounded-sm bg-secondary-background px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground"
+          >
+            {{ t('prototype.workflowCard.branchBadge') }}
+          </span>
+        </span>
         <span class="text-xs text-muted-foreground">
           {{
             ownerName
@@ -93,6 +101,7 @@ const emit = defineEmits<{
 const { t } = useI18n()
 const personaStore = usePrototypePersonaStore()
 const thumbnail = computed(() => thumbnailGradient(workflow.id))
+const isBranch = computed(() => !!workflow.forkedFrom)
 
 // Branch cards show whose branch it is next to the date.
 const ownerName = computed(() => {

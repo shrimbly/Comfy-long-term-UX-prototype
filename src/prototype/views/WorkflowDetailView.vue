@@ -40,6 +40,12 @@
             }}
           </span>
         </div>
+        <p
+          v-if="canonical.description"
+          class="m-0 text-sm text-muted-foreground"
+        >
+          {{ canonical.description }}
+        </p>
         <div class="mt-1 flex flex-wrap gap-2">
           <button
             type="button"

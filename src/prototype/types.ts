@@ -250,6 +250,7 @@ export interface Workflow {
   id: string
   projectId: string
   name: string
+  description?: string
   thumbnailUrl?: string
   updatedAt: string
   kind?: 'workflow' | 'app'
