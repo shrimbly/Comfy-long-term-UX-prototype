@@ -15,12 +15,16 @@
   role on this workflow (resolved via useViewerWorkflowRole) and the menu
   shape is filtered accordingly:
 
-    Owner       — Open, Rename, Fork, Move to project, Save destination,
+    Owner       — Open, Rename, Branch, Move to project, Save destination,
                   Share, Publish (direct link / Hub), View outputs,
                   Open containing project, Delete
-    Runner      — Open (fork-on-open), Fork, View outputs,
+    Runner      — Open (branch-on-open), Branch, View outputs,
                   Open containing project
     App Runner  — Run app, View outputs, Open containing project
+
+  A workflow that is a branch of a shared canonical additionally gets
+  "Publish to workspace" (the dialog adapts to Publish vs Submit for
+  review based on overwrite permission + install identity).
 
   Sharing / publish / view-outputs are prototype stubs that toast — the
   full surfaces exist in their own flows. Storage and Move trigger real
@@ -61,6 +65,14 @@
     @close="moveDialogOpen = false"
     @moved="onMoved"
   />
+
+  <PublishToWorkspaceDialog
+    v-if="publishDialogOpen"
+    :state="publishState"
+    @close="publishDialogOpen = false"
+    @publish="onPublish"
+    @ask-owner="onAskOwner"
+  />
 </template>
 
 <script setup lang="ts">
@@ -74,7 +86,9 @@ import { useI18n } from 'vue-i18n'
 
 import Button from '@/components/ui/button/Button.vue'
 
+import PublishToWorkspaceDialog from './PublishToWorkspaceDialog.vue'
 import WorkflowMoveDialog from './WorkflowMoveDialog.vue'
+import { useWorkflowPublish } from '../composables/useWorkflowPublish'
 import { usePrototypePersonaStore } from '../stores/personaStore'
 import type { ViewerWorkflowRole } from '../composables/useViewerWorkflowRole'
 import type { Workflow } from '../types'
@@ -106,6 +120,14 @@ type ContextMenuHandle = {
 const contextMenu = ref<ContextMenuHandle | null>(null)
 
 const moveDialogOpen = ref(false)
+const publishDialogOpen = ref(false)
+
+// Publish to workspace targets a branch whose canonical lives in a shared
+// project. The composable resolves publishability + permission/install
+// gates; the dialog adapts (Publish vs Submit for review). Per
+// ../IA_Plan/wiki/decisions/published-workflow-model.md.
+const workflowRef = computed(() => workflow)
+const publishState = useWorkflowPublish(workflowRef)
 
 const isOwner = computed(() => viewerRole === 'owner')
 const isRunner = computed(() => viewerRole === 'runner')
@@ -186,6 +208,39 @@ function onSaveToMyWorkflows() {
 
 function onMove() {
   moveDialogOpen.value = true
+}
+
+function onPublishToWorkspace() {
+  publishDialogOpen.value = true
+}
+
+function onPublish() {
+  const ok = personaStore.publishToWorkspace(workflow.id)
+  publishDialogOpen.value = false
+  if (!ok) return
+  toast.add({
+    severity: 'success',
+    summary: t('prototype.workflowMenu.toast.publishedSummary'),
+    detail: t('prototype.workflowMenu.toast.publishedDetail', {
+      workflow: publishState.value.targetWorkflowName ?? workflow.name,
+      project: publishState.value.targetProjectName ?? ''
+    }),
+    life: 2800
+  })
+}
+
+function onAskOwner() {
+  const ok = personaStore.submitWorkflowForReview(workflow.id)
+  publishDialogOpen.value = false
+  if (!ok) return
+  toast.add({
+    severity: 'success',
+    summary: t('prototype.workflowMenu.toast.submittedSummary'),
+    detail: t('prototype.workflowMenu.toast.submittedDetail', {
+      workflow: publishState.value.targetWorkflowName ?? workflow.name
+    }),
+    life: 2800
+  })
 }
 
 function onMoved(targetProjectId: string) {
@@ -310,6 +365,18 @@ const items = computed<MenuItem[]>(() => {
       label: t('prototype.workflowMenu.saveToMyWorkflows'),
       icon: 'icon-[lucide--copy]',
       command: onSaveToMyWorkflows
+    })
+  }
+
+  // Publish to workspace — shows on any branch of a shared canonical, for
+  // every actor (the dialog adapts: Publish for those with overwrite
+  // rights, Submit for review otherwise). Per published-workflow-model.
+  if (publishState.value.isPublishable) {
+    out.push({ separator: true })
+    out.push({
+      label: t('prototype.workflowMenu.publishToWorkspace'),
+      icon: 'icon-[lucide--git-merge]',
+      command: onPublishToWorkspace
     })
   }
 
