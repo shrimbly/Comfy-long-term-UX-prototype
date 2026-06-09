@@ -608,11 +608,16 @@ export const usePrototypePersonaStore = defineStore('prototype-persona', () => {
       // Overwrite canonical content with the fork's. Name + identity +
       // project membership of the canonical are preserved; the fork's
       // working state (thumbnail here as a stand-in for graph contents)
-      // and a fresh updatedAt land on the canonical.
+      // and a fresh updatedAt land on the canonical, plus a new entry on
+      // the published-version history timeline.
       return {
         ...w,
         updatedAt: today,
-        thumbnailUrl: fork.thumbnailUrl ?? w.thumbnailUrl
+        thumbnailUrl: fork.thumbnailUrl ?? w.thumbnailUrl,
+        publishedVersions: [
+          ...(w.publishedVersions ?? []),
+          { byUserId: fixture.value.currentUser.id, at: today }
+        ]
       }
     })
     return overwritten
@@ -673,9 +678,21 @@ export const usePrototypePersonaStore = defineStore('prototype-persona', () => {
     if (!submission) return
     if (status === 'approved') {
       // Overwrite the canonical in place (the fork itself may not live in
-      // this reviewer's fixture, so bump the canonical's updatedAt).
+      // this reviewer's fixture, so bump the canonical's updatedAt) and
+      // append a published-version entry — approving IS publishing, so it
+      // lands on the canonical's history timeline (attributed to the
+      // reviewer who published).
       fixture.value.workflows = fixture.value.workflows.map((w) =>
-        w.id === submission.canonicalWorkflowId ? { ...w, updatedAt: today } : w
+        w.id === submission.canonicalWorkflowId
+          ? {
+              ...w,
+              updatedAt: today,
+              publishedVersions: [
+                ...(w.publishedVersions ?? []),
+                { byUserId: fixture.value.currentUser.id, at: today }
+              ]
+            }
+          : w
       )
     }
     fixture.value.workflowSubmissions = fixture.value.workflowSubmissions.map(
