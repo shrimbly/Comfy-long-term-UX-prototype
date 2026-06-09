@@ -114,6 +114,7 @@
       "myBranches": "My branches",
       "otherBranches": "Other collaborators' branches",
       "noMyBranches": "You don't have a branch yet. Open to create one.",
+      "pendingReviewHeading": "Pending review",
       "yours": "You"
     },
     "history": {
@@ -151,6 +152,8 @@
       "empty": "No submissions to review.",
       "meta": "Submitted by {user} · {date}",
       "open": "Open workflow",
+      "reviewCta": "Review",
+      "pendingBadge": "Pending review",
       "approve": "Publish",
       "reject": "Decline",
       "lockedToApprove": "Publishing needs the {required} install — switch to it to approve.",

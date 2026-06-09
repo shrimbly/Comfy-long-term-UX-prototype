@@ -67,6 +67,18 @@
       </div>
     </header>
 
+    <section v-if="pendingReviews.length" class="flex flex-col gap-3">
+      <h2
+        class="text-sm font-semibold tracking-wide text-muted-foreground uppercase"
+      >
+        {{ t('prototype.workflowDetail.pendingReviewHeading') }}
+      </h2>
+      <SubmissionReviewList
+        :canonical-workflow-id="canonical.id"
+        variant="review"
+      />
+    </section>
+
     <div class="grid gap-8 lg:grid-cols-[minmax(0,1fr)_18rem]">
       <div class="flex flex-col gap-8">
         <section class="flex flex-col gap-3">
@@ -122,6 +134,7 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 
+import SubmissionReviewList from '../components/SubmissionReviewList.vue'
 import WorkflowCard from '../components/WorkflowCard.vue'
 import WorkflowHistoryGraph from '../components/WorkflowHistoryGraph.vue'
 import { usePrototypePersonaStore } from '../stores/personaStore'
@@ -157,6 +170,12 @@ const myBranches = computed(() =>
 )
 const otherBranches = computed(() =>
   branches.value.filter((b) => b.ownerUserId !== currentUserId.value)
+)
+
+const pendingReviews = computed(() =>
+  personaStore.pendingWorkflowSubmissions.filter(
+    (s) => s.canonicalWorkflowId === workflowId
+  )
 )
 
 function onBack() {

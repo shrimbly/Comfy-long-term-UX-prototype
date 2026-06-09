@@ -570,3 +570,16 @@ Resolution of the cloud-access question (which the 2026-05-20 + 2026-05-27 entri
 - The prospective "allow cloud runtime: yes/no" per-project flag is **dropped** — it was a misframing (it implied cloud could be a publish source for a reproducibility lock, which contradicts the lock's purpose).
 
 Wiki effect: removed the per-project-cloud-flag open question from `install-journeys.md` and `team-locked-install.md`; reframed those + `personas.md` cloud-only artist to "desktop/local-install mechanism; cloud users keep Save to My Workflows, hand off to publish." Promoted 2026-05-27.
+
+### Review surface — detail page acts, queues triage (2026-06-09)
+
+Willie raised that the submission review should happen on the **workflow detail page**, not (only) the project Review tab. Settled on a split:
+
+- **Workflow detail page = where review _happens_.** A canonical with a pending submission shows a "Pending review" section (diff, note, Approve / Decline) scoped to that canonical. Approve/Decline is gated to reviewers (project Owner / workspace Admin); other viewers (incl. the submitter) see a read-only "Pending review" badge. This is the surface with full context — the canonical, its version history, and every branch are already here.
+- **Project Review tab + workspace queue = triage indexes.** They list pending submissions with a **Review** button that links into the workflow detail page. No inline Approve/Decline anymore.
+
+Rationale: a submission is "this branch wants to overwrite this canonical" — inherently per-workflow. The detail page is the one place with the lineage context to judge that. The queues keep their value as "what needs my attention" discovery surfaces. `published-workflow-model.md` already says the per-workflow branch list + version history live together (our detail page), so co-locating review there is faithful.
+
+Implementation: `SubmissionReviewList` gained a `variant` (`queue` | `review`) + a `canonicalWorkflowId` filter; the detail page renders `variant="review"`, the two queues default to `variant="queue"`.
+
+Promote? **candidate** — `published-workflow-model.md` names the project Review tab + workspace queue but doesn't pin where the act happens. Worth a one-line addition that the review acting surface is the workflow detail page, with the queues as indexes.

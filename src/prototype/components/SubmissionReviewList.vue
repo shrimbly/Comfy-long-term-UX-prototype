@@ -10,10 +10,15 @@
                 approved from a blessed active install.
     log:      ../prototype/design-decisions.md 2026-05-27
 
-  Shared list of pending submissions with Approve / Reject. Used by both
-  the project-level Review tab and the workspace-level review queue.
+  Two responsibilities, one component:
+    variant="queue"  — triage index (project Review tab + workspace
+                       queue). Each row links into the workflow's detail
+                       page where the review actually happens.
+    variant="review" — the review itself, rendered on the workflow detail
+                       page scoped to one canonical: diff, note, and
+                       Approve / Decline (reviewers only).
   `showProject` adds the project name per row (workspace queue spans
-  projects; the project tab doesn't need it).
+  projects).
 -->
 <template>
   <div class="flex flex-col gap-3">
@@ -47,31 +52,34 @@
               <span class="text-danger-200"> −{{ sub.diff.removed }}</span>
             </span>
             <span
-              v-if="sub.note"
+              v-if="variant === 'review' && sub.note"
               class="pt-1 text-xs text-base-foreground italic"
             >
               “{{ sub.note }}”
             </span>
           </div>
-        </div>
 
-        <div
-          v-if="lockedReason(sub)"
-          class="flex items-center gap-2 rounded-md bg-warning-background/30 px-3 py-1.5 text-xs text-base-foreground"
-        >
-          <i class="icon-[lucide--triangle-alert] size-3.5 shrink-0" />
-          {{ lockedReason(sub) }}
-        </div>
-
-        <div class="flex items-center justify-between gap-2">
-          <Button variant="textonly" size="md" @click="onOpen(sub)">
-            <i
-              class="icon-[lucide--square-arrow-out-up-right]"
-              aria-hidden="true"
-            />
-            {{ t('prototype.submissionReview.open') }}
+          <Button
+            v-if="variant === 'queue'"
+            variant="secondary"
+            size="md"
+            @click="onOpen(sub)"
+          >
+            {{ t('prototype.submissionReview.reviewCta') }}
+            <i class="icon-[lucide--chevron-right]" aria-hidden="true" />
           </Button>
-          <div class="flex gap-2">
+        </div>
+
+        <template v-if="variant === 'review'">
+          <div
+            v-if="lockedReason(sub)"
+            class="flex items-center gap-2 rounded-md bg-warning-background/30 px-3 py-1.5 text-xs text-base-foreground"
+          >
+            <i class="icon-[lucide--triangle-alert] size-3.5 shrink-0" />
+            {{ lockedReason(sub) }}
+          </div>
+
+          <div v-if="canReview(sub)" class="flex justify-end gap-2">
             <Button variant="secondary" size="md" @click="onReject(sub)">
               {{ t('prototype.submissionReview.reject') }}
             </Button>
@@ -85,7 +93,13 @@
               {{ t('prototype.submissionReview.approve') }}
             </Button>
           </div>
-        </div>
+          <span
+            v-else
+            class="self-start rounded-sm bg-base-background px-1.5 py-0.5 text-[10px] text-muted-foreground"
+          >
+            {{ t('prototype.submissionReview.pendingBadge') }}
+          </span>
+        </template>
       </li>
     </ul>
   </div>
@@ -103,11 +117,21 @@ import { usePrototypePersonaStore } from '../stores/personaStore'
 import { usePrototypeUiStore } from '../stores/uiStore'
 import type { WorkflowSubmission } from '../types'
 
-const { projectId, showProject = false } = defineProps<{
-  // When set, scope to one project (the project Review tab). Omit for the
+const {
+  projectId,
+  canonicalWorkflowId,
+  showProject = false,
+  variant = 'queue'
+} = defineProps<{
+  // Scope to one project (the project Review tab). Omit for the
   // workspace-wide queue.
   projectId?: string
+  // Scope to one canonical (the workflow detail page review section).
+  canonicalWorkflowId?: string
   showProject?: boolean
+  // 'queue' lists + links into the detail page; 'review' shows the
+  // Approve / Decline acting surface.
+  variant?: 'queue' | 'review'
 }>()
 
 const { t } = useI18n()
@@ -119,7 +143,9 @@ const { fixture, activeInstall, pendingWorkflowSubmissions } =
 
 const submissions = computed<WorkflowSubmission[]>(() =>
   pendingWorkflowSubmissions.value.filter(
-    (s) => !projectId || s.projectId === projectId
+    (s) =>
+      (!projectId || s.projectId === projectId) &&
+      (!canonicalWorkflowId || s.canonicalWorkflowId === canonicalWorkflowId)
   )
 )
 
@@ -129,6 +155,20 @@ function submitterName(id: string): string {
 
 function projectName(id: string): string {
   return fixture.value.projects.find((p) => p.id === id)?.name ?? id
+}
+
+// Who can act on a submission = who can overwrite the canonical: the
+// project Owner, or a workspace Admin of the project's workspace. The
+// detail page is visible to all collaborators, so this gates the acting
+// surface there; the queue surfaces are already reviewer-only.
+function canReview(sub: WorkflowSubmission): boolean {
+  const project = fixture.value.projects.find((p) => p.id === sub.projectId)
+  if (!project || project.isDrafts) return false
+  if (project.ownerUserId === fixture.value.currentUser.id) return true
+  const workspace = fixture.value.workspaces.find(
+    (w) => w.id === project.workspaceId
+  )
+  return workspace?.currentUserRole === 'admin'
 }
 
 // Approving publishes the canonical, so the install gate applies to the
@@ -149,9 +189,7 @@ function lockedReason(sub: WorkflowSubmission): string | null {
   })
 }
 
-// Open the workflow for review. No editor in the prototype — this lands
-// on the canonical's detail page, where the submitted branch shows under
-// "Other branches" alongside the full published-version history.
+// Triage → jump to the canonical's detail page, where the review happens.
 function onOpen(sub: WorkflowSubmission) {
   uiStore.go({ kind: 'workflow', workflowId: sub.canonicalWorkflowId })
 }
