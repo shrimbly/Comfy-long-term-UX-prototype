@@ -75,45 +75,68 @@
 
           <div class="mx-2 my-1 h-px bg-border-subtle" />
 
-          <Button
-            v-if="selectedId !== NEW_PROJECT"
-            variant="textonly"
-            size="unset"
-            class="w-full items-center gap-3 rounded-lg p-2 text-left hover:bg-interface-menu-component-surface-hovered"
-            @click="selectedId = NEW_PROJECT"
+          <div
+            role="button"
+            :tabindex="isNewProject ? -1 : 0"
+            :class="
+              cn(
+                'flex items-center gap-3 rounded-lg p-2 transition-colors outline-none',
+                isNewProject
+                  ? 'bg-interface-menu-component-surface-selected'
+                  : 'cursor-pointer hover:bg-interface-menu-component-surface-hovered'
+              )
+            "
+            @click="selectNewProject"
+            @keydown.enter.prevent="selectNewProject"
           >
             <span
-              class="grid size-8 shrink-0 place-items-center rounded-md border border-dashed border-border-default text-muted-foreground"
+              :class="
+                cn(
+                  'grid h-8 shrink-0 place-items-center overflow-hidden rounded-md border border-dashed transition-all duration-200 ease-out',
+                  isNewProject
+                    ? 'w-0 border-0 text-base-foreground opacity-0'
+                    : 'w-8 border-border-default text-muted-foreground opacity-100'
+                )
+              "
               aria-hidden="true"
             >
               <i class="icon-[lucide--plus] size-4" />
             </span>
-            <span class="flex-1 text-sm text-base-foreground">{{
-              t('prototype.promoteToProject.newProjectOption')
-            }}</span>
-          </Button>
-          <div
-            v-else
-            class="flex items-center gap-3 rounded-lg bg-interface-menu-component-surface-selected p-2"
-          >
             <span
-              class="grid size-8 shrink-0 place-items-center rounded-md border border-dashed border-base-foreground text-base-foreground"
-              aria-hidden="true"
+              :class="
+                cn(
+                  'overflow-hidden text-sm whitespace-nowrap text-base-foreground transition-all duration-200 ease-out',
+                  isNewProject ? 'max-w-0 opacity-0' : 'flex-1 opacity-100'
+                )
+              "
             >
-              <i class="icon-[lucide--plus] size-4" />
+              {{ t('prototype.promoteToProject.newProjectOption') }}
             </span>
             <input
+              ref="newProjectInput"
               v-model="newProjectName"
               type="text"
-              autofocus
-              class="min-w-0 flex-1 rounded-md border border-border-default bg-base-background px-2.5 py-1.5 text-sm text-base-foreground outline-none placeholder:text-muted-foreground"
+              :tabindex="isNewProject ? 0 : -1"
+              :class="
+                cn(
+                  'min-w-0 rounded-md bg-base-background text-sm text-base-foreground transition-all duration-200 ease-out outline-none placeholder:text-muted-foreground',
+                  isNewProject
+                    ? 'flex-1 border border-border-default px-2.5 py-1.5 opacity-100'
+                    : 'pointer-events-none w-0 border-0 p-0 opacity-0'
+                )
+              "
               :placeholder="
                 t('prototype.promoteToProject.newProjectPlaceholder')
               "
               @keydown.enter="canConfirm && onConfirm()"
             />
             <i
-              class="icon-[lucide--check] size-4 shrink-0 text-base-foreground"
+              :class="
+                cn(
+                  'icon-[lucide--check] size-4 shrink-0 text-base-foreground transition-opacity duration-200 ease-out',
+                  isNewProject ? 'opacity-100' : 'opacity-0'
+                )
+              "
             />
           </div>
         </div>
@@ -135,7 +158,7 @@
 <script setup lang="ts">
 import { cn } from '@comfyorg/tailwind-utils'
 import { storeToRefs } from 'pinia'
-import { computed, ref } from 'vue'
+import { computed, nextTick, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import Button from '@/components/ui/button/Button.vue'
@@ -173,6 +196,15 @@ function seedsFor(project: Project): string[] {
 
 const selectedId = ref<string>('')
 const newProjectName = ref<string>('')
+const newProjectInput = ref<HTMLInputElement | null>(null)
+
+const isNewProject = computed(() => selectedId.value === NEW_PROJECT)
+
+async function selectNewProject() {
+  selectedId.value = NEW_PROJECT
+  await nextTick()
+  newProjectInput.value?.focus()
+}
 
 const canConfirm = computed(() =>
   selectedId.value === NEW_PROJECT
