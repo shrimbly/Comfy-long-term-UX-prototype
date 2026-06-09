@@ -376,6 +376,18 @@ export const adminFixture: PersonaFixture = {
       updatedAt: '2026-05-11'
     },
     {
+      // Mira's branch of the establishing-shot canonical, submitted for
+      // review (see workflowSubmissions below). Lives in the project per
+      // the branch model so the reviewer can open it from the Review tab.
+      id: 'wf-fork-mira-establishing',
+      projectId: 'proj-indie-short',
+      name: 'Establishing shot generator — Mira Voss',
+      kind: 'workflow',
+      ownerUserId: 'user-mira',
+      updatedAt: '2026-05-12',
+      forkedFrom: { workflowId: 'wf-indie-establishing' }
+    },
+    {
       id: 'wf-cocacola-hero',
       projectId: 'proj-cocacola',
       name: 'Coke can hero',

@@ -59,19 +59,28 @@
           {{ lockedReason(sub) }}
         </div>
 
-        <div class="flex justify-end gap-2">
-          <Button variant="secondary" size="md" @click="onReject(sub)">
-            {{ t('prototype.submissionReview.reject') }}
+        <div class="flex items-center justify-between gap-2">
+          <Button variant="textonly" size="md" @click="onOpen(sub)">
+            <i
+              class="icon-[lucide--square-arrow-out-up-right]"
+              aria-hidden="true"
+            />
+            {{ t('prototype.submissionReview.open') }}
           </Button>
-          <Button
-            variant="primary"
-            size="md"
-            :disabled="!!lockedReason(sub)"
-            @click="onApprove(sub)"
-          >
-            <i class="icon-[lucide--check]" aria-hidden="true" />
-            {{ t('prototype.submissionReview.approve') }}
-          </Button>
+          <div class="flex gap-2">
+            <Button variant="secondary" size="md" @click="onReject(sub)">
+              {{ t('prototype.submissionReview.reject') }}
+            </Button>
+            <Button
+              variant="primary"
+              size="md"
+              :disabled="!!lockedReason(sub)"
+              @click="onApprove(sub)"
+            >
+              <i class="icon-[lucide--check]" aria-hidden="true" />
+              {{ t('prototype.submissionReview.approve') }}
+            </Button>
+          </div>
         </div>
       </li>
     </ul>
@@ -87,6 +96,7 @@ import { useI18n } from 'vue-i18n'
 import Button from '@/components/ui/button/Button.vue'
 
 import { usePrototypePersonaStore } from '../stores/personaStore'
+import { usePrototypeUiStore } from '../stores/uiStore'
 import type { WorkflowSubmission } from '../types'
 
 const { projectId, showProject = false } = defineProps<{
@@ -99,6 +109,7 @@ const { projectId, showProject = false } = defineProps<{
 const { t } = useI18n()
 const toast = useToast()
 const personaStore = usePrototypePersonaStore()
+const uiStore = usePrototypeUiStore()
 const { fixture, activeInstall, pendingWorkflowSubmissions } =
   storeToRefs(personaStore)
 
@@ -132,6 +143,13 @@ function lockedReason(sub: WorkflowSubmission): string | null {
       project?.installLockDisplayName ??
       t('prototype.submissionReview.teamInstall')
   })
+}
+
+// Open the workflow for review. No editor in the prototype — this lands
+// on the canonical's detail page, where the submitted branch shows under
+// "Other branches" alongside the full published-version history.
+function onOpen(sub: WorkflowSubmission) {
+  uiStore.go({ kind: 'workflow', workflowId: sub.canonicalWorkflowId })
 }
 
 function onApprove(sub: WorkflowSubmission) {

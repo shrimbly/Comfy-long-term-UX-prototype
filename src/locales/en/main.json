@@ -150,6 +150,7 @@
     "submissionReview": {
       "empty": "No submissions to review.",
       "meta": "Submitted by {user} · {date}",
+      "open": "Open workflow",
       "approve": "Publish",
       "reject": "Decline",
       "lockedToApprove": "Publishing needs the {required} install — switch to it to approve.",
