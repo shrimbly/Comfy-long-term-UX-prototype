@@ -34,42 +34,47 @@
           </p>
         </div>
 
-        <fieldset
-          class="m-0 flex max-h-72 flex-col gap-2 overflow-y-auto border-0 p-0"
-        >
+        <fieldset class="m-0 flex flex-col gap-2 border-0 p-0">
           <legend class="sr-only">
             {{ t('prototype.promoteToProject.pickerLabel') }}
           </legend>
-          <label
-            v-for="p in candidates"
-            :key="p.id"
-            :class="
-              cn(
-                'flex cursor-pointer flex-col gap-0.5 rounded-lg border p-3 text-sm transition-colors',
-                lockedReason(p) && 'cursor-not-allowed opacity-60',
-                selectedId === p.id
-                  ? 'border-primary-background bg-secondary-background'
-                  : 'border-border-subtle hover:bg-secondary-background'
-              )
-            "
+          <div
+            v-if="candidates.length"
+            class="flex max-h-56 flex-col gap-2 overflow-y-auto"
           >
-            <span class="flex items-center gap-2">
-              <input
-                v-model="selectedId"
-                type="radio"
-                :value="p.id"
-                :disabled="!!lockedReason(p)"
-                class="accent-base-foreground"
-              />
-              <span class="font-medium text-base-foreground">{{ p.name }}</span>
-            </span>
-            <span
-              v-if="lockedReason(p)"
-              class="pl-6 text-xs text-muted-foreground"
+            <label
+              v-for="p in candidates"
+              :key="p.id"
+              :class="
+                cn(
+                  'flex cursor-pointer flex-col gap-0.5 rounded-lg border p-3 text-sm transition-colors',
+                  lockedReason(p) && 'cursor-not-allowed opacity-60',
+                  selectedId === p.id
+                    ? 'border-primary-background bg-secondary-background'
+                    : 'border-border-subtle hover:bg-secondary-background'
+                )
+              "
             >
-              {{ lockedReason(p) }}
-            </span>
-          </label>
+              <span class="flex items-center gap-2">
+                <input
+                  v-model="selectedId"
+                  type="radio"
+                  :value="p.id"
+                  :disabled="!!lockedReason(p)"
+                  class="accent-base-foreground"
+                />
+                <span class="font-medium text-base-foreground">{{
+                  p.name
+                }}</span>
+              </span>
+              <span
+                v-if="lockedReason(p)"
+                class="pl-6 text-xs text-muted-foreground"
+              >
+                {{ lockedReason(p) }}
+              </span>
+            </label>
+          </div>
 
           <label
             :class="
