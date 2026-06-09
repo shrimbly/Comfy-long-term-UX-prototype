@@ -41,6 +41,20 @@ export const usePrototypeUiStore = defineStore('prototype-ui', () => {
   // switch, where the install picture changes.
   const acknowledgedInstallNotices = ref<Set<string>>(new Set())
 
+  // One-shot intent: a project freshly created via promotion wants its
+  // share settings opened on arrival. ProjectDetailView consumes it once.
+  const shareIntentProjectId = ref<string | null>(null)
+
+  function requestShareSettings(id: string) {
+    shareIntentProjectId.value = id
+  }
+
+  function consumeShareIntent(id: string): boolean {
+    if (shareIntentProjectId.value !== id) return false
+    shareIntentProjectId.value = null
+    return true
+  }
+
   function acknowledgeInstallNotice(id: string) {
     acknowledgedInstallNotices.value = new Set([
       ...acknowledgedInstallNotices.value,
@@ -126,6 +140,8 @@ export const usePrototypeUiStore = defineStore('prototype-ui', () => {
     searchQuery,
     acknowledgeInstallNotice,
     isInstallNoticeAcknowledged,
+    requestShareSettings,
+    consumeShareIntent,
     go,
     goHome,
     selectProject,

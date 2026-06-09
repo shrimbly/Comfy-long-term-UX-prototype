@@ -177,7 +177,7 @@ import type { Project } from '../types'
 
 const emit = defineEmits<{
   close: []
-  promote: [projectId: string]
+  promote: [projectId: string, isNewProject: boolean]
 }>()
 
 const { t } = useI18n()
@@ -227,10 +227,10 @@ function lockedReason(project: Project): string | null {
 
 function onConfirm() {
   if (!canConfirm.value) return
-  const projectId =
-    selectedId.value === NEW_PROJECT
-      ? personaStore.createProject(newProjectName.value)
-      : selectedId.value
-  emit('promote', projectId)
+  const isNew = selectedId.value === NEW_PROJECT
+  const projectId = isNew
+    ? personaStore.createProject(newProjectName.value)
+    : selectedId.value
+  emit('promote', projectId, isNew)
 }
 </script>

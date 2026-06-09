@@ -235,7 +235,7 @@ function onPromoteToProject() {
   promoteDialogOpen.value = true
 }
 
-function onPromoted(targetProjectId: string) {
+function onPromoted(targetProjectId: string, isNewProject: boolean) {
   const ok = personaStore.promoteWorkflowToProject(workflow.id, targetProjectId)
   promoteDialogOpen.value = false
   if (!ok) return
@@ -249,8 +249,16 @@ function onPromoted(targetProjectId: string) {
     }),
     life: 2800
   })
-  // Land on the now-canonical's detail page so its fresh V1 is visible.
-  uiStore.go({ kind: 'workflow', workflowId: workflow.id })
+  if (isNewProject) {
+    // Brand-new project — land on it and open share settings so the user
+    // can invite collaborators straight away.
+    uiStore.requestShareSettings(targetProjectId)
+    uiStore.go({ kind: 'project', projectId: targetProjectId })
+  } else {
+    // Existing project — land on the now-canonical's detail page so its
+    // fresh version history is visible.
+    uiStore.go({ kind: 'workflow', workflowId: workflow.id })
+  }
 }
 
 function onPublish() {

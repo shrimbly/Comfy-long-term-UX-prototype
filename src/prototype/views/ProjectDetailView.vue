@@ -203,7 +203,7 @@
 <script setup lang="ts">
 import { cn } from '@comfyorg/tailwind-utils'
 import { storeToRefs } from 'pinia'
-import { computed, ref, watch, watchEffect } from 'vue'
+import { computed, onMounted, ref, watch, watchEffect } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import ProjectAccessInstallNotice from '../components/ProjectAccessInstallNotice.vue'
@@ -228,6 +228,12 @@ const { fixture, currentWorkspace, currentPersonaId } =
   storeToRefs(personaStore)
 
 const isSharingOpen = ref(false)
+
+// A project just created via workflow promotion asks to open its share
+// settings on arrival.
+onMounted(() => {
+  if (uiStore.consumeShareIntent(projectId)) isSharingOpen.value = true
+})
 const activeTab = ref<ProjectTabId>('workflows')
 
 const project = computed(() =>
