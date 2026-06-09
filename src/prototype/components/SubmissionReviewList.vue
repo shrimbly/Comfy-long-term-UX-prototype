@@ -79,26 +79,35 @@
             {{ lockedReason(sub) }}
           </div>
 
-          <div v-if="canReview(sub)" class="flex justify-end gap-2">
-            <Button variant="secondary" size="md" @click="onReject(sub)">
-              {{ t('prototype.submissionReview.reject') }}
+          <div class="flex items-center justify-between gap-2">
+            <Button variant="textonly" size="md" @click="onOpenBranch(sub)">
+              <i
+                class="icon-[lucide--square-arrow-out-up-right]"
+                aria-hidden="true"
+              />
+              {{ t('prototype.submissionReview.open') }}
             </Button>
-            <Button
-              variant="primary"
-              size="md"
-              :disabled="!!lockedReason(sub)"
-              @click="onApprove(sub)"
+            <div v-if="canReview(sub)" class="flex gap-2">
+              <Button variant="secondary" size="md" @click="onReject(sub)">
+                {{ t('prototype.submissionReview.reject') }}
+              </Button>
+              <Button
+                variant="primary"
+                size="md"
+                :disabled="!!lockedReason(sub)"
+                @click="onApprove(sub)"
+              >
+                <i class="icon-[lucide--check]" aria-hidden="true" />
+                {{ t('prototype.submissionReview.approve') }}
+              </Button>
+            </div>
+            <span
+              v-else
+              class="rounded-sm bg-base-background px-1.5 py-0.5 text-[10px] text-muted-foreground"
             >
-              <i class="icon-[lucide--check]" aria-hidden="true" />
-              {{ t('prototype.submissionReview.approve') }}
-            </Button>
+              {{ t('prototype.submissionReview.pendingBadge') }}
+            </span>
           </div>
-          <span
-            v-else
-            class="self-start rounded-sm bg-base-background px-1.5 py-0.5 text-[10px] text-muted-foreground"
-          >
-            {{ t('prototype.submissionReview.pendingBadge') }}
-          </span>
         </template>
       </li>
     </ul>
@@ -192,6 +201,19 @@ function lockedReason(sub: WorkflowSubmission): string | null {
 // Triage → jump to the canonical's detail page, where the review happens.
 function onOpen(sub: WorkflowSubmission) {
   uiStore.go({ kind: 'workflow', workflowId: sub.canonicalWorkflowId })
+}
+
+// On the detail page: open the submitted branch itself so the reviewer
+// can inspect it (the canonical is already the page they're on). Falls
+// back to the canonical if the branch isn't in this fixture.
+function onOpenBranch(sub: WorkflowSubmission) {
+  const hasBranch = fixture.value.workflows.some(
+    (w) => w.id === sub.forkWorkflowId
+  )
+  uiStore.go({
+    kind: 'workflow',
+    workflowId: hasBranch ? sub.forkWorkflowId : sub.canonicalWorkflowId
+  })
 }
 
 function onApprove(sub: WorkflowSubmission) {
