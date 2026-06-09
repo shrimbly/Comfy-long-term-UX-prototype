@@ -705,8 +705,9 @@ export const usePrototypePersonaStore = defineStore('prototype-persona', () => {
       // Overwrite the canonical in place (the fork itself may not live in
       // this reviewer's fixture, so bump the canonical's updatedAt) and
       // append a published-version entry — approving IS publishing, so it
-      // lands on the canonical's history timeline (attributed to the
-      // reviewer who published).
+      // lands on the canonical's history timeline. The change is the
+      // submitter's work, so the version is attributed to them, not the
+      // reviewer who approved it.
       fixture.value.workflows = fixture.value.workflows.map((w) =>
         w.id === submission.canonicalWorkflowId
           ? {
@@ -714,7 +715,7 @@ export const usePrototypePersonaStore = defineStore('prototype-persona', () => {
               updatedAt: today,
               publishedVersions: [
                 ...(w.publishedVersions ?? []),
-                { byUserId: fixture.value.currentUser.id, at: today }
+                { byUserId: submission.submittedByUserId, at: today }
               ]
             }
           : w
