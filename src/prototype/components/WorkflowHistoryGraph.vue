@@ -5,7 +5,8 @@
 
   VS Code-style history graph: a vertical main line of published versions
   (newest at top, latest tagged Current) with fork offshoots hanging off
-  the version each fork diverged from (`forkedFrom.atVersion`). Read-only.
+  the version each branch diverged from (`forkedFrom.atVersion`). Clicking
+  a published version opens it (toast-confirmed in the prototype).
 -->
 <template>
   <div class="flex flex-col gap-3">
@@ -41,7 +42,12 @@
           />
         </li>
         <li class="flex min-w-0 items-start py-1.5">
-          <div v-if="row.type === 'version'" class="flex min-w-0 flex-col">
+          <button
+            v-if="row.type === 'version'"
+            type="button"
+            class="flex min-w-0 cursor-pointer appearance-none flex-col gap-0.5 rounded-md border-0 bg-transparent px-2 py-1 text-left transition-colors hover:bg-secondary-background focus:outline-none"
+            @click="onOpenVersion(row.version)"
+          >
             <span class="flex items-center gap-1.5 text-sm font-medium">
               {{ t('prototype.history.version', { number: row.version }) }}
               <span
@@ -59,7 +65,7 @@
                 })
               }}
             </span>
-          </div>
+          </button>
           <div v-else class="flex min-w-0 items-center gap-2">
             <span
               class="-ml-2 size-3 shrink-0 -translate-y-1.5 rounded-bl-md border-b border-l border-border-default"
@@ -71,7 +77,7 @@
             />
             <span class="flex min-w-0 items-center gap-1.5 text-sm">
               <span
-                class="icon-[lucide--git-fork] size-3.5 text-muted-foreground"
+                class="icon-[lucide--git-branch] size-3.5 text-muted-foreground"
               />
               <span class="truncate text-muted-foreground">{{
                 ownerName(row.ownerUserId)
@@ -86,6 +92,7 @@
 
 <script setup lang="ts">
 import { cn } from '@comfyorg/tailwind-utils'
+import { useToast } from 'primevue/usetoast'
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 
@@ -96,7 +103,23 @@ const { canonicalId } = defineProps<{
 }>()
 
 const { t } = useI18n()
+const toast = useToast()
 const personaStore = usePrototypePersonaStore()
+
+// No real snapshot loading in the prototype — opening a published version
+// confirms via toast. Per ../IA_Plan/wiki/decisions/published-workflow-model.md.
+function onOpenVersion(version: number) {
+  if (!canonical.value) return
+  toast.add({
+    severity: 'info',
+    summary: t('prototype.history.openedSummary'),
+    detail: t('prototype.history.openedDetail', {
+      name: canonical.value.name,
+      number: version
+    }),
+    life: 2200
+  })
+}
 
 const canonical = computed(() =>
   personaStore.fixture.workflows.find((w) => w.id === canonicalId)

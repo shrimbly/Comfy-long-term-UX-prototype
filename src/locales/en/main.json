@@ -123,7 +123,9 @@
       "empty": "Not published yet.",
       "version": "V{number}",
       "current": "Current",
-      "versionMeta": "{date} · {user}"
+      "versionMeta": "{date} · {user}",
+      "openedSummary": "Opened version",
+      "openedDetail": "Opened “{name}” · V{number}"
     },
     "installNotice": {
       "title": "Install-locked project",
