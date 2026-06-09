@@ -131,6 +131,7 @@
 </template>
 
 <script setup lang="ts">
+import { useToast } from 'primevue/usetoast'
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 
@@ -146,6 +147,7 @@ const { workflowId } = defineProps<{
 }>()
 
 const { t } = useI18n()
+const toast = useToast()
 const personaStore = usePrototypePersonaStore()
 const uiStore = usePrototypeUiStore()
 
@@ -186,13 +188,19 @@ function onBack() {
   }
 }
 
-// Open for work: reuse-or-branch in this project. No in-app editor surface,
-// so jump to the project so the new branch is visible alongside its peers.
+// Open for work: reuse-or-branch in this project (creates a branch if the
+// user doesn't have one yet). No in-app editor, so confirm via toast and
+// stay on the page — the branch appears in "My branches" reactively.
 function onOpen() {
   personaStore.openForWork(workflowId)
-  if (project.value) {
-    uiStore.go({ kind: 'project', projectId: project.value.id })
-  }
+  toast.add({
+    severity: 'info',
+    summary: t('prototype.workflowCard.forkOnOpenSummary'),
+    detail: t('prototype.workflowCard.forkOnOpenDetail', {
+      name: canonical.value?.name ?? ''
+    }),
+    life: 2800
+  })
 }
 
 function onSaveToMyWorkflows() {
