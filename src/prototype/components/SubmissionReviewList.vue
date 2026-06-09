@@ -43,8 +43,8 @@
               >
             </span>
             <span v-if="sub.diff" class="pt-1 font-mono text-xs">
-              <span class="text-success">+{{ sub.diff.added }}</span>
-              <span class="text-danger"> −{{ sub.diff.removed }}</span>
+              <span class="text-jade-400">+{{ sub.diff.added }}</span>
+              <span class="text-danger-200"> −{{ sub.diff.removed }}</span>
             </span>
             <span
               v-if="sub.note"
