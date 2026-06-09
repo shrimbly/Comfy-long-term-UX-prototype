@@ -5,7 +5,7 @@
 // fixture is the source of truth for everything the dashboard renders.
 
 import { defineStore } from 'pinia'
-import { computed, ref } from 'vue'
+import { computed, reactive, ref } from 'vue'
 
 import { personas } from '../fixtures/personas'
 import type {
@@ -26,8 +26,14 @@ import type {
 export const usePrototypePersonaStore = defineStore('prototype-persona', () => {
   const currentPersonaId = ref<PersonaId>('workspace-admin')
 
+  // Reactive so in-place fixture mutations (publish, approve, rename, …)
+  // trigger re-renders even without a subsequent navigation.
+  const reactivePersonas = reactive(personas)
+
   const currentPersona = computed<PersonaDef>(
-    () => personas.find((p) => p.id === currentPersonaId.value) ?? personas[0]
+    () =>
+      reactivePersonas.find((p) => p.id === currentPersonaId.value) ??
+      reactivePersonas[0]
   )
 
   const fixture = computed(() => currentPersona.value.fixture)
