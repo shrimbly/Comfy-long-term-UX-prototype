@@ -10,11 +10,13 @@ import type { AssetStorage, LibrarySection } from '../types'
 
 type StorageFilter = 'all' | AssetStorage
 
+export type ProjectTab = 'workflows' | 'review' | 'settings' | 'usage'
+
 type ActiveView =
   | { kind: 'explore' }
   | { kind: 'drafts' }
   | { kind: 'projects' }
-  | { kind: 'project'; projectId: string }
+  | { kind: 'project'; projectId: string; tab?: ProjectTab }
   | { kind: 'workflow'; workflowId: string }
   | { kind: 'library'; section: LibrarySection }
   | { kind: 'recents' }
