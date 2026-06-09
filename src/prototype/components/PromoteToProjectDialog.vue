@@ -8,33 +8,31 @@
   Pick a shared project to publish a My Workflows workflow into as its
   canonical. Install-locked targets the user isn't blessed for are shown
   but not selectable (publishing into a locked project needs the blessed
-  install — same gate as Publish to workspace).
+  install — same gate as Publish to workspace). Built on the shared
+  design-system Dialog so it matches the rest of the Comfy Cloud surface.
 -->
 <template>
-  <Teleport to="body">
-    <div
-      class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
-      role="dialog"
-      aria-modal="true"
-      @click.self="emit('close')"
-    >
-      <div
-        class="flex w-full max-w-lg flex-col gap-4 rounded-2xl border border-border-subtle bg-base-background p-6 shadow-2xl"
-      >
-        <div class="flex flex-col gap-1">
-          <h2 class="m-0 text-lg font-semibold">
-            {{ t('prototype.promoteToProject.title') }}
-          </h2>
-          <p class="m-0 text-sm text-muted-foreground">
-            {{
-              t('prototype.promoteToProject.subtitle', {
-                workflow: workflow.name
-              })
-            }}
-          </p>
-        </div>
+  <Dialog :open="true" @update:open="(v) => !v && emit('close')">
+    <DialogPortal>
+      <DialogOverlay />
+      <DialogContent size="sm">
+        <DialogHeader>
+          <div class="flex flex-col gap-1">
+            <DialogTitle>{{
+              t('prototype.promoteToProject.title')
+            }}</DialogTitle>
+            <DialogDescription>
+              {{
+                t('prototype.promoteToProject.subtitle', {
+                  workflow: workflow.name
+                })
+              }}
+            </DialogDescription>
+          </div>
+          <DialogClose />
+        </DialogHeader>
 
-        <fieldset class="m-0 flex flex-col gap-2 border-0 p-0">
+        <fieldset class="m-0 flex flex-col gap-1 border-0 px-4 py-2">
           <legend class="sr-only">
             {{ t('prototype.promoteToProject.pickerLabel') }}
           </legend>
@@ -47,11 +45,11 @@
               :key="p.id"
               :class="
                 cn(
-                  'flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm transition-colors',
+                  'flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors',
                   lockedReason(p) && 'cursor-not-allowed opacity-60',
                   selectedId === p.id
-                    ? 'border-primary-background bg-secondary-background'
-                    : 'border-border-subtle hover:bg-secondary-background'
+                    ? 'bg-interface-menu-component-surface-selected'
+                    : 'hover:bg-interface-menu-component-surface-hovered'
                 )
               "
             >
@@ -62,10 +60,9 @@
                 :disabled="!!lockedReason(p)"
                 class="accent-base-foreground"
               />
-              <span
-                class="min-w-0 flex-1 truncate font-medium text-base-foreground"
-                >{{ p.name }}</span
-              >
+              <span class="min-w-0 flex-1 truncate text-base-foreground">{{
+                p.name
+              }}</span>
               <i
                 v-if="lockInfo(p)"
                 :title="lockInfo(p) ?? undefined"
@@ -77,10 +74,10 @@
           <label
             :class="
               cn(
-                'flex cursor-pointer flex-col gap-2 rounded-lg border px-3 py-2 text-sm transition-colors',
+                'flex cursor-pointer flex-col gap-2 rounded-lg px-3 py-2 text-sm transition-colors',
                 selectedId === NEW_PROJECT
-                  ? 'border-primary-background bg-secondary-background'
-                  : 'border-border-subtle hover:bg-secondary-background'
+                  ? 'bg-interface-menu-component-surface-selected'
+                  : 'hover:bg-interface-menu-component-surface-hovered'
               )
             "
           >
@@ -91,9 +88,7 @@
                 :value="NEW_PROJECT"
                 class="accent-base-foreground"
               />
-              <span
-                class="flex items-center gap-1.5 font-medium text-base-foreground"
-              >
+              <span class="flex items-center gap-1.5 text-base-foreground">
                 <i class="icon-[lucide--plus] size-4" aria-hidden="true" />
                 {{ t('prototype.promoteToProject.newProjectOption') }}
               </span>
@@ -110,23 +105,18 @@
           </label>
         </fieldset>
 
-        <footer class="flex justify-end gap-2">
-          <Button variant="textonly" size="lg" @click="emit('close')">
+        <DialogFooter>
+          <Button variant="textonly" @click="emit('close')">
             {{ t('prototype.promoteToProject.cancel') }}
           </Button>
-          <Button
-            variant="primary"
-            size="lg"
-            :disabled="!canConfirm"
-            @click="onConfirm"
-          >
+          <Button variant="primary" :disabled="!canConfirm" @click="onConfirm">
             <i class="icon-[lucide--upload]" aria-hidden="true" />
             {{ t('prototype.promoteToProject.confirm') }}
           </Button>
-        </footer>
-      </div>
-    </div>
-  </Teleport>
+        </DialogFooter>
+      </DialogContent>
+    </DialogPortal>
+  </Dialog>
 </template>
 
 <script setup lang="ts">
@@ -136,6 +126,15 @@ import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import Button from '@/components/ui/button/Button.vue'
+import Dialog from '@/components/ui/dialog/Dialog.vue'
+import DialogClose from '@/components/ui/dialog/DialogClose.vue'
+import DialogContent from '@/components/ui/dialog/DialogContent.vue'
+import DialogDescription from '@/components/ui/dialog/DialogDescription.vue'
+import DialogFooter from '@/components/ui/dialog/DialogFooter.vue'
+import DialogHeader from '@/components/ui/dialog/DialogHeader.vue'
+import DialogOverlay from '@/components/ui/dialog/DialogOverlay.vue'
+import DialogPortal from '@/components/ui/dialog/DialogPortal.vue'
+import DialogTitle from '@/components/ui/dialog/DialogTitle.vue'
 
 import { usePrototypePersonaStore } from '../stores/personaStore'
 import type { Project, Workflow } from '../types'
