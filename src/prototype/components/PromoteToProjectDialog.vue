@@ -75,43 +75,45 @@
 
           <div class="mx-2 my-1 h-px bg-border-subtle" />
 
-          <div class="flex flex-col">
-            <Button
-              variant="textonly"
-              size="unset"
-              :class="
-                cn(
-                  'w-full items-center gap-3 rounded-lg p-2 text-left',
-                  selectedId === NEW_PROJECT
-                    ? 'bg-secondary-background ring-1 ring-primary-background ring-inset hover:bg-secondary-background'
-                    : 'hover:bg-secondary-background-hover'
-                )
-              "
-              @click="selectedId = NEW_PROJECT"
+          <Button
+            v-if="selectedId !== NEW_PROJECT"
+            variant="textonly"
+            size="unset"
+            class="w-full items-center gap-3 rounded-lg p-2 text-left hover:bg-secondary-background-hover"
+            @click="selectedId = NEW_PROJECT"
+          >
+            <span
+              class="grid size-8 shrink-0 place-items-center rounded-md border border-dashed border-border-default text-muted-foreground"
+              aria-hidden="true"
             >
-              <span
-                class="grid size-8 shrink-0 place-items-center rounded-md border border-dashed border-border-default text-muted-foreground"
-                aria-hidden="true"
-              >
-                <i class="icon-[lucide--plus] size-4" />
-              </span>
-              <span class="flex-1 text-sm text-base-foreground">{{
-                t('prototype.promoteToProject.newProjectOption')
-              }}</span>
-              <i
-                v-if="selectedId === NEW_PROJECT"
-                class="icon-[lucide--check] size-4 shrink-0 text-primary-background"
-              />
-            </Button>
+              <i class="icon-[lucide--plus] size-4" />
+            </span>
+            <span class="flex-1 text-sm text-base-foreground">{{
+              t('prototype.promoteToProject.newProjectOption')
+            }}</span>
+          </Button>
+          <div
+            v-else
+            class="flex items-center gap-3 rounded-lg p-2 ring-1 ring-primary-background ring-inset"
+          >
+            <span
+              class="grid size-8 shrink-0 place-items-center rounded-md border border-dashed border-primary-background text-primary-background"
+              aria-hidden="true"
+            >
+              <i class="icon-[lucide--plus] size-4" />
+            </span>
             <input
-              v-if="selectedId === NEW_PROJECT"
               v-model="newProjectName"
               type="text"
               autofocus
-              class="mt-1 ml-13 rounded-md border border-border-default bg-base-background px-2.5 py-1.5 text-sm text-base-foreground outline-none focus:border-primary-background"
+              class="min-w-0 flex-1 bg-transparent text-sm text-base-foreground outline-none placeholder:text-muted-foreground"
               :placeholder="
                 t('prototype.promoteToProject.newProjectPlaceholder')
               "
+              @keydown.enter="canConfirm && onConfirm()"
+            />
+            <i
+              class="icon-[lucide--check] size-4 shrink-0 text-primary-background"
             />
           </div>
         </div>
