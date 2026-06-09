@@ -21,69 +21,94 @@
           <DialogClose />
         </DialogHeader>
 
-        <div class="flex flex-col gap-1 px-4 py-3">
+        <div class="flex flex-col px-2 py-1">
           <div
             v-if="candidates.length"
-            class="flex max-h-60 flex-col gap-0.5 overflow-y-auto"
+            class="flex max-h-64 flex-col gap-0.5 overflow-y-auto py-1 pr-0.5"
           >
             <Button
               v-for="p in candidates"
               :key="p.id"
-              variant="secondary"
+              variant="textonly"
               size="unset"
               :disabled="!!lockedReason(p)"
               :class="
                 cn(
-                  'w-full justify-start gap-2 rounded-lg px-3 py-2 text-sm',
-                  selectedId === p.id &&
-                    'bg-interface-menu-component-surface-selected hover:bg-interface-menu-component-surface-selected'
+                  'w-full items-center gap-3 rounded-lg p-2 text-left',
+                  selectedId === p.id
+                    ? 'bg-secondary-background ring-1 ring-primary-background ring-inset hover:bg-secondary-background'
+                    : 'hover:bg-secondary-background-hover'
                 )
               "
               @click="selectedId = p.id"
             >
               <span
-                class="min-w-0 flex-1 truncate text-left text-base-foreground"
-                >{{ p.name }}</span
+                class="grid size-8 shrink-0 grid-cols-2 grid-rows-2 gap-0.5 overflow-hidden rounded-md"
+                aria-hidden="true"
               >
+                <span
+                  v-for="(seed, i) in seedsFor(p)"
+                  :key="i"
+                  class="block rounded-[2px]"
+                  :style="{ background: thumbnailGradient(seed) }"
+                />
+              </span>
+              <span class="flex min-w-0 flex-1 flex-col">
+                <span class="truncate text-sm text-base-foreground">{{
+                  p.name
+                }}</span>
+                <span class="truncate text-xs text-muted-foreground">{{
+                  t(`prototype.projectTier.${p.tier}`)
+                }}</span>
+              </span>
               <i
-                v-if="lockInfo(p)"
-                :title="lockInfo(p) ?? undefined"
+                v-if="lockedReason(p)"
+                :title="lockedReason(p) ?? undefined"
                 class="icon-[lucide--lock] size-3.5 shrink-0 text-muted-foreground"
               />
               <i
-                v-if="selectedId === p.id"
-                class="icon-[lucide--check] size-4 shrink-0 text-base-foreground"
+                v-else-if="selectedId === p.id"
+                class="icon-[lucide--check] size-4 shrink-0 text-primary-background"
               />
             </Button>
           </div>
 
+          <div class="mx-2 my-1 h-px bg-border-subtle" />
+
           <div class="flex flex-col">
             <Button
-              variant="secondary"
+              variant="textonly"
               size="unset"
               :class="
                 cn(
-                  'w-full justify-start gap-1.5 rounded-lg px-3 py-2 text-sm',
-                  selectedId === NEW_PROJECT &&
-                    'bg-interface-menu-component-surface-selected hover:bg-interface-menu-component-surface-selected'
+                  'w-full items-center gap-3 rounded-lg p-2 text-left',
+                  selectedId === NEW_PROJECT
+                    ? 'bg-secondary-background ring-1 ring-primary-background ring-inset hover:bg-secondary-background'
+                    : 'hover:bg-secondary-background-hover'
                 )
               "
               @click="selectedId = NEW_PROJECT"
             >
-              <i class="icon-[lucide--plus] size-4" aria-hidden="true" />
-              <span class="flex-1 text-left text-base-foreground">{{
+              <span
+                class="grid size-8 shrink-0 place-items-center rounded-md border border-dashed border-border-default text-muted-foreground"
+                aria-hidden="true"
+              >
+                <i class="icon-[lucide--plus] size-4" />
+              </span>
+              <span class="flex-1 text-sm text-base-foreground">{{
                 t('prototype.promoteToProject.newProjectOption')
               }}</span>
               <i
                 v-if="selectedId === NEW_PROJECT"
-                class="icon-[lucide--check] size-4 shrink-0 text-base-foreground"
+                class="icon-[lucide--check] size-4 shrink-0 text-primary-background"
               />
             </Button>
             <input
               v-if="selectedId === NEW_PROJECT"
               v-model="newProjectName"
               type="text"
-              class="mx-3 mt-1 rounded-md border border-border-default bg-base-background px-2.5 py-1.5 text-sm text-base-foreground outline-none focus:border-primary-background"
+              autofocus
+              class="mt-1 ml-13 rounded-md border border-border-default bg-base-background px-2.5 py-1.5 text-sm text-base-foreground outline-none focus:border-primary-background"
               :placeholder="
                 t('prototype.promoteToProject.newProjectPlaceholder')
               "
@@ -122,6 +147,7 @@ import DialogPortal from '@/components/ui/dialog/DialogPortal.vue'
 import DialogTitle from '@/components/ui/dialog/DialogTitle.vue'
 
 import { usePrototypePersonaStore } from '../stores/personaStore'
+import { thumbnailGradient } from '../utils/thumbnail'
 import type { Project } from '../types'
 
 const emit = defineEmits<{
@@ -136,6 +162,12 @@ const { visibleProjects, activeInstall } = storeToRefs(personaStore)
 const NEW_PROJECT = '__new__'
 
 const candidates = computed(() => visibleProjects.value)
+
+// Four colour-tile seeds per project — the same identity glyph used on
+// project cards, so projects read as projects rather than plain rows.
+function seedsFor(project: Project): string[] {
+  return [0, 1, 2, 3].map((i) => `${project.id}-${i}`)
+}
 
 const selectedId = ref<string>('')
 const newProjectName = ref<string>('')
@@ -157,17 +189,6 @@ function lockedReason(project: Project): string | null {
   return t('prototype.promoteToProject.lockedHint', {
     install: project.installLockDisplayName ?? allowed[0]
   })
-}
-
-// Tooltip for the row's lock icon: the install-lock reason if the user
-// can't publish here, otherwise a note that the project is restricted.
-function lockInfo(project: Project): string | null {
-  return (
-    lockedReason(project) ??
-    (project.tier === 'restricted'
-      ? t('prototype.promoteToProject.restrictedHint')
-      : null)
-  )
 }
 
 function onConfirm() {
