@@ -36,8 +36,8 @@
                 cn(
                   'w-full items-center gap-3 rounded-lg p-2 text-left',
                   selectedId === p.id
-                    ? 'bg-secondary-background ring-1 ring-primary-background ring-inset hover:bg-secondary-background'
-                    : 'hover:bg-secondary-background-hover'
+                    ? 'bg-interface-menu-component-surface-selected hover:bg-interface-menu-component-surface-selected'
+                    : 'hover:bg-interface-menu-component-surface-hovered'
                 )
               "
               @click="selectedId = p.id"
@@ -68,7 +68,7 @@
               />
               <i
                 v-else-if="selectedId === p.id"
-                class="icon-[lucide--check] size-4 shrink-0 text-primary-background"
+                class="icon-[lucide--check] size-4 shrink-0 text-base-foreground"
               />
             </Button>
           </div>
@@ -79,7 +79,7 @@
             v-if="selectedId !== NEW_PROJECT"
             variant="textonly"
             size="unset"
-            class="w-full items-center gap-3 rounded-lg p-2 text-left hover:bg-secondary-background-hover"
+            class="w-full items-center gap-3 rounded-lg p-2 text-left hover:bg-interface-menu-component-surface-hovered"
             @click="selectedId = NEW_PROJECT"
           >
             <span
@@ -94,10 +94,10 @@
           </Button>
           <div
             v-else
-            class="flex items-center gap-3 rounded-lg p-2 ring-1 ring-primary-background ring-inset"
+            class="flex items-center gap-3 rounded-lg bg-interface-menu-component-surface-selected p-2"
           >
             <span
-              class="grid size-8 shrink-0 place-items-center rounded-md border border-dashed border-primary-background text-primary-background"
+              class="grid size-8 shrink-0 place-items-center rounded-md border border-dashed border-border-default text-muted-foreground"
               aria-hidden="true"
             >
               <i class="icon-[lucide--plus] size-4" />
@@ -113,7 +113,7 @@
               @keydown.enter="canConfirm && onConfirm()"
             />
             <i
-              class="icon-[lucide--check] size-4 shrink-0 text-primary-background"
+              class="icon-[lucide--check] size-4 shrink-0 text-base-foreground"
             />
           </div>
         </div>
