@@ -157,6 +157,7 @@
                 v-for="wf in workflows"
                 :key="wf.id"
                 :workflow="wf"
+                :selected="wf.id === selectedWorkflowId"
                 @open="onSelectWorkflow"
                 @open-project="onOpenProject"
               />

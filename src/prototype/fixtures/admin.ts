@@ -310,34 +310,8 @@ export const adminFixture: PersonaFixture = {
       ]
     },
     {
-      // Mira's fork of the Moodboard canonical (lives in her My Workflows;
-      // surfaced on the canonical's detail page as a collaborator fork).
-      id: 'wf-fork-mira-moodboard',
-      projectId: 'proj-drafts',
-      name: 'Moodboard explorer — Mira Voss',
-      kind: 'workflow',
-      ownerUserId: 'user-mira',
-      updatedAt: '2026-05-12',
-      storage: 'cloud',
-      forkedFrom: {
-        workflowId: 'wf-clientx-moodboard',
-        atVersion: '2026-05-04'
-      }
-    },
-    {
-      id: 'wf-fork-alex-moodboard',
-      projectId: 'proj-drafts',
-      name: 'Moodboard explorer — Alex Carmoid',
-      kind: 'workflow',
-      ownerUserId: 'user-alex',
-      updatedAt: '2026-05-12',
-      storage: 'cloud',
-      forkedFrom: {
-        workflowId: 'wf-clientx-moodboard',
-        atVersion: '2026-05-08'
-      }
-    },
-    {
+      // Willie's own branch of the Moodboard canonical — drives the
+      // workflow sidebar's "Open branch" state (vs "Create a branch").
       id: 'wf-fork-admin-moodboard',
       projectId: 'proj-drafts',
       name: 'Moodboard explorer — Willie',

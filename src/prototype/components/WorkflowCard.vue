@@ -17,7 +17,12 @@
       @click="emit('open', workflow.id)"
     >
       <span
-        class="relative block aspect-square w-full overflow-hidden rounded-md"
+        :class="
+          cn(
+            'relative block aspect-square w-full overflow-hidden rounded-md ring-2 ring-offset-2 ring-offset-base-background transition-shadow',
+            selected ? 'ring-primary-background' : 'ring-transparent'
+          )
+        "
         :style="{ background: thumbnail }"
       >
         <span
@@ -88,9 +93,14 @@ import { usePrototypePersonaStore } from '../stores/personaStore'
 import { thumbnailGradient } from '../utils/thumbnail'
 import type { Workflow } from '../types'
 
-const { workflow, showOpenContainingProject = true } = defineProps<{
+const {
+  workflow,
+  showOpenContainingProject = true,
+  selected = false
+} = defineProps<{
   workflow: Workflow
   showOpenContainingProject?: boolean
+  selected?: boolean
 }>()
 
 const emit = defineEmits<{

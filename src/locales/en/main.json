@@ -115,7 +115,9 @@
         "branchSummary": "Branch created",
         "branchDetail": "Editing your branch of “{name}”.",
         "openBranchSummary": "Opened branch",
-        "openBranchDetail": "Opened your branch of “{name}”."
+        "openBranchDetail": "Opened your branch of “{name}”.",
+        "openedVersionSummary": "Opened version",
+        "openedVersionDetail": "Opened “{name}” · V{number}."
       }
     },
     "history": {

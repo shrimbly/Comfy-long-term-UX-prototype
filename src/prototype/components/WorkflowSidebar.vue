@@ -96,7 +96,12 @@
               "
             />
           </span>
-          <span class="flex min-w-0 flex-col py-1">
+          <Button
+            variant="textonly"
+            size="unset"
+            class="my-0.5 min-w-0 flex-col items-start gap-0 rounded-md px-2 py-1 hover:bg-secondary-background-hover"
+            @click="onOpenVersion(row.number)"
+          >
             <span
               class="flex items-center gap-1.5 text-sm text-base-foreground"
             >
@@ -116,7 +121,7 @@
                 })
               }}
             </span>
-          </span>
+          </Button>
         </li>
       </ul>
     </section>
@@ -198,6 +203,20 @@ function onBranch() {
     summary: t('prototype.workflowSidebar.toast.branchSummary'),
     detail: t('prototype.workflowSidebar.toast.branchDetail', { name }),
     life: 2800
+  })
+}
+
+// No editor in the prototype — opening a past version confirms via toast.
+function onOpenVersion(number: number) {
+  if (!canonical.value) return
+  toast.add({
+    severity: 'info',
+    summary: t('prototype.workflowSidebar.toast.openedVersionSummary'),
+    detail: t('prototype.workflowSidebar.toast.openedVersionDetail', {
+      name: canonical.value.name,
+      number
+    }),
+    life: 2200
   })
 }
 
