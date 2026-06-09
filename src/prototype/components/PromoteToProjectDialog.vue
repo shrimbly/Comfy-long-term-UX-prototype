@@ -106,7 +106,7 @@
               v-model="newProjectName"
               type="text"
               autofocus
-              class="min-w-0 flex-1 bg-transparent text-sm text-base-foreground outline-none placeholder:text-muted-foreground"
+              class="min-w-0 flex-1 rounded-md border border-border-default bg-base-background px-2.5 py-1.5 text-sm text-base-foreground outline-none placeholder:text-muted-foreground"
               :placeholder="
                 t('prototype.promoteToProject.newProjectPlaceholder')
               "
