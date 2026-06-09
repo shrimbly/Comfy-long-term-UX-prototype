@@ -112,16 +112,24 @@
       </li>
     </ul>
   </div>
+
+  <DeclineSubmissionDialog
+    v-if="decliningSubmission"
+    :submitter-name="submitterName(decliningSubmission.submittedByUserId)"
+    @close="decliningSubmission = null"
+    @confirm="onDeclineConfirm"
+  />
 </template>
 
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
 import { useToast } from 'primevue/usetoast'
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import Button from '@/components/ui/button/Button.vue'
 
+import DeclineSubmissionDialog from './DeclineSubmissionDialog.vue'
 import { usePrototypePersonaStore } from '../stores/personaStore'
 import { usePrototypeUiStore } from '../stores/uiStore'
 import type { WorkflowSubmission } from '../types'
@@ -157,6 +165,8 @@ const submissions = computed<WorkflowSubmission[]>(() =>
       (!canonicalWorkflowId || s.canonicalWorkflowId === canonicalWorkflowId)
   )
 )
+
+const decliningSubmission = ref<WorkflowSubmission | null>(null)
 
 function submitterName(id: string): string {
   return fixture.value.members.find((m) => m.id === id)?.name ?? id
@@ -234,7 +244,14 @@ function onApprove(sub: WorkflowSubmission) {
 }
 
 function onReject(sub: WorkflowSubmission) {
-  personaStore.rejectSubmission(sub.id)
+  decliningSubmission.value = sub
+}
+
+function onDeclineConfirm(comment: string) {
+  const sub = decliningSubmission.value
+  if (!sub) return
+  personaStore.rejectSubmission(sub.id, comment)
+  decliningSubmission.value = null
   toast.add({
     severity: 'info',
     summary: t('prototype.submissionReview.toast.rejectedSummary'),

@@ -156,6 +156,11 @@
       "pendingBadge": "Pending review",
       "approve": "Publish",
       "reject": "Decline",
+      "declineTitle": "Decline submission",
+      "declineSubtitle": "Tell {user} what to revise. Your feedback is sent back to them.",
+      "declinePlaceholder": "What needs to change before this can be published?",
+      "declineCancel": "Cancel",
+      "declineConfirm": "Send & decline",
       "lockedToApprove": "Publishing needs the {required} install — switch to it to approve.",
       "teamInstall": "team install",
       "toast": {

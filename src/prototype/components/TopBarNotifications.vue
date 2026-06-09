@@ -82,6 +82,12 @@
               <span class="truncate text-sm">
                 {{ messageFor(n) }}
               </span>
+              <span
+                v-if="n.message"
+                class="text-xs text-base-foreground italic"
+              >
+                “{{ n.message }}”
+              </span>
               <span class="truncate text-xs text-muted-foreground">
                 {{
                   t('prototype.views.notifications.in', {

@@ -129,6 +129,9 @@ export interface WorkflowSubmission {
   note?: string
   // Rough lines-changed summary vs the canonical, for the review row.
   diff?: { added: number; removed: number }
+  // Reviewer's feedback when the submission is declined, sent to the
+  // submitter for revision.
+  reviewComment?: string
 }
 
 // Workspace-level allowlists per
@@ -451,6 +454,8 @@ export interface Notification {
   target: NotificationTarget
   createdAt: string
   readAt?: string
+  // Free-text body, e.g. a reviewer's decline feedback to the submitter.
+  message?: string
 }
 
 export interface PersonaFixture {

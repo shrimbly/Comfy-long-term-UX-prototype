@@ -13,6 +13,7 @@ import type {
   BlessedInstall,
   CreditLimitPeriod,
   DelegableCapability,
+  Notification,
   PersonaDef,
   PersonaId,
   Project,
@@ -692,9 +693,27 @@ export const usePrototypePersonaStore = defineStore('prototype-persona', () => {
     return true
   }
 
+  // Deliver a notification into the submitter's own persona fixture so it
+  // surfaces when you switch to them — fixtures don't share state, so this
+  // bridges the cross-persona demo.
+  function notifySubmitter(
+    submitterUserId: string,
+    note: Omit<Notification, 'id'>
+  ) {
+    const submitterPersona = reactivePersonas.find(
+      (p) => p.fixture.currentUser.id === submitterUserId
+    )
+    if (!submitterPersona) return
+    submitterPersona.fixture.notifications = [
+      { ...note, id: `note-${Date.now()}` },
+      ...submitterPersona.fixture.notifications
+    ]
+  }
+
   function resolveSubmission(
     submissionId: string,
-    status: 'approved' | 'rejected'
+    status: 'approved' | 'rejected',
+    comment?: string
   ) {
     const today = new Date().toISOString().slice(0, 10)
     const submission = fixture.value.workflowSubmissions.find(
@@ -722,7 +741,10 @@ export const usePrototypePersonaStore = defineStore('prototype-persona', () => {
       )
     }
     fixture.value.workflowSubmissions = fixture.value.workflowSubmissions.map(
-      (s) => (s.id === submissionId ? { ...s, status } : s)
+      (s) =>
+        s.id === submissionId
+          ? { ...s, status, reviewComment: comment ?? s.reviewComment }
+          : s
     )
     // Clear the reviewer's "submission-received" cue for this asset.
     fixture.value.notifications = fixture.value.notifications.map((n) =>
@@ -732,14 +754,31 @@ export const usePrototypePersonaStore = defineStore('prototype-persona', () => {
         ? { ...n, readAt: today }
         : n
     )
+    // Send the outcome back to the submitter. Declines carry the
+    // reviewer's feedback so they know what to revise.
+    const project = fixture.value.projects.find(
+      (p) => p.id === submission.projectId
+    )
+    notifySubmitter(submission.submittedByUserId, {
+      kind:
+        status === 'approved' ? 'submission-approved' : 'submission-rejected',
+      actorUserId: fixture.value.currentUser.id,
+      target: {
+        workspaceId: project?.workspaceId ?? fixture.value.currentWorkspaceId,
+        projectId: submission.projectId,
+        assetId: submission.canonicalWorkflowId
+      },
+      createdAt: today,
+      message: status === 'rejected' ? comment : undefined
+    })
   }
 
   function approveSubmission(submissionId: string) {
     resolveSubmission(submissionId, 'approved')
   }
 
-  function rejectSubmission(submissionId: string) {
-    resolveSubmission(submissionId, 'rejected')
+  function rejectSubmission(submissionId: string, comment: string) {
+    resolveSubmission(submissionId, 'rejected', comment)
   }
 
   // --- Project settings ------------------------------------------------
