@@ -40,14 +40,14 @@
           </legend>
           <div
             v-if="candidates.length"
-            class="flex max-h-56 flex-col gap-2 overflow-y-auto"
+            class="flex max-h-60 flex-col gap-1 overflow-y-auto"
           >
             <label
               v-for="p in candidates"
               :key="p.id"
               :class="
                 cn(
-                  'flex cursor-pointer flex-col gap-0.5 rounded-lg border p-3 text-sm transition-colors',
+                  'flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm transition-colors',
                   lockedReason(p) && 'cursor-not-allowed opacity-60',
                   selectedId === p.id
                     ? 'border-primary-background bg-secondary-background'
@@ -55,31 +55,29 @@
                 )
               "
             >
-              <span class="flex items-center gap-2">
-                <input
-                  v-model="selectedId"
-                  type="radio"
-                  :value="p.id"
-                  :disabled="!!lockedReason(p)"
-                  class="accent-base-foreground"
-                />
-                <span class="font-medium text-base-foreground">{{
-                  p.name
-                }}</span>
-              </span>
+              <input
+                v-model="selectedId"
+                type="radio"
+                :value="p.id"
+                :disabled="!!lockedReason(p)"
+                class="accent-base-foreground"
+              />
               <span
-                v-if="lockedReason(p)"
-                class="pl-6 text-xs text-muted-foreground"
+                class="min-w-0 flex-1 truncate font-medium text-base-foreground"
+                >{{ p.name }}</span
               >
-                {{ lockedReason(p) }}
-              </span>
+              <i
+                v-if="lockInfo(p)"
+                :title="lockInfo(p) ?? undefined"
+                class="icon-[lucide--lock] size-3.5 shrink-0 text-muted-foreground"
+              />
             </label>
           </div>
 
           <label
             :class="
               cn(
-                'flex cursor-pointer flex-col gap-2 rounded-lg border p-3 text-sm transition-colors',
+                'flex cursor-pointer flex-col gap-2 rounded-lg border px-3 py-2 text-sm transition-colors',
                 selectedId === NEW_PROJECT
                   ? 'border-primary-background bg-secondary-background'
                   : 'border-border-subtle hover:bg-secondary-background'
@@ -179,6 +177,17 @@ function lockedReason(project: Project): string | null {
   return t('prototype.promoteToProject.lockedHint', {
     install: project.installLockDisplayName ?? allowed[0]
   })
+}
+
+// Tooltip for the row's lock icon: the install-lock reason if the user
+// can't publish here, otherwise a note that the project is restricted.
+function lockInfo(project: Project): string | null {
+  return (
+    lockedReason(project) ??
+    (project.tier === 'restricted'
+      ? t('prototype.promoteToProject.restrictedHint')
+      : null)
+  )
 }
 
 function onConfirm() {

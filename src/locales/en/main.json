@@ -193,6 +193,7 @@
       "empty": "No projects you can publish into yet.",
       "newProjectOption": "New project",
       "newProjectPlaceholder": "New project name",
+      "restrictedHint": "Restricted — only invited members can see this project.",
       "lockedHint": "Locked to {install} — switch to it to publish here.",
       "cancel": "Cancel",
       "confirm": "Publish to project",
