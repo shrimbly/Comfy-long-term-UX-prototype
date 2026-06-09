@@ -25,7 +25,7 @@
       <li
         v-for="sub in submissions"
         :key="sub.id"
-        class="flex flex-col gap-3 rounded-lg border border-border-subtle bg-secondary-background p-4"
+        class="flex max-w-2xl flex-col gap-3 rounded-lg border border-border-subtle bg-secondary-background p-4"
       >
         <div class="flex items-start justify-between gap-3">
           <div class="flex min-w-0 flex-col gap-0.5">
