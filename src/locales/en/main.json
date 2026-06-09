@@ -104,27 +104,26 @@
       "forkOnOpenSummary": "Branch in this project",
       "forkOnOpenDetail": "You're editing a branch of \"{name}\". Publish to workspace to update the team version."
     },
-    "workflowDetail": {
-      "workflowTag": "Workflow",
-      "appTag": "App",
-      "open": "Open",
-      "saveToMyWorkflows": "Save to My Workflows",
-      "forksHeading": "Branches ({count})",
-      "noForks": "No branches yet. Open to create one.",
-      "myBranches": "My branches",
-      "otherBranches": "Other collaborators' branches",
-      "noMyBranches": "You don't have a branch yet. Open to create one.",
-      "pendingReviewHeading": "Pending review",
-      "yours": "You"
+    "workflowSidebar": {
+      "openCopy": "Open a copy",
+      "createBranch": "Create a branch",
+      "openBranch": "Open branch",
+      "historyHeading": "Version history",
+      "toast": {
+        "copySummary": "Copied to My Workflows",
+        "copyDetail": "“{name}” is now in My Workflows.",
+        "branchSummary": "Branch created",
+        "branchDetail": "Editing your branch of “{name}”.",
+        "openBranchSummary": "Opened branch",
+        "openBranchDetail": "Opened your branch of “{name}”."
+      }
     },
     "history": {
       "heading": "Published versions",
       "empty": "Not published yet.",
       "version": "V{number}",
       "current": "Current",
-      "versionMeta": "{date} · {user}",
-      "openedSummary": "Opened version",
-      "openedDetail": "Opened “{name}” · V{number}"
+      "versionMeta": "{date} · {user}"
     },
     "installNotice": {
       "title": "Install-locked project",
@@ -152,7 +151,6 @@
       "empty": "No submissions to review.",
       "meta": "Submitted by {user} · {date}",
       "open": "Open workflow",
-      "reviewCta": "Review",
       "pendingBadge": "Pending review",
       "approve": "Publish",
       "reject": "Decline",

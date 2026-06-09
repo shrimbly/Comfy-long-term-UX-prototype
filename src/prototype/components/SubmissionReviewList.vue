@@ -10,15 +10,11 @@
                 approved from a blessed active install.
     log:      ../prototype/design-decisions.md 2026-05-27
 
-  Two responsibilities, one component:
-    variant="queue"  — triage index (project Review tab + workspace
-                       queue). Each row links into the workflow's detail
-                       page where the review actually happens.
-    variant="review" — the review itself, rendered on the workflow detail
-                       page scoped to one canonical: diff, note, and
-                       Approve / Decline (reviewers only).
-  `showProject` adds the project name per row (workspace queue spans
-  projects).
+  The review surface — used by the project Review tab and the workspace
+  review queue. Each row shows the submission (name, diff, note) and the
+  Approve / Decline actions inline (reviewers only; others see a pending
+  badge). `showProject` adds the project name per row (the workspace
+  queue spans projects).
 -->
 <template>
   <div class="flex flex-col gap-3">
@@ -32,83 +28,69 @@
         :key="sub.id"
         class="flex max-w-2xl flex-col gap-3 rounded-lg border border-border-subtle bg-secondary-background p-4"
       >
-        <div class="flex items-start justify-between gap-3">
-          <div class="flex min-w-0 flex-col gap-0.5">
-            <span class="truncate text-sm font-medium text-base-foreground">
-              {{ sub.workflowName }}
-            </span>
-            <span class="text-xs text-muted-foreground">
-              {{
-                t('prototype.submissionReview.meta', {
-                  user: submitterName(sub.submittedByUserId),
-                  date: sub.submittedAt
-                })
-              }}<template v-if="showProject">
-                · {{ projectName(sub.projectId) }}</template
-              >
-            </span>
-            <span v-if="sub.diff" class="pt-1 font-mono text-xs">
-              <span class="text-jade-400">+{{ sub.diff.added }}</span>
-              <span class="text-danger-200"> −{{ sub.diff.removed }}</span>
-            </span>
-            <span
-              v-if="variant === 'review' && sub.note"
-              class="pt-1 text-xs text-base-foreground italic"
+        <div class="flex min-w-0 flex-col gap-0.5">
+          <span class="truncate text-sm font-medium text-base-foreground">
+            {{ sub.workflowName }}
+          </span>
+          <span class="text-xs text-muted-foreground">
+            {{
+              t('prototype.submissionReview.meta', {
+                user: submitterName(sub.submittedByUserId),
+                date: sub.submittedAt
+              })
+            }}<template v-if="showProject">
+              · {{ projectName(sub.projectId) }}</template
             >
-              “{{ sub.note }}”
-            </span>
-          </div>
-
-          <Button
-            v-if="variant === 'queue'"
-            variant="secondary"
-            size="md"
-            @click="onOpen(sub)"
+          </span>
+          <span v-if="sub.diff" class="pt-1 font-mono text-xs">
+            <span class="text-jade-400">+{{ sub.diff.added }}</span>
+            <span class="text-danger-200"> −{{ sub.diff.removed }}</span>
+          </span>
+          <span
+            v-if="sub.note"
+            class="pt-1 text-xs text-base-foreground italic"
           >
-            {{ t('prototype.submissionReview.reviewCta') }}
-            <i class="icon-[lucide--chevron-right]" aria-hidden="true" />
-          </Button>
+            “{{ sub.note }}”
+          </span>
         </div>
 
-        <template v-if="variant === 'review'">
-          <div
-            v-if="lockedReason(sub)"
-            class="flex items-center gap-2 rounded-md bg-warning-background/30 px-3 py-1.5 text-xs text-base-foreground"
-          >
-            <i class="icon-[lucide--triangle-alert] size-3.5 shrink-0" />
-            {{ lockedReason(sub) }}
-          </div>
+        <div
+          v-if="lockedReason(sub)"
+          class="flex items-center gap-2 rounded-md bg-warning-background/30 px-3 py-1.5 text-xs text-base-foreground"
+        >
+          <i class="icon-[lucide--triangle-alert] size-3.5 shrink-0" />
+          {{ lockedReason(sub) }}
+        </div>
 
-          <div class="flex items-center justify-between gap-2">
-            <Button variant="textonly" size="md" @click="onOpenBranch(sub)">
-              <i
-                class="icon-[lucide--square-arrow-out-up-right]"
-                aria-hidden="true"
-              />
-              {{ t('prototype.submissionReview.open') }}
+        <div class="flex items-center justify-between gap-2">
+          <Button variant="textonly" size="md" @click="onOpen(sub)">
+            <i
+              class="icon-[lucide--square-arrow-out-up-right]"
+              aria-hidden="true"
+            />
+            {{ t('prototype.submissionReview.open') }}
+          </Button>
+          <div v-if="canReview(sub)" class="flex gap-2">
+            <Button variant="secondary" size="md" @click="onReject(sub)">
+              {{ t('prototype.submissionReview.reject') }}
             </Button>
-            <div v-if="canReview(sub)" class="flex gap-2">
-              <Button variant="secondary" size="md" @click="onReject(sub)">
-                {{ t('prototype.submissionReview.reject') }}
-              </Button>
-              <Button
-                variant="primary"
-                size="md"
-                :disabled="!!lockedReason(sub)"
-                @click="onApprove(sub)"
-              >
-                <i class="icon-[lucide--check]" aria-hidden="true" />
-                {{ t('prototype.submissionReview.approve') }}
-              </Button>
-            </div>
-            <span
-              v-else
-              class="rounded-sm bg-base-background px-1.5 py-0.5 text-[10px] text-muted-foreground"
+            <Button
+              variant="primary"
+              size="md"
+              :disabled="!!lockedReason(sub)"
+              @click="onApprove(sub)"
             >
-              {{ t('prototype.submissionReview.pendingBadge') }}
-            </span>
+              <i class="icon-[lucide--check]" aria-hidden="true" />
+              {{ t('prototype.submissionReview.approve') }}
+            </Button>
           </div>
-        </template>
+          <span
+            v-else
+            class="rounded-sm bg-base-background px-1.5 py-0.5 text-[10px] text-muted-foreground"
+          >
+            {{ t('prototype.submissionReview.pendingBadge') }}
+          </span>
+        </div>
       </li>
     </ul>
   </div>
@@ -131,38 +113,24 @@ import Button from '@/components/ui/button/Button.vue'
 
 import DeclineSubmissionDialog from './DeclineSubmissionDialog.vue'
 import { usePrototypePersonaStore } from '../stores/personaStore'
-import { usePrototypeUiStore } from '../stores/uiStore'
 import type { WorkflowSubmission } from '../types'
 
-const {
-  projectId,
-  canonicalWorkflowId,
-  showProject = false,
-  variant = 'queue'
-} = defineProps<{
+const { projectId, showProject = false } = defineProps<{
   // Scope to one project (the project Review tab). Omit for the
   // workspace-wide queue.
   projectId?: string
-  // Scope to one canonical (the workflow detail page review section).
-  canonicalWorkflowId?: string
   showProject?: boolean
-  // 'queue' lists + links into the detail page; 'review' shows the
-  // Approve / Decline acting surface.
-  variant?: 'queue' | 'review'
 }>()
 
 const { t } = useI18n()
 const toast = useToast()
 const personaStore = usePrototypePersonaStore()
-const uiStore = usePrototypeUiStore()
 const { fixture, activeInstall, pendingWorkflowSubmissions } =
   storeToRefs(personaStore)
 
 const submissions = computed<WorkflowSubmission[]>(() =>
   pendingWorkflowSubmissions.value.filter(
-    (s) =>
-      (!projectId || s.projectId === projectId) &&
-      (!canonicalWorkflowId || s.canonicalWorkflowId === canonicalWorkflowId)
+    (s) => !projectId || s.projectId === projectId
   )
 )
 
@@ -176,10 +144,9 @@ function projectName(id: string): string {
   return fixture.value.projects.find((p) => p.id === id)?.name ?? id
 }
 
-// Who can act on a submission = who can overwrite the canonical: the
-// project Owner, or a workspace Admin of the project's workspace. The
-// detail page is visible to all collaborators, so this gates the acting
-// surface there; the queue surfaces are already reviewer-only.
+// Who can act = who can overwrite the canonical: the project Owner, or a
+// workspace Admin of the project's workspace. Other viewers see a pending
+// badge.
 function canReview(sub: WorkflowSubmission): boolean {
   const project = fixture.value.projects.find((p) => p.id === sub.projectId)
   if (!project || project.isDrafts) return false
@@ -208,15 +175,9 @@ function lockedReason(sub: WorkflowSubmission): string | null {
   })
 }
 
-// Triage → jump to the canonical's detail page, where the review happens.
+// Open the submitted branch to inspect it. No editor in the prototype, so
+// this confirms via toast.
 function onOpen(sub: WorkflowSubmission) {
-  uiStore.go({ kind: 'workflow', workflowId: sub.canonicalWorkflowId })
-}
-
-// On the detail page: open the submitted branch to inspect it. No editor
-// in the prototype, so this confirms via toast (same pattern as opening a
-// published version from the history graph).
-function onOpenBranch(sub: WorkflowSubmission) {
   const branch = fixture.value.workflows.find(
     (w) => w.id === sub.forkWorkflowId
   )

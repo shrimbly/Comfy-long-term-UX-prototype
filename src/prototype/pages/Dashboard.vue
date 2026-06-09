@@ -40,10 +40,6 @@
             :key="activeView.projectId"
             :project-id="activeView.projectId"
           />
-          <WorkflowDetailView
-            v-else-if="activeView.kind === 'workflow'"
-            :workflow-id="activeView.workflowId"
-          />
           <RecentsView v-else-if="activeView.kind === 'recents'" />
           <HubView v-else-if="activeView.kind === 'hub'" />
           <MembersView v-else-if="activeView.kind === 'members'" />
@@ -81,7 +77,6 @@ import ProjectDetailView from '../views/ProjectDetailView.vue'
 import ProjectsView from '../views/ProjectsView.vue'
 import RecentsView from '../views/RecentsView.vue'
 import SettingsView from '../views/SettingsView.vue'
-import WorkflowDetailView from '../views/WorkflowDetailView.vue'
 
 const uiStore = usePrototypeUiStore()
 const tabsStore = usePrototypeTabsStore()

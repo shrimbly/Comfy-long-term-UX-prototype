@@ -129,61 +129,77 @@
         </button>
       </nav>
 
-      <section v-if="activeTab === 'workflows'" class="flex flex-col gap-3">
-        <div class="flex items-baseline justify-between">
-          <h2
-            class="text-sm font-semibold tracking-wide text-muted-foreground uppercase"
+      <div class="flex gap-6">
+        <div class="flex min-w-0 flex-1 flex-col gap-6">
+          <section v-if="activeTab === 'workflows'" class="flex flex-col gap-3">
+            <div class="flex items-baseline justify-between">
+              <h2
+                class="text-sm font-semibold tracking-wide text-muted-foreground uppercase"
+              >
+                {{ t('prototype.views.project.workflowsHeading') }}
+              </h2>
+              <span
+                v-if="workflows.length"
+                class="text-xs text-muted-foreground"
+              >
+                {{
+                  t('prototype.views.project.workflowCount', {
+                    count: workflows.length
+                  })
+                }}
+              </span>
+            </div>
+            <div
+              v-if="workflows.length"
+              class="grid grid-cols-[repeat(auto-fill,minmax(10rem,14rem))] gap-4"
+            >
+              <WorkflowCard
+                v-for="wf in workflows"
+                :key="wf.id"
+                :workflow="wf"
+                @open="onSelectWorkflow"
+                @open-project="onOpenProject"
+              />
+            </div>
+            <div
+              v-else
+              class="rounded-xl border border-dashed border-border-subtle p-10 text-center text-sm text-muted-foreground"
+            >
+              {{ t('prototype.views.project.empty') }}
+            </div>
+          </section>
+
+          <section
+            v-else-if="activeTab === 'review'"
+            class="flex flex-col gap-3"
           >
-            {{ t('prototype.views.project.workflowsHeading') }}
-          </h2>
-          <span v-if="workflows.length" class="text-xs text-muted-foreground">
-            {{
-              t('prototype.views.project.workflowCount', {
-                count: workflows.length
-              })
-            }}
-          </span>
-        </div>
-        <div
-          v-if="workflows.length"
-          class="grid grid-cols-[repeat(auto-fill,minmax(10rem,14rem))] gap-4"
-        >
-          <WorkflowCard
-            v-for="wf in workflows"
-            :key="wf.id"
-            :workflow="wf"
-            @open="onOpenWorkflow"
-            @open-project="onOpenProject"
+            <h2
+              class="m-0 text-sm font-semibold tracking-wide text-muted-foreground uppercase"
+            >
+              {{ t('prototype.views.project.reviewHeading') }}
+            </h2>
+            <SubmissionReviewList :project-id="projectId" />
+          </section>
+
+          <ProjectSettingsView
+            v-else-if="activeTab === 'settings'"
+            :project="project"
+            :can-edit="canEditSettings"
+          />
+
+          <ProjectUsageSection
+            v-else-if="activeTab === 'usage'"
+            :project-credits="projectCredits"
+            :workspace-credits="workspaceCredits"
           />
         </div>
-        <div
-          v-else
-          class="rounded-xl border border-dashed border-border-subtle p-10 text-center text-sm text-muted-foreground"
-        >
-          {{ t('prototype.views.project.empty') }}
-        </div>
-      </section>
-
-      <section v-else-if="activeTab === 'review'" class="flex flex-col gap-3">
-        <h2
-          class="m-0 text-sm font-semibold tracking-wide text-muted-foreground uppercase"
-        >
-          {{ t('prototype.views.project.reviewHeading') }}
-        </h2>
-        <SubmissionReviewList :project-id="projectId" />
-      </section>
-
-      <ProjectSettingsView
-        v-else-if="activeTab === 'settings'"
-        :project="project"
-        :can-edit="canEditSettings"
-      />
-
-      <ProjectUsageSection
-        v-else-if="activeTab === 'usage'"
-        :project-credits="projectCredits"
-        :workspace-credits="workspaceCredits"
-      />
+        <WorkflowSidebar
+          v-if="selectedWorkflowId && activeTab === 'workflows'"
+          :key="selectedWorkflowId"
+          :workflow-id="selectedWorkflowId"
+          @close="selectedWorkflowId = null"
+        />
+      </div>
     </template>
 
     <ProjectSharingDialog
@@ -211,6 +227,7 @@ import ProjectSharingDialog from '../components/ProjectSharingDialog.vue'
 import SubmissionReviewList from '../components/SubmissionReviewList.vue'
 import ProjectUsageSection from '../components/ProjectUsageSection.vue'
 import WorkflowCard from '../components/WorkflowCard.vue'
+import WorkflowSidebar from '../components/WorkflowSidebar.vue'
 import { usePrototypePersonaStore } from '../stores/personaStore'
 import { usePrototypeUiStore } from '../stores/uiStore'
 import ProjectSettingsView from './ProjectSettingsView.vue'
@@ -228,13 +245,21 @@ const { fixture, currentWorkspace, currentPersonaId } =
   storeToRefs(personaStore)
 
 const isSharingOpen = ref(false)
-
-// A project just created via workflow promotion asks to open its share
-// settings on arrival.
-onMounted(() => {
-  if (uiStore.consumeShareIntent(projectId)) isSharingOpen.value = true
-})
+const selectedWorkflowId = ref<string | null>(null)
 const activeTab = ref<ProjectTabId>('workflows')
+
+onMounted(() => {
+  // A project just created via workflow promotion asks to open its share
+  // settings on arrival.
+  if (uiStore.consumeShareIntent(projectId)) isSharingOpen.value = true
+  // A submission notification lands the reviewer on the Review tab.
+  if (uiStore.consumeReviewIntent(projectId)) activeTab.value = 'review'
+})
+
+function onSelectWorkflow(workflowId: string) {
+  selectedWorkflowId.value =
+    selectedWorkflowId.value === workflowId ? null : workflowId
+}
 
 const project = computed(() =>
   fixture.value.projects.find((p) => p.id === projectId)
@@ -325,12 +350,6 @@ const backLabel = computed(() => t('prototype.views.project.back'))
 
 function onBack() {
   uiStore.go({ kind: 'projects' })
-}
-
-// Clicking a project workflow opens its detail page (forks + version
-// history). Forking-on-open happens from there via the Open action.
-function onOpenWorkflow(workflowId: string) {
-  uiStore.go({ kind: 'workflow', workflowId })
 }
 
 function onOpenProject(id: string) {

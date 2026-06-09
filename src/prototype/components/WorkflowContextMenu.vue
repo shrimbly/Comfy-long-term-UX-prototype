@@ -244,15 +244,13 @@ function onPromoted(targetProjectId: string, isNewProject: boolean) {
     life: 2800
   })
   if (isNewProject) {
-    // Brand-new project — land on it and open share settings so the user
-    // can invite collaborators straight away.
+    // Brand-new project — open share settings so the user can invite
+    // collaborators straight away.
     uiStore.requestShareSettings(targetProjectId)
-    uiStore.go({ kind: 'project', projectId: targetProjectId })
-  } else {
-    // Existing project — land on the now-canonical's detail page so its
-    // fresh version history is visible.
-    uiStore.go({ kind: 'workflow', workflowId: workflow.id })
   }
+  // Land on the destination project; the new canonical appears in its
+  // grid (select it to see the version history in the sidebar).
+  uiStore.go({ kind: 'project', projectId: targetProjectId })
 }
 
 function onPublish() {

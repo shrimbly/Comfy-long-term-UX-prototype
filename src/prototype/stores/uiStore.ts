@@ -15,7 +15,6 @@ type ActiveView =
   | { kind: 'drafts' }
   | { kind: 'projects' }
   | { kind: 'project'; projectId: string }
-  | { kind: 'workflow'; workflowId: string }
   | { kind: 'library'; section: LibrarySection }
   | { kind: 'recents' }
   | { kind: 'hub' }
@@ -52,6 +51,20 @@ export const usePrototypeUiStore = defineStore('prototype-ui', () => {
   function consumeShareIntent(id: string): boolean {
     if (shareIntentProjectId.value !== id) return false
     shareIntentProjectId.value = null
+    return true
+  }
+
+  // One-shot intent: a submission notification wants the project's Review
+  // tab opened on arrival. ProjectDetailView consumes it once.
+  const reviewIntentProjectId = ref<string | null>(null)
+
+  function requestReviewTab(id: string) {
+    reviewIntentProjectId.value = id
+  }
+
+  function consumeReviewIntent(id: string): boolean {
+    if (reviewIntentProjectId.value !== id) return false
+    reviewIntentProjectId.value = null
     return true
   }
 
@@ -142,6 +155,8 @@ export const usePrototypeUiStore = defineStore('prototype-ui', () => {
     isInstallNoticeAcknowledged,
     requestShareSettings,
     consumeShareIntent,
+    requestReviewTab,
+    consumeReviewIntent,
     go,
     goHome,
     selectProject,
