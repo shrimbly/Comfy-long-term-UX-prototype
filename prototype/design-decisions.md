@@ -598,3 +598,16 @@ Built the third lifecycle path (the first two — branch→publish, write-privat
 Implementation: `personaStore.promoteWorkflowToProject`, `components/PromoteToProjectDialog.vue`, wired in `WorkflowContextMenu.vue` (`isPromotable`).
 
 Promote? **candidate** — this is a concrete proposal for `workflow-promotion-flow`. If accepted, fold the six decisions above into `published-workflow-model.md` (or a new `workflow-promotion.md`) and resolve the open question.
+
+### Move-to-project = Publish-to-project — unified (2026-06-10)
+
+Willie flagged that "Move to project" and "Publish to project" are the same thing. The wiki confirms it: [`concepts/cross-cutting-flows.md`](../../IA_Plan/wiki/concepts/cross-cutting-flows.md) defines promotion as **"generalises the existing move-asset-to-another-project verb"** — one operation, not two. The prototype had split them into two menu items with two dialogs and inconsistent behaviour (the old "Move" didn't seed V1, so moving a draft into a shared project left it canonical-but-historyless — a bug).
+
+Consolidated to a single verb:
+
+- **One menu item** — "Publish to project…" (label per Willie), shown on any owned workflow that isn't a branch (branches publish over their canonical instead).
+- **One dialog** — the polished `PromoteToProjectDialog` picker (with create-new-project).
+- **One store fn** — `moveWorkflowToProject`, now destination-aware: moving into a **shared** (non-Drafts, non-private) project publishes it as that project's canonical (clears lineage, seeds V1 if none); moving into My Workflows / a private project is a plain relocation.
+- Retired `WorkflowMoveDialog.vue`, the separate `promoteWorkflowToProject` fn, and the `workflowMenu.move.*` / moved-toast / `moveToProject` i18n.
+
+Note: `PrototypeProjectChip` (editor-chip, part of the explore WIP) still has the same move-vs-promote split in its menu — left untouched as it's unfinished; fold it into this model when that surface is built.

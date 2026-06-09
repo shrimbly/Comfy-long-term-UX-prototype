@@ -250,7 +250,6 @@
       "fork": "Fork to My Workflows",
       "branch": "Branch",
       "saveToMyWorkflows": "Save to My Workflows",
-      "moveToProject": "Move to project…",
       "promoteToProject": "Publish to project…",
       "saveDestination": "Save location",
       "saveToCloud": "Save to cloud",
@@ -272,8 +271,6 @@
         "branchedDetail": "A branch of \"{name}\" was created in the project.",
         "savedCopySummary": "Saved to My Workflows",
         "savedCopyDetail": "A personal copy of \"{name}\" is in My Workflows.",
-        "movedSummary": "Moved",
-        "movedDetail": "\"{name}\" moved to {project}.",
         "deletedSummary": "Deleted",
         "deletedDetail": "\"{name}\" has been deleted.",
         "savedToCloudSummary": "Saved to cloud",
@@ -297,13 +294,6 @@
         },
         "cancel": "Cancel",
         "confirm": "Save & continue"
-      },
-      "move": {
-        "title": "Move workflow to project",
-        "subtitle": "Pick a project in this workspace to move \"{name}\" into.",
-        "noTargets": "No other projects in this workspace are available.",
-        "cancel": "Cancel",
-        "confirm": "Move"
       }
     },
     "assetCard": {

@@ -15,20 +15,23 @@
   role on this workflow (resolved via useViewerWorkflowRole) and the menu
   shape is filtered accordingly:
 
-    Owner       — Open, Rename, Branch, Move to project, Save destination,
+    Owner       — Open, Rename, Branch, Publish to project, Save destination,
                   Share, Publish (direct link / Hub), View outputs,
                   Open containing project, Delete
     Runner      — Open (branch-on-open), Branch, View outputs,
                   Open containing project
     App Runner  — Run app, View outputs, Open containing project
 
-  A workflow that is a branch of a shared canonical additionally gets
-  "Publish to workspace" (the dialog adapts to Publish vs Submit for
-  review based on overwrite permission + install identity).
+  "Publish to project" is the single move-asset-to-another-project verb
+  (concepts/cross-cutting-flows.md): moving a workflow into a shared
+  project publishes it there as a canonical (seeds V1). A branch of a
+  shared canonical instead gets "Publish to workspace" (the dialog adapts
+  to Publish vs Submit for review based on overwrite permission + install
+  identity).
 
   Sharing / publish / view-outputs are prototype stubs that toast — the
-  full surfaces exist in their own flows. Storage and Move trigger real
-  store mutations.
+  full surfaces exist in their own flows. Storage triggers a real store
+  mutation.
 -->
 <template>
   <ContextMenu
@@ -59,13 +62,6 @@
     </template>
   </ContextMenu>
 
-  <WorkflowMoveDialog
-    v-if="moveDialogOpen"
-    :workflow="workflow"
-    @close="moveDialogOpen = false"
-    @moved="onMoved"
-  />
-
   <PublishToWorkspaceDialog
     v-if="publishDialogOpen"
     :state="publishState"
@@ -94,7 +90,6 @@ import Button from '@/components/ui/button/Button.vue'
 
 import PromoteToProjectDialog from './PromoteToProjectDialog.vue'
 import PublishToWorkspaceDialog from './PublishToWorkspaceDialog.vue'
-import WorkflowMoveDialog from './WorkflowMoveDialog.vue'
 import { useWorkflowPublish } from '../composables/useWorkflowPublish'
 import { usePrototypePersonaStore } from '../stores/personaStore'
 import { usePrototypeUiStore } from '../stores/uiStore'
@@ -127,7 +122,6 @@ type ContextMenuHandle = {
 }
 const contextMenu = ref<ContextMenuHandle | null>(null)
 
-const moveDialogOpen = ref(false)
 const publishDialogOpen = ref(false)
 const promoteDialogOpen = ref(false)
 const uiStore = usePrototypeUiStore()
@@ -163,12 +157,11 @@ const canSubmitToHub = computed(() => {
   return false
 })
 
-// A standalone My Workflows workflow the viewer owns can be promoted into
-// a shared project as a canonical (the workflow-promotion-flow path). No
-// existing project needed — the promote dialog can create one.
-const isPromotable = computed(
-  () => isOwner.value && !!sourceProject.value?.isDrafts
-)
+// "Publish to project" is the move-asset-to-another-project verb (the
+// wiki frames promotion as this same verb — concepts/cross-cutting-flows).
+// Available on any owned workflow that isn't a branch (branches publish
+// over their canonical instead). The picker can create a project.
+const isPromotable = computed(() => isOwner.value && !workflow.forkedFrom)
 
 function show(event: MouseEvent) {
   contextMenu.value?.show(event)
@@ -223,10 +216,6 @@ function onSaveToMyWorkflows() {
   })
 }
 
-function onMove() {
-  moveDialogOpen.value = true
-}
-
 function onPublishToWorkspace() {
   publishDialogOpen.value = true
 }
@@ -236,7 +225,7 @@ function onPromoteToProject() {
 }
 
 function onPromoted(targetProjectId: string, isNewProject: boolean) {
-  const ok = personaStore.promoteWorkflowToProject(workflow.id, targetProjectId)
+  const ok = personaStore.moveWorkflowToProject(workflow.id, targetProjectId)
   promoteDialogOpen.value = false
   if (!ok) return
   const project = fixture.value.projects.find((p) => p.id === targetProjectId)
@@ -285,19 +274,6 @@ function onAskOwner() {
     summary: t('prototype.workflowMenu.toast.submittedSummary'),
     detail: t('prototype.workflowMenu.toast.submittedDetail', {
       workflow: publishState.value.targetWorkflowName ?? workflow.name
-    }),
-    life: 2800
-  })
-}
-
-function onMoved(targetProjectId: string) {
-  const target = fixture.value.projects.find((p) => p.id === targetProjectId)
-  toast.add({
-    severity: 'success',
-    summary: t('prototype.workflowMenu.toast.movedSummary'),
-    detail: t('prototype.workflowMenu.toast.movedDetail', {
-      name: workflow.name,
-      project: target?.name ?? ''
     }),
     life: 2800
   })
@@ -368,11 +344,6 @@ const items = computed<MenuItem[]>(() => {
       label: t('prototype.workflowMenu.saveToMyWorkflows'),
       icon: 'icon-[lucide--copy]',
       command: onSaveToMyWorkflows
-    })
-    out.push({
-      label: t('prototype.workflowMenu.moveToProject'),
-      icon: 'icon-[lucide--folder-input]',
-      command: onMove
     })
     if (isPromotable.value) {
       out.push({

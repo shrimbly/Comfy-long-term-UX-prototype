@@ -515,13 +515,41 @@ export const usePrototypePersonaStore = defineStore('prototype-persona', () => {
     return workflowStorageOverrides.value[workflowId] ?? fallback
   }
 
-  function moveWorkflowToProject(workflowId: string, targetProjectId: string) {
+  // Move a workflow into another project — the single "move asset to
+  // another project" verb. Per concepts/cross-cutting-flows.md the wiki
+  // frames promotion as this same verb applied to a My Workflows → shared
+  // move, so the destination decides behaviour: moving into a SHARED
+  // (non-Drafts, non-private) project publishes it as that project's
+  // canonical (lineage cleared, V1 seeded if it had no history); moving
+  // into My Workflows / a private project is a plain relocation. Install
+  // gating for locked targets lives in the picker dialog. Returns success.
+  function moveWorkflowToProject(
+    workflowId: string,
+    targetProjectId: string
+  ): boolean {
+    const source = fixture.value.workflows.find((w) => w.id === workflowId)
+    const target = fixture.value.projects.find((p) => p.id === targetProjectId)
+    if (!source || !target) return false
     const today = new Date().toISOString().slice(0, 10)
+    const publishing = !target.isDrafts && target.tier !== 'private'
     fixture.value.workflows = fixture.value.workflows.map((w) =>
       w.id === workflowId
-        ? { ...w, projectId: targetProjectId, updatedAt: today }
+        ? {
+            ...w,
+            projectId: targetProjectId,
+            updatedAt: today,
+            ...(publishing
+              ? {
+                  forkedFrom: undefined,
+                  publishedVersions: w.publishedVersions?.length
+                    ? w.publishedVersions
+                    : [{ byUserId: fixture.value.currentUser.id, at: today }]
+                }
+              : {})
+          }
         : w
     )
+    return true
   }
 
   // Create a new shared project in the current workspace, owned by the
@@ -544,39 +572,6 @@ export const usePrototypePersonaStore = defineStore('prototype-persona', () => {
       }
     ]
     return id
-  }
-
-  // Promote a standalone My Workflows workflow into a shared project as a
-  // canonical — the "write privately, then share to the team" path. Per
-  // open-question workflow-promotion-flow (working decisions logged in
-  // prototype/design-decisions.md): the workflow MOVES into the project
-  // (it becomes the team version; the author branches to edit it
-  // afterward like everyone else) and the promotion IS the initial
-  // publish, so it seeds V1 of the published-version timeline. Install
-  // gating for locked targets is enforced in the promote dialog.
-  function promoteWorkflowToProject(
-    workflowId: string,
-    targetProjectId: string
-  ): boolean {
-    const source = fixture.value.workflows.find((w) => w.id === workflowId)
-    const target = fixture.value.projects.find((p) => p.id === targetProjectId)
-    if (!source || !target || target.isDrafts) return false
-    const today = new Date().toISOString().slice(0, 10)
-    fixture.value.workflows = fixture.value.workflows.map((w) =>
-      w.id === workflowId
-        ? {
-            ...w,
-            projectId: targetProjectId,
-            updatedAt: today,
-            // It's a canonical now — no upstream lineage.
-            forkedFrom: undefined,
-            publishedVersions: w.publishedVersions?.length
-              ? w.publishedVersions
-              : [{ byUserId: fixture.value.currentUser.id, at: today }]
-          }
-        : w
-    )
-    return true
   }
 
   // Fork = clone into the actor's My Workflows in the host workspace.
@@ -1126,7 +1121,6 @@ export const usePrototypePersonaStore = defineStore('prototype-persona', () => {
     getEffectiveWorkflowStorage,
     moveWorkflowToProject,
     createProject,
-    promoteWorkflowToProject,
     branchWorkflow,
     saveToMyWorkflows,
     openForWork,
