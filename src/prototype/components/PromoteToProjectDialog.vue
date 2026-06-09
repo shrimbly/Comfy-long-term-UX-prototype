@@ -34,15 +34,7 @@
           </p>
         </div>
 
-        <p
-          v-if="!candidates.length"
-          class="rounded-lg border border-dashed border-border-subtle p-4 text-center text-sm text-muted-foreground"
-        >
-          {{ t('prototype.promoteToProject.empty') }}
-        </p>
-
         <fieldset
-          v-else
           class="m-0 flex max-h-72 flex-col gap-2 overflow-y-auto border-0 p-0"
         >
           <legend class="sr-only">
@@ -78,6 +70,41 @@
               {{ lockedReason(p) }}
             </span>
           </label>
+
+          <label
+            :class="
+              cn(
+                'flex cursor-pointer flex-col gap-2 rounded-lg border p-3 text-sm transition-colors',
+                selectedId === NEW_PROJECT
+                  ? 'border-primary-background bg-secondary-background'
+                  : 'border-border-subtle hover:bg-secondary-background'
+              )
+            "
+          >
+            <span class="flex items-center gap-2">
+              <input
+                v-model="selectedId"
+                type="radio"
+                :value="NEW_PROJECT"
+                class="accent-base-foreground"
+              />
+              <span
+                class="flex items-center gap-1.5 font-medium text-base-foreground"
+              >
+                <i class="icon-[lucide--plus] size-4" aria-hidden="true" />
+                {{ t('prototype.promoteToProject.newProjectOption') }}
+              </span>
+            </span>
+            <input
+              v-if="selectedId === NEW_PROJECT"
+              v-model="newProjectName"
+              type="text"
+              class="ml-6 rounded-md border border-border-default bg-base-background px-2.5 py-1.5 text-sm text-base-foreground outline-none focus:border-primary-background"
+              :placeholder="
+                t('prototype.promoteToProject.newProjectPlaceholder')
+              "
+            />
+          </label>
         </fieldset>
 
         <footer class="flex justify-end gap-2">
@@ -87,7 +114,7 @@
           <Button
             variant="primary"
             size="lg"
-            :disabled="!selectedId"
+            :disabled="!canConfirm"
             @click="onConfirm"
           >
             <i class="icon-[lucide--upload]" aria-hidden="true" />
@@ -123,9 +150,18 @@ const { t } = useI18n()
 const personaStore = usePrototypePersonaStore()
 const { visibleProjects, activeInstall } = storeToRefs(personaStore)
 
+const NEW_PROJECT = '__new__'
+
 const candidates = computed(() => visibleProjects.value)
 
 const selectedId = ref<string>('')
+const newProjectName = ref<string>('')
+
+const canConfirm = computed(() =>
+  selectedId.value === NEW_PROJECT
+    ? !!newProjectName.value.trim()
+    : !!selectedId.value
+)
 
 // Publishing into an install-locked project needs the blessed install —
 // the same gate as Publish to workspace.
@@ -141,7 +177,11 @@ function lockedReason(project: Project): string | null {
 }
 
 function onConfirm() {
-  if (!selectedId.value) return
-  emit('promote', selectedId.value)
+  if (!canConfirm.value) return
+  const projectId =
+    selectedId.value === NEW_PROJECT
+      ? personaStore.createProject(newProjectName.value)
+      : selectedId.value
+  emit('promote', projectId)
 }
 </script>

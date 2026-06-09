@@ -191,6 +191,8 @@
       "subtitle": "Share “{workflow}” with a team. It becomes the project's canonical version (V1) — you'll branch from it to make further edits.",
       "pickerLabel": "Choose a project",
       "empty": "No projects you can publish into yet.",
+      "newProjectOption": "New project",
+      "newProjectPlaceholder": "New project name",
       "lockedHint": "Locked to {install} — switch to it to publish here.",
       "cancel": "Cancel",
       "confirm": "Publish to project",

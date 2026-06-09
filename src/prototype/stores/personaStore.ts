@@ -524,6 +524,28 @@ export const usePrototypePersonaStore = defineStore('prototype-persona', () => {
     )
   }
 
+  // Create a new shared project in the current workspace, owned by the
+  // current user. Defaults to the restricted (scoped) tier — a fresh
+  // project starts private to its creator + invitees, not workspace-wide.
+  // Returns the new id.
+  function createProject(name: string): string {
+    const id = `proj-${Date.now()}`
+    fixture.value.projects = [
+      ...fixture.value.projects,
+      {
+        id,
+        workspaceId: fixture.value.currentWorkspaceId,
+        name: name.trim(),
+        tier: 'restricted',
+        ownerUserId: fixture.value.currentUser.id,
+        isDrafts: false,
+        currentUserHasAccess: true,
+        members: [{ userId: fixture.value.currentUser.id, role: 'owner' }]
+      }
+    ]
+    return id
+  }
+
   // Promote a standalone My Workflows workflow into a shared project as a
   // canonical — the "write privately, then share to the team" path. Per
   // open-question workflow-promotion-flow (working decisions logged in
@@ -1103,6 +1125,7 @@ export const usePrototypePersonaStore = defineStore('prototype-persona', () => {
     setWorkflowStorage,
     getEffectiveWorkflowStorage,
     moveWorkflowToProject,
+    createProject,
     promoteWorkflowToProject,
     branchWorkflow,
     saveToMyWorkflows,

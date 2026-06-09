@@ -165,13 +165,10 @@ const canSubmitToHub = computed(() => {
 })
 
 // A standalone My Workflows workflow the viewer owns can be promoted into
-// a shared project as a canonical (the workflow-promotion-flow path),
-// provided there's a project to publish into.
+// a shared project as a canonical (the workflow-promotion-flow path). No
+// existing project needed — the promote dialog can create one.
 const isPromotable = computed(
-  () =>
-    isOwner.value &&
-    !!sourceProject.value?.isDrafts &&
-    personaStore.visibleProjects.length > 0
+  () => isOwner.value && !!sourceProject.value?.isDrafts
 )
 
 function show(event: MouseEvent) {
