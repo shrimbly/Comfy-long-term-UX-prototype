@@ -16,7 +16,7 @@
     <DialogPortal>
       <DialogOverlay />
       <DialogContent size="sm">
-        <DialogHeader>
+        <DialogHeader class="items-start">
           <div class="flex flex-col gap-1">
             <DialogTitle>{{
               t('prototype.promoteToProject.title')

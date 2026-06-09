@@ -188,7 +188,7 @@
     },
     "promoteToProject": {
       "title": "Publish to a project",
-      "subtitle": "Share “{workflow}” with a team. It becomes the project's canonical version (V1) — you'll branch from it to make further edits.",
+      "subtitle": "Becomes the project's canonical version.",
       "pickerLabel": "Choose a project",
       "empty": "No projects you can publish into yet.",
       "newProjectOption": "New project",
