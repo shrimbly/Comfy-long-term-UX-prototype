@@ -97,7 +97,7 @@
             class="flex items-center gap-3 rounded-lg bg-interface-menu-component-surface-selected p-2"
           >
             <span
-              class="grid size-8 shrink-0 place-items-center rounded-md border border-dashed border-border-default text-muted-foreground"
+              class="grid size-8 shrink-0 place-items-center rounded-md border border-dashed border-base-foreground text-base-foreground"
               aria-hidden="true"
             >
               <i class="icon-[lucide--plus] size-4" />
