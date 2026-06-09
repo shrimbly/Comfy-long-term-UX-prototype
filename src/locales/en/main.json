@@ -101,8 +101,6 @@
       "storageCloud": "Saved to cloud",
       "branchBadge": "Branch",
       "meta": "{date} · {user}",
-      "compatBlocked": "Requires install: {required}. You're on: {current}.",
-      "compatRecommendedMismatch": "Recommended: ComfyUI {recommended}. You're on: ComfyUI {current}.",
       "forkOnOpenSummary": "Branch in this project",
       "forkOnOpenDetail": "You're editing a branch of \"{name}\". Publish to workspace to update the team version."
     },
@@ -149,17 +147,6 @@
       "lockedTooltip": "Locked by {workspace} — node + version updates are disabled.",
       "activeLockedNote": "This install is locked by {workspace}. Adding custom nodes, updating ComfyUI, and changing node versions are disabled while you're running on it."
     },
-    "runtimeRecommendation": {
-      "title": "Built for a newer version",
-      "subtitle": "“{workflow}” was made for a newer ComfyUI. It'll still run — some nodes may behave differently.",
-      "recommendedLabel": "Recommended",
-      "currentLabel": "Your install",
-      "versionLine": "ComfyUI {version} or newer",
-      "currentLine": "{name} · ComfyUI {version}",
-      "currentNone": "No active install",
-      "body": "You can keep working on your current install. To match what this workflow was built for, switch to the recommended ComfyUI version.",
-      "acknowledge": "Got it"
-    },
     "submissionReview": {
       "empty": "No submissions to review.",
       "meta": "Submitted by {user} · {date}",
@@ -187,23 +174,6 @@
       "cancel": "Keep in My Workflows",
       "askOwner": "Submit",
       "publish": "Publish"
-    },
-    "installGate": {
-      "title": "Work on your own copy",
-      "subtitle": "You're not on this project's install. Open a copy now — publish back once you switch.",
-      "requiredLabel": "Required to publish",
-      "requiredFallback": "Team-locked install",
-      "requiredReason": "This project is locked to a specific install so everyone publishes from the same runtime.",
-      "currentLabel": "Your install",
-      "currentNone": "No active install",
-      "remediationLabel": "To publish back",
-      "remediationHint": "Switch to the team install, or keep working on your own copy.",
-      "actionInstall": "Install {name}",
-      "actionSwitchTo": "Switch to {name}",
-      "actionInstallTeamBuild": "Install the team build",
-      "actionUseCloudRuntime": "Use cloud runtime",
-      "actionSaveToMyWorkflows": "Save to My Workflows",
-      "close": "Not now"
     },
     "commandPalette": {
       "inputPlaceholder": "Search commands, projects, settings…",

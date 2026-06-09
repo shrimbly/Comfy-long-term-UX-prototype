@@ -400,15 +400,7 @@ export const adminFixture: PersonaFixture = {
       // workspace role are independent.
       ownerUserId: 'user-alex',
       access: [{ userId: user.id, role: 'runner' }],
-      updatedAt: '2026-05-07',
-      // Soft recommendation per ../IA_Plan/wiki/entities/workflow.md
-      // §"Runtime compatibility". A plain minimum version — anything
-      // below this surfaces a caution badge but never blocks. Setting
-      // 0.4.0 means the Managed Artist (on the 0.3.5 team build) sees
-      // the badge as a heads-up that this workflow expects a newer
-      // runtime — even though their install satisfies the project's
-      // hard lock.
-      recommendedComfyUIVersion: '0.4.0'
+      updatedAt: '2026-05-07'
     },
     {
       id: 'wf-marketing-banner',

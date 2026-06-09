@@ -257,13 +257,6 @@ export interface Workflow {
   ownerUserId?: string
   access?: AssetAccess[]
   storage?: AssetStorage
-  // Recommended-minimum runtime version per ../IA_Plan/wiki/entities/
-  // workflow.md §"Runtime compatibility". A plain dotted version string
-  // ("0.4.0"), not a range expression — active installs older than this
-  // surface a caution badge. Soft / advisory only; doesn't block. The
-  // hard gate lives at the project level (`Project.allowedInstallIds`)
-  // by install identity. See prototype/design-decisions.md 2026-05-19.
-  recommendedComfyUIVersion?: string
   // Fork lineage per ../IA_Plan/wiki/decisions/published-workflow-model.md.
   // Set when this workflow was created by forking another (fork-on-open,
   // explicit Fork, or the install gate's "Save to My Workflows"). Points
