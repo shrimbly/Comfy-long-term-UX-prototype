@@ -35,6 +35,23 @@ export const usePrototypeUiStore = defineStore('prototype-ui', () => {
   const storageFilter = ref<StorageFilter>('all')
   const searchQuery = ref<string>('')
 
+  // Projects whose install-access notice the user has already dismissed
+  // this session — so re-entering a project (e.g. after visiting a
+  // workflow) doesn't show the gate again. Reset on persona/workspace
+  // switch, where the install picture changes.
+  const acknowledgedInstallNotices = ref<Set<string>>(new Set())
+
+  function acknowledgeInstallNotice(id: string) {
+    acknowledgedInstallNotices.value = new Set([
+      ...acknowledgedInstallNotices.value,
+      id
+    ])
+  }
+
+  function isInstallNoticeAcknowledged(id: string) {
+    return acknowledgedInstallNotices.value.has(id)
+  }
+
   function go(view: ActiveView) {
     activeView.value = view
   }
@@ -88,6 +105,7 @@ export const usePrototypeUiStore = defineStore('prototype-ui', () => {
     () => {
       activeView.value = { kind: 'explore' }
       resetLibraryFilters()
+      acknowledgedInstallNotices.value = new Set()
     }
   )
   watch(
@@ -95,6 +113,7 @@ export const usePrototypeUiStore = defineStore('prototype-ui', () => {
     () => {
       activeView.value = { kind: 'explore' }
       resetLibraryFilters()
+      acknowledgedInstallNotices.value = new Set()
     }
   )
 
@@ -105,6 +124,8 @@ export const usePrototypeUiStore = defineStore('prototype-ui', () => {
     folderFilter,
     storageFilter,
     searchQuery,
+    acknowledgeInstallNotice,
+    isInstallNoticeAcknowledged,
     go,
     goHome,
     selectProject,

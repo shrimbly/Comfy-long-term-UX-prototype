@@ -195,7 +195,7 @@
     <ProjectAccessInstallNotice
       v-if="installNoticeOpen && project"
       :project="project"
-      @close="installNoticeOpen = false"
+      @close="onInstallNoticeClose"
     />
   </div>
 </template>
@@ -339,10 +339,18 @@ watch(
   () => projectId,
   () => {
     const locked = !!project.value?.allowedInstallIds?.length
-    installNoticeOpen.value = locked && fixture.value.installs.length > 0
+    installNoticeOpen.value =
+      locked &&
+      fixture.value.installs.length > 0 &&
+      !uiStore.isInstallNoticeAcknowledged(projectId)
   },
   { immediate: true }
 )
+
+function onInstallNoticeClose() {
+  installNoticeOpen.value = false
+  uiStore.acknowledgeInstallNotice(projectId)
+}
 
 // Canonicals only. Branches now live in the project too, but they belong
 // on the per-workflow detail page, not the project grid.
