@@ -127,6 +127,8 @@ export interface WorkflowSubmission {
   submittedAt: string
   status: WorkflowSubmissionStatus
   note?: string
+  // Rough lines-changed summary vs the canonical, for the review row.
+  diff?: { added: number; removed: number }
 }
 
 // Workspace-level allowlists per

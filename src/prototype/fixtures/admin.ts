@@ -946,7 +946,8 @@ export const adminFixture: PersonaFixture = {
       submittedByUserId: 'user-mira',
       submittedAt: '2026-05-12',
       status: 'pending',
-      note: 'Tweaked the sky gradient + added a depth pass.'
+      note: 'Tweaked the sky gradient + added a depth pass.',
+      diff: { added: 125, removed: 32 }
     }
   ],
   notifications: [

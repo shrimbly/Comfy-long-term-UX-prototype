@@ -42,6 +42,10 @@
                 · {{ projectName(sub.projectId) }}</template
               >
             </span>
+            <span v-if="sub.diff" class="pt-1 font-mono text-xs">
+              <span class="text-success">+{{ sub.diff.added }}</span>
+              <span class="text-danger"> −{{ sub.diff.removed }}</span>
+            </span>
             <span
               v-if="sub.note"
               class="pt-1 text-xs text-base-foreground italic"
