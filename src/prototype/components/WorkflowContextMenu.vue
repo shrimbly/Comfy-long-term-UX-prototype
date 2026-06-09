@@ -76,7 +76,6 @@
 
   <PromoteToProjectDialog
     v-if="promoteDialogOpen"
-    :workflow="workflow"
     @close="promoteDialogOpen = false"
     @promote="onPromoted"
   />

@@ -16,94 +16,80 @@
     <DialogPortal>
       <DialogOverlay />
       <DialogContent size="sm">
-        <DialogHeader class="items-start">
-          <div class="flex flex-col gap-1">
-            <DialogTitle>{{
-              t('prototype.promoteToProject.title')
-            }}</DialogTitle>
-            <DialogDescription>
-              {{
-                t('prototype.promoteToProject.subtitle', {
-                  workflow: workflow.name
-                })
-              }}
-            </DialogDescription>
-          </div>
+        <DialogHeader class="items-start pb-0">
+          <DialogTitle>{{ t('prototype.promoteToProject.title') }}</DialogTitle>
           <DialogClose />
         </DialogHeader>
 
-        <fieldset class="m-0 flex flex-col gap-1 border-0 px-4 py-2">
-          <legend class="sr-only">
-            {{ t('prototype.promoteToProject.pickerLabel') }}
-          </legend>
+        <div class="flex flex-col gap-1 px-4 py-3">
           <div
             v-if="candidates.length"
-            class="flex max-h-60 flex-col gap-1 overflow-y-auto"
+            class="flex max-h-60 flex-col gap-0.5 overflow-y-auto"
           >
-            <label
+            <Button
               v-for="p in candidates"
               :key="p.id"
+              variant="textonly"
+              size="unset"
+              :disabled="!!lockedReason(p)"
               :class="
                 cn(
-                  'flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors',
-                  lockedReason(p) && 'cursor-not-allowed opacity-60',
-                  selectedId === p.id
-                    ? 'bg-interface-menu-component-surface-selected'
-                    : 'hover:bg-interface-menu-component-surface-hovered'
+                  'w-full justify-start gap-2 rounded-lg px-3 py-2 text-sm',
+                  selectedId === p.id &&
+                    'bg-interface-menu-component-surface-selected'
                 )
               "
+              @click="selectedId = p.id"
             >
-              <input
-                v-model="selectedId"
-                type="radio"
-                :value="p.id"
-                :disabled="!!lockedReason(p)"
-                class="accent-base-foreground"
-              />
-              <span class="min-w-0 flex-1 truncate text-base-foreground">{{
-                p.name
-              }}</span>
+              <span
+                class="min-w-0 flex-1 truncate text-left text-base-foreground"
+                >{{ p.name }}</span
+              >
               <i
                 v-if="lockInfo(p)"
                 :title="lockInfo(p) ?? undefined"
                 class="icon-[lucide--lock] size-3.5 shrink-0 text-muted-foreground"
               />
-            </label>
+              <i
+                v-if="selectedId === p.id"
+                class="icon-[lucide--check] size-4 shrink-0 text-base-foreground"
+              />
+            </Button>
           </div>
 
-          <label
-            :class="
-              cn(
-                'flex cursor-pointer flex-col gap-2 rounded-lg px-3 py-2 text-sm transition-colors',
-                selectedId === NEW_PROJECT
-                  ? 'bg-interface-menu-component-surface-selected'
-                  : 'hover:bg-interface-menu-component-surface-hovered'
-              )
-            "
-          >
-            <span class="flex items-center gap-2">
-              <input
-                v-model="selectedId"
-                type="radio"
-                :value="NEW_PROJECT"
-                class="accent-base-foreground"
+          <div class="flex flex-col">
+            <Button
+              variant="textonly"
+              size="unset"
+              :class="
+                cn(
+                  'w-full justify-start gap-1.5 rounded-lg px-3 py-2 text-sm',
+                  selectedId === NEW_PROJECT &&
+                    'bg-interface-menu-component-surface-selected'
+                )
+              "
+              @click="selectedId = NEW_PROJECT"
+            >
+              <i class="icon-[lucide--plus] size-4" aria-hidden="true" />
+              <span class="flex-1 text-left text-base-foreground">{{
+                t('prototype.promoteToProject.newProjectOption')
+              }}</span>
+              <i
+                v-if="selectedId === NEW_PROJECT"
+                class="icon-[lucide--check] size-4 shrink-0 text-base-foreground"
               />
-              <span class="flex items-center gap-1.5 text-base-foreground">
-                <i class="icon-[lucide--plus] size-4" aria-hidden="true" />
-                {{ t('prototype.promoteToProject.newProjectOption') }}
-              </span>
-            </span>
+            </Button>
             <input
               v-if="selectedId === NEW_PROJECT"
               v-model="newProjectName"
               type="text"
-              class="ml-6 rounded-md border border-border-default bg-base-background px-2.5 py-1.5 text-sm text-base-foreground outline-none focus:border-primary-background"
+              class="mx-3 mt-1 rounded-md border border-border-default bg-base-background px-2.5 py-1.5 text-sm text-base-foreground outline-none focus:border-primary-background"
               :placeholder="
                 t('prototype.promoteToProject.newProjectPlaceholder')
               "
             />
-          </label>
-        </fieldset>
+          </div>
+        </div>
 
         <DialogFooter>
           <Button variant="textonly" @click="emit('close')">
@@ -129,7 +115,6 @@ import Button from '@/components/ui/button/Button.vue'
 import Dialog from '@/components/ui/dialog/Dialog.vue'
 import DialogClose from '@/components/ui/dialog/DialogClose.vue'
 import DialogContent from '@/components/ui/dialog/DialogContent.vue'
-import DialogDescription from '@/components/ui/dialog/DialogDescription.vue'
 import DialogFooter from '@/components/ui/dialog/DialogFooter.vue'
 import DialogHeader from '@/components/ui/dialog/DialogHeader.vue'
 import DialogOverlay from '@/components/ui/dialog/DialogOverlay.vue'
@@ -137,11 +122,7 @@ import DialogPortal from '@/components/ui/dialog/DialogPortal.vue'
 import DialogTitle from '@/components/ui/dialog/DialogTitle.vue'
 
 import { usePrototypePersonaStore } from '../stores/personaStore'
-import type { Project, Workflow } from '../types'
-
-const { workflow } = defineProps<{
-  workflow: Workflow
-}>()
+import type { Project } from '../types'
 
 const emit = defineEmits<{
   close: []

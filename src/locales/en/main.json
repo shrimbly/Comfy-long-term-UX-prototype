@@ -188,8 +188,6 @@
     },
     "promoteToProject": {
       "title": "Publish to a project",
-      "subtitle": "Becomes the project's canonical version.",
-      "pickerLabel": "Choose a project",
       "empty": "No projects you can publish into yet.",
       "newProjectOption": "New project",
       "newProjectPlaceholder": "New project name",
