@@ -181,11 +181,13 @@ function onSelect(n: Notification) {
   if (fixture.value.currentWorkspaceId !== n.target.workspaceId) {
     personaStore.setCurrentWorkspace(n.target.workspaceId)
   }
-  if (n.target.projectId) {
-    // Submission notifications drop the reviewer straight onto the Review
-    // tab where Approve / Decline live, not the default Workflows tab.
-    const tab = n.kind === 'submission-received' ? 'review' : undefined
-    uiStore.go({ kind: 'project', projectId: n.target.projectId, tab })
+  // A submission notification points at the canonical workflow — go
+  // straight to its detail page, where the review happens. Other
+  // notifications land on the project (or the projects list).
+  if (n.kind === 'submission-received' && n.target.assetId) {
+    uiStore.go({ kind: 'workflow', workflowId: n.target.assetId })
+  } else if (n.target.projectId) {
+    uiStore.go({ kind: 'project', projectId: n.target.projectId })
   } else {
     uiStore.go({ kind: 'projects' })
   }

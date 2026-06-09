@@ -217,9 +217,8 @@ import ProjectSettingsView from './ProjectSettingsView.vue'
 
 type ProjectTabId = 'workflows' | 'review' | 'settings' | 'usage'
 
-const { projectId, initialTab } = defineProps<{
+const { projectId } = defineProps<{
   projectId: string
-  initialTab?: ProjectTabId
 }>()
 
 const { t } = useI18n()
@@ -229,7 +228,7 @@ const { fixture, currentWorkspace, currentPersonaId } =
   storeToRefs(personaStore)
 
 const isSharingOpen = ref(false)
-const activeTab = ref<ProjectTabId>(initialTab ?? 'workflows')
+const activeTab = ref<ProjectTabId>('workflows')
 
 const project = computed(() =>
   fixture.value.projects.find((p) => p.id === projectId)

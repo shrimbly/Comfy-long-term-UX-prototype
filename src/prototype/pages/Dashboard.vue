@@ -39,7 +39,6 @@
             v-else-if="activeView.kind === 'project'"
             :key="activeView.projectId"
             :project-id="activeView.projectId"
-            :initial-tab="activeView.tab"
           />
           <WorkflowDetailView
             v-else-if="activeView.kind === 'workflow'"
