@@ -15,7 +15,8 @@
     <PrototypeTabs />
 
     <div v-if="isMediaAssetsTabActive" class="relative flex min-h-0 flex-1">
-      <MediaAssetsView />
+      <LocalMediaView v-if="isLocalMode" />
+      <MediaAssetsView v-else />
     </div>
     <div v-else class="flex min-h-0 flex-1">
       <template v-if="activeView.kind === 'library'">
@@ -63,9 +64,11 @@ import { computed } from 'vue'
 
 import MediaAssetsView from '@/platform/assets/components/MediaAssetsView.vue'
 import LibrarySidebar from '../components/LibrarySidebar.vue'
+import LocalMediaView from '../components/LocalMediaView.vue'
 import PersonaSwitcher from '../components/PersonaSwitcher.vue'
 import PrototypeSidebar from '../components/PrototypeSidebar.vue'
 import PrototypeTabs from '../components/PrototypeTabs.vue'
+import { usePrototypePersonaStore } from '../stores/personaStore'
 import { MEDIA_ASSETS_TAB_ID, usePrototypeTabsStore } from '../stores/tabsStore'
 import { usePrototypeUiStore } from '../stores/uiStore'
 import DraftsView from '../views/DraftsView.vue'
@@ -80,12 +83,15 @@ import SettingsView from '../views/SettingsView.vue'
 
 const uiStore = usePrototypeUiStore()
 const tabsStore = usePrototypeTabsStore()
+const personaStore = usePrototypePersonaStore()
 const { activeView } = storeToRefs(uiStore)
 const { activeTabId } = storeToRefs(tabsStore)
+const { fixture } = storeToRefs(personaStore)
 
 const isMediaAssetsTabActive = computed(
   () => activeTabId.value === MEDIA_ASSETS_TAB_ID
 )
+const isLocalMode = computed(() => fixture.value.mode === 'local')
 
 const isDev = import.meta.env.DEV
 </script>

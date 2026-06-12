@@ -42,17 +42,20 @@
               · {{ projectName(sub.projectId) }}</template
             >
           </span>
-          <span v-if="sub.diff" class="pt-1 font-mono text-xs">
-            <span class="text-jade-400">+{{ sub.diff.added }}</span>
-            <span class="text-danger-200"> −{{ sub.diff.removed }}</span>
-          </span>
-          <span
-            v-if="sub.note"
-            class="pt-1 text-xs text-base-foreground italic"
-          >
-            “{{ sub.note }}”
-          </span>
         </div>
+
+        <WorkflowChangeSummary
+          v-if="sub.semanticDiff"
+          :diff="sub.semanticDiff"
+        />
+        <span v-else-if="sub.diff" class="font-mono text-xs">
+          <span class="text-jade-400">+{{ sub.diff.added }}</span>
+          <span class="text-danger-200"> −{{ sub.diff.removed }}</span>
+        </span>
+
+        <span v-if="sub.note" class="text-xs text-base-foreground italic">
+          “{{ sub.note }}”
+        </span>
 
         <div
           v-if="lockedReason(sub)"
@@ -112,6 +115,7 @@ import { useI18n } from 'vue-i18n'
 import Button from '@/components/ui/button/Button.vue'
 
 import DeclineSubmissionDialog from './DeclineSubmissionDialog.vue'
+import WorkflowChangeSummary from './WorkflowChangeSummary.vue'
 import { usePrototypePersonaStore } from '../stores/personaStore'
 import type { WorkflowSubmission } from '../types'
 

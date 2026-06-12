@@ -95,8 +95,8 @@ const projectById = computed(() => {
   return map
 })
 
-function projectFor(projectId: string): Project | undefined {
-  return projectById.value.get(projectId)
+function projectFor(projectId: string | undefined): Project | undefined {
+  return projectId ? projectById.value.get(projectId) : undefined
 }
 
 const filteredAssets = computed(() => {

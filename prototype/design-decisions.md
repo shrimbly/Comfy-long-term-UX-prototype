@@ -611,3 +611,106 @@ Consolidated to a single verb:
 - Retired `WorkflowMoveDialog.vue`, the separate `promoteWorkflowToProject` fn, and the `workflowMenu.move.*` / moved-toast / `moveToProject` i18n.
 
 Note: `PrototypeProjectChip` (editor-chip, part of the explore WIP) still has the same move-vs-promote split in its menu — left untouched as it's unfinished; fold it into this model when that surface is built.
+
+### Decline → revise → resubmit loop (2026-06-10)
+
+The review flow dead-ended at decline: a reviewer could Decline-with-feedback, but the submitter had no way to act on it. Closed the loop on the submitter's side.
+
+- **Surface = the workflow sidebar.** When the submitter selects the canonical they branched, the sidebar (already showing "Open branch") now shows their submission status: a muted "Submitted for review" while pending, or a "Changes requested" callout with the reviewer's verbatim feedback + a **Resubmit** button when declined. The submitter never sees the project Review tab (guests can't review), so the sidebar — their only per-workflow surface — is the right home. This supersedes the 2026-06-09 "detail page = where review happens" entry, which assumed a workflow detail page we've since replaced with the sidebar.
+- **Resubmit = flip back to pending.** `personaStore.resubmitSubmission` flips the rejected submission to `pending`, bumps `submittedAt`, and re-notifies the project owner (a fresh `submission-received`), so it reappears in the reviewer's queue. No new submission record — the same submission cycles.
+- **Cross-persona consistency.** Per-persona fixtures don't share state, so resolve/resubmit now **mirror** the submission's status into the other party's fixture (`mirrorSubmissionTo`) alongside the existing notification bridge (`deliverNotificationTo`, renamed from `notifySubmitter` since it now flows both ways). A live admin-declines → switch-to-Mira path stays consistent, and Mira's fixture also seeds the declined state directly so the surface is demoable without the live decline first.
+- **Discoverability.** Clicking a `submission-rejected` / `submission-approved` notification now selects the canonical (new one-shot `requestSelectWorkflow` ui intent, consumed by `ProjectDetailView`), opening its sidebar straight onto the feedback.
+
+Wiki link: [`published-workflow-model.md`](../../IA_Plan/wiki/decisions/published-workflow-model.md) §member-overwrite-request-flow — the decline half was specified; this adds the revise/resubmit return path it implies.
+
+Promote? **candidate** — the resubmit return path isn't spelled out in the wiki. If accepted, add a line to §member-overwrite-request-flow: a declined submission returns to the submitter with feedback and can be revised and resubmitted, cycling the same request.
+
+### Semantic workflow diff — P1 core util (2026-06-10)
+
+Submissions currently carry a hand-set `diff: {added, removed}` ("+125 −32"). Willie wants a _semantic_ summary instead — "Spacing & positioning updates · new seed · new prompt · n nodes added/deleted". Validated the approach against a real pair (`Contact Sheet Home Grown` v1/v2, 3.4 MB each, 247 nodes / 32 subgraphs).
+
+What that pair taught us — its entire delta is: a seed bump + a one-phrase prompt edit (both **two levels deep inside a subgraph**), 6 top-level nodes nudged, and a canvas pan/zoom. A naive line/char diff calls this "~5,000 chars changed" because the 5 KB prompt is one JSON line and floats wiggle. That's the case for semantic.
+
+P1 = a pure, dependency-free util `src/prototype/utils/workflowDiff.ts`: `semanticWorkflowDiff(before, after) → { headline, counts, details }`. Decisions baked in:
+
+- **Recurse into `definitions.subgraphs`.** The signal lived there; a top-level-only walk silently under-reports. Each change is scope-tagged.
+- **Match scopes by subgraph _id_, never name.** This pair has 19 subgraphs named "Image to Video" and 10 named "New Subgraph" — name-matching cross-pairs them and invents dozens of phantom rewires. (Caught live; regression-tested.)
+- **Strip view-only noise** up front: `extra.ds` pan/zoom, execution `order`, link ids. Float tolerance (1 px) on pos/size.
+- **Topology by endpoint** (`src:slot→dst:slot`), so link-id renumbering ≠ a change.
+- **Widget semantics, tiered + graceful** (chosen: dictionary + heuristics, offline): a small node-type→widget-name table (KSampler, CLIPTextEncode, …) names known widgets; heuristics catch the rest (big int that moved = seed; long/multiline string = prompt + word-delta; bounded scalar = parameter). Unknown → honest "X → Y" or "settings changed", never a 5 KB dump, never a throw. Product upgrade path (P3): swap the table for `nodeDefStore` `object_info` widget names.
+- **Headline** = ranked phrases (add/remove ≫ rewire ≫ prompt ≫ param ≫ seed ≫ bypass ≫ rename ≫ move ≫ group), capped at 4 + "+k more". Plain English now; i18n formatting is P2 (UI wiring).
+
+Result on the real pair: `["Prompt edited", "Seed changed", "6 nodes moved"]` — viewport dropped, both subgraph-deep edits found. Golden test (`workflowDiff.test.ts`, 8 cases) uses small synthetic fixtures mirroring the pattern (the 6.8 MB pair is not committed) and guards each channel + the name-collision regression + malformed-input safety.
+
+Wiki link: none — this is presentation of the existing submission/diff concept, no IA rule. P2 wires it into `SubmissionReviewList` + the sidebar (chips + expandable details, replacing the `{added,removed}` field).
+
+Promote? **no** — implementation detail, not an IA decision.
+
+### Review UI — ideal-state semantic-diff presentation (2026-06-10)
+
+With the diff engine proven, designed the review UX around it. Built `WorkflowChangeSummary.vue` (+ a Storybook story, `Prototype/WorkflowChangeSummary`) — a pure component that consumes a `SemanticDiff` and nothing else.
+
+**Wired into the live prototype review surface** (`SubmissionReviewList.vue`, used by the project Review tab + the workspace queue), driven by a **mocked diff** rather than a real two-graph comparison: `WorkflowSubmission` gained an optional `semanticDiff` field, and Mira Voss's seeded submission (`wfsub-indie-establishing`) carries a hand-authored `SemanticDiff` matching her note ("Tweaked the sky gradient + added a depth pass" → 1 node added, 2 connections, prompt edited, a param, 3 moved). The old `+125 −32` line stays as a fallback for submissions without a `semanticDiff`. To see it: workspace-admin persona → Indie Short Film → Review.
+
+Design (converged over a few rounds — chips → flat named list → **categorised rows with per-row disclosure**):
+
+- **One row per (entity × action)**, count not names: Nodes / Subgraphs × {added, removed, skipped, moved}, plus Widgets edited, plus an "Other changes" catch-all (connections, groups). So a glance reads "1 subgraph added · 2 node widgets edited · 3 nodes moved" — the taxonomy Willie named.
+- **Each row carries its own chevron** that expands to _that row's_ specifics: a subgraph-added row reveals the new subgraph titles; "N node widgets edited" reveals "Prompt edited · +6 / −2 words", "denoise 1.00 → 0.85", "Seed regenerated"; a moved row reveals the node names. Per-row disclosure replaced the earlier single global toggle — you drill into only the category you care about.
+- **Count where the name is jargon, expand to the name when wanted.** The summary row stays a count (node-type names are noise at a glance); the detail under the chevron is where names/values live. Node vs subgraph split needs a per-entry `isSubgraph` flag on `DiffEntry` (mocked now; the real util sets it when a node's `type` resolves to a subgraph definition).
+- **Ranking:** added → removed → widgets → skipped → moved (muted) → other (muted). Cosmetic rows (moved, other) are de-emphasised but still independently expandable. No global truncation — categorisation already compresses the list to a handful of rows.
+
+Rows are built from `details` (`channel` / `widgetKind` / `isSubgraph`) via i18n (`prototype.changeSummary.*`), not the util's English `headline` (which stays a test/debug convenience).
+
+Surfaced for P2: subgraph-instance nodes carry a UUID as their `type`; the mock resolves these to subgraph names (e.g. "Image Upscale (SeedVR2)") so a moved subgraph reads cleanly — the real util should do the same lookup when wired.
+
+Promote? **no** — prototype UX, not an IA decision. View with `pnpm storybook`.
+
+## [2026-06-10] Local media as managed references — Tier 1 (NON-FINAL)
+
+Decision (working stance, pending product + engineering approval):
+
+- **Always reference.** Added local media is never copied — Comfy stores a pointer (`sourcePath` + `contentHash` + cached thumbnail) and leaves the original in place. There is **no local managed store**; adding = recording a path. This inverts today's drop-to-`input/` copy behavior.
+- **Third Media File origin `referenced`.** `LibraryAsset` gained `origin` (`generated` | `imported` | `referenced`), `sourcePath`, `contentHash`, `linkState` (`linked` | `missing`); `projectId` is now optional (a referenced file belongs to no cloud project). **These fields are not yet in `entities/media-file.md`** — per WORKSPACE-UX-PROTO §2.2 they're logged here because the entity is non-final.
+- **Unified Media library + inline.** Referenced media surfaces in the existing Media Assets `LibraryView` (widened beyond `output/`). For **local mode only**, the sidebar "Media" item re-routes from the upstream `MediaAssetsView` tab to the prototype `LibraryView` (the upstream board showed cloud-project media to a local persona — a pre-existing mismatch; this is a fix, and keeps all work inside `src/prototype/`).
+- **Relink lifecycle** (load-bearing): linked → missing (dimmed cached thumbnail + Relink CTA) → relink, with batch "relink siblings in the same folder." Mutable state lives in a new `mediaReferenceStore` (fixture is the seed).
+- **Remove ≠ delete**, **no local permission surface**, dedupe by path/id, **link-status filter** (All / Linked / Missing) in the library sidebar.
+- **Dev affordances** (`import.meta.env.DEV`): per-card "simulate move/delete" and a "simulate folder moved" control — to demo missing→relink without a real filesystem.
+
+Reason: matches the creator mental model (AE/Lightroom), respects existing local folder organisation, and is the _simplest_ local implementation (no import pipeline, no managed store). The cost concentrates entirely in the relink UX, so Tier 1 builds exactly that loop first.
+
+Wiki link: `../IA_Plan/wiki/open-questions.md#local-media-as-references` (full stance) + `../IA_Plan/wiki/prototype-log.md` Flow 03. Widens `concepts/local-dashboard-views.md`; adds proposed origin to `entities/media-file.md`.
+
+Open question dependency: **gated** on `backend-architecture-decision` — referencing arbitrary external paths collides with the API constraint ("restricts touching anything outside Comfy folders"). The UX is prototyped against fixtures; real file access waits on that. Multi-install path resolution left open.
+
+Scope built (Tier 1): card states, single + batch relink, add, remove, link-status filter, dev simulators, store unit tests (`mediaReferenceStore.test.ts`). Out of scope: cloud materialization, reference-as-workflow-input, multi-install presence.
+
+Promote? **not yet** — explicitly held below `user-confirmed` until product + engineering sign off on the approach. Companion flow doc: `prototype/flows/06-local-media-references.md`.
+
+### Pivot — render local media in the _real_ upstream browser (2026-06-10)
+
+Willie asked for the local media tab to match the upstream media browser **perfectly**. Re-implementing the upstream CSS in the Tier-1 `LibraryView` masonry would only ever approximate it and would drift, so the only way to truly match is to **reuse the actual upstream components**. Pivoted accordingly:
+
+- **Reverted the Tier-1 _presentation_** — `LibraryView` / `LibraryAssetCard` / `LibrarySidebar` / `PrototypeSidebar` reroute are back to their pre-Tier-1 state. The Tier-1 _logic_ is unchanged: `mediaReferenceStore`, the three dialogs, `localMedia` fixture, the `LibraryAsset` referenced-origin fields, and the store tests all carry over.
+- **Forked the view** — new `components/LocalMediaView.vue` is a near-verbatim copy of upstream `MediaAssetsView.vue` that reuses the real `AssetMasonryGrid` → `MediaAssetCard`, `AssetsSidebar`, `MetadataSearchInput`, density/sort/lightbox via `useMediaAssetsBrowserState`. Styling matches _by construction_ (same components), not by approximation. `Dashboard.vue` renders `LocalMediaView` for the local persona's Media tab; cloud personas still get the stock `MediaAssetsView`.
+- **Fed referenced media through the provider** — `usePrototypeAssetsProvider` returns the store's referenced files (mapped to `AssetItem`, `previewUrl` = a bundled image as the cached thumbnail; `sourcePath` + `linkState` in `user_metadata`) for the local persona. The provider's `allMedia` is a computed over the store, so relink/add/remove mutations propagate to the real grid reactively.
+- **Two prototype-gated upstream edits** (both keyed on `user_metadata`, matching the file's existing creator-chip / `storage === 'local'` "Promote to cloud" precedents, so they never render for real assets):
+  - `MediaAssetCard.vue` — missing → dim + Relink overlay (click relinks via the host view); linked → hover source-path badge.
+  - `MediaAssetContextMenu.vue` — gated "Relink" (when missing) + "Remove from Comfy" items, emitting events the forked view handles.
+- **Affordance triggers**: Add = toolbar button; Relink = click a missing card (or context menu); Remove ≠ delete = context menu → confirm dialog; link-status filter (All / Linked / Missing) + missing banner = a thin prototype toolbar under the upstream filter-chips bar; a DEV "simulate folder moved" control creates the missing state without a real filesystem.
+
+Reason: "perfect" parity is only guaranteed by reusing the upstream components, and this fork keeps the prototype-specific surface to one new file + two small gated edits while inheriting masonry virtualization, real thumbnails, sort, density, selection, and the lightbox for free.
+
+Wiki link: same as the Tier-1 entry — `open-questions.md#local-media-as-references`, `prototype-log.md` Flow 03.
+
+Promote? **not yet** — same gate. The two upstream-gated edits are worth calling out to eng on review (they raise the upstream-merge surface slightly, though both are `user_metadata`-gated like existing prototype hooks).
+
+### Detail-panel reference identity + materialize-via-Save-to-cloud (2026-06-11)
+
+Two follow-ups from the "what else to represent" pass:
+
+- **Reference identity in the detail panel.** `AssetDetailPanel.vue` (upstream, prototype-gated on `user_metadata.sourcePath` like the existing install-attribution row) gains three rows for referenced files: **Origin: Referenced (local)**, **Location** (source path), **Link status** (Linked / Missing, amber when missing). The generic "Storage" row is suppressed for referenced files since Origin conveys it. Makes the model self-explanatory on selection.
+- **Materialization reuses the existing Save-to-cloud pattern (Willie's call).** No bespoke "materialize" UI. Referenced `AssetItem`s now carry `user_metadata.storage = 'local'`, which lights up the context menu's existing "Promote to cloud" action (`useSimulatedSaveToCloud`) — that _is_ materialization (upload one cloud copy). Recorded in the wiki open question ([promoting-local-outputs-to-cloud](../../IA_Plan/wiki/decisions/promoting-local-outputs-to-cloud.md) is the reused flow). Snapshot/hash-keyed/lazy semantics stay as documented; the prototype doesn't need a separate surface to show them.
+
+New i18n: `mediaAsset.details.{origin,originReferenced,location,linkStatus,linkLinked,linkMissing}`.
+
+Promote? **not yet** — same gate as the rest of Flow 03.

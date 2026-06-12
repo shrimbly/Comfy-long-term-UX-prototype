@@ -10,12 +10,65 @@
 //   open-q:    ../IA_Plan/wiki/open-questions.md#single-admin-or-many
 //              — proto stance: multiple Admins allowed
 
+import type { SemanticDiff } from '../utils/workflowDiff'
 import type { PersonaFixture, RoleGrants } from '../types'
 
 const user = {
   id: 'user-admin',
   name: 'Willie',
   email: 'willie@comfy.org'
+}
+
+// Mocked semantic diff for Mira's review submission — the prototype does
+// not compute diffs from two graphs (see prototype/design-decisions.md
+// 2026-06-10). Mirrors her note: "Tweaked the sky gradient + added a
+// depth pass."
+const establishingShotDiff: SemanticDiff = {
+  headline: ['1 node added', '2 connections changed', 'Prompt edited'],
+  counts: {
+    added: 1,
+    removed: 0,
+    rewired: 2,
+    prompts: 1,
+    params: 1,
+    seeds: 0,
+    moved: 3,
+    bypassed: 0,
+    renamed: 0,
+    groups: 0
+  },
+  details: [
+    {
+      channel: 'widget',
+      scope: 'root',
+      nodeType: 'CLIPTextEncode',
+      widgetKind: 'prompt',
+      label: '+6 / −2 words',
+      before:
+        '…a wide cinematic establishing shot, clear blue sky, golden hour…',
+      after:
+        '…a wide cinematic establishing shot, graded sky with a soft dusk gradient, golden hour…'
+    },
+    {
+      channel: 'added',
+      scope: 'root',
+      nodeType: 'Depth pass',
+      isSubgraph: true,
+      label: 'Depth pass'
+    },
+    { channel: 'rewired', scope: 'root', label: '+ 14:0→27:0' },
+    { channel: 'rewired', scope: 'root', label: '+ 27:0→8:1' },
+    {
+      channel: 'widget',
+      scope: 'root',
+      nodeType: 'KSampler',
+      widgetKind: 'param',
+      label: 'denoise 1.00 → 0.85'
+    },
+    { channel: 'layout', scope: 'root', nodeType: 'KSampler', label: 'moved' },
+    { channel: 'layout', scope: 'root', nodeType: 'VAEDecode', label: 'moved' },
+    { channel: 'layout', scope: 'root', nodeType: 'SaveImage', label: 'moved' }
+  ]
 }
 
 const comfyOrg = {
@@ -921,7 +974,8 @@ export const adminFixture: PersonaFixture = {
       submittedAt: '2026-05-12',
       status: 'pending',
       note: 'Tweaked the sky gradient + added a depth pass.',
-      diff: { added: 125, removed: 32 }
+      diff: { added: 125, removed: 32 },
+      semanticDiff: establishingShotDiff
     }
   ],
   notifications: [

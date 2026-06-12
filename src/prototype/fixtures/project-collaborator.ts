@@ -8,7 +8,19 @@
 //            — Mira has an auto-created My Workflows in Comfy Org (host)
 
 import { adminFixture } from './admin'
-import type { PersonaFixture, Project, Workflow, Workspace } from '../types'
+import type {
+  PersonaFixture,
+  Project,
+  Workflow,
+  WorkflowSubmission,
+  Workspace
+} from '../types'
+
+// Reviewer feedback on Mira's declined submission — shown both in her
+// notification popover and the workflow sidebar's "Changes requested"
+// callout, so the two surfaces tell the same story.
+const declineFeedback =
+  'Love the depth pass — but the sky gradient is blowing out the highlights. Pull it back ~20% and resubmit.'
 
 const miraId = 'user-mira'
 
@@ -103,9 +115,24 @@ export const projectCollaboratorFixture: PersonaFixture = {
       readAt: '2026-05-10'
     },
     {
-      // Submitter side of the review flow: an earlier submission of
-      // Mira's was published by an owner. Demonstrates the notification
-      // the submitter receives (the reviewer side is seeded in admin.ts).
+      // Submitter side, declined: Mira's latest submission of the
+      // establishing-shot branch was declined with feedback. Clicking it
+      // opens the canonical's sidebar where she can Revise & resubmit.
+      id: 'note-mira-sub-rejected',
+      kind: 'submission-rejected',
+      actorUserId: 'user-admin',
+      target: {
+        workspaceId: 'ws-comfy-org',
+        projectId: 'proj-indie-short',
+        assetId: 'wf-indie-establishing'
+      },
+      createdAt: '2026-05-13',
+      message: declineFeedback
+    },
+    {
+      // Submitter side, approved: an earlier submission of Mira's was
+      // published by an owner. Shows the other outcome the submitter sees
+      // (the reviewer side is seeded in admin.ts).
       id: 'note-mira-sub-approved',
       kind: 'submission-approved',
       actorUserId: 'user-admin',
@@ -114,12 +141,22 @@ export const projectCollaboratorFixture: PersonaFixture = {
         projectId: 'proj-indie-short',
         assetId: 'wf-indie-establishing'
       },
-      createdAt: '2026-05-11'
+      createdAt: '2026-05-11',
+      readAt: '2026-05-11'
     }
   ],
   // Mira collaborates on Indie Short Film (restricted, not install-gated)
   // in addition to Client X — surfaced via projectsForMira/workflowsForMira.
-  workflowSubmissions: adminFixture.workflowSubmissions,
+  // Submitter side: her establishing-shot submission was declined with
+  // feedback, so her workflow sidebar shows "Changes requested" + Revise &
+  // resubmit. (The reviewer side is seeded pending in admin.ts so the
+  // owner can decline it live too.)
+  workflowSubmissions: adminFixture.workflowSubmissions.map(
+    (s): WorkflowSubmission =>
+      s.id === 'wfsub-indie-establishing'
+        ? { ...s, status: 'rejected', reviewComment: declineFeedback }
+        : s
+  ),
   // Cloud-runtime collaborator — install-agnostic. The canonical §4
   // Project Collaborator in the wiki is defined purely by permission
   // position; the install dimension belongs to §4a Freelancer, which

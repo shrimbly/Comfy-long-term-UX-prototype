@@ -21,6 +21,7 @@ import type {
   ProjectAllowlists,
   ProjectRole,
   ProjectTier,
+  WorkflowSubmission,
   WorkspaceRole
 } from '../types'
 
@@ -743,21 +744,39 @@ export const usePrototypePersonaStore = defineStore('prototype-persona', () => {
     return true
   }
 
-  // Deliver a notification into the submitter's own persona fixture so it
+  // Deliver a notification into another user's persona fixture so it
   // surfaces when you switch to them — fixtures don't share state, so this
-  // bridges the cross-persona demo.
-  function notifySubmitter(
-    submitterUserId: string,
+  // bridges the cross-persona review demo in both directions (reviewer →
+  // submitter on resolve, submitter → reviewer on resubmit).
+  function deliverNotificationTo(
+    userId: string,
     note: Omit<Notification, 'id'>
   ) {
-    const submitterPersona = reactivePersonas.find(
-      (p) => p.fixture.currentUser.id === submitterUserId
+    const persona = reactivePersonas.find(
+      (p) => p.fixture.currentUser.id === userId
     )
-    if (!submitterPersona) return
-    submitterPersona.fixture.notifications = [
+    if (!persona) return
+    persona.fixture.notifications = [
       { ...note, id: `note-${Date.now()}` },
-      ...submitterPersona.fixture.notifications
+      ...persona.fixture.notifications
     ]
+  }
+
+  // Upsert a submission into another user's persona fixture so both ends
+  // of the review loop see a consistent status without shared state.
+  function mirrorSubmissionTo(userId: string, submission: WorkflowSubmission) {
+    const persona = reactivePersonas.find(
+      (p) => p.fixture.currentUser.id === userId
+    )
+    if (!persona) return
+    const exists = persona.fixture.workflowSubmissions.some(
+      (s) => s.id === submission.id
+    )
+    persona.fixture.workflowSubmissions = exists
+      ? persona.fixture.workflowSubmissions.map((s) =>
+          s.id === submission.id ? { ...submission } : s
+        )
+      : [...persona.fixture.workflowSubmissions, { ...submission }]
   }
 
   function resolveSubmission(
@@ -790,12 +809,18 @@ export const usePrototypePersonaStore = defineStore('prototype-persona', () => {
           : w
       )
     }
+    const resolved: WorkflowSubmission = {
+      ...submission,
+      status,
+      reviewComment: comment ?? submission.reviewComment
+    }
     fixture.value.workflowSubmissions = fixture.value.workflowSubmissions.map(
-      (s) =>
-        s.id === submissionId
-          ? { ...s, status, reviewComment: comment ?? s.reviewComment }
-          : s
+      (s) => (s.id === submissionId ? resolved : s)
     )
+    // Mirror the outcome into the submitter's own fixture so their workflow
+    // sidebar reflects the decline (and offers Revise & resubmit) without
+    // shared state.
+    mirrorSubmissionTo(submission.submittedByUserId, resolved)
     // Clear the reviewer's "submission-received" cue for this asset.
     fixture.value.notifications = fixture.value.notifications.map((n) =>
       n.kind === 'submission-received' &&
@@ -809,7 +834,7 @@ export const usePrototypePersonaStore = defineStore('prototype-persona', () => {
     const project = fixture.value.projects.find(
       (p) => p.id === submission.projectId
     )
-    notifySubmitter(submission.submittedByUserId, {
+    deliverNotificationTo(submission.submittedByUserId, {
       kind:
         status === 'approved' ? 'submission-approved' : 'submission-rejected',
       actorUserId: fixture.value.currentUser.id,
@@ -829,6 +854,44 @@ export const usePrototypePersonaStore = defineStore('prototype-persona', () => {
 
   function rejectSubmission(submissionId: string, comment: string) {
     resolveSubmission(submissionId, 'rejected', comment)
+  }
+
+  // Submitter revises after a decline and sends the working copy back for
+  // review. Flips the rejected submission to pending, re-notifies the
+  // reviewer (project owner) and mirrors the pending state into their
+  // fixture so it reappears in their Review queue.
+  function resubmitSubmission(submissionId: string): boolean {
+    const today = new Date().toISOString().slice(0, 10)
+    const submission = fixture.value.workflowSubmissions.find(
+      (s) => s.id === submissionId
+    )
+    if (!submission || submission.status !== 'rejected') return false
+    const resubmitted: WorkflowSubmission = {
+      ...submission,
+      status: 'pending',
+      submittedAt: today
+    }
+    fixture.value.workflowSubmissions = fixture.value.workflowSubmissions.map(
+      (s) => (s.id === submissionId ? resubmitted : s)
+    )
+    const project = fixture.value.projects.find(
+      (p) => p.id === submission.projectId
+    )
+    const reviewerId = project?.ownerUserId
+    if (reviewerId) {
+      mirrorSubmissionTo(reviewerId, resubmitted)
+      deliverNotificationTo(reviewerId, {
+        kind: 'submission-received',
+        actorUserId: fixture.value.currentUser.id,
+        target: {
+          workspaceId: project?.workspaceId ?? fixture.value.currentWorkspaceId,
+          projectId: submission.projectId,
+          assetId: submission.canonicalWorkflowId
+        },
+        createdAt: today
+      })
+    }
+    return true
   }
 
   // --- Project settings ------------------------------------------------
@@ -1128,6 +1191,7 @@ export const usePrototypePersonaStore = defineStore('prototype-persona', () => {
     pendingWorkflowSubmissions,
     submitWorkflowForReview,
     approveSubmission,
-    rejectSubmission
+    rejectSubmission,
+    resubmitSubmission
   }
 })

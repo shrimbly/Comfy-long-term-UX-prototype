@@ -193,6 +193,15 @@ function onSelect(n: Notification) {
   if (n.kind === 'submission-received' && n.target.projectId) {
     uiStore.requestReviewTab(n.target.projectId)
     uiStore.go({ kind: 'project', projectId: n.target.projectId })
+  } else if (
+    (n.kind === 'submission-rejected' || n.kind === 'submission-approved') &&
+    n.target.projectId &&
+    n.target.assetId
+  ) {
+    // Outcome notifications drop the submitter on the canonical's sidebar,
+    // where the decline feedback + Revise & resubmit live.
+    uiStore.requestSelectWorkflow(n.target.projectId, n.target.assetId)
+    uiStore.go({ kind: 'project', projectId: n.target.projectId })
   } else if (n.target.projectId) {
     uiStore.go({ kind: 'project', projectId: n.target.projectId })
   } else {

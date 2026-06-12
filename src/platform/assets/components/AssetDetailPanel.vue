@@ -78,7 +78,7 @@
             {{ workflowName }}
           </span>
         </div>
-        <div v-if="storage" class="detail-row">
+        <div v-if="storage && !referencePath" class="detail-row">
           <span class="detail-label">
             {{ $t('mediaAsset.details.storage') }}
           </span>
@@ -94,6 +94,48 @@
               storage === 'cloud'
                 ? $t('mediaAsset.storage.cloud')
                 : $t('mediaAsset.storage.local')
+            }}
+          </span>
+        </div>
+        <div v-if="referencePath" class="detail-row">
+          <span class="detail-label">
+            {{ $t('mediaAsset.details.origin') }}
+          </span>
+          <span class="detail-value inline-flex items-center gap-1.5">
+            <i class="icon-[lucide--link] size-3.5" />
+            {{ $t('mediaAsset.details.originReferenced') }}
+          </span>
+        </div>
+        <div v-if="referencePath" class="detail-row">
+          <span class="detail-label">
+            {{ $t('mediaAsset.details.location') }}
+          </span>
+          <span class="detail-value" :title="referencePath">
+            {{ referencePath }}
+          </span>
+        </div>
+        <div v-if="referencePath" class="detail-row">
+          <span class="detail-label">
+            {{ $t('mediaAsset.details.linkStatus') }}
+          </span>
+          <span
+            :class="
+              isReferenceMissing
+                ? 'detail-value text-warning inline-flex items-center gap-1.5'
+                : 'detail-value inline-flex items-center gap-1.5'
+            "
+          >
+            <i
+              :class="
+                isReferenceMissing
+                  ? 'icon-[lucide--unlink] size-3.5'
+                  : 'icon-[lucide--link] size-3.5'
+              "
+            />
+            {{
+              isReferenceMissing
+                ? $t('mediaAsset.details.linkMissing')
+                : $t('mediaAsset.details.linkLinked')
             }}
           </span>
         </div>
@@ -248,6 +290,16 @@ const storage = computed<'local' | 'cloud' | undefined>(() => {
   const raw = singleAsset.value?.user_metadata?.storage
   return raw === 'local' || raw === 'cloud' ? raw : undefined
 })
+
+// Referenced local media (prototype, Flow 03). Origin/path/link-status rows
+// render only when the asset is a reference (sourcePath present).
+const referencePath = computed(() => {
+  const raw = singleAsset.value?.user_metadata?.sourcePath
+  return typeof raw === 'string' ? raw : undefined
+})
+const isReferenceMissing = computed(
+  () => singleAsset.value?.user_metadata?.linkState === 'missing'
+)
 
 // Install attribution per ../IA_Plan/wiki/entities/output.md
 // §"Install attribution". Prototype-only: imported / pre-attribution

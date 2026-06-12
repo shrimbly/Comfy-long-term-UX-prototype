@@ -6,6 +6,8 @@
 // wiki, either the field is wrong or the wiki needs updating — log it in
 // prototype/design-decisions.md.
 
+import type { SemanticDiff } from './utils/workflowDiff'
+
 export type PersonaId =
   | 'solo'
   | 'solo-local'
@@ -129,6 +131,9 @@ export interface WorkflowSubmission {
   note?: string
   // Rough lines-changed summary vs the canonical, for the review row.
   diff?: { added: number; removed: number }
+  // Semantic change summary vs the canonical (the modern review surface).
+  // In the prototype this is mocked per submission rather than computed.
+  semanticDiff?: SemanticDiff
   // Reviewer's feedback when the submission is declined, sent to the
   // submitter for revision.
   reviewComment?: string
@@ -284,15 +289,42 @@ export interface PublishedVersion {
   at: string
 }
 
+// Origin of a media file per ../IA_Plan/wiki/entities/media-file.md.
+// `generated` (Comfy output dir) and `imported` (uploaded copy) are
+// Comfy-owned bytes. `referenced` is the NON-FINAL third origin under
+// exploration (prototype-log Flow 03 / open-q `local-media-as-references`):
+// Comfy stores a pointer to a file the user keeps on their own disk and
+// never copies it. Referenced assets have no cloud project and carry a
+// link state + source path.
+export type AssetOrigin = 'generated' | 'imported' | 'referenced'
+
+// Link state of a `referenced` media file. `missing` = the original moved
+// or was deleted; Comfy still holds the cached thumbnail and prompts a
+// relink (After Effects / Lightroom pattern).
+export type LinkState = 'linked' | 'missing'
+
 export interface LibraryAsset {
   id: string
   name: string
   section: LibrarySection
-  projectId: string
+  // Optional: a `referenced` local media file belongs to no cloud project
+  // (Projects are cloud-only). Cloud-stored assets set this.
+  projectId?: string
   updatedAt: string
   tags?: string[]
   folder?: string
   storage?: AssetStorage
+  // `referenced`-origin fields. Non-final — logged in
+  // prototype/design-decisions.md until media-file.md adopts them.
+  origin?: AssetOrigin
+  // Absolute path of the original file on the user's disk.
+  sourcePath?: string
+  // Content hash for move-detection and hash-based auto-relink.
+  contentHash?: string
+  linkState?: LinkState
+  // Cached preview the app keeps so a referenced file still shows a
+  // thumbnail even when its original has moved (the relink case).
+  previewUrl?: string
 }
 
 export interface Template {

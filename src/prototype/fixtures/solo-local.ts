@@ -6,6 +6,7 @@
 //   concept:  ../IA_Plan/wiki/concepts/local-dashboard-views.md
 //             — filesystem-driven library (Media / Models / Custom Nodes / Outputs)
 
+import { buildLocalMediaReferences } from './localMedia'
 import type { PersonaFixture } from '../types'
 
 const user = {
@@ -38,7 +39,9 @@ export const soloLocalFixture: PersonaFixture = {
   // No projects — Projects are cloud-only.
   projects: [],
   workflows: [],
-  libraryAssets: [],
+  // Referenced local media (non-final linked-media exploration, Flow 03).
+  // Comfy points at these files in place; it never copies the bytes.
+  libraryAssets: buildLocalMediaReferences(),
   templates: [
     {
       id: 'tpl-txt2img',

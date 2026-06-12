@@ -157,6 +157,39 @@
         </span>
         <span class="text-xs/none">@{{ creator.username }}</span>
       </div>
+
+      <!-- Referenced local media (prototype, Flow 03). Gated on
+           user_metadata.sourcePath so real ComfyUI assets never see it.
+           Missing → dim + relink CTA (click relinks via the host view);
+           linked → hover source-path badge. -->
+      <template v-if="referencePath">
+        <button
+          v-if="isReferenceMissing"
+          type="button"
+          class="absolute inset-0 flex cursor-pointer flex-col items-center justify-center gap-2 bg-base-background/70 text-center"
+          @click.stop="$emit('click')"
+        >
+          <i class="icon-[lucide--unlink] size-6 text-muted-foreground" />
+          <span
+            class="inline-flex items-center gap-1 rounded-full bg-primary-background px-3 py-1 text-xs font-medium text-button-surface-contrast"
+          >
+            <i class="icon-[lucide--link] size-3.5" />
+            {{ $t('prototype.assetCard.relink') }}
+          </span>
+        </button>
+        <div
+          v-else
+          :class="
+            cn(
+              'pointer-events-none absolute inset-x-2 bottom-2 inline-flex items-center gap-1.5 rounded-full bg-black/55 px-2.5 py-1 text-white backdrop-blur-sm transition-opacity duration-150',
+              isHovered ? 'opacity-100' : 'opacity-0'
+            )
+          "
+        >
+          <i class="icon-[lucide--hard-drive] size-3 shrink-0" />
+          <span class="truncate text-xs/none">{{ referencePath }}</span>
+        </div>
+      </template>
     </div>
 
     <!-- Bottom Area: Media Info -->
@@ -351,6 +384,16 @@ const creator = computed<CreatorMeta | undefined>(() => {
 
 const creatorInitial = computed(
   () => creator.value?.username.trim().charAt(0).toUpperCase() ?? ''
+)
+
+// Referenced local media (prototype, Flow 03 — non-final). Gated on
+// user_metadata so the overlay never renders for real ComfyUI assets.
+const referencePath = computed<string | undefined>(() => {
+  const p = asset?.user_metadata?.sourcePath
+  return typeof p === 'string' ? p : undefined
+})
+const isReferenceMissing = computed(
+  () => asset?.user_metadata?.linkState === 'missing'
 )
 
 // Determine file type from extension

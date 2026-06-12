@@ -14,7 +14,7 @@
 <template>
   <aside
     v-if="canonical"
-    class="flex w-80 shrink-0 flex-col gap-4 rounded-xl border border-border-subtle p-4"
+    class="flex w-80 shrink-0 flex-col gap-3 rounded-xl border border-border-subtle p-4"
   >
     <header class="flex items-start justify-between gap-2">
       <div class="flex min-w-0 flex-col gap-1">
@@ -36,7 +36,11 @@
     </header>
 
     <div class="flex flex-col gap-2">
-      <Button variant="primary" size="md" @click="onBranch">
+      <Button
+        :variant="myBranch ? 'inverted' : 'primary'"
+        size="md"
+        @click="onBranch"
+      >
         <i
           :class="
             cn(
@@ -59,6 +63,37 @@
       </Button>
     </div>
 
+    <div v-if="mySubmission && mySubmission.status !== 'approved'">
+      <div
+        v-if="mySubmission.status === 'pending'"
+        class="flex items-center gap-2 rounded-lg border border-border-subtle bg-secondary-background px-3 py-2 text-xs text-muted-foreground"
+      >
+        <i class="icon-[lucide--clock] size-3.5 shrink-0" />
+        {{ t('prototype.workflowSidebar.submission.pending') }}
+      </div>
+      <div
+        v-else
+        class="flex flex-col gap-2 rounded-lg bg-warning-background/30 p-3"
+      >
+        <span
+          class="flex items-center gap-1.5 text-xs font-medium text-base-foreground"
+        >
+          <i class="icon-[lucide--triangle-alert] size-3.5 shrink-0" />
+          {{ t('prototype.workflowSidebar.submission.changesRequested') }}
+        </span>
+        <p
+          v-if="mySubmission.reviewComment"
+          class="m-0 text-xs text-base-foreground italic"
+        >
+          “{{ mySubmission.reviewComment }}”
+        </p>
+        <Button variant="primary" size="md" @click="onResubmit">
+          <i class="icon-[lucide--git-pull-request] size-4" />
+          {{ t('prototype.workflowSidebar.submission.resubmit') }}
+        </Button>
+      </div>
+    </div>
+
     <div class="h-px bg-border-subtle" />
 
     <section class="flex min-h-0 flex-col gap-2">
@@ -76,7 +111,7 @@
           :key="row.key"
           class="grid grid-cols-[0.75rem_1fr] gap-x-2"
         >
-          <span class="relative flex justify-center">
+          <span class="relative flex items-center justify-center">
             <span
               class="absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-border-default"
               :class="
@@ -90,7 +125,7 @@
             <span
               :class="
                 cn(
-                  'relative z-10 mt-1.5 size-2 rounded-full ring-2 ring-base-background',
+                  'relative z-10 size-2 rounded-full ring-2 ring-base-background',
                   row.isLatest ? 'bg-primary-background' : 'bg-muted-foreground'
                 )
               "
@@ -99,27 +134,25 @@
           <Button
             variant="textonly"
             size="unset"
-            class="my-0.5 min-w-0 flex-col items-start gap-0 rounded-md px-2 py-1 hover:bg-secondary-background-hover"
+            class="min-w-0 justify-start gap-2 rounded-md px-2 py-1 text-left hover:bg-secondary-background-hover"
             @click="onOpenVersion(row.number)"
           >
-            <span
-              class="flex items-center gap-1.5 text-sm text-base-foreground"
-            >
+            <span class="shrink-0 text-sm text-base-foreground">
               {{ t('prototype.history.version', { number: row.number }) }}
-              <span
-                v-if="row.isLatest"
-                class="rounded-sm bg-secondary-background px-1.5 py-0.5 text-[10px] text-muted-foreground"
-              >
-                {{ t('prototype.history.current') }}
-              </span>
             </span>
-            <span class="truncate text-xs text-muted-foreground">
+            <span class="min-w-0 flex-1 truncate text-xs text-muted-foreground">
               {{
                 t('prototype.history.versionMeta', {
                   date: row.at,
                   user: row.user
                 })
               }}
+            </span>
+            <span
+              v-if="row.isLatest"
+              class="shrink-0 rounded-sm bg-secondary-background px-1.5 py-0.5 text-[10px] text-muted-foreground"
+            >
+              {{ t('prototype.history.current') }}
             </span>
           </Button>
         </li>
@@ -166,6 +199,19 @@ const myBranch = computed(() =>
       w.forkedFrom?.workflowId === workflowId
   )
 )
+
+// The current user's submission of their branch, if any — drives the
+// "submitted / changes requested" status and the Revise & resubmit action.
+const mySubmission = computed(() => {
+  const userId = personaStore.fixture.currentUser.id
+  const mine = personaStore.fixture.workflowSubmissions.filter(
+    (s) =>
+      s.canonicalWorkflowId === workflowId && s.submittedByUserId === userId
+  )
+  return (
+    mine.find((s) => s.forkWorkflowId === myBranch.value?.id) ?? mine.at(-1)
+  )
+})
 
 function memberName(userId: string): string {
   return (
@@ -217,6 +263,20 @@ function onOpenVersion(number: number) {
       number
     }),
     life: 2200
+  })
+}
+
+function onResubmit() {
+  const sub = mySubmission.value
+  if (!sub || !canonical.value) return
+  personaStore.resubmitSubmission(sub.id)
+  toast.add({
+    severity: 'success',
+    summary: t('prototype.workflowSidebar.toast.resubmittedSummary'),
+    detail: t('prototype.workflowSidebar.toast.resubmittedDetail', {
+      name: canonical.value.name
+    }),
+    life: 2800
   })
 }
 

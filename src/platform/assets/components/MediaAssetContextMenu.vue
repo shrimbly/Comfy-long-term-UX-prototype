@@ -109,6 +109,10 @@ const emit = defineEmits<{
   'bulk-export-workflow': [assets: AssetItem[]]
   'bulk-compare': [assets: AssetItem[], totalSelected: number]
   'show-details': [asset: AssetItem]
+  // Prototype referenced-media actions (Flow 03, non-final). Gated by the
+  // items below on user_metadata so they never surface for real assets.
+  relink: [asset: AssetItem]
+  'remove-from-comfy': [asset: AssetItem]
 }>()
 
 type ContextMenuHandle = {
@@ -494,7 +498,12 @@ const contextMenuItems = computed<MenuItem[]>(() => {
   // Streams progress through a sticky toast then mutates fixture state;
   // destination is inferred from the asset's parent workflow per
   //   ../IA_Plan/wiki/decisions/promoting-local-outputs-to-cloud.md
-  if (asset.user_metadata?.storage === 'local') {
+  // (For referenced local media this is the materialize-to-cloud action;
+  // hidden while missing — there are no bytes to upload. Flow 03.)
+  if (
+    asset.user_metadata?.storage === 'local' &&
+    asset.user_metadata?.linkState !== 'missing'
+  ) {
     const inferredProject =
       (asset.user_metadata?.projectName as string | undefined) ??
       t('mediaAsset.actions.promoteToCloudFallbackDestination')
@@ -504,6 +513,23 @@ const contextMenuItems = computed<MenuItem[]>(() => {
       command: () => {
         void saveToCloud([asset], inferredProject)
       }
+    })
+  }
+
+  // Referenced local media (prototype, Flow 03): relink a moved file +
+  // remove the reference (never deletes the original on disk).
+  if (asset.user_metadata?.sourcePath) {
+    if (asset.user_metadata?.linkState === 'missing') {
+      items.push({
+        label: t('prototype.assetCard.relink'),
+        icon: 'icon-[lucide--link]',
+        command: () => emit('relink', asset)
+      })
+    }
+    items.push({
+      label: t('prototype.assetCard.remove'),
+      icon: 'icon-[lucide--unlink]',
+      command: () => emit('remove-from-comfy', asset)
     })
   }
 

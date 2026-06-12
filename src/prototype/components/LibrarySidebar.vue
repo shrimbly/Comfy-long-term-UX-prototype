@@ -176,7 +176,7 @@ const projectById = computed(() => {
 const sectionAssets = computed(() =>
   fixture.value.libraryAssets.filter((a) => {
     if (a.section !== section) return false
-    const project = projectById.value.get(a.projectId)
+    const project = a.projectId ? projectById.value.get(a.projectId) : undefined
     return (
       project !== undefined &&
       (project.tier === 'workspace-wide' || project.currentUserHasAccess)

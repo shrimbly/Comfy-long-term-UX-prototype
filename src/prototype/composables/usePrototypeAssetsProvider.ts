@@ -18,7 +18,33 @@ import {
 import type { FolderItem } from '@/utils/directoryPickerUtil'
 
 import { buildPrototypeMediaAssets } from '../fixtures/mediaAssets'
+import { useMediaReferenceStore } from '../stores/mediaReferenceStore'
 import { usePrototypePersonaStore } from '../stores/personaStore'
+import type { LibraryAsset } from '../types'
+
+// Map a referenced local file (store shape) to the AssetItem the upstream
+// media browser renders. `previewUrl` is the cached thumbnail; link state +
+// source path ride along in user_metadata so the card overlay + context
+// menu can surface the referenced-media affordances (Flow 03, non-final).
+function referencedToAssetItem(a: LibraryAsset): AssetItem {
+  return {
+    id: a.id,
+    name: a.name,
+    display_name: a.name,
+    size: 0,
+    created_at: a.updatedAt,
+    tags: a.tags ?? [],
+    thumbnail_url: a.previewUrl,
+    preview_url: a.previewUrl,
+    user_metadata: {
+      sourcePath: a.sourcePath,
+      linkState: a.linkState ?? 'linked',
+      // Local bytes → lights up the existing "Promote to cloud" context
+      // action, which is how a reference materializes a cloud copy (Flow 03).
+      storage: 'local'
+    }
+  }
+}
 
 // Shared filter state for the prototype project dropdown. Module-level so
 // every consumer (provider + sidebar dropdown) sees the same ref.
@@ -35,6 +61,9 @@ export function usePrototypeProjectFilter() {
   const { currentPersonaId } = storeToRefs(personaStore)
 
   const availableProjects = computed<ProjectFilterOption[]>(() => {
+    // Local users have no cloud projects — referenced media isn't grouped
+    // by project, so the project dropdown stays empty.
+    if (personaStore.fixture.mode === 'local') return []
     const assets = buildPrototypeMediaAssets(currentPersonaId.value)
     const byId = new Map<string, ProjectFilterOption>()
     for (const asset of assets) {
@@ -54,10 +83,17 @@ export function usePrototypeProjectFilter() {
 export function usePrototypeAssetsProvider(directory: 'input' | 'output') {
   const personaStore = usePrototypePersonaStore()
   const { currentPersonaId } = storeToRefs(personaStore)
+  const mediaRefs = useMediaReferenceStore()
 
   // Re-derives whenever the persona switcher OR the project dropdown changes.
   const allMedia = computed<AssetItem[]>(() => {
     if (directory !== 'output') return []
+    // Local persona: serve the user's referenced media (linked files on
+    // their own disk). Store mutations (relink / add / remove) propagate
+    // through this computed to the grid automatically.
+    if (personaStore.fixture.mode === 'local') {
+      return mediaRefs.references.map(referencedToAssetItem)
+    }
     const base = buildPrototypeMediaAssets(currentPersonaId.value)
     if (!selectedProjectId.value) return base
     return base.filter(

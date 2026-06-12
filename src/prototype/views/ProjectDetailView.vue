@@ -255,6 +255,13 @@ onMounted(() => {
   if (uiStore.consumeShareIntent(projectId)) isSharingOpen.value = true
   // A submission notification lands the reviewer on the Review tab.
   if (uiStore.consumeReviewIntent(projectId)) activeTab.value = 'review'
+  // A submission-outcome notification selects the canonical so its sidebar
+  // (decline feedback + Revise & resubmit) is open on arrival.
+  const selectId = uiStore.consumeSelectWorkflow(projectId)
+  if (selectId) {
+    activeTab.value = 'workflows'
+    selectedWorkflowId.value = selectId
+  }
 })
 
 function onSelectWorkflow(workflowId: string) {

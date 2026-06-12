@@ -68,6 +68,25 @@ export const usePrototypeUiStore = defineStore('prototype-ui', () => {
     return true
   }
 
+  // One-shot intent: a submission-outcome notification wants a specific
+  // workflow selected (its sidebar open) on arrival. ProjectDetailView
+  // consumes it once.
+  const selectWorkflowIntent = ref<{
+    projectId: string
+    workflowId: string
+  } | null>(null)
+
+  function requestSelectWorkflow(projectId: string, workflowId: string) {
+    selectWorkflowIntent.value = { projectId, workflowId }
+  }
+
+  function consumeSelectWorkflow(projectId: string): string | null {
+    const intent = selectWorkflowIntent.value
+    if (!intent || intent.projectId !== projectId) return null
+    selectWorkflowIntent.value = null
+    return intent.workflowId
+  }
+
   function acknowledgeInstallNotice(id: string) {
     acknowledgedInstallNotices.value = new Set([
       ...acknowledgedInstallNotices.value,
@@ -157,6 +176,8 @@ export const usePrototypeUiStore = defineStore('prototype-ui', () => {
     consumeShareIntent,
     requestReviewTab,
     consumeReviewIntent,
+    requestSelectWorkflow,
+    consumeSelectWorkflow,
     go,
     goHome,
     selectProject,
