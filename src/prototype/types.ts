@@ -246,16 +246,6 @@ export interface Project {
 // 'cloud' = stored under a cloud workspace/project.
 export type AssetStorage = 'local' | 'cloud'
 
-// Snapshot of the install that generated an output. Captured at run
-// time and embedded in the output's metadata so attribution survives
-// even if the install is later removed. Per ../IA_Plan/wiki/entities/
-// output.md §"Install attribution".
-export interface InstallAttribution {
-  installId: string
-  displayName: string
-  comfyUIVersion: string
-}
-
 export interface Workflow {
   id: string
   projectId: string

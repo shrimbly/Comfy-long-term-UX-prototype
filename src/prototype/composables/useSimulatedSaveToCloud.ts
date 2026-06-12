@@ -23,7 +23,7 @@ import { promotePrototypeAssetsToCloud } from '../fixtures/mediaAssets'
 const PROGRESS_GROUP = 'save-to-cloud'
 const PER_ASSET_DELAY_MS = 350
 
-export interface UploadProgress {
+interface UploadProgress {
   done: number
   total: number
   destination: string

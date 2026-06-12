@@ -99,13 +99,6 @@ export function buildPrototypeMediaAssets(_personaId?: string): AssetItem[] {
   return assets
 }
 
-export function listPrototypeProjects(): {
-  id: string
-  name: string
-}[] {
-  return PROJECTS.map((p) => ({ id: p.projectId, name: p.projectName }))
-}
-
 // TEMP shim to restore loadability over the interrupted WIP migration
 // (the real cloud-promotion impl is in backup/wip-pre-port). No-op for
 // now so the dev server boots for review; replace when the WIP lands.

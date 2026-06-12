@@ -19,7 +19,7 @@ export function parentFolder(path: string): string {
   return i <= 0 ? path : path.slice(0, i)
 }
 
-export function fileName(path: string): string {
+function fileName(path: string): string {
   const i = path.lastIndexOf('/')
   return i < 0 ? path : path.slice(i + 1)
 }
