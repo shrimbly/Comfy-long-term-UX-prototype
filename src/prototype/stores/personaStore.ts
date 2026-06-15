@@ -494,21 +494,6 @@ export const usePrototypePersonaStore = defineStore('prototype-persona', () => {
     return overwritten
   }
 
-  // --- Project settings ------------------------------------------------
-  //
-  // Per prototype/design-decisions.md 2026-05-15: an Owner can set a
-  // filename-prefix default that prefills new save-node widgets.
-
-  function setProjectFilenamePrefix(projectId: string, prefix: string) {
-    fixture.value.projects = fixture.value.projects.map((p) => {
-      if (p.id !== projectId) return p
-      return {
-        ...p,
-        defaults: { ...(p.defaults ?? {}), filenamePrefix: prefix }
-      }
-    })
-  }
-
   return {
     currentPersonaId,
     currentPersona,
@@ -538,7 +523,6 @@ export const usePrototypePersonaStore = defineStore('prototype-persona', () => {
     addProjectMember,
     changeProjectMemberRole,
     removeProjectMember,
-    setProjectFilenamePrefix,
     renameWorkflow,
     deleteWorkflow,
     setWorkflowStorage,

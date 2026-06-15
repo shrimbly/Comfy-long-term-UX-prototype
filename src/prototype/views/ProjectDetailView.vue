@@ -9,8 +9,8 @@
   lives in a modal accessed from the header (avatar summary + Share
   button), mirroring Google Drive's Share affordance.
 
-  Body tabs: Workflows (always visible) and Settings (Owner-only). The
-  Settings tab is gated by `canEditSettings` so a Collaborator sees the
+  Body tabs: Workflows (always visible) and Usage (Owner/Admin-only). The
+  Usage tab is gated by `canViewUsage` so a Collaborator sees the
   Workflows view directly and the tab strip collapses.
 -->
 <template>
@@ -169,12 +169,6 @@
             </div>
           </section>
 
-          <ProjectSettingsView
-            v-else-if="activeTab === 'settings'"
-            :project="project"
-            :can-edit="canEditSettings"
-          />
-
           <ProjectUsageSection
             v-else-if="activeTab === 'usage'"
             :project-credits="projectCredits"
@@ -211,9 +205,8 @@ import WorkflowSidebar from '../components/WorkflowSidebar.vue'
 import { usePrototypePersonaStore } from '../stores/personaStore'
 import { usePrototypeTabsStore } from '../stores/tabsStore'
 import { usePrototypeUiStore } from '../stores/uiStore'
-import ProjectSettingsView from './ProjectSettingsView.vue'
 
-type ProjectTabId = 'workflows' | 'settings' | 'usage'
+type ProjectTabId = 'workflows' | 'usage'
 
 const { projectId } = defineProps<{
   projectId: string
@@ -244,10 +237,10 @@ const project = computed(() =>
   fixture.value.projects.find((p) => p.id === projectId)
 )
 
-// Owner-only settings access per
+// Owner/Admin-only usage visibility per
 // ../IA_Plan/wiki/concepts/three-level-permissions.md §"Project level".
 // Workspace Admins auto-act as Owner on workspace-wide projects only.
-const canEditSettings = computed(() => {
+const canViewUsage = computed(() => {
   const p = project.value
   if (!p || p.isDrafts) return false
   const viewerId = fixture.value.currentUser.id
@@ -265,11 +258,7 @@ const visibleTabs = computed(() => {
       label: t('prototype.views.project.tabs.workflows')
     }
   ]
-  if (canEditSettings.value) {
-    tabs.push({
-      id: 'settings',
-      label: t('prototype.views.project.tabs.settings')
-    })
+  if (canViewUsage.value) {
     tabs.push({
       id: 'usage',
       label: t('prototype.views.project.tabs.usage')

@@ -473,14 +473,11 @@
         "tabs": {
           "workflows": "Workflows",
           "review": "Review",
-          "settings": "Settings",
           "usage": "Usage"
         },
         "reviewHeading": "Submitted for review",
         "settings": {
           "allowlistsHeading": "Allowlists",
-          "defaultsHeading": "Defaults",
-          "usageHeading": "Usage",
           "installLock": {
             "heading": "Install lock",
             "description": "Pin this project to specific installs from the workspace registry. Workflows run only if the active install matches one of the entries below.",
@@ -522,13 +519,6 @@
             "shareLabel": "{pct}% of workspace spend",
             "periodLabel": "Current month",
             "note": "The workspace is the single billing entity. Per-project caps are not supported."
-          },
-          "defaults": {
-            "heading": "Save defaults",
-            "description": "Values that prefill widgets when workflows are created or saved inside this project.",
-            "filenamePrefixLabel": "Filename prefix",
-            "filenamePrefixPlaceholder": "e.g. coca-cola/q3-campaign/",
-            "filenamePrefixHint": "Prefills the filename prefix widget on save nodes for new workflows in this project. Users can edit or remove the value in the widget at any time."
           }
         },
         "sharing": {

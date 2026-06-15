@@ -67,7 +67,6 @@ export const adminFixture: PersonaFixture = {
       ownerUserId: user.id,
       isDrafts: false,
       currentUserHasAccess: true,
-      defaults: { filenamePrefix: 'marketing/{date}/' },
       creditsThisMonth: 1840
     },
     {
@@ -78,7 +77,6 @@ export const adminFixture: PersonaFixture = {
       ownerUserId: user.id,
       isDrafts: false,
       currentUserHasAccess: true,
-      defaults: { filenamePrefix: 'brand/' },
       creditsThisMonth: 420
     },
     {
@@ -91,7 +89,6 @@ export const adminFixture: PersonaFixture = {
       ownerUserId: 'user-jane',
       isDrafts: false,
       currentUserHasAccess: true,
-      defaults: {},
       creditsThisMonth: 980
     },
     {
@@ -106,7 +103,6 @@ export const adminFixture: PersonaFixture = {
         { userId: user.id, role: 'owner' },
         { userId: 'user-jane', role: 'collaborator' }
       ],
-      defaults: { filenamePrefix: 'clients/client-x/{workflow}/' },
       creditsThisMonth: 2240
     },
     {
@@ -136,7 +132,6 @@ export const adminFixture: PersonaFixture = {
         { userId: user.id, role: 'owner' },
         { userId: 'user-alex', role: 'collaborator' }
       ],
-      defaults: { filenamePrefix: 'coca-cola/q3-campaign/' },
       creditsThisMonth: 3620
     }
   ],
