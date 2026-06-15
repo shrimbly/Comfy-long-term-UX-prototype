@@ -157,6 +157,139 @@ export const adminFixture: PersonaFixture = {
       updatedAt: '2026-05-08',
       storage: 'local'
     },
+    // A fuller My Workflows set — exercises the list density, search, the
+    // storage filter (cloud/local), and the Copy badge (forkedFrom).
+    {
+      id: 'wf-mw-portrait-retouch',
+      projectId: myWorkflows.id,
+      name: 'Portrait retoucher',
+      updatedAt: '2026-06-15',
+      storage: 'cloud'
+    },
+    {
+      id: 'wf-mw-product-hero',
+      projectId: myWorkflows.id,
+      name: 'Product hero v3',
+      updatedAt: '2026-06-14',
+      storage: 'local',
+      forkedFrom: { workflowId: 'wf-cocacola-hero' }
+    },
+    {
+      id: 'wf-mw-upscale-4x',
+      projectId: myWorkflows.id,
+      name: 'Upscale 4x (ESRGAN)',
+      updatedAt: '2026-06-13',
+      storage: 'cloud'
+    },
+    {
+      id: 'wf-mw-style-ghibli',
+      projectId: myWorkflows.id,
+      name: 'Style transfer — Ghibli',
+      updatedAt: '2026-06-12',
+      storage: 'local'
+    },
+    {
+      id: 'wf-mw-bg-remove',
+      projectId: myWorkflows.id,
+      name: 'Background remover',
+      updatedAt: '2026-06-11',
+      storage: 'cloud'
+    },
+    {
+      id: 'wf-mw-inpaint',
+      projectId: myWorkflows.id,
+      name: 'Inpaint cleanup',
+      updatedAt: '2026-06-09',
+      storage: 'local'
+    },
+    {
+      id: 'wf-mw-sdxl-refiner',
+      projectId: myWorkflows.id,
+      name: 'SDXL base + refiner',
+      updatedAt: '2026-06-07',
+      storage: 'cloud'
+    },
+    {
+      id: 'wf-mw-flux-portrait',
+      projectId: myWorkflows.id,
+      name: 'Flux dev portrait',
+      updatedAt: '2026-06-05',
+      storage: 'cloud'
+    },
+    {
+      id: 'wf-mw-controlnet-pose',
+      projectId: myWorkflows.id,
+      name: 'ControlNet pose test',
+      updatedAt: '2026-06-03',
+      storage: 'local'
+    },
+    {
+      id: 'wf-mw-moodboard-copy',
+      projectId: myWorkflows.id,
+      name: 'Moodboard explorer — rework',
+      updatedAt: '2026-06-01',
+      storage: 'cloud',
+      forkedFrom: {
+        workflowId: 'wf-clientx-moodboard',
+        atVersion: '2026-05-11'
+      }
+    },
+    {
+      id: 'wf-mw-faceswap-batch',
+      projectId: myWorkflows.id,
+      name: 'Batch face swap',
+      updatedAt: '2026-05-28',
+      storage: 'cloud'
+    },
+    {
+      id: 'wf-mw-sketch-render',
+      projectId: myWorkflows.id,
+      name: 'Sketch → render',
+      updatedAt: '2026-05-25',
+      storage: 'local'
+    },
+    {
+      id: 'wf-mw-frame-interp',
+      projectId: myWorkflows.id,
+      name: 'Video frame interpolation',
+      updatedAt: '2026-05-22',
+      storage: 'cloud'
+    },
+    {
+      id: 'wf-mw-depth-map',
+      projectId: myWorkflows.id,
+      name: 'Depth map generator',
+      updatedAt: '2026-05-19',
+      storage: 'local'
+    },
+    {
+      id: 'wf-mw-establishing-copy',
+      projectId: myWorkflows.id,
+      name: 'Establishing shot — my cut',
+      updatedAt: '2026-05-16',
+      storage: 'cloud',
+      forkedFrom: { workflowId: 'wf-indie-establishing' }
+    },
+    {
+      id: 'wf-mw-outpaint-wide',
+      projectId: myWorkflows.id,
+      name: 'Outpaint wide',
+      updatedAt: '2026-05-13',
+      storage: 'local'
+    },
+    {
+      id: 'wf-mw-thumbnail-ab',
+      projectId: myWorkflows.id,
+      name: 'Thumbnail A/B set',
+      updatedAt: '2026-04-30'
+    },
+    {
+      id: 'wf-mw-color-grade',
+      projectId: myWorkflows.id,
+      name: 'Color grade LUT apply',
+      updatedAt: '2026-04-22',
+      storage: 'cloud'
+    },
     // Project-scoped workflows + apps. Owner roles + per-user access
     // grants drive the asset-role test coverage from
     // ../IA_Plan/wiki/concepts/prototype-test-coverage.md.
