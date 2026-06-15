@@ -25,7 +25,7 @@
       <span
         :class="
           cn(
-            'relative block aspect-square w-full overflow-hidden rounded-md ring-2 ring-offset-2 ring-offset-base-background transition-shadow',
+            'relative block aspect-3/2 w-full overflow-hidden rounded-md ring-2 ring-offset-2 ring-offset-base-background transition-shadow',
             selected ? 'ring-primary-background' : 'ring-transparent'
           )
         "
@@ -41,7 +41,7 @@
       </span>
       <span class="flex flex-col">
         <span class="flex items-center gap-1.5">
-          <span class="truncate text-sm/tight">{{ workflow.name }}</span>
+          <span class="truncate text-xs/tight">{{ workflow.name }}</span>
           <span v-if="isCopy" :class="copyBadgeClass">
             {{ t('prototype.workflowCard.copyBadge') }}
           </span>
