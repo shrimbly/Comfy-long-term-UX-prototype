@@ -166,8 +166,7 @@ const isSoloPersona = computed(
 const isGuestPersona = computed(
   () =>
     currentPersonaId.value === 'project-collaborator' ||
-    currentPersonaId.value === 'asset-only-guest' ||
-    currentPersonaId.value === 'freelancer'
+    currentPersonaId.value === 'asset-only-guest'
 )
 
 const showWorkspaceGroup = computed(

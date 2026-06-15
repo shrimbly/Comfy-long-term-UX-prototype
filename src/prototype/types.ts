@@ -13,9 +13,6 @@ export type PersonaId =
   | 'workspace-member'
   | 'project-collaborator'
   | 'asset-only-guest'
-  | 'install-governor'
-  | 'managed-artist'
-  | 'freelancer'
 
 export type WorkspaceTier = 'personal' | 'team'
 export type WorkspacePlan = 'free' | 'professional' | 'enterprise'
