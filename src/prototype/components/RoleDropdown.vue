@@ -1,7 +1,7 @@
 <!--
-  Per-row project role dropdown. Three options + "Remove from project."
-  Owner option only appears when the viewer is themselves a project Owner
-  (project Collaborators can't promote others to Owner).
+  Per-row project role dropdown. Owner / Collaborator + "Remove from
+  project." Owner option only appears when the viewer is themselves a
+  project Owner (project Collaborators can't promote others to Owner).
 -->
 <template>
   <div ref="containerRef" class="relative inline-flex">
@@ -74,10 +74,6 @@ onClickOutside(containerRef, () => {
 })
 
 const options = computed<ProjectRole[]>(() => {
-  // Project Guest is intentionally omitted: per
-  // ../IA_Plan/wiki/concepts/three-level-permissions.md, a Project Guest
-  // cannot view the project at all — they arrive at that role via
-  // asset-level invites, not by being demoted from inside this panel.
   const base: ProjectRole[] = ['collaborator']
   if (viewerCanSetOwner) base.unshift('owner')
   return base

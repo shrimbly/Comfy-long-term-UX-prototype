@@ -112,7 +112,6 @@
       >
         <span class="icon-[lucide--message-square-text] size-4" />
       </button>
-      <TopBarNotifications />
       <button
         type="button"
         class="inline-flex h-7 cursor-pointer appearance-none items-center gap-1 rounded-full border-0 bg-transparent p-0.5 pr-1 text-base-foreground transition-colors hover:bg-secondary-background focus:outline-none"
@@ -139,7 +138,6 @@ import { storeToRefs } from 'pinia'
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 
-import TopBarNotifications from './TopBarNotifications.vue'
 import { usePrototypePersonaStore } from '../stores/personaStore'
 import { HOME_TAB_ID, usePrototypeTabsStore } from '../stores/tabsStore'
 import { usePrototypeUiStore } from '../stores/uiStore'

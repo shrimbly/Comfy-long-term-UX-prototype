@@ -20,8 +20,6 @@
       "groupWorkspace": "Workspace",
       "groupSharedWithYou": "Shared with you",
       "searchPlaceholder": "Search",
-      "guestEmptyState": "Tailored guest view coming in a later pass.",
-      "guest": "Guest",
       "workspaces": "Workspaces",
       "searchWorkspaces": "Search workspaces",
       "createWorkspace": "Create a workspace",
@@ -32,7 +30,6 @@
       "accountSettings": "Account settings",
       "logOut": "Log out",
       "workspaceSubtitle": "{plan} · {memberCount} members",
-      "workspaceSubtitleGuest": "Guest · {plan} · {memberCount} members",
       "creditsLeft": "{pct}% credits",
       "upgrade": "Upgrade →",
       "upgradeCta": "Upgrade",
@@ -45,7 +42,6 @@
         "owner": "Owner",
         "admin": "Admin",
         "member": "Member",
-        "guest": "Guest",
         "personal": "Personal"
       }
     },
@@ -57,7 +53,6 @@
       "newTab": "New blank workflow",
       "closeTab": "Close tab",
       "feedback": "Send feedback",
-      "notifications": "Notifications",
       "mediaAssets": "Media Assets"
     },
     "persona": {
@@ -294,20 +289,37 @@
           "label": "Search workflows",
           "hint": "Find a workflow across projects"
         },
-        "openDrafts": { "label": "Open My Workflows" },
-        "openRecents": { "label": "Open Recents" },
-        "openHub": { "label": "Open Hub" },
-        "openSettings": { "label": "Open Settings" },
-        "settingsGeneral": { "label": "Settings → General" },
-        "settingsAllowlists": { "label": "Settings → Allowlists" },
-        "settingsPublishing": { "label": "Settings → Publishing" },
-        "settingsBilling": { "label": "Settings → Billing" },
-        "settingsAdvanced": { "label": "Settings → Advanced" }
+        "openDrafts": {
+          "label": "Open My Workflows"
+        },
+        "openRecents": {
+          "label": "Open Recents"
+        },
+        "openHub": {
+          "label": "Open Hub"
+        },
+        "openSettings": {
+          "label": "Open Settings"
+        },
+        "settingsGeneral": {
+          "label": "Settings → General"
+        },
+        "settingsAllowlists": {
+          "label": "Settings → Allowlists"
+        },
+        "settingsPublishing": {
+          "label": "Settings → Publishing"
+        },
+        "settingsBilling": {
+          "label": "Settings → Billing"
+        },
+        "settingsAdvanced": {
+          "label": "Settings → Advanced"
+        }
       }
     },
     "workflowMenu": {
       "open": "Open",
-      "runApp": "Run app",
       "rename": "Rename…",
       "duplicate": "Duplicate",
       "fork": "Fork to My Workflows",
@@ -409,13 +421,8 @@
         "empty": "Nothing here yet. Tap \"New Workflow\" to start.",
         "emptyHeading": "Save your first workflow",
         "emptySubtitle": "My Workflows is the default home for new work. Spin one up or start from a template.",
-        "sharedEmpty": "Nothing has been shared with you outside of a project yet.",
         "createWorkflow": "+ Workflow",
-        "templatesHeading": "Starter templates",
-        "tabs": {
-          "private": "Private",
-          "shared": "Shared with me"
-        }
+        "templatesHeading": "Starter templates"
       },
       "recents": {
         "title": "Recents",
@@ -427,7 +434,6 @@
         "templatesHeading": "Starter templates",
         "filterAll": "All",
         "filterMine": "Mine",
-        "filterShared": "Shared with me",
         "filterEmpty": "No workflows match the current filter.",
         "sort": {
           "lastModified": "Last modified",
@@ -530,13 +536,11 @@
           "addPlaceholder": "Add people by name or email",
           "addPickerHeading": "Add to project",
           "addButton": "Add",
-          "addExternalHint": "Invite {email} as Guest in {workspace}",
           "noMatches": "No matching workspace members. Press Enter to invite by email.",
           "peopleHeading": "People with access",
           "peopleCount": "{count} with access",
           "generalAccessHeading": "General access",
           "viaWorkspace": "via workspace",
-          "pending": "Pending",
           "shareButton": "Share",
           "close": "Close",
           "summaryAnyone": "Anyone in {workspace}",
@@ -587,34 +591,13 @@
         "title": "Comfy Hub",
         "subtitle": "Discover and start from published workflows and templates."
       },
-      "notifications": {
-        "title": "Notifications",
-        "empty": "You're all caught up.",
-        "markAllRead": "Mark all read",
-        "in": "in {workspace}",
-        "kind": {
-          "asset-grant": "{actor} gave you access to {asset}",
-          "asset-update": "{actor} updated {asset}",
-          "project-grant": "{actor} added you to {project}",
-          "workspace-invite": "{actor} invited you to {workspace}",
-          "submission-received": "{actor} submitted {asset} for review",
-          "submission-approved": "{actor} published your changes to {asset}",
-          "submission-rejected": "{actor} declined your changes to {asset}"
-        },
-        "unknownActor": "Someone",
-        "unknownAsset": "an asset",
-        "unknownProject": "a project",
-        "unknownWorkspace": "a workspace"
-      },
       "assetRole": {
         "owner": "Owner",
-        "runner": "Runner",
-        "app-runner": "App Runner"
+        "runner": "Runner"
       },
       "projectRole": {
         "owner": "Owner",
-        "collaborator": "Collaborator",
-        "project-guest": "Project Guest"
+        "collaborator": "Collaborator"
       },
       "members": {
         "title": "Members",
@@ -653,9 +636,7 @@
           "headerCapability": "Capability",
           "roleAdmin": "Admin",
           "roleMember": "Member",
-          "roleGuest": "Guest",
           "always": "Always",
-          "never": "Never",
           "capability": {
             "publishDirectLink": {
               "label": "Publish workflows via shareable link",
@@ -677,8 +658,7 @@
           "cancel": "Cancel",
           "roleHint": {
             "admin": "Full workspace control, including billing and member management.",
-            "member": "Standard collaborator. Can invite others, create projects, and use the library.",
-            "guest": "Limited to assets and projects they're explicitly invited to."
+            "member": "Standard collaborator. Can invite others, create projects, and use the library."
           }
         },
         "removeConfirm": "Remove {name} from this workspace?"
@@ -686,7 +666,6 @@
       "settings": {
         "title": "Workspace settings",
         "subtitle": "Identity, allowlists, and other workspace-wide configuration.",
-        "guestEmpty": "Workspace settings are not available to guests.",
         "tabs": {
           "general": "General",
           "allowlists": "Allowlists",

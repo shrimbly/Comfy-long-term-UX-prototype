@@ -11,12 +11,10 @@ export type PersonaId =
   | 'solo-local'
   | 'workspace-admin'
   | 'workspace-member'
-  | 'project-collaborator'
-  | 'asset-only-guest'
 
 export type WorkspaceTier = 'personal' | 'team'
 export type WorkspacePlan = 'free' | 'professional' | 'enterprise'
-export type WorkspaceRole = 'admin' | 'member' | 'guest'
+export type WorkspaceRole = 'admin' | 'member'
 
 // Project visibility tiers, post-rename. Working stance (see prototype-log
 // 2026-05-12 entry): user-creatable tiers are `workspace-wide` and
@@ -25,7 +23,7 @@ export type ProjectTier = 'workspace-wide' | 'restricted' | 'private'
 
 // Asset-level roles per ../IA_Plan/wiki/concepts/three-level-permissions.md.
 // Post-MVP roles (Editor, Viewer) intentionally omitted.
-export type AssetRole = 'owner' | 'runner' | 'app-runner'
+export type AssetRole = 'owner' | 'runner'
 
 export interface AssetAccess {
   userId: string
@@ -33,7 +31,7 @@ export interface AssetAccess {
 }
 
 // Project-level roles per ../IA_Plan/wiki/concepts/three-level-permissions.md.
-export type ProjectRole = 'owner' | 'collaborator' | 'project-guest'
+export type ProjectRole = 'owner' | 'collaborator'
 
 export interface ProjectMember {
   userId: string
@@ -264,8 +262,8 @@ export interface PendingInvite {
 // publish-direct-link-admin-gate / delegation-surface-in-ui.
 export type DelegableCapability = 'publish-direct-link' | 'configure-workspace'
 
-// Per-role grant baseline. Admin always implicitly has all; Guest never has
-// any workspace-wide grant. Member is the only interactive column.
+// Per-role grant baseline. Admin always implicitly has all. Member is the
+// only interactive column.
 export type RoleGrants = Record<DelegableCapability, boolean>
 
 // Cloud vs local distinction per wiki:
@@ -274,37 +272,6 @@ export type RoleGrants = Record<DelegableCapability, boolean>
 // 'local' personas have no projects, no workspace switcher, and a
 // filesystem-backed library (Outputs replaces Prompts).
 export type PersonaMode = 'cloud' | 'local'
-
-// Cross-workspace activity surfaced through the top-bar notifications
-// popover. Drives the alert path for Guest personas who otherwise have
-// no in-workspace cue that something changed in another workspace.
-//
-//   asset-grant      — granted access to a specific asset
-//   project-grant    — added to a project
-//   workspace-invite — invited to a new workspace
-//   asset-update     — owner changed a shared asset
-export type NotificationKind =
-  | 'asset-grant'
-  | 'project-grant'
-  | 'workspace-invite'
-  | 'asset-update'
-
-export interface NotificationTarget {
-  workspaceId: string
-  projectId?: string
-  assetId?: string
-}
-
-export interface Notification {
-  id: string
-  kind: NotificationKind
-  actorUserId: string
-  target: NotificationTarget
-  createdAt: string
-  readAt?: string
-  // Free-text body for a notification, when one is needed.
-  message?: string
-}
 
 export interface PersonaFixture {
   mode: PersonaMode
@@ -320,7 +287,6 @@ export interface PersonaFixture {
   roleGrants: RoleGrants
   billing: WorkspaceBilling | null
   memberCreditLimits: MemberCreditLimit[]
-  notifications: Notification[]
 }
 
 export interface PersonaDef {

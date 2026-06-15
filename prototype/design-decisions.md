@@ -750,3 +750,22 @@ Wiki link: **supersedes** for MVP — [branch-vs-personal-copy](../../IA_Plan/wi
 Open question dependency: closes the MVP cut of `workflow-promotion-flow`, `project-collaborator-library-publish` (moot — no guests), `member-overwrite-request-flow` (moot — open overwrite). Defers `local-media-as-references`.
 
 Promote? **yes — high priority.** This is a major direction change that must go back to the wiki as a formal `wiki/decisions/mvp-scope.md` once the team confirms, with the four superseded decisions marked accordingly. Confirm before propagating.
+
+---
+
+## [2026-06-16] MVP Phase 3 — collapse personas + remove external-guest support
+
+Executing the scope cut above on the supporting surfaces. Two rounds:
+
+**Persona registry trimmed to the workspace-internal core (4).** Dropped the three install/compat personas (Install Governor, Managed Artist, Freelancer) — they only existed to demo install-locking / allowlists / compat-gates, all cut. Then, per the "workspace-internal collaboration only" line in the scope-cut entry above (confirmed by Willie 2026-06-16), also dropped the two **external-guest** personas (Project Collaborator, Asset-only Guest). Surviving personas: **Workspace Admin, Workspace Member, Solo (cloud), Solo (local)**.
+
+**External-guest support removed wholesale.** Concretely: `WorkspaceRole` → `admin | member` (no `guest`); `ProjectRole` → `owner | collaborator` (no `project-guest`); `AssetRole` → `owner | runner` (no `app-runner`). The **notifications tray** (`TopBarNotifications`, the `Notification` subsystem, the store getters) is deleted — it existed solely as the cross-workspace cue for guests. Removed share-by-email / `inviteExternalCollaborator`, the "shared with me" surfaces (`sharedWorkflows` getter, the Recents "Shared" pill, the Drafts "Shared with me" tab), the Permissions-matrix Guest column, and the guest-view gating in the sidebar / project detail / members / settings.
+
+Two non-obvious calls worth recording:
+
+- **`runner` survives; only `app-runner` is guest-only.** `runner` is the role a workspace Member holds on a shared-project workflow they don't own (run + copy-on-access, no in-place canonical edit) — core to internal collaboration. `app-runner` (run-only, no copy) was exclusively the asset-only-guest tier, so it goes. `useViewerWorkflowRole` now maps any scoped-project member to `runner`.
+- **Restored a restricted-project collaboration demo with an internal member.** The admin fixture's restricted-project story was anchored on external client _Mira Voss_ (client-x.com, a Guest). Rather than delete the demo, her collaborator/runner slots + forked working copy were **reassigned to Jane Park** (an existing comfy.org Member). This keeps "restricted project + internal collaborator + copy-on-access" demonstrable without any external guest. Also removed the `acme` guest-membership workspace the Admin no longer belongs to.
+
+Wiki link: same as the scope-cut entry — when `mvp-scope.md` is drafted, it should state plainly that **external guests / asset-only access are out of MVP** (not merely "deferred"), narrowing [three-level-permissions](../../IA_Plan/wiki/concepts/three-level-permissions.md) to two levels (workspace + project) for launch.
+
+Promote? **with the parent entry** — this is the implementation of the scope cut, not a separate decision.

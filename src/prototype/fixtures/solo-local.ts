@@ -51,6 +51,5 @@ export const soloLocalFixture: PersonaFixture = {
     'configure-workspace': false
   },
   billing: null,
-  memberCreditLimits: [],
-  notifications: []
+  memberCreditLimits: []
 }

@@ -6,11 +6,10 @@
     open-q:  ../IA_Plan/wiki/open-questions.md#publish-direct-link-admin-gate
              — admin-controlled per-role grants
     decision: prototype/design-decisions.md (2026-05-13)
-             — per-role baseline; Admin always on, Guest always off
+             — per-role baseline; Admin always on
 
-  Per-role baseline grants. Admin column is always-on, Guest always-off;
-  Member is the only interactive column. Read-only when current user is
-  not an Admin.
+  Per-role baseline grants. Admin column is always-on; Member is the only
+  interactive column. Read-only when current user is not an Admin.
 -->
 <template>
   <div class="flex flex-col gap-4">
@@ -34,9 +33,6 @@
             </th>
             <th class="w-24 px-4 py-3 text-center font-medium">
               {{ t('prototype.views.members.permissionsTab.roleMember') }}
-            </th>
-            <th class="w-24 px-4 py-3 text-center font-medium">
-              {{ t('prototype.views.members.permissionsTab.roleGuest') }}
             </th>
           </tr>
         </thead>
@@ -83,12 +79,6 @@
                     ($event.target as HTMLInputElement).checked
                   )
                 "
-              />
-            </td>
-            <td class="px-4 py-3 text-center align-middle">
-              <span
-                class="icon-[lucide--minus] size-4 text-muted-foreground/60"
-                :title="t('prototype.views.members.permissionsTab.never')"
               />
             </td>
           </tr>

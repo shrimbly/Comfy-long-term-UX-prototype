@@ -25,7 +25,7 @@ const comfyOrg = {
   ownerUserId: user.id,
   plan: 'professional' as const,
   avatarColor: '#facc15',
-  memberCount: 12,
+  memberCount: 11,
   currentUserRole: 'admin' as const,
   description: 'Production workflows + shared assets for the Comfy team.',
   dataTrainingOptOut: true
@@ -42,17 +42,6 @@ const personal = {
   currentUserRole: 'admin' as const
 }
 
-const acme = {
-  id: 'ws-acme',
-  name: 'Acme Studio',
-  tier: 'team' as const,
-  ownerUserId: 'user-someone-else',
-  plan: 'professional' as const,
-  avatarColor: '#3b82f6',
-  memberCount: 4,
-  currentUserRole: 'guest' as const
-}
-
 const myWorkflows = {
   id: 'proj-drafts',
   workspaceId: comfyOrg.id,
@@ -66,7 +55,7 @@ const myWorkflows = {
 export const adminFixture: PersonaFixture = {
   mode: 'cloud',
   currentUser: user,
-  workspaces: [comfyOrg, personal, acme],
+  workspaces: [comfyOrg, personal],
   currentWorkspaceId: comfyOrg.id,
   projects: [
     myWorkflows,
@@ -115,13 +104,13 @@ export const adminFixture: PersonaFixture = {
       currentUserHasAccess: true,
       members: [
         { userId: user.id, role: 'owner' },
-        { userId: 'user-mira', role: 'collaborator' }
+        { userId: 'user-jane', role: 'collaborator' }
       ],
       defaults: { filenamePrefix: 'clients/client-x/{workflow}/' },
       creditsThisMonth: 2240
     },
     {
-      // Restricted by membership. A collaborator (Mira) can open, work on
+      // Restricted by membership. A collaborator (Jane) can open, work on
       // a copy in her My Workflows, and publish it back to the project.
       id: 'proj-indie-short',
       workspaceId: comfyOrg.id,
@@ -132,7 +121,7 @@ export const adminFixture: PersonaFixture = {
       currentUserHasAccess: true,
       members: [
         { userId: user.id, role: 'owner' },
-        { userId: 'user-mira', role: 'collaborator' }
+        { userId: 'user-jane', role: 'collaborator' }
       ]
     },
     {
@@ -145,8 +134,7 @@ export const adminFixture: PersonaFixture = {
       currentUserHasAccess: true,
       members: [
         { userId: user.id, role: 'owner' },
-        { userId: 'user-alex', role: 'collaborator' },
-        { userId: 'user-tomas', role: 'project-guest' }
+        { userId: 'user-alex', role: 'collaborator' }
       ],
       defaults: { filenamePrefix: 'coca-cola/q3-campaign/' },
       creditsThisMonth: 3620
@@ -192,9 +180,9 @@ export const adminFixture: PersonaFixture = {
         { byUserId: user.id, at: '2026-03-02' },
         { byUserId: 'user-jane', at: '2026-03-18' },
         { byUserId: user.id, at: '2026-04-06' },
-        { byUserId: 'user-mira', at: '2026-04-14' },
+        { byUserId: 'user-alex', at: '2026-04-14' },
         { byUserId: 'user-jane', at: '2026-04-28' },
-        { byUserId: 'user-mira', at: '2026-05-04' },
+        { byUserId: 'user-alex', at: '2026-05-04' },
         { byUserId: 'user-alex', at: '2026-05-08' },
         { byUserId: user.id, at: '2026-05-11' }
       ]
@@ -222,11 +210,11 @@ export const adminFixture: PersonaFixture = {
         'Recolors line art to the approved brand palette, with guardrails that reject out-of-gamut results.',
       kind: 'app',
       ownerUserId: user.id,
-      access: [{ userId: 'user-mira', role: 'app-runner' }],
+      access: [{ userId: 'user-jane', role: 'runner' }],
       updatedAt: '2026-05-09'
     },
     {
-      // Canonical workflow in the restricted-but-unlocked project. Mira
+      // Canonical workflow in the restricted-but-unlocked project. Jane
       // (collaborator) opens → fork-on-open → can submit for publishing
       // but is permission-blocked (not owner/admin); no install gate.
       id: 'wf-indie-establishing',
@@ -236,17 +224,17 @@ export const adminFixture: PersonaFixture = {
         'Builds wide cinematic establishing shots from a scene prompt and reference lighting.',
       kind: 'workflow',
       ownerUserId: user.id,
-      access: [{ userId: 'user-mira', role: 'runner' }],
+      access: [{ userId: 'user-jane', role: 'runner' }],
       updatedAt: '2026-05-11'
     },
     {
-      // Mira's working copy of the establishing-shot canonical (carries
+      // Jane's working copy of the establishing-shot canonical (carries
       // copy lineage; could be published back over the canonical).
-      id: 'wf-fork-mira-establishing',
+      id: 'wf-fork-jane-establishing',
       projectId: 'proj-indie-short',
-      name: 'Establishing shot generator — Mira Voss',
+      name: 'Establishing shot generator — Jane Park',
       kind: 'workflow',
-      ownerUserId: 'user-mira',
+      ownerUserId: 'user-jane',
       updatedAt: '2026-05-12',
       forkedFrom: { workflowId: 'wf-indie-establishing' }
     },
@@ -258,10 +246,7 @@ export const adminFixture: PersonaFixture = {
         'Hero product render for the can, with studio reflections and configurable background sweeps.',
       kind: 'workflow',
       ownerUserId: user.id,
-      access: [
-        { userId: 'user-alex', role: 'runner' },
-        { userId: 'user-tomas', role: 'runner' }
-      ],
+      access: [{ userId: 'user-alex', role: 'runner' }],
       updatedAt: '2026-05-10'
     },
     {
@@ -306,35 +291,6 @@ export const adminFixture: PersonaFixture = {
       kind: 'workflow',
       ownerUserId: 'user-jane',
       updatedAt: '2026-05-03'
-    },
-    // Cross-workspace asset-level grants — workflows in Acme Studio
-    // where Willie is a workspace Guest. No project membership, so they
-    // don't surface anywhere except the Shared-with-me view.
-    // Per concepts/three-level-permissions.md §"Asset level" and
-    // concepts/personas-and-flows.md #4/#5.
-    {
-      id: 'wf-acme-titles',
-      projectId: 'proj-acme-titles',
-      name: 'Title-card composer',
-      description:
-        'Composes animated title cards from a script line, with typography and motion presets.',
-      kind: 'workflow',
-      ownerUserId: 'user-acme-anna',
-      access: [{ userId: user.id, role: 'runner' }],
-      updatedAt: '2026-05-11',
-      storage: 'cloud'
-    },
-    {
-      id: 'app-acme-poster',
-      projectId: 'proj-acme-campaigns',
-      name: 'Poster preview',
-      description:
-        'Generates quick poster mockups from a headline and key art for stakeholder previews.',
-      kind: 'app',
-      ownerUserId: 'user-acme-anna',
-      access: [{ userId: user.id, role: 'app-runner' }],
-      updatedAt: '2026-05-09',
-      storage: 'cloud'
     }
   ],
   libraryAssets: [
@@ -572,45 +528,15 @@ export const adminFixture: PersonaFixture = {
       role: 'member',
       avatarColor: '#14b8a6',
       joinedAt: '2026-03-28'
-    },
-    {
-      id: 'user-mira',
-      name: 'Mira Voss',
-      email: 'mira@client-x.com',
-      role: 'guest',
-      avatarColor: '#64748b',
-      joinedAt: '2026-04-19'
-    },
-    {
-      id: 'user-tomas',
-      name: 'Tomás Reyes',
-      email: 'tomas@cocacola-creative.com',
-      role: 'guest',
-      avatarColor: '#94a3b8',
-      joinedAt: '2026-05-02'
     }
   ],
   pendingInvites: [
     {
       id: 'invite-1',
-      email: 'priya@studio-anon.com',
+      email: 'priya@comfy.org',
       role: 'member',
       invitedByUserId: user.id,
       invitedAt: '2026-05-10'
-    },
-    {
-      id: 'invite-2',
-      email: 'kai@cocacola-creative.com',
-      role: 'guest',
-      invitedByUserId: 'user-pablo',
-      invitedAt: '2026-05-09'
-    },
-    {
-      id: 'invite-3',
-      email: 'jordan@client-x.com',
-      role: 'guest',
-      invitedByUserId: 'user-alex',
-      invitedAt: '2026-05-06'
     }
   ],
   roleGrants: {
@@ -673,6 +599,5 @@ export const adminFixture: PersonaFixture = {
       used: 1640,
       resetsAt: '2026-06-01'
     }
-  ],
-  notifications: []
+  ]
 }

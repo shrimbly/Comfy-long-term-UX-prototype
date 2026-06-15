@@ -84,74 +84,15 @@ export const usePrototypePersonaStore = defineStore('prototype-persona', () => {
       .length
   })
 
-  // Workflows shared with me via asset-level grant where the
-  // containing project is NOT one I can reach through project nav —
-  // i.e. workflows that wouldn't surface anywhere else. Per
-  // concepts/three-level-permissions.md, asset-level grants are
-  // independent from project-level access. The set is unioned across
-  // every workspace the persona belongs to (not just the current one),
-  // because share invites span workspaces — see persona personas-and-
-  // flows.md #4 / #5.
-  const sharedWorkflows = computed(() => {
-    const viewerId = fixture.value.currentUser.id
-    const reachableProjectIds = new Set(
-      fixture.value.projects
-        .filter(
-          (p) =>
-            p.isDrafts || p.tier === 'workspace-wide' || p.currentUserHasAccess
-        )
-        .map((p) => p.id)
-    )
-    return fixture.value.workflows
-      .filter((w) => w.access?.some((a) => a.userId === viewerId))
-      .filter((w) => !reachableProjectIds.has(w.projectId))
-      .toSorted((a, b) => b.updatedAt.localeCompare(a.updatedAt))
-  })
-
   const recentWorkflows = computed(() => {
     const accessibleProjectIds = new Set([
       ...visibleProjects.value.map((p) => p.id),
       ...(draftsProject.value ? [draftsProject.value.id] : [])
     ])
-    const projectReachable = fixture.value.workflows.filter((w) =>
-      accessibleProjectIds.has(w.projectId)
-    )
-    return [...projectReachable, ...sharedWorkflows.value].toSorted((a, b) =>
-      b.updatedAt.localeCompare(a.updatedAt)
-    )
+    return fixture.value.workflows
+      .filter((w) => accessibleProjectIds.has(w.projectId))
+      .toSorted((a, b) => b.updatedAt.localeCompare(a.updatedAt))
   })
-
-  // --- Notifications ---------------------------------------------------
-  //
-  // Cross-workspace alerts. Surfaced via the top-bar popover. Per
-  // prototype/design-decisions.md 2026-05-14 — replaces the prior
-  // "Shared with me" tray for Guest personas; the in-workspace nav now
-  // carries shared content directly, so notifications are the only
-  // cross-workspace cue.
-
-  const sortedNotifications = computed(() =>
-    [...fixture.value.notifications].sort((a, b) =>
-      b.createdAt.localeCompare(a.createdAt)
-    )
-  )
-
-  const unreadNotificationCount = computed(
-    () => fixture.value.notifications.filter((n) => !n.readAt).length
-  )
-
-  function markNotificationRead(id: string) {
-    const today = new Date().toISOString().slice(0, 10)
-    fixture.value.notifications = fixture.value.notifications.map((n) =>
-      n.id === id && !n.readAt ? { ...n, readAt: today } : n
-    )
-  }
-
-  function markAllNotificationsRead() {
-    const today = new Date().toISOString().slice(0, 10)
-    fixture.value.notifications = fixture.value.notifications.map((n) =>
-      n.readAt ? n : { ...n, readAt: today }
-    )
-  }
 
   function setPersona(id: PersonaId) {
     currentPersonaId.value = id
@@ -346,11 +287,6 @@ export const usePrototypePersonaStore = defineStore('prototype-persona', () => {
         members: (p.members ?? []).filter((m) => m.userId !== userId)
       }
     })
-    // If we're removing a pending project invite, also drop the
-    // workspace-level Guest invite it spawned.
-    fixture.value.pendingInvites = fixture.value.pendingInvites.filter(
-      (i) => i.id !== userId
-    )
   }
 
   // --- Workflow operations --------------------------------------------
@@ -573,28 +509,6 @@ export const usePrototypePersonaStore = defineStore('prototype-persona', () => {
     })
   }
 
-  // External email invite to a project. Creates a workspace-level Guest
-  // pendingInvite + a project member entry keyed by the invite id, so the
-  // panel can render the pending row before the recipient accepts.
-  // Per ../IA_Plan/wiki/concepts/three-level-permissions.md: a project
-  // Collaborator must hold *some* workspace role; for externals that role
-  // is Guest, auto-created via the invite.
-  function inviteExternalCollaborator(projectId: string, email: string) {
-    const inviteId = `invite-${Date.now()}`
-    const today = new Date().toISOString().slice(0, 10)
-    fixture.value.pendingInvites = [
-      ...fixture.value.pendingInvites,
-      {
-        id: inviteId,
-        email,
-        role: 'guest',
-        invitedByUserId: fixture.value.currentUser.id,
-        invitedAt: today
-      }
-    ]
-    addProjectMember(projectId, inviteId, 'collaborator')
-  }
-
   return {
     currentPersonaId,
     currentPersona,
@@ -604,11 +518,6 @@ export const usePrototypePersonaStore = defineStore('prototype-persona', () => {
     draftsWorkflowCount,
     visibleProjects,
     recentWorkflows,
-    sharedWorkflows,
-    sortedNotifications,
-    unreadNotificationCount,
-    markNotificationRead,
-    markAllNotificationsRead,
     personas,
     setPersona,
     setCurrentWorkspace,
@@ -629,7 +538,6 @@ export const usePrototypePersonaStore = defineStore('prototype-persona', () => {
     addProjectMember,
     changeProjectMemberRole,
     removeProjectMember,
-    inviteExternalCollaborator,
     setProjectFilenamePrefix,
     renameWorkflow,
     deleteWorkflow,

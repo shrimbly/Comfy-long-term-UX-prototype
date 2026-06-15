@@ -6,8 +6,6 @@
 // test-coverage matrix; see fixtures/<persona>.ts for the concrete shape.
 
 import { adminFixture } from './admin'
-import { assetOnlyGuestFixture } from './asset-only-guest'
-import { projectCollaboratorFixture } from './project-collaborator'
 import { soloLocalFixture } from './solo-local'
 import { soloFixture } from './solo'
 import { workspaceMemberFixture } from './workspace-member'
@@ -40,19 +38,5 @@ export const personas: PersonaDef[] = [
     description:
       'Invited team collaborator. Sees the same workspace as Admin but cannot edit the permissions matrix.',
     fixture: workspaceMemberFixture
-  },
-  {
-    id: 'project-collaborator',
-    label: 'Project Collaborator',
-    description:
-      'Mira Voss (client-x.com). Workspace Guest + Collaborator on Client X. Narrow view: only Client X visible; no library, members, or billing.',
-    fixture: projectCollaboratorFixture
-  },
-  {
-    id: 'asset-only-guest',
-    label: 'Asset-only Guest',
-    description:
-      'Tomás Reyes (cocacola-creative.com). Workspace Guest in Comfy Org + Studio Atlas with asset-only access. Runner on one workflow.',
-    fixture: assetOnlyGuestFixture
   }
 ]

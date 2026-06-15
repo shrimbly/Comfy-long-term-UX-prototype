@@ -74,10 +74,7 @@
         />
       </SidebarGroup>
 
-      <SidebarGroup
-        v-if="!isGuestPersona"
-        :label="t('prototype.sidebar.groupLibrary')"
-      >
+      <SidebarGroup :label="t('prototype.sidebar.groupLibrary')">
         <SidebarItem
           :label="t('prototype.sidebar.libraryMedia')"
           icon="icon-[lucide--image]"
@@ -114,7 +111,6 @@
         {{ t('prototype.sidebar.upgradeCta') }}
       </button>
       <SidebarItem
-        v-if="!isGuestPersona"
         :label="t('prototype.sidebar.settings')"
         icon="icon-[lucide--settings]"
         :active="activeView.kind === 'settings'"
@@ -163,17 +159,9 @@ const isSoloPersona = computed(
   () =>
     currentPersonaId.value === 'solo' || currentPersonaId.value === 'solo-local'
 )
-const isGuestPersona = computed(
-  () =>
-    currentPersonaId.value === 'project-collaborator' ||
-    currentPersonaId.value === 'asset-only-guest'
-)
 
 const showWorkspaceGroup = computed(
-  () =>
-    isCloudMode.value &&
-    !isGuestPersona.value &&
-    currentWorkspace.value?.tier === 'team'
+  () => isCloudMode.value && currentWorkspace.value?.tier === 'team'
 )
 const showGroupHeaders = computed(() => !isSoloPersona.value)
 

@@ -28,7 +28,6 @@
         </p>
       </div>
       <button
-        v-if="!isGuest"
         type="button"
         class="inline-flex h-10 cursor-pointer items-center gap-2 rounded-lg bg-base-foreground px-4 text-sm font-medium text-base-background transition-opacity hover:opacity-90"
         @click="showInvite = true"
@@ -257,16 +256,14 @@ const activeTab = ref<TabId>('members')
 const showInvite = ref(false)
 
 const viewerRole = computed<WorkspaceRole>(
-  () => currentWorkspace.value?.currentUserRole ?? 'guest'
+  () => currentWorkspace.value?.currentUserRole ?? 'member'
 )
-const isGuest = computed(() => viewerRole.value === 'guest')
 
 const memberCount = computed(() => fixture.value.members.length)
 
 const roleOrder: Record<WorkspaceRole, number> = {
   admin: 0,
-  member: 1,
-  guest: 2
+  member: 1
 }
 
 const sortedMembers = computed(() =>
@@ -303,7 +300,6 @@ function initialOf(name: string) {
 
 function roleBadgeClass(role: WorkspaceRole) {
   if (role === 'admin') return 'bg-accent-warning/15 text-accent-warning'
-  if (role === 'guest') return 'bg-secondary-background text-muted-foreground'
   return 'bg-secondary-background text-base-foreground'
 }
 
@@ -316,7 +312,6 @@ function inviterName(userId: string) {
 
 function canActOn(member: WorkspaceMember) {
   if (member.id === fixture.value.currentUser.id) return false
-  if (isGuest.value) return false
   if (viewerRole.value === 'member' && member.role === 'admin') return false
   return true
 }

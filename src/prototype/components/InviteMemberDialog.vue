@@ -5,7 +5,7 @@
 
   Workspace invite dialog. Email + role picker. Members can invite, not
   just Admins (wiki: workspace permissions). Promoting to Admin is only
-  available to existing Admins; Members can pick Member or Guest.
+  available to existing Admins; Members can pick Member.
 -->
 <template>
   <Teleport to="body">
@@ -139,10 +139,7 @@ const role = ref<WorkspaceRole>('member')
 const emailInput = useTemplateRef<HTMLInputElement>('emailInput')
 
 const roleOptions = computed<Array<{ role: WorkspaceRole }>>(() => {
-  const opts: Array<{ role: WorkspaceRole }> = [
-    { role: 'member' },
-    { role: 'guest' }
-  ]
+  const opts: Array<{ role: WorkspaceRole }> = [{ role: 'member' }]
   if (canInviteAdmins) opts.unshift({ role: 'admin' })
   return opts
 })

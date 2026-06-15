@@ -72,10 +72,7 @@ onClickOutside(containerRef, () => {
   open.value = false
 })
 
-const subtitle = computed(() => {
-  if (workspace.currentUserRole === 'guest') return t('prototype.sidebar.guest')
-  return t(`prototype.sidebar.plan.${workspace.plan}`)
-})
+const subtitle = computed(() => t(`prototype.sidebar.plan.${workspace.plan}`))
 
 function onSelect(id: string) {
   emit('selectWorkspace', id)

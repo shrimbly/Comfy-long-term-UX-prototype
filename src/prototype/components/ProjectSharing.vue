@@ -6,7 +6,7 @@
 
   Google Drive-style sharing surface for a single project:
     - Add people row at top (combobox of workspace members not yet in project)
-    - People with access list (role dropdowns; Owner / Collaborator / Project Guest)
+    - People with access list (role dropdowns; Owner / Collaborator)
     - General access row (tier dropdown — Restricted ↔ Workspace-wide)
 
   Workspace-wide projects synthesize an implicit "via workspace" floor;
@@ -65,32 +65,8 @@
                 {{ t(`prototype.sidebar.role.${candidate.workspaceRole}`) }}
               </span>
             </button>
-            <button
-              v-if="canSubmitExternal"
-              type="button"
-              class="flex w-full cursor-pointer appearance-none items-center gap-3 rounded-sm border-0 bg-transparent px-2 py-1.5 text-left text-base-foreground transition-colors hover:bg-interface-menu-component-surface-hovered focus:bg-interface-menu-component-surface-hovered focus:outline-none"
-              @click="onSubmitExternal"
-            >
-              <span
-                class="grid size-7 shrink-0 place-items-center rounded-full bg-secondary-background text-muted-foreground"
-              >
-                <span class="icon-[lucide--mail-plus] size-3.5" />
-              </span>
-              <span class="flex min-w-0 flex-1 flex-col">
-                <span class="truncate text-sm">
-                  {{
-                    t('prototype.views.project.sharing.addExternalHint', {
-                      email: searchQuery.trim(),
-                      workspace: workspaceName
-                    })
-                  }}
-                </span>
-              </span>
-            </button>
             <p
-              v-if="
-                !pickerCandidates.length && !canSubmitExternal && searchQuery
-              "
+              v-if="!pickerCandidates.length && searchQuery"
               class="p-2 text-xs text-muted-foreground italic"
             >
               {{ t('prototype.views.project.sharing.noMatches') }}
@@ -135,13 +111,7 @@
           </span>
         </div>
         <span
-          v-if="row.pending"
-          class="bg-accent-warning/15 text-accent-warning rounded-full px-2 py-0.5 text-xs"
-        >
-          {{ t('prototype.views.project.sharing.pending') }}
-        </span>
-        <span
-          v-else-if="row.implicit"
+          v-if="row.implicit"
           class="rounded-full bg-secondary-background px-2 py-0.5 text-xs text-muted-foreground italic"
         >
           {{ t('prototype.views.project.sharing.viaWorkspace') }}
@@ -244,9 +214,6 @@ interface PersonRow {
   // Implicit rows derive from workspace role (e.g. workspace Admin auto-Owner
   // on workspace-wide projects). The role pill is read-only for implicit rows.
   implicit: boolean
-  // Pending rows correspond to external email invites that haven't been
-  // accepted yet — they live in fixture.pendingInvites rather than members.
-  pending: boolean
 }
 
 function makeRow(
@@ -263,23 +230,7 @@ function makeRow(
       avatarColor: wsMember.avatarColor ?? '#7c7c7c',
       initial: wsMember.name.trim().charAt(0).toUpperCase(),
       role,
-      implicit,
-      pending: false
-    }
-  }
-  // Fallback: pending external invite (project member entry keyed by the
-  // invite id, no workspace member yet).
-  const invite = fixture.value.pendingInvites.find((i) => i.id === userId)
-  if (invite) {
-    return {
-      userId,
-      name: invite.email,
-      email: invite.email,
-      avatarColor: '#7c7c7c',
-      initial: invite.email.trim().charAt(0).toUpperCase(),
-      role,
-      implicit,
-      pending: true
+      implicit
     }
   }
   return {
@@ -289,8 +240,7 @@ function makeRow(
     avatarColor: '#7c7c7c',
     initial: userId.trim().charAt(0).toUpperCase(),
     role,
-    implicit,
-    pending: false
+    implicit
   }
 }
 
@@ -320,7 +270,7 @@ const peopleRows = computed<PersonRow[]>(() => {
 })
 
 const viewerWorkspaceRole = computed(
-  () => currentWorkspace.value?.currentUserRole ?? 'guest'
+  () => currentWorkspace.value?.currentUserRole ?? 'member'
 )
 
 const isWorkspaceAdmin = computed(() => viewerWorkspaceRole.value === 'admin')
@@ -383,26 +333,6 @@ const pickerCandidates = computed(() => {
     }))
 })
 
-const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-
-// Offer the external-invite affordance when:
-//   1. The input looks like an email
-//   2. That email doesn't match a workspace member (those are suggestions)
-//   3. That email isn't already a pending invite
-const canSubmitExternal = computed(() => {
-  const value = searchQuery.value.trim().toLowerCase()
-  if (!emailRegex.test(value)) return false
-  if (fixture.value.members.some((m) => m.email.toLowerCase() === value)) {
-    return false
-  }
-  if (
-    fixture.value.pendingInvites.some((i) => i.email.toLowerCase() === value)
-  ) {
-    return false
-  }
-  return true
-})
-
 const tierLabel = computed(() => {
   const key = `prototype.views.project.sharing.tier.${project.tier}.label`
   return t(key, { workspace: workspaceName.value })
@@ -431,18 +361,7 @@ function onAddCandidate(userId: string) {
   pickerOpen.value = false
 }
 
-function onSubmitExternal() {
-  if (!canSubmitExternal.value) return
-  personaStore.inviteExternalCollaborator(project.id, searchQuery.value.trim())
-  searchQuery.value = ''
-  pickerOpen.value = false
-}
-
 function onEnterSubmit() {
-  if (canSubmitExternal.value) {
-    onSubmitExternal()
-    return
-  }
   // If the input exactly matches one workspace member's name or email,
   // treat Enter as confirming that suggestion.
   const query = searchQuery.value.trim().toLowerCase()

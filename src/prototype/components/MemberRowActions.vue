@@ -4,7 +4,7 @@
 
   Per-row action menu. Role changes that cross the Admin boundary
   (promote to Admin, demote Admin → Member) are Admin-only. Members can
-  promote Guest → Member, but not promote anyone to or from Admin.
+  act on other Members, but not promote anyone to or from Admin.
 -->
 <template>
   <div ref="containerRef" class="relative inline-flex">
@@ -74,9 +74,9 @@ onClickOutside(containerRef, () => {
   open.value = false
 })
 
-const allRoles: WorkspaceRole[] = ['admin', 'member', 'guest']
+const allRoles: WorkspaceRole[] = ['admin', 'member']
 
-// Member can act on Guest <-> Member but not on Admin in either direction.
+// Member can act on other Members but not on Admin in either direction.
 // Admin can act on everyone.
 const availableRoles = computed<WorkspaceRole[]>(() => {
   const candidates = allRoles.filter((r) => r !== currentRole)

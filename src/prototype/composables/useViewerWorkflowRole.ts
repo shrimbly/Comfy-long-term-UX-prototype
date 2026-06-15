@@ -16,7 +16,7 @@ import type { ComputedRef } from 'vue'
 import type { Workflow } from '../types'
 import { usePrototypePersonaStore } from '../stores/personaStore'
 
-export type ViewerWorkflowRole = 'owner' | 'runner' | 'app-runner' | 'none'
+export type ViewerWorkflowRole = 'owner' | 'runner' | 'none'
 
 export function useViewerWorkflowRole(
   workflow: ComputedRef<Workflow | undefined>
@@ -52,12 +52,10 @@ export function useViewerWorkflowRole(
       return 'runner'
     }
 
-    // Scoped project: explicit member entry is required. Mirror their
-    // role at project-level into the asset-level vocabulary.
+    // Scoped project: explicit member entry is required. A project member
+    // is at least Runner at the asset level.
     const projectMember = project.members?.find((m) => m.userId === viewerId)
-    if (projectMember) {
-      return projectMember.role === 'project-guest' ? 'app-runner' : 'runner'
-    }
+    if (projectMember) return 'runner'
 
     return 'none'
   })

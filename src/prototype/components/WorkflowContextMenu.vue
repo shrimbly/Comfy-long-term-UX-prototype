@@ -5,8 +5,6 @@
     decision: ../IA_Plan/wiki/decisions/fork-vs-copy-one-operation.md
     decision: ../IA_Plan/wiki/decisions/save-destination-workflow-level.md
     decision: ../IA_Plan/wiki/decisions/published-workflow-model.md
-    open-q:   ../IA_Plan/wiki/open-questions.md#app-runner-fork-capability
-              (prototype takes spec stance: App Runner cannot fork)
     open-q:   ../IA_Plan/wiki/open-questions.md#publish-direct-link-admin-gate
               (gated by roleGrants['publish-direct-link'])
     log:      ../prototype/design-decisions.md (2026-05-15 Workflow context menu)
@@ -20,7 +18,6 @@
                   View outputs, Open containing project, Delete
     Runner      — Open, Save to My Workflows, View outputs,
                   Open containing project
-    App Runner  — Run app, View outputs, Open containing project
 
   "Publish to project" is the single move-asset-to-another-project verb
   (concepts/cross-cutting-flows.md): moving a workflow into a shared
@@ -117,7 +114,6 @@ const uiStore = usePrototypeUiStore()
 
 const isOwner = computed(() => viewerRole === 'owner')
 const isRunner = computed(() => viewerRole === 'runner')
-const isAppRunner = computed(() => viewerRole === 'app-runner')
 
 const sourceProject = computed(() =>
   fixture.value.projects.find((p) => p.id === workflow.projectId)
@@ -277,20 +273,12 @@ function onOpenContainingProject() {
 const items = computed<MenuItem[]>(() => {
   const out: MenuItem[] = []
 
-  // Open / Run primary action — verb depends on default-mode + role.
-  if (isAppRunner.value) {
-    out.push({
-      label: t('prototype.workflowMenu.runApp'),
-      icon: 'icon-[lucide--play]',
-      command: onOpen
-    })
-  } else {
-    out.push({
-      label: t('prototype.workflowMenu.open'),
-      icon: 'icon-[lucide--square-arrow-out-up-right]',
-      command: onOpen
-    })
-  }
+  // Open primary action.
+  out.push({
+    label: t('prototype.workflowMenu.open'),
+    icon: 'icon-[lucide--square-arrow-out-up-right]',
+    command: onOpen
+  })
 
   // Owner ops — rename / fork in place / move / storage.
   if (isOwner.value) {
@@ -339,7 +327,7 @@ const items = computed<MenuItem[]>(() => {
   }
 
   // Runner: Save a copy is the explicit way to get a working copy in My
-  // Workflows. App Runner can't copy per spec.
+  // Workflows.
   if (isRunner.value && !isInDrafts.value) {
     out.push({ separator: true })
     out.push({

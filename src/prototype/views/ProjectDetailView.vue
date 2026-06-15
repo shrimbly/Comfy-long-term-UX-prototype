@@ -2,7 +2,6 @@
   Implements:
     entity:  ../IA_Plan/wiki/entities/project.md
     concept: ../IA_Plan/wiki/concepts/three-level-permissions.md — project level
-    persona: ../IA_Plan/wiki/concepts/personas.md — Project Collaborator (#4)
     log:     ../prototype/design-decisions.md (2026-05-13 Sharing panel)
     log:     ../prototype/design-decisions.md (2026-05-15 Project Settings tab)
 
@@ -11,8 +10,8 @@
   button), mirroring Google Drive's Share affordance.
 
   Body tabs: Workflows (always visible) and Settings (Owner-only). The
-  Settings tab is gated by `canEditSettings` so a Collaborator / Guest
-  sees the Workflows view directly and the tab strip collapses.
+  Settings tab is gated by `canEditSettings` so a Collaborator sees the
+  Workflows view directly and the tab strip collapses.
 -->
 <template>
   <div class="flex flex-col gap-6">
@@ -35,7 +34,7 @@
           {{ t(`prototype.projectTier.${project.tier}`) }}
         </span>
       </div>
-      <div v-if="project && !isAssetOnlyGuest" class="flex items-center gap-2">
+      <div v-if="project" class="flex items-center gap-2">
         <button
           v-if="project.tier !== 'private'"
           type="button"
@@ -224,8 +223,7 @@ const { t } = useI18n()
 const personaStore = usePrototypePersonaStore()
 const uiStore = usePrototypeUiStore()
 const tabsStore = usePrototypeTabsStore()
-const { fixture, currentWorkspace, currentPersonaId } =
-  storeToRefs(personaStore)
+const { fixture, currentWorkspace } = storeToRefs(personaStore)
 
 const isSharingOpen = ref(false)
 const selectedWorkflowId = ref<string | null>(null)
@@ -244,13 +242,6 @@ function onSelectWorkflow(workflowId: string) {
 
 const project = computed(() =>
   fixture.value.projects.find((p) => p.id === projectId)
-)
-
-// Asset-only Guests see the project as a transit shell only — workflows
-// are filtered to just their accessible assets, and the share / media-
-// assets / new-workflow CTAs are hidden.
-const isAssetOnlyGuest = computed(
-  () => currentPersonaId.value === 'asset-only-guest'
 )
 
 // Owner-only settings access per

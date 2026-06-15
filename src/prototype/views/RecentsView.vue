@@ -1,8 +1,7 @@
 <!--
   Implements:
     Recents view — workflows from every accessible project (visible
-    projects + Drafts) plus asset-level-shared workflows that don't
-    belong to any project the viewer can reach.
+    projects + Drafts).
 
     Filter + sort affordances mirror the Projects index (filter pills
     with counts; sort dropdown). Skipped the grid/list view-mode toggle
@@ -137,13 +136,12 @@ import WorkflowCard from '../components/WorkflowCard.vue'
 import { usePrototypePersonaStore } from '../stores/personaStore'
 import type { Workflow } from '../types'
 
-type FilterValue = 'all' | 'mine' | 'shared'
+type FilterValue = 'all' | 'mine'
 type SortValue = 'last-modified' | 'oldest' | 'az' | 'za'
 
 const { t } = useI18n()
 const personaStore = usePrototypePersonaStore()
-const { recentWorkflows, sharedWorkflows, draftsProject, fixture } =
-  storeToRefs(personaStore)
+const { recentWorkflows, draftsProject, fixture } = storeToRefs(personaStore)
 
 const filter = ref<FilterValue>('all')
 const sort = ref<SortValue>('last-modified')
@@ -158,10 +156,6 @@ function onSelectSort(next: SortValue) {
   sort.value = next
   isSortOpen.value = false
 }
-
-const sharedIds = computed(
-  () => new Set(sharedWorkflows.value.map((w) => w.id))
-)
 
 const mineWorkflows = computed(() => {
   const viewerId = fixture.value.currentUser.id
@@ -182,11 +176,6 @@ const filterOptions = computed<
     value: 'mine',
     label: t('prototype.views.recents.filterMine'),
     count: mineWorkflows.value.length
-  },
-  {
-    value: 'shared',
-    label: t('prototype.views.recents.filterShared'),
-    count: sharedWorkflows.value.length
   }
 ])
 
@@ -208,9 +197,6 @@ const currentSortLabel = computed(
 
 const filteredWorkflows = computed<Workflow[]>(() => {
   if (filter.value === 'mine') return mineWorkflows.value
-  if (filter.value === 'shared') {
-    return recentWorkflows.value.filter((w) => sharedIds.value.has(w.id))
-  }
   return recentWorkflows.value
 })
 
