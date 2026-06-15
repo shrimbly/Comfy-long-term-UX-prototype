@@ -126,7 +126,7 @@
     "workflowCard": {
       "storageLocal": "Saved locally",
       "storageCloud": "Saved to cloud",
-      "branchBadge": "Branch",
+      "copyBadge": "Copy",
       "meta": "{date} · {user}",
       "forkOnOpenSummary": "Branch in this project",
       "forkOnOpenDetail": "You're editing a branch of \"{name}\". Publish to workspace to update the team version."
@@ -319,7 +319,6 @@
       "export": "Export…",
       "share": "Share…",
       "publishDirectLink": "Publish via direct link…",
-      "publishHub": "Submit to Comfy Hub…",
       "publishToWorkspace": "Publish to workspace…",
       "viewOutputs": "View outputs",
       "openContainingProject": "Open containing project",
@@ -341,7 +340,6 @@
         "exportStub": "Export isn't wired up in this pass.",
         "shareStub": "Share dialog isn't wired up in this pass.",
         "publishLinkStub": "Direct-link publishing isn't wired up in this pass.",
-        "publishHubStub": "Hub submission isn't wired up in this pass.",
         "outputsStub": "Output history isn't wired up in this pass.",
         "publishedSummary": "Published to workspace",
         "publishedDetail": "\"{workflow}\" in {project} now reflects your changes.",
@@ -662,18 +660,6 @@
             "publishDirectLink": {
               "label": "Publish workflows via shareable link",
               "description": "Create a public direct link to a workflow snapshot. Recipients can run; recipient's workspace pays."
-            },
-            "submitToHub": {
-              "label": "Submit workflows to Comfy Hub",
-              "description": "Send a workflow for Hub listing. Each submission still requires Admin approval to go live."
-            },
-            "approveHubSubmissions": {
-              "label": "Approve Comfy Hub submissions",
-              "description": "Decide whether a submitted workflow is published to the Hub. Delegating this lets Members act on the approval queue."
-            },
-            "editAllowlists": {
-              "label": "Edit workspace model and custom-node allowlists",
-              "description": "Add or remove entries from the workspace allowlists that constrain cloud assets."
             },
             "configureWorkspace": {
               "label": "Configure workspace settings",

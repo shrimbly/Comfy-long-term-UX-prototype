@@ -262,12 +262,7 @@ export interface PendingInvite {
 // Admin-delegable capabilities surfaced in the Permissions matrix. Per
 // concepts/three-level-permissions.md and open-questions
 // publish-direct-link-admin-gate / delegation-surface-in-ui.
-export type DelegableCapability =
-  | 'publish-direct-link'
-  | 'submit-to-hub'
-  | 'approve-hub-submissions'
-  | 'edit-allowlists'
-  | 'configure-workspace'
+export type DelegableCapability = 'publish-direct-link' | 'configure-workspace'
 
 // Per-role grant baseline. Admin always implicitly has all; Guest never has
 // any workspace-wide grant. Member is the only interactive column.

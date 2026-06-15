@@ -116,17 +116,11 @@ const { t } = useI18n()
 
 const capabilities: DelegableCapability[] = [
   'publish-direct-link',
-  'submit-to-hub',
-  'approve-hub-submissions',
-  'edit-allowlists',
   'configure-workspace'
 ]
 
 const i18nKeyByCapability: Record<DelegableCapability, string> = {
   'publish-direct-link': 'publishDirectLink',
-  'submit-to-hub': 'submitToHub',
-  'approve-hub-submissions': 'approveHubSubmissions',
-  'edit-allowlists': 'editAllowlists',
   'configure-workspace': 'configureWorkspace'
 }
 

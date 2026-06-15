@@ -6,7 +6,7 @@
 //   open-q:    ../IA_Plan/wiki/open-questions.md#delegation-surface-in-ui
 //              — Permissions matrix is the proposed first-class surface
 //   open-q:    ../IA_Plan/wiki/open-questions.md#publish-direct-link-admin-gate
-//              — Member grants for publish-direct-link / submit-to-hub
+//              — Member grant for publish-direct-link
 //   open-q:    ../IA_Plan/wiki/open-questions.md#single-admin-or-many
 //              — proto stance: multiple Admins allowed
 
@@ -615,9 +615,6 @@ export const adminFixture: PersonaFixture = {
   ],
   roleGrants: {
     'publish-direct-link': true,
-    'submit-to-hub': true,
-    'approve-hub-submissions': false,
-    'edit-allowlists': false,
     'configure-workspace': false
   } satisfies RoleGrants,
   billing: {

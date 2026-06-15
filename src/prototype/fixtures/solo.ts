@@ -56,9 +56,6 @@ export const soloFixture: PersonaFixture = {
   pendingInvites: [],
   roleGrants: {
     'publish-direct-link': false,
-    'submit-to-hub': false,
-    'approve-hub-submissions': false,
-    'edit-allowlists': false,
     'configure-workspace': false
   },
   billing: {

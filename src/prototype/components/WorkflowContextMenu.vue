@@ -15,19 +15,18 @@
   role on this workflow (resolved via useViewerWorkflowRole) and the menu
   shape is filtered accordingly:
 
-    Owner       — Open, Rename, Branch, Publish to project, Save destination,
-                  Share, Publish (direct link / Hub), View outputs,
-                  Open containing project, Delete
-    Runner      — Open (branch-on-open), Branch, View outputs,
+    Owner       — Open, Rename, Save to My Workflows, Publish to project,
+                  Save destination, Share, Publish via direct link,
+                  View outputs, Open containing project, Delete
+    Runner      — Open, Save to My Workflows, View outputs,
                   Open containing project
     App Runner  — Run app, View outputs, Open containing project
 
   "Publish to project" is the single move-asset-to-another-project verb
   (concepts/cross-cutting-flows.md): moving a workflow into a shared
-  project publishes it there as a canonical (seeds V1). A branch of a
-  shared canonical instead gets "Publish to workspace" (the dialog adapts
-  to Publish vs Submit for review based on overwrite permission + install
-  identity).
+  project publishes it there as a canonical (seeds V1). Accessing a
+  project workflow takes a personal copy (copy-on-access); publishing
+  that copy back either overwrites the canonical or adds a new one.
 
   Sharing / publish / view-outputs are prototype stubs that toast — the
   full surfaces exist in their own flows. Storage triggers a real store
@@ -135,13 +134,6 @@ const canPublishDirectLink = computed(() => {
   if (role === 'member') {
     return fixture.value.roleGrants['publish-direct-link']
   }
-  return false
-})
-
-const canSubmitToHub = computed(() => {
-  const role = personaStore.currentWorkspace?.currentUserRole
-  if (role === 'admin') return true
-  if (role === 'member') return fixture.value.roleGrants['submit-to-hub']
   return false
 })
 
@@ -370,13 +362,6 @@ const items = computed<MenuItem[]>(() => {
         label: t('prototype.workflowMenu.publishDirectLink'),
         icon: 'icon-[lucide--link]',
         command: () => toastStub('prototype.workflowMenu.toast.publishLinkStub')
-      })
-    }
-    if (canSubmitToHub.value) {
-      out.push({
-        label: t('prototype.workflowMenu.publishHub'),
-        icon: 'icon-[lucide--upload]',
-        command: () => toastStub('prototype.workflowMenu.toast.publishHubStub')
       })
     }
   }
