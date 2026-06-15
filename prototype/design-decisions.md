@@ -714,3 +714,39 @@ Two follow-ups from the "what else to represent" pass:
 New i18n: `mediaAsset.details.{origin,originReferenced,location,linkStatus,linkLinked,linkMissing}`.
 
 Promote? **not yet** — same gate as the rest of Flow 03.
+
+---
+
+## [2026-06-16] MVP scope cut — collapse governance, revert to copy-on-access + open publish
+
+Decision (team call, 2026-06-16): aggressively narrow to a fast, cloud-collaboration MVP. Cut the reproducibility/governance system wholesale and replace the branch model with a simpler copy-and-publish model.
+
+**Cut / deferred for MVP:**
+
+- **Explore view** — removed.
+- **Library → Models, Custom nodes, Prompts** — removed. The Library section collapses to **Media assets** (outputs) only. The Workspace Library (linked-instance system) is cut entirely (was already partly NOT-MVP).
+- **Allowlists** — model + custom-node allowlists, at both workspace and project level, removed.
+- **Branching** — removed. See replacement model below.
+- **Install locks + all install governance** — removed: the install registry, project allowed-install sets, the install switcher _as a governance tool_, install attribution, the project-access install notice, the lock editor. "Install" survives only as an invisible runtime detail (consistent with [install-is-runtime-not-permission-entity](../../IA_Plan/wiki/decisions/install-is-runtime-not-permission-entity.md)); every governance surface goes.
+- **Review / submission flow** — removed (coupled to gated overwrite): review queue, decline-with-feedback dialog, `WorkflowChangeSummary`, semantic `workflowDiff`.
+- **External guests + share-by-email + shared-with-me** — deferred. MVP is **workspace-internal collaboration only**. Removes the narrow guest view, cross-workspace tray/notifications, and asset-only invites.
+- **Comfy Hub / anonymous publishing** — deferred (post-launch discovery surface anyway).
+- **Local media references (Flow 06)** — deferred (exploration-tier; gated on `backend-architecture-decision`).
+- **Blueprints, Prompts-as-asset** — out (already post-MVP).
+
+**Replacement publish model:**
+
+- **Copy-on-access.** Opening a workflow _from a project_ creates a fresh personal copy of the **current canonical** in the actor's **My Workflows**, on **every access** (not first-access-with-reuse) — so the copy always reflects the latest published version, never a stale earlier open. Workflows opened in one's own My Workflows are still edited in place. Copies carry a `copiedFrom: { workflowId }` lineage pointer. _(Phase-2 sub-questions: how accumulating copies are surfaced/deduped in My Workflows, and what happens to a prior copy with unpublished edits when the canonical is re-accessed — resolve when building the publish model.)_
+- **Open publish-to-workspace.** **Any workspace member** with access to the target project can publish: either **overwrite** an existing canonical (resolved via `copiedFrom`) or **publish-as-new** into a chosen project. The published workflow **inherits the destination project's visibility**. No Owner-gate, no review/submission step.
+- **Version history is the safety net.** Each publish appends to the canonical's published-version history (who, when). This is what makes ungated overwrite _recoverable_ rather than silent data loss — kept deliberately even though the review flow around it is cut.
+- **Accepted loss:** no team-visible work-in-progress. A copy is private in My Workflows until published; branches' project-wide visibility of in-progress work is gone for MVP.
+
+**What survives (the MVP core):** Workspaces (billing) · Members (Admin / Member; no external Guest) · Projects + visibility tiers (workspace-wide / restricted / private-as-My-Workflows) · My Workflows · Workflows + Apps (run both modes) · copy-on-access · open publish-to-workspace · version history · Media assets (outputs) · run + credits/billing · slim Settings (identity, members, billing, danger zone).
+
+Reason: the team needs to ship quickly. Branching and install locks were one system, not two — the branch model existed _to keep working copies under project governance (locks + allowlists)_, so removing governance removes branching's reason to exist. The replacement is essentially the pre-2026-06-06 (pre-branch) model with overwrite ungated. Version history is the one piece kept from the governance era because it is cheap and makes open overwrite survivable.
+
+Wiki link: **supersedes** for MVP — [branch-vs-personal-copy](../../IA_Plan/wiki/decisions/branch-vs-personal-copy.md) (retire), [published-workflow-model](../../IA_Plan/wiki/decisions/published-workflow-model.md) (revise to ungated copy+publish), [team-locked-install](../../IA_Plan/wiki/decisions/team-locked-install.md) (retire), [workspace-install-registry](../../IA_Plan/wiki/decisions/workspace-install-registry.md) (retire). Narrows [three-level-permissions](../../IA_Plan/wiki/concepts/three-level-permissions.md) (allowlists out; guest tiers deferred) and [sharing-vs-publishing](../../IA_Plan/wiki/concepts/sharing-vs-publishing.md) (Hub + external share deferred).
+
+Open question dependency: closes the MVP cut of `workflow-promotion-flow`, `project-collaborator-library-publish` (moot — no guests), `member-overwrite-request-flow` (moot — open overwrite). Defers `local-media-as-references`.
+
+Promote? **yes — high priority.** This is a major direction change that must go back to the wiki as a formal `wiki/decisions/mvp-scope.md` once the team confirms, with the four superseded decisions marked accordingly. Confirm before propagating.
