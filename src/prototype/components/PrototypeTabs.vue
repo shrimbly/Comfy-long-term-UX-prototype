@@ -112,7 +112,6 @@
       >
         <span class="icon-[lucide--message-square-text] size-4" />
       </button>
-      <InstallChip />
       <TopBarNotifications />
       <button
         type="button"
@@ -140,7 +139,6 @@ import { storeToRefs } from 'pinia'
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 
-import InstallChip from './InstallChip.vue'
 import TopBarNotifications from './TopBarNotifications.vue'
 import { usePrototypePersonaStore } from '../stores/personaStore'
 import { HOME_TAB_ID, usePrototypeTabsStore } from '../stores/tabsStore'

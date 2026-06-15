@@ -19,33 +19,21 @@
       <MediaAssetsView v-else />
     </div>
     <div v-else class="flex min-h-0 flex-1">
-      <template v-if="activeView.kind === 'library'">
-        <LibrarySidebar :section="activeView.section" />
-      </template>
-      <template v-else>
-        <PrototypeSidebar />
-      </template>
+      <PrototypeSidebar />
 
       <main
         class="flex-1 overflow-auto bg-base-background p-6 text-base-foreground"
       >
-        <template v-if="activeView.kind === 'library'">
-          <LibraryView :section="activeView.section" />
-        </template>
-        <template v-else>
-          <ExploreView v-if="activeView.kind === 'explore'" />
-          <DraftsView v-else-if="activeView.kind === 'drafts'" />
-          <ProjectsView v-else-if="activeView.kind === 'projects'" />
-          <ProjectDetailView
-            v-else-if="activeView.kind === 'project'"
-            :key="activeView.projectId"
-            :project-id="activeView.projectId"
-          />
-          <RecentsView v-else-if="activeView.kind === 'recents'" />
-          <HubView v-else-if="activeView.kind === 'hub'" />
-          <MembersView v-else-if="activeView.kind === 'members'" />
-          <SettingsView v-else-if="activeView.kind === 'settings'" />
-        </template>
+        <DraftsView v-if="activeView.kind === 'drafts'" />
+        <ProjectsView v-else-if="activeView.kind === 'projects'" />
+        <ProjectDetailView
+          v-else-if="activeView.kind === 'project'"
+          :key="activeView.projectId"
+          :project-id="activeView.projectId"
+        />
+        <RecentsView v-else-if="activeView.kind === 'recents'" />
+        <MembersView v-else-if="activeView.kind === 'members'" />
+        <SettingsView v-else-if="activeView.kind === 'settings'" />
       </main>
     </div>
 
@@ -63,7 +51,6 @@ import { storeToRefs } from 'pinia'
 import { computed } from 'vue'
 
 import MediaAssetsView from '@/platform/assets/components/MediaAssetsView.vue'
-import LibrarySidebar from '../components/LibrarySidebar.vue'
 import LocalMediaView from '../components/LocalMediaView.vue'
 import PersonaSwitcher from '../components/PersonaSwitcher.vue'
 import PrototypeSidebar from '../components/PrototypeSidebar.vue'
@@ -72,9 +59,6 @@ import { usePrototypePersonaStore } from '../stores/personaStore'
 import { MEDIA_ASSETS_TAB_ID, usePrototypeTabsStore } from '../stores/tabsStore'
 import { usePrototypeUiStore } from '../stores/uiStore'
 import DraftsView from '../views/DraftsView.vue'
-import ExploreView from '../views/ExploreView.vue'
-import HubView from '../views/HubView.vue'
-import LibraryView from '../views/LibraryView.vue'
 import MembersView from '../views/MembersView.vue'
 import ProjectDetailView from '../views/ProjectDetailView.vue'
 import ProjectsView from '../views/ProjectsView.vue'

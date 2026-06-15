@@ -31,7 +31,6 @@
               :key="p.id"
               variant="textonly"
               size="unset"
-              :disabled="!!lockedReason(p)"
               :class="
                 cn(
                   'w-full items-center gap-3 rounded-lg p-2 text-left',
@@ -62,12 +61,7 @@
                 }}</span>
               </span>
               <i
-                v-if="lockedReason(p)"
-                :title="lockedReason(p) ?? undefined"
-                class="icon-[lucide--lock] size-3.5 shrink-0 text-muted-foreground"
-              />
-              <i
-                v-else-if="selectedId === p.id"
+                v-if="selectedId === p.id"
                 class="icon-[lucide--check] size-4 shrink-0 text-base-foreground"
               />
             </Button>
@@ -182,7 +176,7 @@ const emit = defineEmits<{
 
 const { t } = useI18n()
 const personaStore = usePrototypePersonaStore()
-const { visibleProjects, activeInstall } = storeToRefs(personaStore)
+const { visibleProjects } = storeToRefs(personaStore)
 
 const NEW_PROJECT = '__new__'
 
@@ -211,19 +205,6 @@ const canConfirm = computed(() =>
     ? !!newProjectName.value.trim()
     : !!selectedId.value
 )
-
-// Publishing into an install-locked project needs the blessed install —
-// the same gate as Publish to workspace.
-function lockedReason(project: Project): string | null {
-  const allowed = project.allowedInstallIds
-  if (!allowed || allowed.length === 0) return null
-  if (activeInstall.value && allowed.includes(activeInstall.value.id)) {
-    return null
-  }
-  return t('prototype.promoteToProject.lockedHint', {
-    install: project.installLockDisplayName ?? allowed[0]
-  })
-}
 
 function onConfirm() {
   if (!canConfirm.value) return

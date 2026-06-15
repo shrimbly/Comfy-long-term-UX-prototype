@@ -122,25 +122,6 @@
           {{ t('prototype.views.recents.createWorkflow') }}
         </button>
       </section>
-
-      <section v-if="templates.length" class="flex flex-col gap-4">
-        <header class="flex items-baseline justify-between">
-          <h2
-            class="text-sm font-semibold tracking-wide text-muted-foreground uppercase"
-          >
-            {{ t('prototype.views.recents.templatesHeading') }}
-          </h2>
-        </header>
-        <div
-          class="grid grid-cols-[repeat(auto-fill,minmax(10rem,14rem))] gap-4"
-        >
-          <TemplateCard
-            v-for="tpl in starterTemplates"
-            :key="tpl.id"
-            :template="tpl"
-          />
-        </div>
-      </section>
     </template>
   </div>
 </template>
@@ -152,7 +133,6 @@ import { storeToRefs } from 'pinia'
 import { computed, ref, useTemplateRef } from 'vue'
 import { useI18n } from 'vue-i18n'
 
-import TemplateCard from '../components/TemplateCard.vue'
 import WorkflowCard from '../components/WorkflowCard.vue'
 import { usePrototypePersonaStore } from '../stores/personaStore'
 import type { Workflow } from '../types'
@@ -248,7 +228,4 @@ const sortedWorkflows = computed(() => {
       return list.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
   }
 })
-
-const templates = computed(() => fixture.value.templates)
-const starterTemplates = computed(() => templates.value.slice(0, 4))
 </script>

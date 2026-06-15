@@ -1,20 +1,17 @@
 <!--
   Implements:
     entity:  ../IA_Plan/wiki/entities/workspace.md
-             — Settings inventory: model + custom-node allowlists,
-               data/training policy, billing, member credit limits
+             — Settings inventory: data/training policy, billing,
+               member credit limits
     concept: ../IA_Plan/wiki/concepts/three-level-permissions.md
-             — Admin-only with delegable allowlist editing (edit-allowlists)
-    log:     ../prototype/design-decisions.md (2026-05-13)
-             — Workspace settings scope + Settings design system
+             — Admin-only workspace configuration
+    log:     ../prototype/design-decisions.md (2026-05-13) Workspace settings
+             scope; (2026-06-16) MVP — allowlists / installs / review /
+             Hub-publishing tabs removed.
 
   Tabbed surface so an Admin doesn't see one very long page. Each tab
-  visibility is gated by role + delegations; missing tabs collapse the
-  strip rather than rendering disabled placeholders.
-
-  Uses the shared SettingsPanel / SettingsSubCard / SettingsTable
-  components and the production Button component for a single design
-  vocabulary across the page.
+  visibility is gated by role; missing tabs collapse the strip rather
+  than rendering disabled placeholders.
 -->
 <template>
   <div class="flex flex-col gap-8">
@@ -53,12 +50,6 @@
           @click="activeTab = tab.id"
         >
           <span>{{ tab.label }}</span>
-          <span
-            v-if="tab.count"
-            class="rounded-full bg-secondary-background px-2 py-0.5 text-xs text-text-secondary"
-          >
-            {{ tab.count }}
-          </span>
         </button>
       </nav>
 
@@ -156,147 +147,6 @@
         </SettingsPanel>
       </template>
 
-      <template v-if="activeTab === 'allowlists'">
-        <AllowlistEditor
-          :title="t('prototype.views.settings.modelAllowlist.heading')"
-          :description="
-            t('prototype.views.settings.modelAllowlist.description')
-          "
-          :entries="fixture.allowlists.models.entries"
-          :enabled="fixture.allowlists.models.enabled"
-          :can-edit="canEditAllowlists"
-          :add-placeholder="
-            t('prototype.views.settings.modelAllowlist.placeholder')
-          "
-          :added-by-label="addedByLabel"
-          @add="(name) => personaStore.addAllowlistEntry('model', name)"
-          @remove="(id) => personaStore.removeAllowlistEntry('model', id)"
-          @toggle-enabled="
-            (enabled) => personaStore.setAllowlistEnabled('model', enabled)
-          "
-        />
-
-        <AllowlistEditor
-          :title="t('prototype.views.settings.partnerNodeAllowlist.heading')"
-          :description="
-            t('prototype.views.settings.partnerNodeAllowlist.description')
-          "
-          :entries="fixture.allowlists.partnerNodes.entries"
-          :enabled="fixture.allowlists.partnerNodes.enabled"
-          :can-edit="canEditAllowlists"
-          :add-placeholder="
-            t('prototype.views.settings.partnerNodeAllowlist.placeholder')
-          "
-          :added-by-label="addedByLabel"
-          @add="(name) => personaStore.addAllowlistEntry('partner-node', name)"
-          @remove="
-            (id) => personaStore.removeAllowlistEntry('partner-node', id)
-          "
-          @toggle-enabled="
-            (enabled) =>
-              personaStore.setAllowlistEnabled('partner-node', enabled)
-          "
-        />
-
-        <AllowlistEditor
-          :title="t('prototype.views.settings.customNodeAllowlist.heading')"
-          :description="
-            t('prototype.views.settings.customNodeAllowlist.description')
-          "
-          :entries="fixture.allowlists.customNodes.entries"
-          :enabled="fixture.allowlists.customNodes.enabled"
-          :can-edit="canEditAllowlists"
-          :add-placeholder="
-            t('prototype.views.settings.customNodeAllowlist.placeholder')
-          "
-          :added-by-label="addedByLabel"
-          @add="(name) => personaStore.addAllowlistEntry('custom-node', name)"
-          @remove="(id) => personaStore.removeAllowlistEntry('custom-node', id)"
-          @toggle-enabled="
-            (enabled) =>
-              personaStore.setAllowlistEnabled('custom-node', enabled)
-          "
-        />
-
-        <p v-if="!canEditAllowlists" class="m-0 text-xs text-muted italic">
-          {{ t('prototype.views.settings.allowlist.delegationHint') }}
-        </p>
-      </template>
-
-      <template v-if="activeTab === 'installs'">
-        <WorkspaceInstallsSection :can-edit="canEditInstalls" />
-        <p v-if="!canEditInstalls" class="m-0 text-xs text-muted italic">
-          {{ t('prototype.views.settings.installs.delegationHint') }}
-        </p>
-      </template>
-
-      <template v-if="activeTab === 'review'">
-        <SettingsPanel
-          :title="t('prototype.views.settings.review.heading')"
-          :description="t('prototype.views.settings.review.description')"
-        >
-          <SubmissionReviewList :show-project="true" />
-        </SettingsPanel>
-      </template>
-
-      <template v-if="activeTab === 'publishing'">
-        <SettingsPanel
-          :title="t('prototype.views.settings.hubQueue.heading')"
-          :description="t('prototype.views.settings.hubQueue.description')"
-        >
-          <p
-            v-if="!fixture.hubSubmissions.length"
-            class="m-0 text-sm text-text-secondary"
-          >
-            {{ t('prototype.views.settings.hubQueue.empty') }}
-          </p>
-          <SettingsSubCard v-else>
-            <ul class="m-0 flex list-none flex-col p-0">
-              <li
-                v-for="(sub, index) in fixture.hubSubmissions"
-                :key="sub.id"
-                :class="
-                  cn(
-                    'flex items-center justify-between gap-3 py-2',
-                    index > 0 && 'border-t border-interface-stroke'
-                  )
-                "
-              >
-                <div class="flex min-w-0 flex-col gap-0.5">
-                  <span class="truncate text-sm text-text-primary">
-                    {{ sub.assetName }}
-                  </span>
-                  <span class="text-xs text-muted">
-                    {{
-                      t('prototype.views.settings.hubQueue.submittedBy', {
-                        user: addedByLabel(sub.submittedByUserId),
-                        date: sub.submittedAt
-                      })
-                    }}
-                  </span>
-                </div>
-                <div class="inline-flex shrink-0 gap-2">
-                  <Button
-                    variant="secondary"
-                    size="lg"
-                    @click="personaStore.rejectHubSubmission(sub.id)"
-                  >
-                    {{ t('prototype.views.settings.hubQueue.reject') }}
-                  </Button>
-                  <Button
-                    variant="inverted"
-                    size="lg"
-                    @click="personaStore.approveHubSubmission(sub.id)"
-                  >
-                    {{ t('prototype.views.settings.hubQueue.approve') }}
-                  </Button>
-                </div>
-              </li>
-            </ul>
-          </SettingsSubCard>
-        </SettingsPanel>
-      </template>
-
       <template v-if="activeTab === 'billing' && fixture.billing">
         <BillingSection
           :billing="fixture.billing"
@@ -384,24 +234,13 @@ import { useI18n } from 'vue-i18n'
 
 import Button from '@/components/ui/button/Button.vue'
 
-import AllowlistEditor from '../components/AllowlistEditor.vue'
 import BillingSection from '../components/BillingSection.vue'
 import MemberCreditLimitsSection from '../components/MemberCreditLimitsSection.vue'
 import SettingsPanel from '../components/settings/SettingsPanel.vue'
-import SettingsSubCard from '../components/settings/SettingsSubCard.vue'
-import SubmissionReviewList from '../components/SubmissionReviewList.vue'
-import WorkspaceInstallsSection from '../components/WorkspaceInstallsSection.vue'
 import { usePrototypePersonaStore } from '../stores/personaStore'
 import type { WorkspaceRole } from '../types'
 
-type TabId =
-  | 'general'
-  | 'allowlists'
-  | 'installs'
-  | 'review'
-  | 'publishing'
-  | 'billing'
-  | 'advanced'
+type TabId = 'general' | 'billing' | 'advanced'
 
 const inputClass =
   'h-10 rounded-lg border border-interface-stroke bg-base-background px-3 text-sm text-text-primary outline-none focus:border-text-primary disabled:cursor-not-allowed disabled:opacity-60'
@@ -422,30 +261,11 @@ const isAdmin = computed(() => viewerRole.value === 'admin')
 const workspace = computed(() => currentWorkspace.value)
 
 const canEditIdentity = computed(() => viewerRole.value === 'admin')
-const canEditAllowlists = computed(
-  () =>
-    viewerRole.value === 'admin' ||
-    (viewerRole.value === 'member' &&
-      fixture.value.roleGrants['edit-allowlists'])
-)
-// Install registry authority per
-// ../IA_Plan/wiki/concepts/workspace-install-registry.md §"Authority" —
-// Admin-only by default, delegable to Members. Reuses the
-// `edit-allowlists` grant since registry curation parallels allowlist
-// curation; if delegation needs to split later, introduce a separate
-// capability.
-const canEditInstalls = canEditAllowlists
 const canConfigureWorkspace = computed(
   () =>
     viewerRole.value === 'admin' ||
     (viewerRole.value === 'member' &&
       fixture.value.roleGrants['configure-workspace'])
-)
-const canApproveHub = computed(
-  () =>
-    viewerRole.value === 'admin' ||
-    (viewerRole.value === 'member' &&
-      fixture.value.roleGrants['approve-hub-submissions'])
 )
 
 const otherAdmins = computed(() =>
@@ -464,33 +284,9 @@ const canDeleteWorkspace = computed(
 )
 
 const visibleTabs = computed(() => {
-  const tabs: Array<{ id: TabId; label: string; count?: number }> = [
-    { id: 'general', label: t('prototype.views.settings.tabs.general') },
-    {
-      id: 'allowlists',
-      label: t('prototype.views.settings.tabs.allowlists')
-    }
+  const tabs: Array<{ id: TabId; label: string }> = [
+    { id: 'general', label: t('prototype.views.settings.tabs.general') }
   ]
-  if (workspace.value?.tier === 'team') {
-    tabs.push({
-      id: 'installs',
-      label: t('prototype.views.settings.tabs.installs')
-    })
-  }
-  if (isAdmin.value && workspace.value?.tier === 'team') {
-    tabs.push({
-      id: 'review',
-      label: t('prototype.views.settings.tabs.review'),
-      count: personaStore.pendingWorkflowSubmissions.length || undefined
-    })
-  }
-  if (canApproveHub.value) {
-    tabs.push({
-      id: 'publishing',
-      label: t('prototype.views.settings.tabs.publishing'),
-      count: fixture.value.hubSubmissions.length || undefined
-    })
-  }
   if (isAdmin.value && fixture.value.billing) {
     tabs.push({
       id: 'billing',
@@ -533,13 +329,6 @@ const ownerLabel = computed(() => {
     ws.ownerUserId
   )
 })
-
-function addedByLabel(userId: string): string {
-  if (userId === fixture.value.currentUser.id) {
-    return t('prototype.views.members.actions.you')
-  }
-  return fixture.value.members.find((m) => m.id === userId)?.name ?? userId
-}
 
 function onNameChange(value: string) {
   const trimmed = value.trim()

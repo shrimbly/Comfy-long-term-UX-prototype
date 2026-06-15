@@ -7,14 +7,13 @@
 
   Composed sidebar. Workspace chip at top (cloud only); groups:
     YOUR WORK — My Workflows, Projects (cloud only)
-    LIBRARY   — Media, Models, Custom Nodes, Prompts (cloud) / Outputs (local)
+    LIBRARY   — Media assets
     WORKSPACE — Members (team only)
   Footer: usage / upgrade chip (cloud only), Settings, Help.
 
   Local mode (Persona 1b) — workspace switcher slot holds a dashed
   Create-a-workspace CTA (see prototype/design-decisions.md 2026-05-14)
-  instead of the populated chip. No projects, Prompts dropped in favor of
-  Outputs, no usage chip.
+  instead of the populated chip. No projects, no usage chip.
 -->
 <template>
   <aside
@@ -45,24 +44,10 @@
 
     <div class="flex flex-col gap-1">
       <SidebarItem
-        :label="t('prototype.sidebar.explore')"
-        icon="icon-[lucide--compass]"
-        :active="activeView.kind === 'explore'"
-        @click="uiStore.go({ kind: 'explore' })"
-      />
-      <SidebarItem
         :label="t('prototype.sidebar.recents')"
         icon="icon-[lucide--clock]"
         :active="activeView.kind === 'recents'"
         @click="uiStore.go({ kind: 'recents' })"
-      />
-
-      <SidebarItem
-        v-if="showDiscover"
-        :label="t('prototype.sidebar.templates')"
-        icon="icon-[lucide--layout-template]"
-        :active="activeView.kind === 'hub'"
-        @click="uiStore.go({ kind: 'hub' })"
       />
     </div>
 
@@ -94,12 +79,10 @@
         :label="t('prototype.sidebar.groupLibrary')"
       >
         <SidebarItem
-          v-for="item in libraryItems"
-          :key="item.section"
-          :label="item.label"
-          :icon="item.icon"
-          :active="isLibrarySectionActive(item.section)"
-          @click="onLibraryItemClick(item.section, item.label)"
+          :label="t('prototype.sidebar.libraryMedia')"
+          icon="icon-[lucide--image]"
+          :active="activeTabId === MEDIA_ASSETS_TAB_ID"
+          @click="openMedia"
         />
       </SidebarGroup>
 
@@ -158,7 +141,6 @@ import WorkspaceCreateChip from './sidebar/WorkspaceCreateChip.vue'
 import { usePrototypePersonaStore } from '../stores/personaStore'
 import { MEDIA_ASSETS_TAB_ID, usePrototypeTabsStore } from '../stores/tabsStore'
 import { usePrototypeUiStore } from '../stores/uiStore'
-import type { LibrarySection } from '../types'
 
 const { t } = useI18n()
 const personaStore = usePrototypePersonaStore()
@@ -188,7 +170,6 @@ const isGuestPersona = computed(
     currentPersonaId.value === 'freelancer'
 )
 
-const showDiscover = computed(() => true)
 const showWorkspaceGroup = computed(
   () =>
     isCloudMode.value &&
@@ -197,51 +178,7 @@ const showWorkspaceGroup = computed(
 )
 const showGroupHeaders = computed(() => !isSoloPersona.value)
 
-const libraryItems = computed<
-  Array<{ section: LibrarySection; label: string; icon: string }>
->(() => {
-  const items: Array<{ section: LibrarySection; label: string; icon: string }> =
-    [
-      {
-        section: 'media',
-        label: t('prototype.sidebar.libraryMedia'),
-        icon: 'icon-[lucide--image]'
-      },
-      {
-        section: 'models',
-        label: t('prototype.sidebar.libraryModels'),
-        icon: 'icon-[lucide--box]'
-      },
-      {
-        section: 'nodes',
-        label: t('prototype.sidebar.libraryNodes'),
-        icon: 'icon-[lucide--blocks]'
-      }
-    ]
-  if (isCloudMode.value) {
-    items.push({
-      section: 'prompts',
-      label: t('prototype.sidebar.libraryPrompts'),
-      icon: 'icon-[lucide--text]'
-    })
-  }
-  return items
-})
-
-function isLibrarySectionActive(section: LibrarySection) {
-  if (section === 'media') {
-    return activeTabId.value === MEDIA_ASSETS_TAB_ID
-  }
-  return (
-    activeView.value.kind === 'library' && activeView.value.section === section
-  )
-}
-
-function onLibraryItemClick(section: LibrarySection, label: string) {
-  if (section === 'media') {
-    tabsStore.openMediaAssets(label)
-    return
-  }
-  uiStore.go({ kind: 'library', section })
+function openMedia() {
+  tabsStore.openMediaAssets(t('prototype.sidebar.libraryMedia'))
 }
 </script>

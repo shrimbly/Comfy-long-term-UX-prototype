@@ -36,23 +36,5 @@ export const installGovernorFixture: PersonaFixture = {
     comfyOrgForSasha,
     ...adminFixture.workspaces.filter((w) => w.id !== 'ws-comfy-org')
   ],
-  currentWorkspaceId: comfyOrgForSasha.id,
-  // Two installs — personal dev sandbox + the team-blessed build. Active
-  // defaults to the VFX build (most-recently-used per open-q
-  // `default-active-install` working answer).
-  installs: [
-    {
-      id: 'install-sasha-personal',
-      displayName: 'Personal dev',
-      comfyUIVersion: '0.4.0',
-      registeredAt: '2026-01-12'
-    },
-    {
-      id: 'install-vfx-team-q2-2026',
-      displayName: 'VFX team Q2 2026',
-      comfyUIVersion: '0.3.5',
-      registeredAt: '2026-03-30'
-    }
-  ],
-  activeInstallId: 'install-vfx-team-q2-2026'
+  currentWorkspaceId: comfyOrgForSasha.id
 }

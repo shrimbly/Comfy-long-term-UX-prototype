@@ -10,65 +10,12 @@
 //   open-q:    ../IA_Plan/wiki/open-questions.md#single-admin-or-many
 //              — proto stance: multiple Admins allowed
 
-import type { SemanticDiff } from '../utils/workflowDiff'
 import type { PersonaFixture, RoleGrants } from '../types'
 
 const user = {
   id: 'user-admin',
   name: 'Willie',
   email: 'willie@comfy.org'
-}
-
-// Mocked semantic diff for Mira's review submission — the prototype does
-// not compute diffs from two graphs (see prototype/design-decisions.md
-// 2026-06-10). Mirrors her note: "Tweaked the sky gradient + added a
-// depth pass."
-const establishingShotDiff: SemanticDiff = {
-  headline: ['1 node added', '2 connections changed', 'Prompt edited'],
-  counts: {
-    added: 1,
-    removed: 0,
-    rewired: 2,
-    prompts: 1,
-    params: 1,
-    seeds: 0,
-    moved: 3,
-    bypassed: 0,
-    renamed: 0,
-    groups: 0
-  },
-  details: [
-    {
-      channel: 'widget',
-      scope: 'root',
-      nodeType: 'CLIPTextEncode',
-      widgetKind: 'prompt',
-      label: '+6 / −2 words',
-      before:
-        '…a wide cinematic establishing shot, clear blue sky, golden hour…',
-      after:
-        '…a wide cinematic establishing shot, graded sky with a soft dusk gradient, golden hour…'
-    },
-    {
-      channel: 'added',
-      scope: 'root',
-      nodeType: 'Depth pass',
-      isSubgraph: true,
-      label: 'Depth pass'
-    },
-    { channel: 'rewired', scope: 'root', label: '+ 14:0→27:0' },
-    { channel: 'rewired', scope: 'root', label: '+ 27:0→8:1' },
-    {
-      channel: 'widget',
-      scope: 'root',
-      nodeType: 'KSampler',
-      widgetKind: 'param',
-      label: 'denoise 1.00 → 0.85'
-    },
-    { channel: 'layout', scope: 'root', nodeType: 'KSampler', label: 'moved' },
-    { channel: 'layout', scope: 'root', nodeType: 'VAEDecode', label: 'moved' },
-    { channel: 'layout', scope: 'root', nodeType: 'SaveImage', label: 'moved' }
-  ]
 }
 
 const comfyOrg = {
@@ -81,48 +28,7 @@ const comfyOrg = {
   memberCount: 12,
   currentUserRole: 'admin' as const,
   description: 'Production workflows + shared assets for the Comfy team.',
-  dataTrainingOptOut: true,
-  // Workspace install registry per
-  // ../IA_Plan/wiki/concepts/workspace-install-registry.md — the
-  // Install Governor (Sasha) has blessed the team's VFX build. Locked
-  // for the Q2 production crunch so artists can't mutate node
-  // versions out from under in-flight shots.
-  blessedInstalls: [
-    // Current production build — pinned by Client X and other team
-    // projects. Locked during the Q2 crunch so nodes / Comfy versions
-    // don't shift under in-flight shots.
-    {
-      installId: 'install-vfx-team-q2-2026',
-      canonicalDisplayName: 'VFX team Q2 2026',
-      comfyUIVersion: '0.3.5',
-      publishedByUserId: 'user-sasha',
-      publishedAt: '2026-04-22',
-      isLocked: true
-    },
-    // Candidate for the next bump (Journey 5). Sasha is validating it
-    // and intentionally hasn't locked yet — locking happens after
-    // canonical workflows have been re-run end-to-end.
-    {
-      installId: 'install-vfx-team-q3-2026-rc',
-      canonicalDisplayName: 'VFX team Q3 2026 (RC)',
-      comfyUIVersion: '0.3.6',
-      publishedByUserId: 'user-sasha',
-      publishedAt: '2026-05-12',
-      isLocked: false
-    },
-    // Retired prior build — kept blessed so historical outputs'
-    // attribution still resolves to a canonical name. No project
-    // currently pins to it. Demonstrates the "blessed but not in any
-    // active allowed-install set" state.
-    {
-      installId: 'install-vfx-team-q1-2026',
-      canonicalDisplayName: 'VFX team Q1 2026',
-      comfyUIVersion: '0.3.0',
-      publishedByUserId: 'user-sasha',
-      publishedAt: '2026-02-04',
-      isLocked: false
-    }
-  ]
+  dataTrainingOptOut: true
 }
 
 const personal = {
@@ -172,10 +78,6 @@ export const adminFixture: PersonaFixture = {
       ownerUserId: user.id,
       isDrafts: false,
       currentUserHasAccess: true,
-      allowlists: {
-        models: { override: false, entries: [] },
-        customNodes: { override: false, entries: [] }
-      },
       defaults: { filenamePrefix: 'marketing/{date}/' },
       creditsThisMonth: 1840
     },
@@ -187,10 +89,6 @@ export const adminFixture: PersonaFixture = {
       ownerUserId: user.id,
       isDrafts: false,
       currentUserHasAccess: true,
-      allowlists: {
-        models: { override: false, entries: [] },
-        customNodes: { override: false, entries: [] }
-      },
       defaults: { filenamePrefix: 'brand/' },
       creditsThisMonth: 420
     },
@@ -204,10 +102,6 @@ export const adminFixture: PersonaFixture = {
       ownerUserId: 'user-jane',
       isDrafts: false,
       currentUserHasAccess: true,
-      allowlists: {
-        models: { override: false, entries: [] },
-        customNodes: { override: false, entries: [] }
-      },
       defaults: {},
       creditsThisMonth: 980
     },
@@ -223,38 +117,12 @@ export const adminFixture: PersonaFixture = {
         { userId: user.id, role: 'owner' },
         { userId: 'user-mira', role: 'collaborator' }
       ],
-      allowlists: {
-        models: {
-          override: true,
-          entries: [
-            {
-              id: 'pmdl-clientx-sdxl',
-              name: 'sd_xl_base_1.0.safetensors',
-              addedAt: '2026-04-22',
-              addedByUserId: user.id,
-              note: 'Approved for Client X likeness work.'
-            }
-          ]
-        },
-        customNodes: { override: false, entries: [] }
-      },
       defaults: { filenamePrefix: 'clients/client-x/{workflow}/' },
-      creditsThisMonth: 2240,
-      // Team-locked install per
-      // ../IA_Plan/wiki/decisions/team-locked-install.md — hard lock by
-      // install identity. The Install Governor named the lock at config
-      // time; that workspace-canonical name is what the gate dialog
-      // renders, regardless of what each user has named the same bundle
-      // locally.
-      allowedInstallIds: ['install-vfx-team-q2-2026'],
-      installLockDisplayName: 'VFX team Q2 2026'
+      creditsThisMonth: 2240
     },
     {
-      // Restricted by membership, but NOT install-gated — no
-      // allowedInstallIds. A collaborator (Mira) can open, work on a
-      // copy, and submit it for publishing; she hits only the permission
-      // gate, never an install gate. Contrast with Client X (restricted
-      // AND install-locked) — this isolates the permission dimension.
+      // Restricted by membership. A collaborator (Mira) can open, work on
+      // a copy in her My Workflows, and publish it back to the project.
       id: 'proj-indie-short',
       workspaceId: comfyOrg.id,
       name: 'Indie Short Film',
@@ -280,37 +148,6 @@ export const adminFixture: PersonaFixture = {
         { userId: 'user-alex', role: 'collaborator' },
         { userId: 'user-tomas', role: 'project-guest' }
       ],
-      allowlists: {
-        models: {
-          override: true,
-          entries: [
-            {
-              id: 'pmdl-cocacola-flux',
-              name: 'flux1-dev.safetensors',
-              addedAt: '2026-05-02',
-              addedByUserId: user.id
-            },
-            {
-              id: 'pmdl-cocacola-sdxl',
-              name: 'sd_xl_base_1.0.safetensors',
-              addedAt: '2026-05-02',
-              addedByUserId: user.id
-            }
-          ]
-        },
-        customNodes: {
-          override: true,
-          entries: [
-            {
-              id: 'pcn-cocacola-controlnet',
-              name: 'comfyui_controlnet_aux',
-              addedAt: '2026-05-02',
-              addedByUserId: 'user-alex',
-              note: 'Required for the bottle-pose templates.'
-            }
-          ]
-        }
-      },
       defaults: { filenamePrefix: 'coca-cola/q3-campaign/' },
       creditsThisMonth: 3620
     }
@@ -403,9 +240,8 @@ export const adminFixture: PersonaFixture = {
       updatedAt: '2026-05-11'
     },
     {
-      // Mira's branch of the establishing-shot canonical, submitted for
-      // review (see workflowSubmissions below). Lives in the project per
-      // the branch model so the reviewer can open it from the Review tab.
+      // Mira's working copy of the establishing-shot canonical (carries
+      // copy lineage; could be published back over the canonical).
       id: 'wf-fork-mira-establishing',
       projectId: 'proj-indie-short',
       name: 'Establishing shot generator — Mira Voss',
@@ -652,38 +488,6 @@ export const adminFixture: PersonaFixture = {
       folder: 'campaigns'
     }
   ],
-  templates: [
-    {
-      id: 'tpl-txt2img',
-      name: 'Text to image',
-      description: 'A starter image-generation graph.'
-    },
-    {
-      id: 'tpl-img2img',
-      name: 'Image to image',
-      description: 'Transform an input image with a prompt.'
-    },
-    {
-      id: 'tpl-inpaint',
-      name: 'Inpainting',
-      description: 'Mask + regenerate a region.'
-    },
-    {
-      id: 'tpl-upscale',
-      name: 'Upscale',
-      description: 'Increase resolution with a model pass.'
-    },
-    {
-      id: 'tpl-controlnet',
-      name: 'Pose to image',
-      description: 'ControlNet-style pose conditioning.'
-    },
-    {
-      id: 'tpl-vid',
-      name: 'Image to video',
-      description: 'Animate a still image.'
-    }
-  ],
   usage: {
     creditsRemainingPct: 77,
     showUpgrade: true
@@ -816,72 +620,6 @@ export const adminFixture: PersonaFixture = {
     'edit-allowlists': false,
     'configure-workspace': false
   } satisfies RoleGrants,
-  allowlists: {
-    models: {
-      enabled: true,
-      entries: [
-        {
-          id: 'mdl-sdxl-base',
-          name: 'sd_xl_base_1.0.safetensors',
-          addedAt: '2026-04-12',
-          addedByUserId: user.id
-        },
-        {
-          id: 'mdl-sdxl-refiner',
-          name: 'sd_xl_refiner_1.0.safetensors',
-          addedAt: '2026-04-12',
-          addedByUserId: user.id
-        },
-        {
-          id: 'mdl-flux-dev',
-          name: 'flux1-dev.safetensors',
-          addedAt: '2026-04-29',
-          addedByUserId: 'user-alex',
-          note: 'Internal eval — not for client work yet.'
-        }
-      ]
-    },
-    customNodes: {
-      enabled: true,
-      entries: [
-        {
-          id: 'cn-comfyui-manager',
-          name: 'ComfyUI-Manager',
-          addedAt: '2026-04-12',
-          addedByUserId: user.id
-        },
-        {
-          id: 'cn-comfyui-controlnet-aux',
-          name: 'comfyui_controlnet_aux',
-          addedAt: '2026-04-18',
-          addedByUserId: user.id
-        }
-      ]
-    },
-    partnerNodes: {
-      enabled: true,
-      entries: [
-        {
-          id: 'pn-runwayml',
-          name: 'RunwayML / Gen-3 Alpha',
-          addedAt: '2026-03-22',
-          addedByUserId: user.id
-        },
-        {
-          id: 'pn-luma',
-          name: 'Luma / Dream Machine',
-          addedAt: '2026-03-22',
-          addedByUserId: user.id
-        },
-        {
-          id: 'pn-bfl-flux',
-          name: 'Black Forest Labs / FLUX Pro',
-          addedAt: '2026-04-05',
-          addedByUserId: 'user-pablo'
-        }
-      ]
-    }
-  },
   billing: {
     subscription: {
       plan: 'professional',
@@ -939,74 +677,5 @@ export const adminFixture: PersonaFixture = {
       resetsAt: '2026-06-01'
     }
   ],
-  hubSubmissions: [
-    {
-      id: 'hub-sub-1',
-      assetName: 'Cinematic upscaler v3',
-      submittedByUserId: 'user-alex',
-      submittedAt: '2026-05-09'
-    },
-    {
-      id: 'hub-sub-2',
-      assetName: 'Product photography pipeline',
-      submittedByUserId: 'user-jane',
-      submittedAt: '2026-05-11'
-    },
-    {
-      id: 'hub-sub-3',
-      assetName: 'Animated logo intro',
-      submittedByUserId: 'user-marcus',
-      submittedAt: '2026-05-12'
-    }
-  ],
-  // Pending submission: Mira (project Collaborator on Indie Short Film,
-  // a restricted-but-unlocked project) submitted her working copy of the
-  // establishing-shot workflow for an owner to publish. Willie (owner)
-  // sees it in the project Review tab + the workspace queue.
-  workflowSubmissions: [
-    {
-      id: 'wfsub-indie-establishing',
-      forkWorkflowId: 'wf-fork-mira-establishing',
-      canonicalWorkflowId: 'wf-indie-establishing',
-      workflowName: 'Establishing shot generator',
-      projectId: 'proj-indie-short',
-      submittedByUserId: 'user-mira',
-      submittedAt: '2026-05-12',
-      status: 'pending',
-      note: 'Tweaked the sky gradient + added a depth pass.',
-      diff: { added: 125, removed: 32 },
-      semanticDiff: establishingShotDiff
-    }
-  ],
-  notifications: [
-    {
-      id: 'note-admin-sub-1',
-      kind: 'submission-received',
-      actorUserId: 'user-mira',
-      target: {
-        workspaceId: comfyOrg.id,
-        projectId: 'proj-indie-short',
-        assetId: 'wf-indie-establishing'
-      },
-      createdAt: '2026-05-12'
-    }
-  ],
-  // Admin owns two installs — a personal dev sandbox and the team-blessed
-  // VFX build referenced by Comfy Org's projects. Active is the personal
-  // one (most-recent-used per open-q `default-active-install`).
-  installs: [
-    {
-      id: 'install-willie-personal',
-      displayName: 'Personal dev',
-      comfyUIVersion: '0.4.0',
-      registeredAt: '2026-02-14'
-    },
-    {
-      id: 'install-vfx-team-q2-2026',
-      displayName: 'VFX team Q2 2026',
-      comfyUIVersion: '0.3.5',
-      registeredAt: '2026-04-22'
-    }
-  ],
-  activeInstallId: 'install-willie-personal'
+  notifications: []
 }

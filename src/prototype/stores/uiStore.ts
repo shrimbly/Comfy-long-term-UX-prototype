@@ -1,44 +1,35 @@
 // Implements:
 //   prototype scaffolding — local UI state for the active body view + the
-//   filter state for the Library page.
+//   filter state for the Media library page.
 
 import { defineStore } from 'pinia'
 import { ref, watch } from 'vue'
 
 import { usePrototypePersonaStore } from './personaStore'
-import type { AssetStorage, LibrarySection } from '../types'
+import type { AssetStorage } from '../types'
 
 type StorageFilter = 'all' | AssetStorage
 
 type ActiveView =
-  | { kind: 'explore' }
   | { kind: 'drafts' }
   | { kind: 'projects' }
   | { kind: 'project'; projectId: string }
-  | { kind: 'library'; section: LibrarySection }
   | { kind: 'recents' }
-  | { kind: 'hub' }
   | { kind: 'members' }
   | { kind: 'settings' }
 
 export const usePrototypeUiStore = defineStore('prototype-ui', () => {
-  // Explore is the dashboard home — every dashboard mount lands here
+  // Recents is the dashboard home — every dashboard mount lands here
   // regardless of where the user navigated previously.
-  const activeView = ref<ActiveView>({ kind: 'explore' })
+  const activeView = ref<ActiveView>({ kind: 'recents' })
 
-  // Library page filters. 'all' = no filter applied. Click the active
+  // Media library filters. 'all' = no filter applied. Click the active
   // project/folder again to deselect (toggle back to 'all').
   const projectFilter = ref<string>('all')
   const tagFilter = ref<Set<string>>(new Set())
   const folderFilter = ref<string>('all')
   const storageFilter = ref<StorageFilter>('all')
   const searchQuery = ref<string>('')
-
-  // Projects whose install-access notice the user has already dismissed
-  // this session — so re-entering a project (e.g. after visiting a
-  // workflow) doesn't show the gate again. Reset on persona/workspace
-  // switch, where the install picture changes.
-  const acknowledgedInstallNotices = ref<Set<string>>(new Set())
 
   // One-shot intent: a project freshly created via promotion wants its
   // share settings opened on arrival. ProjectDetailView consumes it once.
@@ -54,56 +45,12 @@ export const usePrototypeUiStore = defineStore('prototype-ui', () => {
     return true
   }
 
-  // One-shot intent: a submission notification wants the project's Review
-  // tab opened on arrival. ProjectDetailView consumes it once.
-  const reviewIntentProjectId = ref<string | null>(null)
-
-  function requestReviewTab(id: string) {
-    reviewIntentProjectId.value = id
-  }
-
-  function consumeReviewIntent(id: string): boolean {
-    if (reviewIntentProjectId.value !== id) return false
-    reviewIntentProjectId.value = null
-    return true
-  }
-
-  // One-shot intent: a submission-outcome notification wants a specific
-  // workflow selected (its sidebar open) on arrival. ProjectDetailView
-  // consumes it once.
-  const selectWorkflowIntent = ref<{
-    projectId: string
-    workflowId: string
-  } | null>(null)
-
-  function requestSelectWorkflow(projectId: string, workflowId: string) {
-    selectWorkflowIntent.value = { projectId, workflowId }
-  }
-
-  function consumeSelectWorkflow(projectId: string): string | null {
-    const intent = selectWorkflowIntent.value
-    if (!intent || intent.projectId !== projectId) return null
-    selectWorkflowIntent.value = null
-    return intent.workflowId
-  }
-
-  function acknowledgeInstallNotice(id: string) {
-    acknowledgedInstallNotices.value = new Set([
-      ...acknowledgedInstallNotices.value,
-      id
-    ])
-  }
-
-  function isInstallNoticeAcknowledged(id: string) {
-    return acknowledgedInstallNotices.value.has(id)
-  }
-
   function go(view: ActiveView) {
     activeView.value = view
   }
 
   function goHome() {
-    activeView.value = { kind: 'explore' }
+    activeView.value = { kind: 'recents' }
   }
 
   function selectProject(id: string) {
@@ -149,17 +96,15 @@ export const usePrototypeUiStore = defineStore('prototype-ui', () => {
   watch(
     () => personaStore.currentPersonaId,
     () => {
-      activeView.value = { kind: 'explore' }
+      activeView.value = { kind: 'recents' }
       resetLibraryFilters()
-      acknowledgedInstallNotices.value = new Set()
     }
   )
   watch(
     () => personaStore.fixture.currentWorkspaceId,
     () => {
-      activeView.value = { kind: 'explore' }
+      activeView.value = { kind: 'recents' }
       resetLibraryFilters()
-      acknowledgedInstallNotices.value = new Set()
     }
   )
 
@@ -170,14 +115,8 @@ export const usePrototypeUiStore = defineStore('prototype-ui', () => {
     folderFilter,
     storageFilter,
     searchQuery,
-    acknowledgeInstallNotice,
-    isInstallNoticeAcknowledged,
     requestShareSettings,
     consumeShareIntent,
-    requestReviewTab,
-    consumeReviewIntent,
-    requestSelectWorkflow,
-    consumeSelectWorkflow,
     go,
     goHome,
     selectProject,

@@ -39,38 +39,6 @@ export const soloFixture: PersonaFixture = {
   projects: [myWorkflows],
   workflows: [],
   libraryAssets: [],
-  templates: [
-    {
-      id: 'tpl-txt2img',
-      name: 'Text to image',
-      description: 'A starter image-generation graph.'
-    },
-    {
-      id: 'tpl-img2img',
-      name: 'Image to image',
-      description: 'Transform an input image with a prompt.'
-    },
-    {
-      id: 'tpl-inpaint',
-      name: 'Inpainting',
-      description: 'Mask + regenerate a region.'
-    },
-    {
-      id: 'tpl-upscale',
-      name: 'Upscale',
-      description: 'Increase resolution with a model pass.'
-    },
-    {
-      id: 'tpl-controlnet',
-      name: 'Pose to image',
-      description: 'ControlNet-style pose conditioning.'
-    },
-    {
-      id: 'tpl-vid',
-      name: 'Image to video',
-      description: 'Animate a still image.'
-    }
-  ],
   usage: {
     creditsRemainingPct: 0,
     showUpgrade: true
@@ -93,11 +61,6 @@ export const soloFixture: PersonaFixture = {
     'edit-allowlists': false,
     'configure-workspace': false
   },
-  allowlists: {
-    models: { enabled: false, entries: [] },
-    customNodes: { enabled: false, entries: [] },
-    partnerNodes: { enabled: false, entries: [] }
-  },
   billing: {
     subscription: {
       plan: 'free',
@@ -116,10 +79,5 @@ export const soloFixture: PersonaFixture = {
     invoices: []
   },
   memberCreditLimits: [],
-  hubSubmissions: [],
-  workflowSubmissions: [],
-  notifications: [],
-  // Solo cloud has no install presence — they run on Comfy Cloud BE only.
-  installs: [],
-  activeInstallId: undefined
+  notifications: []
 }

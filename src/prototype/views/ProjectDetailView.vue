@@ -170,18 +170,6 @@
             </div>
           </section>
 
-          <section
-            v-else-if="activeTab === 'review'"
-            class="flex flex-col gap-3"
-          >
-            <h2
-              class="m-0 text-sm font-semibold tracking-wide text-muted-foreground uppercase"
-            >
-              {{ t('prototype.views.project.reviewHeading') }}
-            </h2>
-            <SubmissionReviewList :project-id="projectId" />
-          </section>
-
           <ProjectSettingsView
             v-else-if="activeTab === 'settings'"
             :project="project"
@@ -208,32 +196,25 @@
       :project="project"
       @close="isSharingOpen = false"
     />
-
-    <ProjectAccessInstallNotice
-      v-if="installNoticeOpen && project"
-      :project="project"
-      @close="onInstallNoticeClose"
-    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { cn } from '@comfyorg/tailwind-utils'
 import { storeToRefs } from 'pinia'
-import { computed, onMounted, ref, watch, watchEffect } from 'vue'
+import { computed, onMounted, ref, watchEffect } from 'vue'
 import { useI18n } from 'vue-i18n'
 
-import ProjectAccessInstallNotice from '../components/ProjectAccessInstallNotice.vue'
 import ProjectSharingDialog from '../components/ProjectSharingDialog.vue'
-import SubmissionReviewList from '../components/SubmissionReviewList.vue'
 import ProjectUsageSection from '../components/ProjectUsageSection.vue'
 import WorkflowCard from '../components/WorkflowCard.vue'
 import WorkflowSidebar from '../components/WorkflowSidebar.vue'
 import { usePrototypePersonaStore } from '../stores/personaStore'
+import { usePrototypeTabsStore } from '../stores/tabsStore'
 import { usePrototypeUiStore } from '../stores/uiStore'
 import ProjectSettingsView from './ProjectSettingsView.vue'
 
-type ProjectTabId = 'workflows' | 'review' | 'settings' | 'usage'
+type ProjectTabId = 'workflows' | 'settings' | 'usage'
 
 const { projectId } = defineProps<{
   projectId: string
@@ -242,6 +223,7 @@ const { projectId } = defineProps<{
 const { t } = useI18n()
 const personaStore = usePrototypePersonaStore()
 const uiStore = usePrototypeUiStore()
+const tabsStore = usePrototypeTabsStore()
 const { fixture, currentWorkspace, currentPersonaId } =
   storeToRefs(personaStore)
 
@@ -253,15 +235,6 @@ onMounted(() => {
   // A project just created via workflow promotion asks to open its share
   // settings on arrival.
   if (uiStore.consumeShareIntent(projectId)) isSharingOpen.value = true
-  // A submission notification lands the reviewer on the Review tab.
-  if (uiStore.consumeReviewIntent(projectId)) activeTab.value = 'review'
-  // A submission-outcome notification selects the canonical so its sidebar
-  // (decline feedback + Revise & resubmit) is open on arrival.
-  const selectId = uiStore.consumeSelectWorkflow(projectId)
-  if (selectId) {
-    activeTab.value = 'workflows'
-    selectedWorkflowId.value = selectId
-  }
 })
 
 function onSelectWorkflow(workflowId: string) {
@@ -294,23 +267,6 @@ const canEditSettings = computed(() => {
   )
 })
 
-// Who can review submissions = who can publish over the canonical:
-// project Owner, or workspace Admin (any project in their workspace).
-// Broader than canEditSettings, which limits Admin to workspace-wide.
-const canReviewSubmissions = computed(() => {
-  const p = project.value
-  if (!p || p.isDrafts) return false
-  if (p.ownerUserId === fixture.value.currentUser.id) return true
-  return currentWorkspace.value?.currentUserRole === 'admin'
-})
-
-const pendingReviewCount = computed(
-  () =>
-    personaStore.pendingWorkflowSubmissions.filter(
-      (s) => s.projectId === projectId
-    ).length
-)
-
 const visibleTabs = computed(() => {
   const tabs: Array<{ id: ProjectTabId; label: string; count?: number }> = [
     {
@@ -318,13 +274,6 @@ const visibleTabs = computed(() => {
       label: t('prototype.views.project.tabs.workflows')
     }
   ]
-  if (canReviewSubmissions.value) {
-    tabs.push({
-      id: 'review',
-      label: t('prototype.views.project.tabs.review'),
-      count: pendingReviewCount.value || undefined
-    })
-  }
   if (canEditSettings.value) {
     tabs.push({
       id: 'settings',
@@ -364,29 +313,8 @@ function onOpenProject(id: string) {
   uiStore.go({ kind: 'project', projectId: id })
 }
 
-// Touchpoint 1: warn on entering an install-locked project. Shown to every
-// actor with a local install (cloud-only personas have none and are out of
-// scope). Re-fires on each project change.
-const installNoticeOpen = ref(false)
-watch(
-  () => projectId,
-  () => {
-    const locked = !!project.value?.allowedInstallIds?.length
-    installNoticeOpen.value =
-      locked &&
-      fixture.value.installs.length > 0 &&
-      !uiStore.isInstallNoticeAcknowledged(projectId)
-  },
-  { immediate: true }
-)
-
-function onInstallNoticeClose() {
-  installNoticeOpen.value = false
-  uiStore.acknowledgeInstallNotice(projectId)
-}
-
-// Canonicals only. Branches now live in the project too, but they belong
-// on the per-workflow detail page, not the project grid.
+// Canonicals only. Working copies live in the actor's My Workflows, not
+// the project grid.
 const workflows = computed(() =>
   fixture.value.workflows
     .filter((w) => w.projectId === projectId && !w.forkedFrom)
@@ -395,7 +323,7 @@ const workflows = computed(() =>
 
 function onViewMediaAssets() {
   uiStore.setProjectFilter(projectId)
-  uiStore.go({ kind: 'library', section: 'media' })
+  tabsStore.openMediaAssets(t('prototype.sidebar.libraryMedia'))
 }
 
 // People with access to drive the avatar stack + member-count summary.

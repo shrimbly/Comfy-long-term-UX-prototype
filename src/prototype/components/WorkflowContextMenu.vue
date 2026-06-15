@@ -67,7 +67,6 @@
     :state="publishState"
     @close="publishDialogOpen = false"
     @publish="onPublish"
-    @ask-owner="onAskOwner"
   />
 
   <PromoteToProjectDialog
@@ -263,20 +262,6 @@ function onPublish() {
     detail: t('prototype.workflowMenu.toast.publishedDetail', {
       workflow: publishState.value.targetWorkflowName ?? workflow.name,
       project: publishState.value.targetProjectName ?? ''
-    }),
-    life: 2800
-  })
-}
-
-function onAskOwner() {
-  const ok = personaStore.submitWorkflowForReview(workflow.id)
-  publishDialogOpen.value = false
-  if (!ok) return
-  toast.add({
-    severity: 'success',
-    summary: t('prototype.workflowMenu.toast.submittedSummary'),
-    detail: t('prototype.workflowMenu.toast.submittedDetail', {
-      workflow: publishState.value.targetWorkflowName ?? workflow.name
     }),
     life: 2800
   })

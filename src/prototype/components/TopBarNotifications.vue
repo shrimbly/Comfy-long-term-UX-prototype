@@ -163,13 +163,7 @@ const kindKey: Record<NotificationKind, string> = {
   'asset-grant': 'prototype.views.notifications.kind.asset-grant',
   'asset-update': 'prototype.views.notifications.kind.asset-update',
   'project-grant': 'prototype.views.notifications.kind.project-grant',
-  'workspace-invite': 'prototype.views.notifications.kind.workspace-invite',
-  'submission-received':
-    'prototype.views.notifications.kind.submission-received',
-  'submission-approved':
-    'prototype.views.notifications.kind.submission-approved',
-  'submission-rejected':
-    'prototype.views.notifications.kind.submission-rejected'
+  'workspace-invite': 'prototype.views.notifications.kind.workspace-invite'
 }
 
 function messageFor(n: Notification) {
@@ -187,22 +181,8 @@ function onSelect(n: Notification) {
   if (fixture.value.currentWorkspaceId !== n.target.workspaceId) {
     personaStore.setCurrentWorkspace(n.target.workspaceId)
   }
-  // A submission-received notification drops the reviewer on the project's
-  // Review tab (where Approve / Decline live). Other notifications land on
-  // the project (or the projects list).
-  if (n.kind === 'submission-received' && n.target.projectId) {
-    uiStore.requestReviewTab(n.target.projectId)
-    uiStore.go({ kind: 'project', projectId: n.target.projectId })
-  } else if (
-    (n.kind === 'submission-rejected' || n.kind === 'submission-approved') &&
-    n.target.projectId &&
-    n.target.assetId
-  ) {
-    // Outcome notifications drop the submitter on the canonical's sidebar,
-    // where the decline feedback + Revise & resubmit live.
-    uiStore.requestSelectWorkflow(n.target.projectId, n.target.assetId)
-    uiStore.go({ kind: 'project', projectId: n.target.projectId })
-  } else if (n.target.projectId) {
+  // Notifications land on the relevant project, or the projects list.
+  if (n.target.projectId) {
     uiStore.go({ kind: 'project', projectId: n.target.projectId })
   } else {
     uiStore.go({ kind: 'projects' })

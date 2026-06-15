@@ -6,8 +6,6 @@
 // wiki, either the field is wrong or the wiki needs updating — log it in
 // prototype/design-decisions.md.
 
-import type { SemanticDiff } from './utils/workflowDiff'
-
 export type PersonaId =
   | 'solo'
   | 'solo-local'
@@ -45,10 +43,10 @@ export interface ProjectMember {
   role: ProjectRole
 }
 
-// Library sidebar sub-sections. `media` and `models` map cleanly to wiki
-// asset types. `nodes` and `prompts` are surfaced as Library items even
-// though the wiki today treats them as configuration / workflow-internal —
-// flagged as working decision in prototype-log.
+// Library sidebar sub-sections. MVP collapses the Library to Media only
+// (see design-decisions.md 2026-06-16); the wider union is retained on the
+// data type because fixtures may still carry non-media seed data that is
+// simply not surfaced.
 export type LibrarySection = 'media' | 'models' | 'nodes' | 'prompts'
 
 export interface User {
@@ -71,122 +69,6 @@ export interface Workspace {
   // ../IA_Plan/wiki/entities/workspace.md §"What it contains" and
   // ../IA_Plan/wiki/concepts/three-level-permissions.md §"Workspace level".
   dataTrainingOptOut?: boolean
-  // Workspace install registry per
-  // ../IA_Plan/wiki/concepts/workspace-install-registry.md and
-  // ../IA_Plan/wiki/decisions/workspace-install-registry.md — the
-  // curated list of blessed install identities + workspace-canonical
-  // metadata. Project allowed-install sets pick identities from here.
-  blessedInstalls?: BlessedInstall[]
-}
-
-// Workspace install registry entry per
-// ../IA_Plan/wiki/concepts/workspace-install-registry.md §"What a
-// 'blessed install' is". References a bundle by its identity; carries
-// workspace-canonical metadata (name, publish provenance, lock,
-// bundle version). `comfyUIVersion` is metadata about the referenced
-// bundle so the desktop client can show the version before the user
-// installs it locally and so a freshly-installed bundle starts with
-// the right version stamped on its local Install entry.
-export interface BlessedInstall {
-  installId: string
-  canonicalDisplayName: string
-  comfyUIVersion: string
-  publishedByUserId: string
-  publishedAt: string
-  isLocked: boolean
-  description?: string
-}
-
-// Hub publishing approval queue item. Per
-// ../IA_Plan/wiki/concepts/three-level-permissions.md §"Workspace level"
-// — "Approve Comfy Hub publishing (delegable to Members)".
-export interface HubSubmission {
-  id: string
-  assetName: string
-  submittedByUserId: string
-  submittedAt: string
-}
-
-// A request from a collaborator to publish their working copy over a
-// team canonical workflow they lack overwrite permission for. Per
-// ../IA_Plan/wiki/decisions/published-workflow-model.md §"member-overwrite
-// -request-flow" (promoted from open question 2026-05-27). Reviewed by
-// the project Owner / workspace Admin, who publishes (approve) or
-// declines (reject). Denormalized name fields so the review queue
-// renders without the submitter's fork being present in the reviewer's
-// fixture (per-persona fixtures don't share state).
-export type WorkflowSubmissionStatus = 'pending' | 'approved' | 'rejected'
-
-export interface WorkflowSubmission {
-  id: string
-  // The submitter's working copy (may not exist in a reviewer's fixture).
-  forkWorkflowId: string
-  // The canonical workflow this would overwrite, + its project.
-  canonicalWorkflowId: string
-  workflowName: string
-  projectId: string
-  submittedByUserId: string
-  submittedAt: string
-  status: WorkflowSubmissionStatus
-  note?: string
-  // Rough lines-changed summary vs the canonical, for the review row.
-  diff?: { added: number; removed: number }
-  // Semantic change summary vs the canonical (the modern review surface).
-  // In the prototype this is mocked per submission rather than computed.
-  semanticDiff?: SemanticDiff
-  // Reviewer's feedback when the submission is declined, sent to the
-  // submitter for revision.
-  reviewComment?: string
-}
-
-// Workspace-level allowlists per
-// ../IA_Plan/wiki/concepts/three-level-permissions.md §Workspace level.
-// "Set workspace-level model + custom-node allowlists (delegable to Members)".
-// Partner nodes are vendor-vetted custom nodes — a distinct allowlist
-// from the open community custom-node list.
-export type AllowlistKind = 'model' | 'custom-node' | 'partner-node'
-
-export interface AllowlistEntry {
-  id: string
-  name: string
-  addedAt: string
-  addedByUserId: string
-  note?: string
-}
-
-// Each allowlist is an enabled flag + curated entries. When `enabled`
-// is false the gate is off — anything is permitted regardless of what
-// the entries list says. Admins may still curate entries while the
-// gate is off.
-export interface AllowlistConfig {
-  enabled: boolean
-  entries: AllowlistEntry[]
-}
-
-export interface WorkspaceAllowlists {
-  models: AllowlistConfig
-  customNodes: AllowlistConfig
-  partnerNodes: AllowlistConfig
-}
-
-// Project-level allowlists per
-// ../IA_Plan/wiki/entities/project.md §"What it contains"
-// ("Settings — model allowlist, custom-node allowlist") combined with
-// the prototype's strict-override rule (see design-decisions.md
-// 2026-05-15): `override = false` inherits the workspace allowlist
-// read-only; `override = true` replaces it entirely (workspace entries
-// are not unioned in). The `entries` list is curatable while
-// `override` is off so an Owner can stage a list before flipping it on.
-export type ProjectAllowlistKind = 'model' | 'custom-node'
-
-export interface ProjectAllowlistConfig {
-  override: boolean
-  entries: AllowlistEntry[]
-}
-
-export interface ProjectAllowlists {
-  models: ProjectAllowlistConfig
-  customNodes: ProjectAllowlistConfig
 }
 
 // Project-level defaults per prototype/design-decisions.md 2026-05-15.
@@ -213,30 +95,12 @@ export interface Project {
   // Owner-editable settings surfaced through the Settings tab on
   // ProjectDetailView. Optional because the auto-created Drafts /
   // My Workflows project has no Owner-managed settings surface.
-  allowlists?: ProjectAllowlists
   defaults?: ProjectDefaults
   // Read-only spend attribution for the current calendar month, in
   // credits. The workspace total is derived by summing across projects
   // in the workspace — workspace remains the single billing entity per
   // ../IA_Plan/wiki/entities/workspace.md.
   creditsThisMonth?: number
-  // Allowed-install set per ../IA_Plan/wiki/entities/project.md §"Install
-  // constraints (allowed-install set)" and
-  // decisions/team-locked-install.md — a hard lock by install IDENTITY.
-  //
-  // Per the desktop team (clarified in prototype/design-decisions.md
-  // 2026-05-19 entry): an install is one indivisible bundle (ComfyUI
-  // version + Python deps + custom nodes + ...). The only stable
-  // identity for "this install" is the install's id / bundle hash.
-  // User-chosen display names are labels, not identifiers — Sasha's
-  // "VFX team Q2 2026" can be Reza's "Titanic v1" referring to the same
-  // bundle on different machines.
-  //
-  // `installLockDisplayName` is the *workspace-canonical* name chosen
-  // by the Install Governor when they set the lock; the gate dialog
-  // renders this rather than whatever local label any user has applied.
-  allowedInstallIds?: string[]
-  installLockDisplayName?: string
 }
 
 // Storage medium for an asset. Per
@@ -257,20 +121,20 @@ export interface Workflow {
   ownerUserId?: string
   access?: AssetAccess[]
   storage?: AssetStorage
-  // Fork lineage per ../IA_Plan/wiki/decisions/published-workflow-model.md.
-  // Set when this workflow was created by forking another (fork-on-open,
-  // explicit Fork, or the install gate's "Save to My Workflows"). Points
-  // at the source workflow's id. A fork whose source resolves to a
-  // canonical workflow in a shared project is eligible for Publish to
-  // workspace (overwrite the canonical). Absent on directly-authored
-  // workflows and on canonical workflows themselves. `atVersion` is the
-  // canonical published-version date this fork diverged from — drives the
-  // history graph's offshoot point.
+  // Copy lineage per ../IA_Plan/wiki/decisions/published-workflow-model.md
+  // and the MVP scope (design-decisions.md 2026-06-16). Set when this
+  // workflow was created by copying another (copy-on-access from a project,
+  // or an explicit Save to My Workflows). Points at the source workflow's
+  // id. A copy whose source resolves to a canonical workflow in a shared
+  // project is eligible for Publish to workspace (overwrite the canonical).
+  // Absent on directly-authored workflows and on canonical workflows
+  // themselves. `atVersion` is the canonical published-version date this
+  // copy diverged from — drives the history graph's offshoot point.
   forkedFrom?: { workflowId: string; atVersion?: string }
   // On a canonical: the full Publish-to-workspace timeline (who/when).
   // Display/audit record; the latest publish is the current content. Per
   // ../IA_Plan/wiki/decisions/published-workflow-model.md §"Published-
-  // version history".
+  // version history". Kept as the MVP safety net for ungated overwrite.
   publishedVersions?: PublishedVersion[]
 }
 
@@ -315,13 +179,6 @@ export interface LibraryAsset {
   // Cached preview the app keeps so a referenced file still shows a
   // thumbnail even when its original has moved (the relink case).
   previewUrl?: string
-}
-
-export interface Template {
-  id: string
-  name: string
-  thumbnailUrl?: string
-  description?: string
 }
 
 export interface UsageState {
@@ -426,25 +283,6 @@ export type RoleGrants = Record<DelegableCapability, boolean>
 // filesystem-backed library (Outputs replaces Prompts).
 export type PersonaMode = 'cloud' | 'local'
 
-// Install per ../IA_Plan/wiki/entities/install.md. Runtime entity — owns
-// a ComfyUI version + locally installed packages and models. NOT in the
-// permission spine per
-//   decision: ../IA_Plan/wiki/decisions/install-is-runtime-not-permission-entity.md
-// Cardinality: many installs per user; many installs per workspace; one
-// install shared across workspaces (all at the user level).
-//
-// `id` is the install's stable identity (in product, a bundle/manifest
-// hash assigned by the desktop installer; for the prototype, a string).
-// `displayName` is the user-chosen label and is NOT an identifier — two
-// users can give the same bundle different names. Identity comparisons
-// for the project-level allowed-install set go through `id` only.
-export interface Install {
-  id: string
-  displayName: string
-  comfyUIVersion: string
-  registeredAt: string
-}
-
 // Cross-workspace activity surfaced through the top-bar notifications
 // popover. Drives the alert path for Guest personas who otherwise have
 // no in-workspace cue that something changed in another workspace.
@@ -458,10 +296,6 @@ export type NotificationKind =
   | 'project-grant'
   | 'workspace-invite'
   | 'asset-update'
-  // Submission lifecycle (member-overwrite-request-flow):
-  | 'submission-received' // → owner/admin: a workflow was submitted for review
-  | 'submission-approved' // → submitter: their submission was published
-  | 'submission-rejected' // → submitter: their submission was declined
 
 export interface NotificationTarget {
   workspaceId: string
@@ -476,7 +310,7 @@ export interface Notification {
   target: NotificationTarget
   createdAt: string
   readAt?: string
-  // Free-text body, e.g. a reviewer's decline feedback to the submitter.
+  // Free-text body for a notification, when one is needed.
   message?: string
 }
 
@@ -488,23 +322,13 @@ export interface PersonaFixture {
   projects: Project[]
   workflows: Workflow[]
   libraryAssets: LibraryAsset[]
-  templates: Template[]
   usage: UsageState | null
   members: WorkspaceMember[]
   pendingInvites: PendingInvite[]
   roleGrants: RoleGrants
-  allowlists: WorkspaceAllowlists
   billing: WorkspaceBilling | null
   memberCreditLimits: MemberCreditLimit[]
-  hubSubmissions: HubSubmission[]
-  workflowSubmissions: WorkflowSubmission[]
   notifications: Notification[]
-  // Multi-install state per ../IA_Plan/wiki/concepts/install-switcher.md.
-  // Empty for cloud-only personas — they have no install presence. The
-  // active install determines runtime (not visibility); content is
-  // aggregated across `installs`, not scoped to active.
-  installs: Install[]
-  activeInstallId?: string
 }
 
 export interface PersonaDef {

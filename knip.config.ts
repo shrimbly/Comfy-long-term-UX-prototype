@@ -63,12 +63,7 @@ const config: KnipConfig = {
     'tools/devtools/web/**',
     // Fork-orphaned upstream files — kept to minimize upstream merge friction
     'src/lib/litegraph/src/widgets/TagsWidget.ts',
-    'src/renderer/extensions/vueNodes/widgets/components/WidgetTags.vue',
-    // Prototype explorations parked for reference (not mounted in the router)
-    'src/prototype/pages/ExploreV2Page.vue',
-    'src/prototype/components/CommandPalette.vue',
-    'src/prototype/components/InstallLockEditor.vue',
-    'src/prototype/fixtures/exploreAssets.ts'
+    'src/renderer/extensions/vueNodes/widgets/components/WidgetTags.vue'
   ],
   vite: {
     config: ['vite?(.*).config.mts']

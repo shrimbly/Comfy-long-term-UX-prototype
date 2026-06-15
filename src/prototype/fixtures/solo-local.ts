@@ -42,28 +42,6 @@ export const soloLocalFixture: PersonaFixture = {
   // Referenced local media (non-final linked-media exploration, Flow 03).
   // Comfy points at these files in place; it never copies the bytes.
   libraryAssets: buildLocalMediaReferences(),
-  templates: [
-    {
-      id: 'tpl-txt2img',
-      name: 'Text to image',
-      description: 'A starter image-generation graph.'
-    },
-    {
-      id: 'tpl-img2img',
-      name: 'Image to image',
-      description: 'Transform an input image with a prompt.'
-    },
-    {
-      id: 'tpl-inpaint',
-      name: 'Inpainting',
-      description: 'Mask + regenerate a region.'
-    },
-    {
-      id: 'tpl-upscale',
-      name: 'Upscale',
-      description: 'Increase resolution with a model pass.'
-    }
-  ],
   // No credits — local runs on local hardware.
   usage: null,
   members: [],
@@ -75,27 +53,7 @@ export const soloLocalFixture: PersonaFixture = {
     'edit-allowlists': false,
     'configure-workspace': false
   },
-  allowlists: {
-    models: { enabled: false, entries: [] },
-    customNodes: { enabled: false, entries: [] },
-    partnerNodes: { enabled: false, entries: [] }
-  },
   billing: null,
   memberCreditLimits: [],
-  hubSubmissions: [],
-  workflowSubmissions: [],
-  notifications: [],
-  // Persona 1b surfaces a single local install (the implicit one). Per
-  // ../IA_Plan/wiki/concepts/install-switcher.md the indicator still
-  // renders when only one install exists — the popover just shows nothing
-  // to switch to.
-  installs: [
-    {
-      id: 'install-local-default',
-      displayName: 'Local',
-      comfyUIVersion: '0.4.0',
-      registeredAt: '2026-01-10'
-    }
-  ],
-  activeInstallId: 'install-local-default'
+  notifications: []
 }

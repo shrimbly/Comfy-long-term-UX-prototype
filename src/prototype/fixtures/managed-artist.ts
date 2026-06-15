@@ -19,17 +19,5 @@ export const managedArtistFixture: PersonaFixture = {
     id: jonahId,
     name: 'Jonah Park',
     email: 'jonah@comfy.org'
-  },
-  // One install — the team build. Switcher popover shows nothing to
-  // switch to, matching the Journey 2 expectation that this artist
-  // rarely engages the install surface.
-  installs: [
-    {
-      id: 'install-vfx-team-q2-2026',
-      displayName: 'VFX team Q2 2026',
-      comfyUIVersion: '0.3.5',
-      registeredAt: '2026-04-08'
-    }
-  ],
-  activeInstallId: 'install-vfx-team-q2-2026'
+  }
 }

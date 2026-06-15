@@ -89,23 +89,6 @@
           {{ t('prototype.views.drafts.createWorkflow') }}
         </button>
       </section>
-
-      <section v-if="starterTemplates.length" class="flex flex-col gap-4">
-        <h2
-          class="text-sm font-semibold tracking-wide text-muted-foreground uppercase"
-        >
-          {{ t('prototype.views.drafts.templatesHeading') }}
-        </h2>
-        <div
-          class="grid grid-cols-[repeat(auto-fill,minmax(10rem,14rem))] gap-4"
-        >
-          <TemplateCard
-            v-for="tpl in starterTemplates"
-            :key="tpl.id"
-            :template="tpl"
-          />
-        </div>
-      </section>
     </template>
 
     <p
@@ -123,7 +106,6 @@ import { storeToRefs } from 'pinia'
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
-import TemplateCard from '../components/TemplateCard.vue'
 import WorkflowCard from '../components/WorkflowCard.vue'
 import { usePrototypePersonaStore } from '../stores/personaStore'
 
@@ -160,9 +142,5 @@ const tabs = computed<Array<{ id: DraftsTabId; label: string; count: number }>>(
       count: sharedWorkflows.value.length
     }
   ]
-)
-
-const starterTemplates = computed(() =>
-  personaStore.fixture.templates.slice(0, 4)
 )
 </script>
