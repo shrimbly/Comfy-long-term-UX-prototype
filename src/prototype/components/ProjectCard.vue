@@ -19,7 +19,7 @@
     @click="emit('open', project.id)"
   >
     <span
-      class="grid aspect-square w-full grid-cols-2 grid-rows-2 gap-2 overflow-hidden rounded-md"
+      class="grid aspect-3/2 w-full grid-cols-2 grid-rows-2 gap-2 overflow-hidden rounded-md"
     >
       <span
         v-for="(seed, i) in thumbnailSeeds"
