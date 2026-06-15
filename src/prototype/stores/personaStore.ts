@@ -414,19 +414,22 @@ export const usePrototypePersonaStore = defineStore('prototype-persona', () => {
   // success.
   function moveWorkflowToProject(
     workflowId: string,
-    targetProjectId: string
+    targetProjectId: string,
+    newName?: string
   ): boolean {
     const source = fixture.value.workflows.find((w) => w.id === workflowId)
     const target = fixture.value.projects.find((p) => p.id === targetProjectId)
     if (!source || !target) return false
     const today = new Date().toISOString().slice(0, 10)
     const publishing = !target.isDrafts && target.tier !== 'private'
+    const trimmedName = newName?.trim()
     fixture.value.workflows = fixture.value.workflows.map((w) =>
       w.id === workflowId
         ? {
             ...w,
             projectId: targetProjectId,
             updatedAt: today,
+            ...(trimmedName ? { name: trimmedName } : {}),
             ...(publishing
               ? {
                   forkedFrom: undefined,

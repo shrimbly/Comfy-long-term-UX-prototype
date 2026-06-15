@@ -3,16 +3,15 @@
     open-q:   ../IA_Plan/wiki/open-questions.md#workflow-promotion-flow
     decision: ../IA_Plan/wiki/decisions/published-workflow-model.md
     log:      ../prototype/design-decisions.md (2026-06-09 promotion;
-              2026-06-16 publish = overwrite-existing OR new)
+              2026-06-16 publish = overwrite-existing OR new, stepped)
 
-  Publish a workflow into a project. Two choices:
-    1. Destination project (an existing one, or create a new one).
-    2. Publish as a NEW workflow in that project, or OVERWRITE an existing
-       workflow in it (the user picks which). For a copy, the source
-       canonical + its project are pre-selected so the common "update the
-       original" case is one confirm; the user can switch to new or to a
-       different workflow. Published workflows inherit the project's
-       visibility. Built on the shared design-system Dialog.
+  Publish a workflow into a project, as a two-step wizard:
+    Step 1 — Select a project (an existing one, or add a new one).
+    Step 2 — Replace an existing workflow in that project, or add a new one.
+             The new-workflow name defaults to the current file's name.
+  For a copy, the source canonical + its project are pre-selected so the
+  common "update the original" path is fast. Published workflows inherit
+  the project's visibility. Built on the shared design-system Dialog.
 -->
 <template>
   <Dialog :open="true" @update:open="(v) => !v && emit('close')">
@@ -20,19 +19,21 @@
       <DialogOverlay />
       <DialogContent size="sm">
         <DialogHeader class="items-start pb-0">
-          <DialogTitle>{{ t('prototype.promoteToProject.title') }}</DialogTitle>
+          <DialogTitle>
+            {{
+              step === 1
+                ? t('prototype.promoteToProject.step1Title')
+                : t('prototype.promoteToProject.step2Title')
+            }}
+          </DialogTitle>
           <DialogClose />
         </DialogHeader>
 
-        <div class="flex flex-col px-2 py-1">
-          <span
-            class="px-2 py-1 text-xs font-semibold tracking-wide text-muted-foreground uppercase"
-          >
-            {{ t('prototype.promoteToProject.projectHeading') }}
-          </span>
+        <!-- Step 1 — select project -->
+        <div v-if="step === 1" class="flex flex-col px-2 py-1">
           <div
             v-if="candidates.length"
-            class="flex max-h-48 flex-col gap-0.5 overflow-y-auto py-1 pr-0.5"
+            class="flex max-h-64 flex-col gap-0.5 overflow-y-auto py-1 pr-0.5"
           >
             <Button
               v-for="p in candidates"
@@ -123,7 +124,7 @@
               :placeholder="
                 t('prototype.promoteToProject.newProjectPlaceholder')
               "
-              @keydown.enter="canConfirm && onConfirm()"
+              @keydown.enter="canContinue && goToStep2()"
             />
             <i
               :class="
@@ -134,78 +135,131 @@
               "
             />
           </div>
+        </div>
 
-          <template v-if="showPublishAs">
-            <div class="mx-2 mt-2 mb-1 h-px bg-border-subtle" />
+        <!-- Step 2 — replace or add new -->
+        <div v-else class="flex flex-col px-2 py-1">
+          <p class="px-2 pt-1 pb-2 text-xs text-muted-foreground">
+            {{
+              t('prototype.promoteToProject.step2Subtitle', {
+                project: targetProjectName
+              })
+            }}
+          </p>
+
+          <div
+            class="flex max-h-48 flex-col gap-0.5 overflow-y-auto py-1 pr-0.5"
+          >
+            <Button
+              v-for="w in targetCandidates"
+              :key="w.id"
+              variant="textonly"
+              size="unset"
+              :class="rowClass(targetWorkflowId === w.id)"
+              @click="targetWorkflowId = w.id"
+            >
+              <span
+                class="grid size-8 shrink-0 place-items-center rounded-md bg-secondary-background text-muted-foreground"
+                aria-hidden="true"
+              >
+                <i class="icon-[lucide--file] size-4" />
+              </span>
+              <span class="flex min-w-0 flex-1 flex-col text-left">
+                <span class="truncate text-sm text-base-foreground">{{
+                  w.name
+                }}</span>
+                <span class="truncate text-xs text-muted-foreground">
+                  {{ t('prototype.promoteToProject.overwriteHint') }}
+                </span>
+              </span>
+              <i
+                v-if="targetWorkflowId === w.id"
+                class="icon-[lucide--check] size-4 shrink-0 text-base-foreground"
+              />
+            </Button>
+          </div>
+
+          <div
+            v-if="targetCandidates.length"
+            class="mx-2 my-1 h-px bg-border-subtle"
+          />
+
+          <div
+            :class="
+              cn(
+                'flex items-center gap-3 rounded-lg p-2',
+                isAddNew
+                  ? 'bg-interface-menu-component-surface-selected'
+                  : 'cursor-pointer hover:bg-interface-menu-component-surface-hovered'
+              )
+            "
+            role="button"
+            tabindex="0"
+            @click="targetWorkflowId = NEW_WORKFLOW"
+            @keydown.enter.prevent="targetWorkflowId = NEW_WORKFLOW"
+          >
             <span
-              class="px-2 py-1 text-xs font-semibold tracking-wide text-muted-foreground uppercase"
+              class="grid size-8 shrink-0 place-items-center rounded-md border border-dashed border-border-default text-muted-foreground"
+              aria-hidden="true"
             >
-              {{ t('prototype.promoteToProject.publishAsHeading') }}
+              <i class="icon-[lucide--plus] size-4" />
             </span>
-            <div
-              class="flex max-h-40 flex-col gap-0.5 overflow-y-auto py-1 pr-0.5"
-            >
-              <Button
-                variant="textonly"
-                size="unset"
-                :class="rowClass(targetWorkflowId === NEW_WORKFLOW)"
-                @click="targetWorkflowId = NEW_WORKFLOW"
-              >
-                <span
-                  class="grid size-8 shrink-0 place-items-center rounded-md border border-dashed border-border-default text-muted-foreground"
-                  aria-hidden="true"
-                >
-                  <i class="icon-[lucide--plus] size-4" />
-                </span>
-                <span
-                  class="flex-1 truncate text-left text-sm text-base-foreground"
-                >
-                  {{ t('prototype.promoteToProject.newWorkflowOption') }}
-                </span>
-                <i
-                  v-if="targetWorkflowId === NEW_WORKFLOW"
-                  class="icon-[lucide--check] size-4 shrink-0 text-base-foreground"
-                />
-              </Button>
-              <Button
-                v-for="w in targetCandidates"
-                :key="w.id"
-                variant="textonly"
-                size="unset"
-                :class="rowClass(targetWorkflowId === w.id)"
-                @click="targetWorkflowId = w.id"
-              >
-                <span
-                  class="grid size-8 shrink-0 place-items-center rounded-md bg-secondary-background text-muted-foreground"
-                  aria-hidden="true"
-                >
-                  <i class="icon-[lucide--file] size-4" />
-                </span>
-                <span class="flex min-w-0 flex-1 flex-col text-left">
-                  <span class="truncate text-sm text-base-foreground">{{
-                    w.name
-                  }}</span>
-                  <span class="truncate text-xs text-muted-foreground">
-                    {{ t('prototype.promoteToProject.overwriteHint') }}
-                  </span>
-                </span>
-                <i
-                  v-if="targetWorkflowId === w.id"
-                  class="icon-[lucide--check] size-4 shrink-0 text-base-foreground"
-                />
-              </Button>
-            </div>
-          </template>
+            <span class="flex min-w-0 flex-1 flex-col text-left">
+              <span class="text-sm text-base-foreground">
+                {{ t('prototype.promoteToProject.newWorkflowOption') }}
+              </span>
+              <input
+                v-if="isAddNew"
+                ref="newWorkflowInput"
+                v-model="newWorkflowName"
+                type="text"
+                class="mt-1 min-w-0 rounded-md border border-border-default bg-base-background px-2.5 py-1.5 text-sm text-base-foreground outline-none placeholder:text-muted-foreground"
+                :placeholder="
+                  t('prototype.promoteToProject.newWorkflowPlaceholder')
+                "
+                @click.stop
+                @keydown.enter="canConfirm && onConfirm()"
+              />
+            </span>
+            <i
+              :class="
+                cn(
+                  'icon-[lucide--check] size-4 shrink-0 text-base-foreground',
+                  isAddNew ? 'opacity-100' : 'opacity-0'
+                )
+              "
+            />
+          </div>
         </div>
 
         <DialogFooter>
-          <Button variant="textonly" @click="emit('close')">
-            {{ t('prototype.promoteToProject.cancel') }}
-          </Button>
-          <Button variant="primary" :disabled="!canConfirm" @click="onConfirm">
-            <i class="icon-[lucide--upload]" aria-hidden="true" />
-            {{ t('prototype.promoteToProject.confirm') }}
-          </Button>
+          <template v-if="step === 1">
+            <Button variant="textonly" @click="emit('close')">
+              {{ t('prototype.promoteToProject.cancel') }}
+            </Button>
+            <Button
+              variant="primary"
+              :disabled="!canContinue"
+              @click="goToStep2"
+            >
+              {{ t('prototype.promoteToProject.continue') }}
+              <i class="icon-[lucide--arrow-right]" aria-hidden="true" />
+            </Button>
+          </template>
+          <template v-else>
+            <Button variant="textonly" @click="step = 1">
+              <i class="icon-[lucide--arrow-left]" aria-hidden="true" />
+              {{ t('prototype.promoteToProject.back') }}
+            </Button>
+            <Button
+              variant="primary"
+              :disabled="!canConfirm"
+              @click="onConfirm"
+            >
+              <i class="icon-[lucide--upload]" aria-hidden="true" />
+              {{ t('prototype.promoteToProject.confirm') }}
+            </Button>
+          </template>
         </DialogFooter>
       </DialogContent>
     </DialogPortal>
@@ -239,13 +293,14 @@ const { sourceWorkflowId } = defineProps<{
 
 const emit = defineEmits<{
   close: []
-  // targetWorkflowId === null → publish as a NEW workflow in the project;
+  // targetWorkflowId === null → add as a NEW workflow (named newName);
   // otherwise overwrite that existing workflow.
   publish: [
     payload: {
       projectId: string
       isNewProject: boolean
       targetWorkflowId: string | null
+      newName: string | null
     }
   ]
 }>()
@@ -257,7 +312,14 @@ const { fixture, visibleProjects } = storeToRefs(personaStore)
 const NEW_PROJECT = '__new__'
 const NEW_WORKFLOW = '__new_wf__'
 
+const step = ref<1 | 2>(1)
+
 const candidates = computed(() => visibleProjects.value)
+
+const sourceName = computed(
+  () =>
+    fixture.value.workflows.find((w) => w.id === sourceWorkflowId)?.name ?? ''
+)
 
 // Four colour-tile seeds per project — the same identity glyph used on
 // project cards, so projects read as projects rather than plain rows.
@@ -278,8 +340,17 @@ const selectedId = ref<string>('')
 const newProjectName = ref<string>('')
 const newProjectInput = ref<HTMLInputElement | null>(null)
 const targetWorkflowId = ref<string>(NEW_WORKFLOW)
+const newWorkflowName = ref<string>('')
+const newWorkflowInput = ref<HTMLInputElement | null>(null)
 
 const isNewProject = computed(() => selectedId.value === NEW_PROJECT)
+const isAddNew = computed(() => targetWorkflowId.value === NEW_WORKFLOW)
+
+const targetProjectName = computed(() =>
+  isNewProject.value
+    ? newProjectName.value.trim()
+    : (candidates.value.find((p) => p.id === selectedId.value)?.name ?? '')
+)
 
 // Existing canonical workflows in the selected project that could be
 // overwritten (a copy carries `forkedFrom`; canonicals don't).
@@ -290,41 +361,53 @@ const targetCandidates = computed(() => {
   )
 })
 
-// Surface the new-vs-overwrite choice once a real (existing) project is
-// picked. A brand-new project has no workflows to overwrite, so the choice
-// is implicitly "new".
-const showPublishAs = computed(() => !!selectedId.value && !isNewProject.value)
-
 function selectProject(id: string) {
   selectedId.value = id
-  targetWorkflowId.value = NEW_WORKFLOW
 }
 
 async function selectNewProject() {
   selectedId.value = NEW_PROJECT
-  targetWorkflowId.value = NEW_WORKFLOW
   await nextTick()
   newProjectInput.value?.focus()
 }
 
-// Pre-select the source copy's canonical + its project so "update the
-// original" is one confirm. Only when that project is a visible candidate.
+const canContinue = computed(() =>
+  isNewProject.value ? !!newProjectName.value.trim() : !!selectedId.value
+)
+
+async function goToStep2() {
+  if (!canContinue.value) return
+  // A copy's source canonical (if it's in the chosen project) is the
+  // default overwrite target; otherwise default to adding a new workflow.
+  const source = fixture.value.workflows.find((w) => w.id === sourceWorkflowId)
+  const canonicalId = source?.forkedFrom?.workflowId
+  targetWorkflowId.value =
+    canonicalId && targetCandidates.value.some((w) => w.id === canonicalId)
+      ? canonicalId
+      : NEW_WORKFLOW
+  step.value = 2
+  if (isAddNew.value) {
+    await nextTick()
+    newWorkflowInput.value?.focus()
+  }
+}
+
+const canConfirm = computed(() =>
+  isAddNew.value ? !!newWorkflowName.value.trim() : !!targetWorkflowId.value
+)
+
 onMounted(() => {
+  newWorkflowName.value = sourceName.value
+  // Pre-select the source copy's project so step 1 opens on the likely
+  // destination. Only when that project is a visible candidate.
   const source = fixture.value.workflows.find((w) => w.id === sourceWorkflowId)
   const canonicalId = source?.forkedFrom?.workflowId
   if (!canonicalId) return
   const canonical = fixture.value.workflows.find((w) => w.id === canonicalId)
-  if (!canonical) return
-  if (!candidates.value.some((p) => p.id === canonical.projectId)) return
-  selectedId.value = canonical.projectId
-  targetWorkflowId.value = canonical.id
+  if (canonical && candidates.value.some((p) => p.id === canonical.projectId)) {
+    selectedId.value = canonical.projectId
+  }
 })
-
-const canConfirm = computed(() =>
-  selectedId.value === NEW_PROJECT
-    ? !!newProjectName.value.trim()
-    : !!selectedId.value
-)
 
 function onConfirm() {
   if (!canConfirm.value) return
@@ -332,10 +415,12 @@ function onConfirm() {
   const projectId = isNew
     ? personaStore.createProject(newProjectName.value)
     : selectedId.value
-  const target =
-    isNew || targetWorkflowId.value === NEW_WORKFLOW
-      ? null
-      : targetWorkflowId.value
-  emit('publish', { projectId, isNewProject: isNew, targetWorkflowId: target })
+  const addingNew = isAddNew.value
+  emit('publish', {
+    projectId,
+    isNewProject: isNew,
+    targetWorkflowId: addingNew ? null : targetWorkflowId.value,
+    newName: addingNew ? newWorkflowName.value.trim() : null
+  })
 }
 </script>

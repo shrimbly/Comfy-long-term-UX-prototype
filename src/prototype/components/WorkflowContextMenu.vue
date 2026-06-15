@@ -201,6 +201,7 @@ function onPublished(payload: {
   projectId: string
   isNewProject: boolean
   targetWorkflowId: string | null
+  newName: string | null
 }) {
   promoteDialogOpen.value = false
   const project = fixture.value.projects.find((p) => p.id === payload.projectId)
@@ -224,10 +225,11 @@ function onPublished(payload: {
       life: 2800
     })
   } else {
-    // Publish as a new canonical in the project.
+    // Publish as a new canonical in the project (named via the dialog).
     const ok = personaStore.moveWorkflowToProject(
       workflow.id,
-      payload.projectId
+      payload.projectId,
+      payload.newName ?? undefined
     )
     if (!ok) return
     toast.add({
