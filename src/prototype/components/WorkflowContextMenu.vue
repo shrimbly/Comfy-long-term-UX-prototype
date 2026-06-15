@@ -62,17 +62,11 @@
     </template>
   </ContextMenu>
 
-  <PublishToWorkspaceDialog
-    v-if="publishDialogOpen"
-    :state="publishState"
-    @close="publishDialogOpen = false"
-    @publish="onPublish"
-  />
-
   <PromoteToProjectDialog
     v-if="promoteDialogOpen"
+    :source-workflow-id="workflow.id"
     @close="promoteDialogOpen = false"
-    @promote="onPromoted"
+    @publish="onPublished"
   />
 </template>
 
@@ -88,8 +82,6 @@ import { useI18n } from 'vue-i18n'
 import Button from '@/components/ui/button/Button.vue'
 
 import PromoteToProjectDialog from './PromoteToProjectDialog.vue'
-import PublishToWorkspaceDialog from './PublishToWorkspaceDialog.vue'
-import { useWorkflowPublish } from '../composables/useWorkflowPublish'
 import { usePrototypePersonaStore } from '../stores/personaStore'
 import { usePrototypeUiStore } from '../stores/uiStore'
 import type { ViewerWorkflowRole } from '../composables/useViewerWorkflowRole'
@@ -121,16 +113,8 @@ type ContextMenuHandle = {
 }
 const contextMenu = ref<ContextMenuHandle | null>(null)
 
-const publishDialogOpen = ref(false)
 const promoteDialogOpen = ref(false)
 const uiStore = usePrototypeUiStore()
-
-// Publish to workspace targets a branch whose canonical lives in a shared
-// project. The composable resolves publishability + permission/install
-// gates; the dialog adapts (Publish vs Submit for review). Per
-// ../IA_Plan/wiki/decisions/published-workflow-model.md.
-const workflowRef = computed(() => workflow)
-const publishState = useWorkflowPublish(workflowRef)
 
 const isOwner = computed(() => viewerRole === 'owner')
 const isRunner = computed(() => viewerRole === 'runner')
@@ -209,51 +193,61 @@ function onSaveCopy() {
   })
 }
 
-function onPublishToWorkspace() {
-  publishDialogOpen.value = true
-}
-
 function onPromoteToProject() {
   promoteDialogOpen.value = true
 }
 
-function onPromoted(targetProjectId: string, isNewProject: boolean) {
-  const ok = personaStore.moveWorkflowToProject(workflow.id, targetProjectId)
+function onPublished(payload: {
+  projectId: string
+  isNewProject: boolean
+  targetWorkflowId: string | null
+}) {
   promoteDialogOpen.value = false
-  if (!ok) return
-  const project = fixture.value.projects.find((p) => p.id === targetProjectId)
-  toast.add({
-    severity: 'success',
-    summary: t('prototype.promoteToProject.toastSummary'),
-    detail: t('prototype.promoteToProject.toastDetail', {
-      workflow: workflow.name,
-      project: project?.name ?? ''
-    }),
-    life: 2800
-  })
-  if (isNewProject) {
-    // Brand-new project — open share settings so the user can invite
-    // collaborators straight away.
-    uiStore.requestShareSettings(targetProjectId)
+  const project = fixture.value.projects.find((p) => p.id === payload.projectId)
+  if (payload.targetWorkflowId) {
+    // Overwrite an existing workflow in the project with this one's content.
+    const target = fixture.value.workflows.find(
+      (w) => w.id === payload.targetWorkflowId
+    )
+    const ok = personaStore.publishOverWorkflow(
+      workflow.id,
+      payload.targetWorkflowId
+    )
+    if (!ok) return
+    toast.add({
+      severity: 'success',
+      summary: t('prototype.promoteToProject.overwriteToastSummary'),
+      detail: t('prototype.promoteToProject.overwriteToastDetail', {
+        workflow: target?.name ?? workflow.name,
+        project: project?.name ?? ''
+      }),
+      life: 2800
+    })
+  } else {
+    // Publish as a new canonical in the project.
+    const ok = personaStore.moveWorkflowToProject(
+      workflow.id,
+      payload.projectId
+    )
+    if (!ok) return
+    toast.add({
+      severity: 'success',
+      summary: t('prototype.promoteToProject.toastSummary'),
+      detail: t('prototype.promoteToProject.toastDetail', {
+        workflow: workflow.name,
+        project: project?.name ?? ''
+      }),
+      life: 2800
+    })
+    if (payload.isNewProject) {
+      // Brand-new project — open share settings so the user can invite
+      // collaborators straight away.
+      uiStore.requestShareSettings(payload.projectId)
+    }
   }
-  // Land on the destination project; the new canonical appears in its
+  // Land on the destination project; the published workflow appears in its
   // grid (select it to see the version history in the sidebar).
-  uiStore.go({ kind: 'project', projectId: targetProjectId })
-}
-
-function onPublish() {
-  const ok = personaStore.publishToWorkspace(workflow.id)
-  publishDialogOpen.value = false
-  if (!ok) return
-  toast.add({
-    severity: 'success',
-    summary: t('prototype.workflowMenu.toast.publishedSummary'),
-    detail: t('prototype.workflowMenu.toast.publishedDetail', {
-      workflow: publishState.value.targetWorkflowName ?? workflow.name,
-      project: publishState.value.targetProjectName ?? ''
-    }),
-    life: 2800
-  })
+  uiStore.go({ kind: 'project', projectId: payload.projectId })
 }
 
 function onSetStorage(value: 'local' | 'cloud') {
@@ -358,19 +352,6 @@ const items = computed<MenuItem[]>(() => {
       label: t('prototype.workflowMenu.saveToMyWorkflows'),
       icon: 'icon-[lucide--copy]',
       command: onSaveCopy
-    })
-  }
-
-  // Publish to workspace — shows on any copy of a shared canonical, for
-  // every member (overwrite is ungated per the MVP model; version history
-  // is the safety net). Per published-workflow-model + design-decisions
-  // 2026-06-16.
-  if (publishState.value.isPublishable) {
-    out.push({ separator: true })
-    out.push({
-      label: t('prototype.workflowMenu.publishToWorkspace'),
-      icon: 'icon-[lucide--git-merge]',
-      command: onPublishToWorkspace
     })
   }
 

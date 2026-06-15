@@ -518,30 +518,34 @@ export const usePrototypePersonaStore = defineStore('prototype-persona', () => {
     return newId
   }
 
-  // Publish a copy to workspace — overwrite the canonical workflow it was
-  // copied from with the copy's contents, in place (stable id). Per
-  // ../IA_Plan/wiki/decisions/published-workflow-model.md + the MVP model:
-  // any member can overwrite; the latest publish is the canonical content,
-  // and a version-history entry is appended (the recoverability safety
-  // net). Returns true if a canonical was overwritten.
-  function publishToWorkspace(forkId: string): boolean {
-    const fork = fixture.value.workflows.find((w) => w.id === forkId)
-    if (!fork?.forkedFrom) return false
-    const canonicalId = fork.forkedFrom.workflowId
+  // Publish a workflow's contents OVER an existing canonical workflow,
+  // in place (stable id). The publish flow lets the user pick which
+  // existing workflow to overwrite (commonly the source canonical, but any
+  // workflow in the target project is selectable) — see
+  // PromoteToProjectDialog. Per the MVP model (design-decisions.md
+  // 2026-06-16): any member can overwrite; the latest publish is the
+  // canonical content, and a version-history entry is appended (the
+  // recoverability safety net). Returns true if a workflow was overwritten.
+  function publishOverWorkflow(
+    sourceId: string,
+    targetWorkflowId: string
+  ): boolean {
+    const source = fixture.value.workflows.find((w) => w.id === sourceId)
+    if (!source) return false
     const today = new Date().toISOString().slice(0, 10)
     let overwritten = false
     fixture.value.workflows = fixture.value.workflows.map((w) => {
-      if (w.id !== canonicalId) return w
+      if (w.id !== targetWorkflowId) return w
       overwritten = true
-      // Overwrite canonical content with the copy's. Name + identity +
-      // project membership of the canonical are preserved; the copy's
+      // Overwrite the target's content with the source's. The target's
+      // name + identity + project membership are preserved; the source's
       // working state (thumbnail here as a stand-in for graph contents)
-      // and a fresh updatedAt land on the canonical, plus a new entry on
-      // the published-version history timeline.
+      // and a fresh updatedAt land on it, plus a new entry on the
+      // published-version history timeline.
       return {
         ...w,
         updatedAt: today,
-        thumbnailUrl: fork.thumbnailUrl ?? w.thumbnailUrl,
+        thumbnailUrl: source.thumbnailUrl ?? w.thumbnailUrl,
         publishedVersions: [
           ...(w.publishedVersions ?? []),
           { byUserId: fixture.value.currentUser.id, at: today }
@@ -631,6 +635,6 @@ export const usePrototypePersonaStore = defineStore('prototype-persona', () => {
     moveWorkflowToProject,
     createProject,
     copyToMyWorkflows,
-    publishToWorkspace
+    publishOverWorkflow
   }
 })

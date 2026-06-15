@@ -2,14 +2,17 @@
   Implements:
     open-q:   ../IA_Plan/wiki/open-questions.md#workflow-promotion-flow
     decision: ../IA_Plan/wiki/decisions/published-workflow-model.md
-              — promotion is the initial Publish: seeds the canonical's V1.
-    log:      ../prototype/design-decisions.md (2026-06-09 workflow promotion)
+    log:      ../prototype/design-decisions.md (2026-06-09 promotion;
+              2026-06-16 publish = overwrite-existing OR new)
 
-  Pick a shared project to publish a My Workflows workflow into as its
-  canonical. Install-locked targets the user isn't blessed for are shown
-  but not selectable (publishing into a locked project needs the blessed
-  install — same gate as Publish to workspace). Built on the shared
-  design-system Dialog so it matches the rest of the Comfy Cloud surface.
+  Publish a workflow into a project. Two choices:
+    1. Destination project (an existing one, or create a new one).
+    2. Publish as a NEW workflow in that project, or OVERWRITE an existing
+       workflow in it (the user picks which). For a copy, the source
+       canonical + its project are pre-selected so the common "update the
+       original" case is one confirm; the user can switch to new or to a
+       different workflow. Published workflows inherit the project's
+       visibility. Built on the shared design-system Dialog.
 -->
 <template>
   <Dialog :open="true" @update:open="(v) => !v && emit('close')">
@@ -22,24 +25,22 @@
         </DialogHeader>
 
         <div class="flex flex-col px-2 py-1">
+          <span
+            class="px-2 py-1 text-xs font-semibold tracking-wide text-muted-foreground uppercase"
+          >
+            {{ t('prototype.promoteToProject.projectHeading') }}
+          </span>
           <div
             v-if="candidates.length"
-            class="flex max-h-64 flex-col gap-0.5 overflow-y-auto py-1 pr-0.5"
+            class="flex max-h-48 flex-col gap-0.5 overflow-y-auto py-1 pr-0.5"
           >
             <Button
               v-for="p in candidates"
               :key="p.id"
               variant="textonly"
               size="unset"
-              :class="
-                cn(
-                  'w-full items-center gap-3 rounded-lg p-2 text-left',
-                  selectedId === p.id
-                    ? 'bg-interface-menu-component-surface-selected hover:bg-interface-menu-component-surface-selected'
-                    : 'hover:bg-interface-menu-component-surface-hovered'
-                )
-              "
-              @click="selectedId = p.id"
+              :class="rowClass(selectedId === p.id)"
+              @click="selectProject(p.id)"
             >
               <span
                 class="grid size-8 shrink-0 grid-cols-2 grid-rows-2 gap-0.5 overflow-hidden rounded-md"
@@ -133,6 +134,68 @@
               "
             />
           </div>
+
+          <template v-if="showPublishAs">
+            <div class="mx-2 mt-2 mb-1 h-px bg-border-subtle" />
+            <span
+              class="px-2 py-1 text-xs font-semibold tracking-wide text-muted-foreground uppercase"
+            >
+              {{ t('prototype.promoteToProject.publishAsHeading') }}
+            </span>
+            <div
+              class="flex max-h-40 flex-col gap-0.5 overflow-y-auto py-1 pr-0.5"
+            >
+              <Button
+                variant="textonly"
+                size="unset"
+                :class="rowClass(targetWorkflowId === NEW_WORKFLOW)"
+                @click="targetWorkflowId = NEW_WORKFLOW"
+              >
+                <span
+                  class="grid size-8 shrink-0 place-items-center rounded-md border border-dashed border-border-default text-muted-foreground"
+                  aria-hidden="true"
+                >
+                  <i class="icon-[lucide--plus] size-4" />
+                </span>
+                <span
+                  class="flex-1 truncate text-left text-sm text-base-foreground"
+                >
+                  {{ t('prototype.promoteToProject.newWorkflowOption') }}
+                </span>
+                <i
+                  v-if="targetWorkflowId === NEW_WORKFLOW"
+                  class="icon-[lucide--check] size-4 shrink-0 text-base-foreground"
+                />
+              </Button>
+              <Button
+                v-for="w in targetCandidates"
+                :key="w.id"
+                variant="textonly"
+                size="unset"
+                :class="rowClass(targetWorkflowId === w.id)"
+                @click="targetWorkflowId = w.id"
+              >
+                <span
+                  class="grid size-8 shrink-0 place-items-center rounded-md bg-secondary-background text-muted-foreground"
+                  aria-hidden="true"
+                >
+                  <i class="icon-[lucide--file] size-4" />
+                </span>
+                <span class="flex min-w-0 flex-1 flex-col text-left">
+                  <span class="truncate text-sm text-base-foreground">{{
+                    w.name
+                  }}</span>
+                  <span class="truncate text-xs text-muted-foreground">
+                    {{ t('prototype.promoteToProject.overwriteHint') }}
+                  </span>
+                </span>
+                <i
+                  v-if="targetWorkflowId === w.id"
+                  class="icon-[lucide--check] size-4 shrink-0 text-base-foreground"
+                />
+              </Button>
+            </div>
+          </template>
         </div>
 
         <DialogFooter>
@@ -152,7 +215,7 @@
 <script setup lang="ts">
 import { cn } from '@comfyorg/tailwind-utils'
 import { storeToRefs } from 'pinia'
-import { computed, nextTick, ref } from 'vue'
+import { computed, nextTick, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import Button from '@/components/ui/button/Button.vue'
@@ -169,16 +232,30 @@ import { usePrototypePersonaStore } from '../stores/personaStore'
 import { thumbnailGradient } from '../utils/thumbnail'
 import type { Project } from '../types'
 
+const { sourceWorkflowId } = defineProps<{
+  // The workflow being published (a copy, or a My Workflows original).
+  sourceWorkflowId: string
+}>()
+
 const emit = defineEmits<{
   close: []
-  promote: [projectId: string, isNewProject: boolean]
+  // targetWorkflowId === null → publish as a NEW workflow in the project;
+  // otherwise overwrite that existing workflow.
+  publish: [
+    payload: {
+      projectId: string
+      isNewProject: boolean
+      targetWorkflowId: string | null
+    }
+  ]
 }>()
 
 const { t } = useI18n()
 const personaStore = usePrototypePersonaStore()
-const { visibleProjects } = storeToRefs(personaStore)
+const { fixture, visibleProjects } = storeToRefs(personaStore)
 
 const NEW_PROJECT = '__new__'
+const NEW_WORKFLOW = '__new_wf__'
 
 const candidates = computed(() => visibleProjects.value)
 
@@ -188,17 +265,60 @@ function seedsFor(project: Project): string[] {
   return [0, 1, 2, 3].map((i) => `${project.id}-${i}`)
 }
 
+function rowClass(selected: boolean): string {
+  return cn(
+    'w-full items-center gap-3 rounded-lg p-2 text-left',
+    selected
+      ? 'bg-interface-menu-component-surface-selected hover:bg-interface-menu-component-surface-selected'
+      : 'hover:bg-interface-menu-component-surface-hovered'
+  )
+}
+
 const selectedId = ref<string>('')
 const newProjectName = ref<string>('')
 const newProjectInput = ref<HTMLInputElement | null>(null)
+const targetWorkflowId = ref<string>(NEW_WORKFLOW)
 
 const isNewProject = computed(() => selectedId.value === NEW_PROJECT)
 
+// Existing canonical workflows in the selected project that could be
+// overwritten (a copy carries `forkedFrom`; canonicals don't).
+const targetCandidates = computed(() => {
+  if (!selectedId.value || isNewProject.value) return []
+  return fixture.value.workflows.filter(
+    (w) => w.projectId === selectedId.value && !w.forkedFrom
+  )
+})
+
+// Surface the new-vs-overwrite choice once a real (existing) project is
+// picked. A brand-new project has no workflows to overwrite, so the choice
+// is implicitly "new".
+const showPublishAs = computed(() => !!selectedId.value && !isNewProject.value)
+
+function selectProject(id: string) {
+  selectedId.value = id
+  targetWorkflowId.value = NEW_WORKFLOW
+}
+
 async function selectNewProject() {
   selectedId.value = NEW_PROJECT
+  targetWorkflowId.value = NEW_WORKFLOW
   await nextTick()
   newProjectInput.value?.focus()
 }
+
+// Pre-select the source copy's canonical + its project so "update the
+// original" is one confirm. Only when that project is a visible candidate.
+onMounted(() => {
+  const source = fixture.value.workflows.find((w) => w.id === sourceWorkflowId)
+  const canonicalId = source?.forkedFrom?.workflowId
+  if (!canonicalId) return
+  const canonical = fixture.value.workflows.find((w) => w.id === canonicalId)
+  if (!canonical) return
+  if (!candidates.value.some((p) => p.id === canonical.projectId)) return
+  selectedId.value = canonical.projectId
+  targetWorkflowId.value = canonical.id
+})
 
 const canConfirm = computed(() =>
   selectedId.value === NEW_PROJECT
@@ -212,6 +332,10 @@ function onConfirm() {
   const projectId = isNew
     ? personaStore.createProject(newProjectName.value)
     : selectedId.value
-  emit('promote', projectId, isNew)
+  const target =
+    isNew || targetWorkflowId.value === NEW_WORKFLOW
+      ? null
+      : targetWorkflowId.value
+  emit('publish', { projectId, isNewProject: isNew, targetWorkflowId: target })
 }
 </script>
