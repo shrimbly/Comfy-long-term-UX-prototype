@@ -422,7 +422,26 @@
         "emptyHeading": "Save your first workflow",
         "emptySubtitle": "My Workflows is the default home for new work. Spin one up or start from a template.",
         "createWorkflow": "+ Workflow",
-        "templatesHeading": "Starter templates"
+        "templatesHeading": "Starter templates",
+        "searchPlaceholder": "Search My Workflows…",
+        "filterEmpty": "No workflows match your search.",
+        "filterAria": "Filter workflows by storage",
+        "sortAria": "Sort workflows",
+        "filter": {
+          "all": "All",
+          "cloud": "Cloud",
+          "local": "Local"
+        },
+        "sort": {
+          "lastModified": "Last modified",
+          "oldest": "Oldest",
+          "az": "Name A–Z",
+          "za": "Name Z–A"
+        },
+        "view": {
+          "grid": "Grid view",
+          "list": "List view"
+        }
       },
       "recents": {
         "title": "Recents",

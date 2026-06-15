@@ -8,10 +8,16 @@
 -->
 <template>
   <div
-    class="group flex flex-col gap-2 text-base-foreground select-none"
+    :class="
+      cn(
+        'group text-base-foreground select-none',
+        layout === 'grid' ? 'flex flex-col gap-2' : 'block'
+      )
+    "
     @contextmenu.prevent.stop="onContextMenu"
   >
     <button
+      v-if="layout === 'grid'"
       type="button"
       class="flex cursor-pointer flex-col gap-2 text-left text-base-foreground"
       @click="emit('open', workflow.id)"
@@ -27,48 +33,54 @@
       >
         <span
           v-if="workflow.storage"
-          :title="
-            t(
-              workflow.storage === 'local'
-                ? 'prototype.workflowCard.storageLocal'
-                : 'prototype.workflowCard.storageCloud'
-            )
-          "
+          :title="storageTitle"
           class="absolute top-2 right-2 grid size-6 place-items-center rounded-sm bg-black/40 backdrop-blur-sm"
         >
-          <i
-            :class="
-              cn(
-                'size-3.5 text-white',
-                workflow.storage === 'local'
-                  ? 'icon-[lucide--hard-drive]'
-                  : 'icon-[lucide--cloud]'
-              )
-            "
-          />
+          <i :class="cn('size-3.5 text-white', storageIcon)" />
         </span>
       </span>
       <span class="flex flex-col">
         <span class="flex items-center gap-1.5">
           <span class="truncate text-sm/tight">{{ workflow.name }}</span>
-          <span
-            v-if="isCopy"
-            class="shrink-0 rounded-sm bg-secondary-background px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground"
-          >
+          <span v-if="isCopy" :class="copyBadgeClass">
             {{ t('prototype.workflowCard.copyBadge') }}
           </span>
         </span>
-        <span class="text-xs text-muted-foreground">
-          {{
-            ownerName
-              ? t('prototype.workflowCard.meta', {
-                  date: workflow.updatedAt,
-                  user: ownerName
-                })
-              : workflow.updatedAt
-          }}
+        <span class="text-xs text-muted-foreground">{{ metaText }}</span>
+      </span>
+    </button>
+
+    <button
+      v-else
+      type="button"
+      :class="
+        cn(
+          'flex w-full cursor-pointer items-center gap-3 rounded-lg px-2 py-1.5 text-left transition-colors',
+          selected
+            ? 'bg-secondary-background'
+            : 'hover:bg-secondary-background-hover'
+        )
+      "
+      @click="emit('open', workflow.id)"
+    >
+      <span
+        class="block size-9 shrink-0 overflow-hidden rounded-md"
+        :style="{ background: thumbnail }"
+      />
+      <span class="flex min-w-0 flex-1 items-center gap-1.5">
+        <span class="truncate text-sm">{{ workflow.name }}</span>
+        <span v-if="isCopy" :class="copyBadgeClass">
+          {{ t('prototype.workflowCard.copyBadge') }}
         </span>
       </span>
+      <span
+        v-if="workflow.storage"
+        class="flex shrink-0 items-center gap-1 text-xs text-muted-foreground"
+        :title="storageTitle"
+      >
+        <i :class="cn('size-3.5', storageIcon)" />
+      </span>
+      <span class="shrink-0 text-xs text-muted-foreground">{{ metaText }}</span>
     </button>
 
     <WorkflowContextMenu
@@ -95,10 +107,12 @@ import type { Workflow } from '../types'
 
 const {
   workflow,
+  layout = 'grid',
   showOpenContainingProject = true,
   selected = false
 } = defineProps<{
   workflow: Workflow
+  layout?: 'grid' | 'list'
   showOpenContainingProject?: boolean
   selected?: boolean
 }>()
@@ -113,6 +127,23 @@ const personaStore = usePrototypePersonaStore()
 const thumbnail = computed(() => thumbnailGradient(workflow.id))
 const isCopy = computed(() => !!workflow.forkedFrom)
 
+const copyBadgeClass =
+  'shrink-0 rounded-sm bg-secondary-background px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground'
+
+const storageIcon = computed(() =>
+  workflow.storage === 'local'
+    ? 'icon-[lucide--hard-drive]'
+    : 'icon-[lucide--cloud]'
+)
+
+const storageTitle = computed(() =>
+  t(
+    workflow.storage === 'local'
+      ? 'prototype.workflowCard.storageLocal'
+      : 'prototype.workflowCard.storageCloud'
+  )
+)
+
 // Copy cards show whose copy it is next to the date.
 const ownerName = computed(() => {
   if (!workflow.forkedFrom) return null
@@ -120,6 +151,15 @@ const ownerName = computed(() => {
   if (!id) return null
   return personaStore.fixture.members.find((m) => m.id === id)?.name ?? null
 })
+
+const metaText = computed(() =>
+  ownerName.value
+    ? t('prototype.workflowCard.meta', {
+        date: workflow.updatedAt,
+        user: ownerName.value
+      })
+    : workflow.updatedAt
+)
 
 const workflowRef = computed(() => workflow)
 const viewerRole = useViewerWorkflowRole(workflowRef)
