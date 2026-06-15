@@ -463,12 +463,30 @@ export const usePrototypePersonaStore = defineStore('prototype-persona', () => {
     return id
   }
 
-  // Create a working copy of a workflow in the actor's My Workflows in the
-  // host workspace (the workspace containing the source workflow's project).
-  // Carries `forkedFrom` lineage so a copy of a shared-project canonical can
-  // later Publish to workspace. Returns the new id so the caller can route
-  // into the copy.
-  function branchWorkflow(workflowId: string): string | undefined {
+  // Generate a non-colliding copy name within a project. Keep-every-copy
+  // (design-decisions.md 2026-06-16) means re-copying never overwrites, so
+  // names disambiguate: "X (copy)", "X (copy 2)", …
+  function uniqueCopyName(baseName: string, projectId: string): string {
+    const existing = new Set(
+      fixture.value.workflows
+        .filter((w) => w.projectId === projectId)
+        .map((w) => w.name)
+    )
+    const first = `${baseName} (copy)`
+    if (!existing.has(first)) return first
+    let n = 2
+    while (existing.has(`${baseName} (copy ${n})`)) n++
+    return `${baseName} (copy ${n})`
+  }
+
+  // Copy-on-access (design-decisions.md 2026-06-16). Taking a working copy
+  // of a workflow lands a fresh copy in the actor's My Workflows in the host
+  // workspace (the workspace containing the source's project). Every call
+  // yields a NEW copy — keep-every-copy: no reuse, no dedup, names
+  // disambiguate. The copy carries `forkedFrom` lineage so it can be
+  // published back over the canonical (Publish to workspace) or published
+  // as a new workflow into a project. Returns the new copy's id.
+  function copyToMyWorkflows(workflowId: string): string | undefined {
     const source = fixture.value.workflows.find((w) => w.id === workflowId)
     if (!source) return
     const canonicalId = source.forkedFrom?.workflowId ?? source.id
@@ -480,6 +498,7 @@ export const usePrototypePersonaStore = defineStore('prototype-persona', () => {
     const myWorkflowsId = sourceProject
       ? findHostMyWorkflows(sourceProject.workspaceId)
       : undefined
+    const targetProjectId = myWorkflowsId ?? canonical.projectId
     const newId = `wf-copy-${Date.now()}`
     const today = new Date().toISOString().slice(0, 10)
     const atVersion = canonical.publishedVersions?.at(-1)?.at
@@ -488,8 +507,8 @@ export const usePrototypePersonaStore = defineStore('prototype-persona', () => {
       {
         ...source,
         id: newId,
-        projectId: myWorkflowsId ?? canonical.projectId,
-        name: `${canonical.name} (copy)`,
+        projectId: targetProjectId,
+        name: uniqueCopyName(canonical.name, targetProjectId),
         ownerUserId: fixture.value.currentUser.id,
         updatedAt: today,
         forkedFrom: { workflowId: canonicalId, atVersion },
@@ -497,49 +516,6 @@ export const usePrototypePersonaStore = defineStore('prototype-persona', () => {
       }
     ]
     return newId
-  }
-
-  // Detached personal copy in My Workflows. No lineage — it cannot be
-  // published/merged back. Always available.
-  function saveToMyWorkflows(workflowId: string): string | undefined {
-    const source = fixture.value.workflows.find((w) => w.id === workflowId)
-    if (!source) return
-    const sourceProject = fixture.value.projects.find(
-      (p) => p.id === source.projectId
-    )
-    if (!sourceProject) return
-    const myWorkflowsId = findHostMyWorkflows(sourceProject.workspaceId)
-    if (!myWorkflowsId) return
-    const newId = `wf-copy-${Date.now()}`
-    const today = new Date().toISOString().slice(0, 10)
-    fixture.value.workflows = [
-      ...fixture.value.workflows,
-      {
-        ...source,
-        id: newId,
-        projectId: myWorkflowsId,
-        name: `${source.name} (copy)`,
-        ownerUserId: fixture.value.currentUser.id,
-        updatedAt: today,
-        forkedFrom: undefined,
-        access: []
-      }
-    ]
-    return newId
-  }
-
-  // Copy-on-access per the MVP model (design-decisions.md 2026-06-16).
-  // Opening a workflow in a SHARED project yields a copy in the actor's My
-  // Workflows; editing a shared workflow is never in-place. A workflow
-  // already in My Workflows is edited directly. Returns the id to open.
-  function openForWork(workflowId: string): string | undefined {
-    const source = fixture.value.workflows.find((w) => w.id === workflowId)
-    if (!source) return
-    const sourceProject = fixture.value.projects.find(
-      (p) => p.id === source.projectId
-    )
-    if (!sourceProject || sourceProject.isDrafts) return workflowId
-    return branchWorkflow(workflowId)
   }
 
   // Publish a copy to workspace — overwrite the canonical workflow it was
@@ -654,9 +630,7 @@ export const usePrototypePersonaStore = defineStore('prototype-persona', () => {
     getEffectiveWorkflowStorage,
     moveWorkflowToProject,
     createProject,
-    branchWorkflow,
-    saveToMyWorkflows,
-    openForWork,
+    copyToMyWorkflows,
     publishToWorkspace
   }
 })

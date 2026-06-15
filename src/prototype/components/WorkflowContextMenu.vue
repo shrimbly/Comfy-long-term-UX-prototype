@@ -163,9 +163,11 @@ const canSubmitToHub = computed(() => {
 
 // "Publish to project" is the move-asset-to-another-project verb (the
 // wiki frames promotion as this same verb — concepts/cross-cutting-flows).
-// Available on any owned workflow that isn't a branch (branches publish
-// over their canonical instead). The picker can create a project.
-const isPromotable = computed(() => isOwner.value && !workflow.forkedFrom)
+// Available on any owned workflow, including a copy: on a copy this is the
+// publish-as-NEW mode (publishes the copy as a new canonical into the
+// chosen project), alongside Publish to workspace which OVERWRITES the
+// copy's source canonical. The picker can create a project.
+const isPromotable = computed(() => isOwner.value)
 
 function show(event: MouseEvent) {
   contextMenu.value?.show(event)
@@ -194,21 +196,8 @@ function onRename() {
   personaStore.renameWorkflow(workflow.id, next)
 }
 
-function onBranch() {
-  const newId = personaStore.branchWorkflow(workflow.id)
-  if (!newId) return
-  toast.add({
-    severity: 'success',
-    summary: t('prototype.workflowMenu.toast.branchedSummary'),
-    detail: t('prototype.workflowMenu.toast.branchedDetail', {
-      name: workflow.name
-    }),
-    life: 2800
-  })
-}
-
-function onSaveToMyWorkflows() {
-  const newId = personaStore.saveToMyWorkflows(workflow.id)
+function onSaveCopy() {
+  const newId = personaStore.copyToMyWorkflows(workflow.id)
   if (!newId) return
   toast.add({
     severity: 'success',
@@ -325,14 +314,9 @@ const items = computed<MenuItem[]>(() => {
     })
     if (!isInDrafts.value) {
       out.push({
-        label: t('prototype.workflowMenu.branch'),
-        icon: 'icon-[lucide--git-branch]',
-        command: onBranch
-      })
-      out.push({
         label: t('prototype.workflowMenu.saveToMyWorkflows'),
         icon: 'icon-[lucide--copy]',
-        command: onSaveToMyWorkflows
+        command: onSaveCopy
       })
     }
     if (isPromotable.value) {
@@ -366,26 +350,21 @@ const items = computed<MenuItem[]>(() => {
     })
   }
 
-  // Runner: fork-into-My-Workflows is the explicit way to get a working
-  // copy without going through Open (which also forks per
-  // published-workflow-model). App Runner can't fork per spec.
+  // Runner: Save a copy is the explicit way to get a working copy in My
+  // Workflows. App Runner can't copy per spec.
   if (isRunner.value && !isInDrafts.value) {
     out.push({ separator: true })
     out.push({
-      label: t('prototype.workflowMenu.branch'),
-      icon: 'icon-[lucide--git-branch]',
-      command: onBranch
-    })
-    out.push({
       label: t('prototype.workflowMenu.saveToMyWorkflows'),
       icon: 'icon-[lucide--copy]',
-      command: onSaveToMyWorkflows
+      command: onSaveCopy
     })
   }
 
-  // Publish to workspace — shows on any branch of a shared canonical, for
-  // every actor (the dialog adapts: Publish for those with overwrite
-  // rights, Submit for review otherwise). Per published-workflow-model.
+  // Publish to workspace — shows on any copy of a shared canonical, for
+  // every member (overwrite is ungated per the MVP model; version history
+  // is the safety net). Per published-workflow-model + design-decisions
+  // 2026-06-16.
   if (publishState.value.isPublishable) {
     out.push({ separator: true })
     out.push({

@@ -36,28 +36,7 @@
     </header>
 
     <div class="flex flex-col gap-2">
-      <Button
-        :variant="myBranch ? 'inverted' : 'primary'"
-        size="md"
-        @click="onBranch"
-      >
-        <i
-          :class="
-            cn(
-              'size-4',
-              myBranch
-                ? 'icon-[lucide--git-branch]'
-                : 'icon-[lucide--git-branch-plus]'
-            )
-          "
-        />
-        {{
-          myBranch
-            ? t('prototype.workflowSidebar.openBranch')
-            : t('prototype.workflowSidebar.createBranch')
-        }}
-      </Button>
-      <Button variant="secondary" size="md" @click="onOpenCopy">
+      <Button variant="primary" size="md" @click="onOpenCopy">
         <i class="icon-[lucide--copy] size-4" />
         {{ t('prototype.workflowSidebar.openCopy') }}
       </Button>
@@ -160,15 +139,6 @@ const versionNumber = computed(
   () => canonical.value?.publishedVersions?.length ?? 0
 )
 
-// The current user's own branch of this canonical, if any.
-const myBranch = computed(() =>
-  personaStore.fixture.workflows.find(
-    (w) =>
-      w.ownerUserId === personaStore.fixture.currentUser.id &&
-      w.forkedFrom?.workflowId === workflowId
-  )
-)
-
 function memberName(userId: string): string {
   return (
     personaStore.fixture.members.find((m) => m.id === userId)?.name ?? userId
@@ -187,27 +157,6 @@ const versions = computed(() => {
   }))
 })
 
-function onBranch() {
-  if (!canonical.value) return
-  const name = canonical.value.name
-  if (myBranch.value) {
-    toast.add({
-      severity: 'info',
-      summary: t('prototype.workflowSidebar.toast.openBranchSummary'),
-      detail: t('prototype.workflowSidebar.toast.openBranchDetail', { name }),
-      life: 2200
-    })
-    return
-  }
-  personaStore.branchWorkflow(workflowId)
-  toast.add({
-    severity: 'success',
-    summary: t('prototype.workflowSidebar.toast.branchSummary'),
-    detail: t('prototype.workflowSidebar.toast.branchDetail', { name }),
-    life: 2800
-  })
-}
-
 // No editor in the prototype — opening a past version confirms via toast.
 function onOpenVersion(number: number) {
   if (!canonical.value) return
@@ -224,7 +173,7 @@ function onOpenVersion(number: number) {
 
 function onOpenCopy() {
   if (!canonical.value) return
-  personaStore.saveToMyWorkflows(workflowId)
+  personaStore.copyToMyWorkflows(workflowId)
   toast.add({
     severity: 'success',
     summary: t('prototype.workflowSidebar.toast.copySummary'),
