@@ -70,7 +70,7 @@
     type="button"
     :class="
       cn(
-        'group flex w-full items-center gap-3 rounded-lg bg-secondary-background px-3 py-2 text-left text-base-foreground transition-colors select-none',
+        'group flex items-center gap-3 rounded-lg bg-secondary-background px-3 py-2.5 text-left text-base-foreground transition-colors select-none',
         project.currentUserHasAccess
           ? 'cursor-pointer hover:bg-secondary-background-hover'
           : 'cursor-not-allowed opacity-50'
@@ -84,24 +84,18 @@
     >
       <i class="icon-[lucide--folder] size-4 text-muted-foreground" />
     </span>
-    <span class="min-w-0 flex-1 truncate text-sm/tight">{{
-      project.name
-    }}</span>
-    <span class="shrink-0 text-xs text-muted-foreground">
-      {{
-        t('prototype.views.projects.workflowCount', {
-          count: workflows.length
-        })
-      }}
-    </span>
-    <span :class="tierBadgeClass">
-      {{ t(`prototype.projectTier.${project.tier}`) }}
-    </span>
-    <span
-      v-if="!project.currentUserHasAccess"
-      class="shrink-0 text-xs text-muted-foreground italic"
-    >
-      {{ t('prototype.views.projects.noAccess') }}
+    <span class="flex min-w-0 flex-1 flex-col">
+      <span class="truncate text-sm/tight">{{ project.name }}</span>
+      <span
+        :class="
+          cn(
+            'truncate text-xs text-muted-foreground',
+            !project.currentUserHasAccess && 'italic'
+          )
+        "
+      >
+        {{ metaText }}
+      </span>
     </span>
   </button>
 </template>
@@ -134,6 +128,17 @@ const { t } = useI18n()
 const tiles = computed(() => {
   const ids = workflows.slice(0, 4).map((w) => w.id)
   return Array.from({ length: 4 }, (_, i) => ids[i] ?? null)
+})
+
+// List chip second line: workflow count + the project's scope as "location".
+const metaText = computed(() => {
+  if (!project.currentUserHasAccess) {
+    return t('prototype.views.projects.noAccess')
+  }
+  const count = t('prototype.views.projects.workflowCount', {
+    count: workflows.length
+  })
+  return `${count} · ${t(`prototype.projectTier.${project.tier}`)}`
 })
 
 const tierBadgeClass = computed(() =>

@@ -91,7 +91,10 @@
         @open="onOpen"
       />
     </div>
-    <div v-else-if="sortedProjects.length" class="flex flex-col gap-2">
+    <div
+      v-else-if="sortedProjects.length"
+      class="grid grid-cols-[repeat(auto-fill,minmax(14rem,18rem))] gap-3"
+    >
       <ProjectCard
         v-for="p in sortedProjects"
         :key="p.id"
