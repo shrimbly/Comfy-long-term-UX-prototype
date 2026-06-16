@@ -130,7 +130,6 @@
             v-for="card in featuredCards"
             :key="card.id"
             :title="card.title"
-            :subtitle="card.subtitle"
             :seed="card.id"
           />
         </div>
@@ -156,39 +155,14 @@ type FeaturedTab = 'whatsNew' | 'templates' | 'tutorials'
 
 // "What's new" promotes the latest models supported in ComfyUI (per
 // blog.comfy.org) across modalities — image, audio, 3D, multimodal.
-// Subtitles are a short maker + modality hook; the placeholder gradient
-// is seeded off the id.
-const featuredModels: Array<{ id: string; title: string; subtitle: string }> = [
-  {
-    id: 'model-ideogram-4',
-    title: 'Ideogram 4.0',
-    subtitle: 'Ideogram · open-weights image'
-  },
-  {
-    id: 'model-stable-audio-3',
-    title: 'Stable Audio 3.0',
-    subtitle: 'Stability AI · music & sound'
-  },
-  {
-    id: 'model-triposplat',
-    title: 'TripoSplat',
-    subtitle: 'Tripo · 3D Gaussian splats'
-  },
-  {
-    id: 'model-krea-2',
-    title: 'Krea 2 Image',
-    subtitle: 'Krea · image with creative direction'
-  },
-  {
-    id: 'model-luma-uni-1',
-    title: 'Luma Uni-1',
-    subtitle: 'Luma · image generation & editing'
-  },
-  {
-    id: 'model-gemma-4',
-    title: 'Gemma 4',
-    subtitle: 'Google · open multimodal'
-  }
+// The placeholder gradient is seeded off the id.
+const featuredModels: Array<{ id: string; title: string }> = [
+  { id: 'model-ideogram-4', title: 'Ideogram 4.0' },
+  { id: 'model-stable-audio-3', title: 'Stable Audio 3.0' },
+  { id: 'model-triposplat', title: 'TripoSplat' },
+  { id: 'model-krea-2', title: 'Krea 2 Image' },
+  { id: 'model-luma-uni-1', title: 'Luma Uni-1' },
+  { id: 'model-gemma-4', title: 'Gemma 4' }
 ]
 
 const { t } = useI18n()
@@ -266,14 +240,11 @@ const featuredTabs = computed<Array<{ value: FeaturedTab; label: string }>>(
   ]
 )
 
-const featuredCards = computed<
-  Array<{ id: string; title: string; subtitle: string }>
->(() => {
+const featuredCards = computed<Array<{ id: string; title: string }>>(() => {
   if (activeFeaturedTab.value === 'templates') {
     return workflowTemplates.slice(0, 3).map((tpl) => ({
       id: tpl.id,
-      title: tpl.name,
-      subtitle: t(`prototype.templateCategory.${tpl.category}`)
+      title: tpl.name
     }))
   }
   if (activeFeaturedTab.value === 'whatsNew') {
