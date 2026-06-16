@@ -36,9 +36,6 @@
           <span class="min-w-0 flex-1 truncate text-xs/tight">{{
             workflow.name
           }}</span>
-          <span v-if="isCopy" :class="copyBadgeClass">
-            {{ t('prototype.workflowCard.copyBadge') }}
-          </span>
           <StorageIcon
             v-if="workflow.storage"
             :storage="workflow.storage"
@@ -46,7 +43,9 @@
             class="size-4 shrink-0 text-muted-foreground"
           />
         </span>
-        <span class="text-xs text-muted-foreground">{{ metaText }}</span>
+        <span class="text-xs text-muted-foreground">{{
+          workflow.updatedAt
+        }}</span>
       </span>
     </button>
 
@@ -69,9 +68,6 @@
       />
       <span class="flex min-w-0 flex-1 items-center gap-1.5">
         <span class="truncate text-sm">{{ workflow.name }}</span>
-        <span v-if="isCopy" :class="copyBadgeClass">
-          {{ t('prototype.workflowCard.copyBadge') }}
-        </span>
       </span>
       <StorageIcon
         v-if="workflow.storage"
@@ -79,7 +75,9 @@
         :label="storageTitle"
         class="size-4 shrink-0 text-muted-foreground"
       />
-      <span class="shrink-0 text-xs text-muted-foreground">{{ metaText }}</span>
+      <span class="shrink-0 text-xs text-muted-foreground">{{
+        workflow.updatedAt
+      }}</span>
     </button>
 
     <WorkflowContextMenu
@@ -101,7 +99,6 @@ import { useI18n } from 'vue-i18n'
 import StorageIcon from './StorageIcon.vue'
 import WorkflowContextMenu from './WorkflowContextMenu.vue'
 import { useViewerWorkflowRole } from '../composables/useViewerWorkflowRole'
-import { usePrototypePersonaStore } from '../stores/personaStore'
 import { thumbnailGradient } from '../utils/thumbnail'
 import type { Workflow } from '../types'
 
@@ -123,12 +120,7 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
-const personaStore = usePrototypePersonaStore()
 const thumbnail = computed(() => thumbnailGradient(workflow.id))
-const isCopy = computed(() => !!workflow.forkedFrom)
-
-const copyBadgeClass =
-  'shrink-0 rounded-sm bg-secondary-background px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground'
 
 const storageTitle = computed(() =>
   t(
@@ -136,23 +128,6 @@ const storageTitle = computed(() =>
       ? 'prototype.workflowCard.storageLocal'
       : 'prototype.workflowCard.storageCloud'
   )
-)
-
-// Copy cards show whose copy it is next to the date.
-const ownerName = computed(() => {
-  if (!workflow.forkedFrom) return null
-  const id = workflow.ownerUserId
-  if (!id) return null
-  return personaStore.fixture.members.find((m) => m.id === id)?.name ?? null
-})
-
-const metaText = computed(() =>
-  ownerName.value
-    ? t('prototype.workflowCard.meta', {
-        date: workflow.updatedAt,
-        user: ownerName.value
-      })
-    : workflow.updatedAt
 )
 
 const workflowRef = computed(() => workflow)
