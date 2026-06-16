@@ -41,6 +41,7 @@
         )
       }
     }"
+    @hide="onHide"
   >
     <template #item="{ item, props }">
       <Button
@@ -109,6 +110,12 @@ type ContextMenuHandle = {
 }
 const contextMenu = ref<ContextMenuHandle | null>(null)
 
+// Each WorkflowCard owns its own menu instance, so opening one would
+// otherwise leave the others on screen (the card stops the contextmenu
+// event from reaching PrimeVue's outside-click dismissal). Track the
+// open menu at module scope and dismiss it before showing the next.
+let closeActiveMenu: (() => void) | null = null
+
 const promoteDialogOpen = ref(false)
 const uiStore = usePrototypeUiStore()
 
@@ -141,8 +148,18 @@ const canPublishDirectLink = computed(() => {
 // copy's source canonical. The picker can create a project.
 const isPromotable = computed(() => isOwner.value)
 
+function hide() {
+  contextMenu.value?.hide()
+}
+
 function show(event: MouseEvent) {
+  if (closeActiveMenu && closeActiveMenu !== hide) closeActiveMenu()
+  closeActiveMenu = hide
   contextMenu.value?.show(event)
+}
+
+function onHide() {
+  if (closeActiveMenu === hide) closeActiveMenu = null
 }
 defineExpose({ show })
 
