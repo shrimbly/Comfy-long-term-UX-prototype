@@ -14,9 +14,7 @@
   than rendering disabled placeholders.
 -->
 <template>
-  <div
-    :class="cn('flex flex-col gap-8', activeTab !== 'members' && 'max-w-3xl')"
-  >
+  <div class="flex flex-col gap-8">
     <header>
       <PageTitle>{{ t('prototype.views.settings.title') }}</PageTitle>
     </header>
@@ -44,6 +42,7 @@
 
     <template v-if="activeTab === 'general'">
       <SettingsPanel
+        class="max-w-4xl"
         :title="t('prototype.views.settings.general.heading')"
         :description="t('prototype.views.settings.general.description')"
       >
@@ -123,55 +122,60 @@
     </template>
 
     <template v-if="activeTab === 'danger'">
-      <SettingsPanel
-        v-if="canTransferOwnership"
-        :title="t('prototype.views.settings.ownership.heading')"
-        :description="t('prototype.views.settings.ownership.description')"
-      >
-        <div class="flex items-center gap-2">
-          <select v-model="transferTargetId" :class="cn(inputClass, 'flex-1')">
-            <option value="" disabled>
-              {{ t('prototype.views.settings.ownership.selectPlaceholder') }}
-            </option>
-            <option
-              v-for="admin in otherAdmins"
-              :key="admin.id"
-              :value="admin.id"
-            >
-              {{ admin.name }} ({{ admin.email }})
-            </option>
-          </select>
-          <Button
-            variant="inverted"
-            size="lg"
-            :disabled="!transferTargetId"
-            @click="onTransferOwnership"
-          >
-            {{ t('prototype.views.settings.ownership.transfer') }}
-          </Button>
-        </div>
-        <p
-          v-if="!otherAdmins.length"
-          class="m-0 text-xs text-muted-foreground italic"
+      <div class="flex max-w-4xl flex-col gap-8">
+        <SettingsPanel
+          v-if="canTransferOwnership"
+          :title="t('prototype.views.settings.ownership.heading')"
+          :description="t('prototype.views.settings.ownership.description')"
         >
-          {{ t('prototype.views.settings.ownership.noTargets') }}
-        </p>
-        <p class="m-0 text-xs text-muted-foreground italic">
-          {{ t('prototype.views.settings.ownership.billingNote') }}
-        </p>
-      </SettingsPanel>
+          <div class="flex items-center gap-2">
+            <select
+              v-model="transferTargetId"
+              :class="cn(inputClass, 'flex-1')"
+            >
+              <option value="" disabled>
+                {{ t('prototype.views.settings.ownership.selectPlaceholder') }}
+              </option>
+              <option
+                v-for="admin in otherAdmins"
+                :key="admin.id"
+                :value="admin.id"
+              >
+                {{ admin.name }} ({{ admin.email }})
+              </option>
+            </select>
+            <Button
+              variant="inverted"
+              size="lg"
+              :disabled="!transferTargetId"
+              @click="onTransferOwnership"
+            >
+              {{ t('prototype.views.settings.ownership.transfer') }}
+            </Button>
+          </div>
+          <p
+            v-if="!otherAdmins.length"
+            class="m-0 text-xs text-muted-foreground italic"
+          >
+            {{ t('prototype.views.settings.ownership.noTargets') }}
+          </p>
+          <p class="m-0 text-xs text-muted-foreground italic">
+            {{ t('prototype.views.settings.ownership.billingNote') }}
+          </p>
+        </SettingsPanel>
 
-      <SettingsPanel
-        v-if="canDeleteWorkspace"
-        :title="t('prototype.views.settings.danger.heading')"
-        :description="t('prototype.views.settings.danger.description')"
-      >
-        <div>
-          <Button variant="destructive" size="lg" @click="onDelete">
-            {{ t('prototype.views.settings.danger.deleteButton') }}
-          </Button>
-        </div>
-      </SettingsPanel>
+        <SettingsPanel
+          v-if="canDeleteWorkspace"
+          :title="t('prototype.views.settings.danger.heading')"
+          :description="t('prototype.views.settings.danger.description')"
+        >
+          <div>
+            <Button variant="destructive" size="lg" @click="onDelete">
+              {{ t('prototype.views.settings.danger.deleteButton') }}
+            </Button>
+          </div>
+        </SettingsPanel>
+      </div>
     </template>
   </div>
 </template>
