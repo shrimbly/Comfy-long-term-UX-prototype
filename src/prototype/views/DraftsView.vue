@@ -136,7 +136,7 @@ const { fixture, draftsProject } = storeToRefs(personaStore)
 const searchQuery = ref('')
 const filter = ref<FilterValue>('all')
 const sort = ref<SortValue>('last-modified')
-const viewMode = ref<ViewMode>('list')
+const viewMode = ref<ViewMode>('grid')
 
 const privateWorkflows = computed(() => {
   const drafts = draftsProject.value
