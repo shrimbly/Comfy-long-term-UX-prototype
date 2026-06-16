@@ -7,17 +7,17 @@
 -->
 <template>
   <section
-    class="flex flex-col gap-6 rounded-2xl border border-interface-stroke p-6"
+    class="flex flex-col gap-6 rounded-2xl border border-border-subtle p-6"
   >
     <header
       v-if="title || $slots.header"
       class="flex flex-col gap-2 md:flex-row md:items-start md:justify-between md:gap-4"
     >
       <div class="flex flex-col gap-1">
-        <h2 v-if="title" class="m-0 text-sm font-bold text-text-primary">
+        <h2 v-if="title" class="m-0 text-sm font-bold text-base-foreground">
           {{ title }}
         </h2>
-        <p v-if="description" class="m-0 text-sm text-text-secondary">
+        <p v-if="description" class="m-0 text-sm text-muted-foreground">
           {{ description }}
         </p>
         <slot name="header" />

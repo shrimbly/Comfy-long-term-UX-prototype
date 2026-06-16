@@ -19,7 +19,7 @@
       <PageTitle>{{ t('prototype.views.settings.title') }}</PageTitle>
     </header>
 
-    <nav class="flex gap-1 border-b border-interface-stroke" role="tablist">
+    <nav class="flex gap-1 border-b border-border-subtle" role="tablist">
       <button
         v-for="tab in visibleTabs"
         :key="tab.id"
@@ -30,8 +30,8 @@
           cn(
             'inline-flex h-10 cursor-pointer appearance-none items-center gap-2 border-0 border-b-2 bg-transparent px-3 text-sm transition-colors',
             activeTab === tab.id
-              ? 'border-text-primary text-text-primary'
-              : 'border-transparent text-text-secondary hover:text-text-primary'
+              ? 'border-base-foreground text-base-foreground'
+              : 'border-transparent text-muted-foreground hover:text-base-foreground'
           )
         "
         @click="activeTab = tab.id"
@@ -46,7 +46,7 @@
         :description="t('prototype.views.settings.general.description')"
       >
         <div class="flex flex-col gap-1">
-          <label class="text-xs text-muted" :for="nameInputId">
+          <label class="text-xs text-muted-foreground" :for="nameInputId">
             {{ t('prototype.views.settings.general.nameLabel') }}
           </label>
           <input
@@ -60,7 +60,7 @@
         </div>
 
         <div class="flex flex-col gap-1">
-          <label class="text-xs text-muted" :for="descInputId">
+          <label class="text-xs text-muted-foreground" :for="descInputId">
             {{ t('prototype.views.settings.general.descriptionLabel') }}
           </label>
           <textarea
@@ -80,26 +80,29 @@
 
         <dl class="grid grid-cols-2 gap-4 text-sm">
           <div class="flex flex-col gap-0.5">
-            <dt class="text-xs text-muted">
+            <dt class="text-xs text-muted-foreground">
               {{ t('prototype.views.settings.general.typeLabel') }}
             </dt>
             <dd>
               <span
-                class="inline-flex h-6 items-center rounded-full bg-secondary-background px-2 text-xs text-text-primary"
+                class="inline-flex h-6 items-center rounded-full bg-secondary-background px-2 text-xs text-base-foreground"
               >
                 {{ tierLabel }}
               </span>
             </dd>
           </div>
           <div class="flex flex-col gap-0.5">
-            <dt class="text-xs text-muted">
+            <dt class="text-xs text-muted-foreground">
               {{ t('prototype.views.settings.general.ownerLabel') }}
             </dt>
-            <dd class="text-sm text-text-primary">{{ ownerLabel }}</dd>
+            <dd class="text-sm text-base-foreground">{{ ownerLabel }}</dd>
           </div>
         </dl>
 
-        <p v-if="!canEditIdentity" class="m-0 text-xs text-muted italic">
+        <p
+          v-if="!canEditIdentity"
+          class="m-0 text-xs text-muted-foreground italic"
+        >
           {{ t('prototype.views.settings.general.readOnly') }}
         </p>
       </SettingsPanel>
@@ -121,10 +124,10 @@
             "
           />
           <span class="flex flex-col gap-0.5 text-sm">
-            <span class="text-text-primary">
+            <span class="text-base-foreground">
               {{ t('prototype.views.settings.dataTraining.toggleLabel') }}
             </span>
-            <span class="text-xs text-muted">
+            <span class="text-xs text-muted-foreground">
               {{ t('prototype.views.settings.dataTraining.toggleHint') }}
             </span>
           </span>
@@ -179,10 +182,13 @@
             {{ t('prototype.views.settings.ownership.transfer') }}
           </Button>
         </div>
-        <p v-if="!otherAdmins.length" class="m-0 text-xs text-muted italic">
+        <p
+          v-if="!otherAdmins.length"
+          class="m-0 text-xs text-muted-foreground italic"
+        >
           {{ t('prototype.views.settings.ownership.noTargets') }}
         </p>
-        <p class="m-0 text-xs text-muted italic">
+        <p class="m-0 text-xs text-muted-foreground italic">
           {{ t('prototype.views.settings.ownership.billingNote') }}
         </p>
       </SettingsPanel>
@@ -226,7 +232,7 @@ import type { WorkspaceRole } from '../types'
 type TabId = 'general' | 'billing' | 'advanced'
 
 const inputClass =
-  'h-10 rounded-lg border border-interface-stroke bg-base-background px-3 text-sm text-text-primary outline-none focus:border-text-primary disabled:cursor-not-allowed disabled:opacity-60'
+  'h-10 rounded-lg border border-border-subtle bg-base-background px-3 text-sm text-base-foreground outline-none focus:border-base-foreground disabled:cursor-not-allowed disabled:opacity-60'
 
 const { t } = useI18n()
 const personaStore = usePrototypePersonaStore()

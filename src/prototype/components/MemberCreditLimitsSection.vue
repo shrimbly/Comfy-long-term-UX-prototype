@@ -11,7 +11,7 @@
     :description="t('prototype.views.settings.creditLimits.description')"
   >
     <SettingsSubCard>
-      <p class="m-0 text-sm text-text-secondary italic">
+      <p class="m-0 text-sm text-muted-foreground italic">
         {{ t('prototype.views.settings.creditLimits.mechanismNote') }}
       </p>
     </SettingsSubCard>
@@ -20,22 +20,22 @@
       <thead class="bg-secondary-background">
         <tr>
           <th
-            class="px-3 py-2 text-left text-xs font-medium tracking-wide text-muted uppercase"
+            class="px-3 py-2 text-left text-xs font-medium tracking-wide text-muted-foreground uppercase"
           >
             {{ t('prototype.views.settings.creditLimits.col.member') }}
           </th>
           <th
-            class="px-3 py-2 text-left text-xs font-medium tracking-wide text-muted uppercase"
+            class="px-3 py-2 text-left text-xs font-medium tracking-wide text-muted-foreground uppercase"
           >
             {{ t('prototype.views.settings.creditLimits.col.limit') }}
           </th>
           <th
-            class="px-3 py-2 text-left text-xs font-medium tracking-wide text-muted uppercase"
+            class="px-3 py-2 text-left text-xs font-medium tracking-wide text-muted-foreground uppercase"
           >
             {{ t('prototype.views.settings.creditLimits.col.period') }}
           </th>
           <th
-            class="px-3 py-2 text-left text-xs font-medium tracking-wide text-muted uppercase"
+            class="px-3 py-2 text-left text-xs font-medium tracking-wide text-muted-foreground uppercase"
           >
             {{ t('prototype.views.settings.creditLimits.col.usage') }}
           </th>
@@ -46,12 +46,12 @@
         <tr
           v-for="row in rows"
           :key="row.memberId"
-          class="border-t border-interface-stroke"
+          class="border-t border-border-subtle"
         >
           <td class="px-3 py-2 align-middle">
             <div class="flex flex-col gap-0.5">
-              <span class="text-sm text-text-primary">{{ row.name }}</span>
-              <span class="text-xs text-muted">{{ row.email }}</span>
+              <span class="text-sm text-base-foreground">{{ row.name }}</span>
+              <span class="text-xs text-muted-foreground">{{ row.email }}</span>
             </div>
           </td>
           <td class="px-3 py-2 align-middle">
@@ -60,14 +60,14 @@
               type="number"
               min="0"
               step="50"
-              class="h-8 w-24 rounded-md border border-interface-stroke bg-base-background px-2 text-sm text-text-primary outline-none focus:border-text-primary"
+              class="h-8 w-24 rounded-md border border-border-subtle bg-base-background px-2 text-sm text-base-foreground outline-none focus:border-base-foreground"
               @change="onLimitChange(row.memberId, row.period, $event)"
             />
           </td>
           <td class="px-3 py-2 align-middle">
             <select
               :value="row.period"
-              class="h-8 rounded-md border border-interface-stroke bg-base-background px-2 text-sm text-text-primary outline-none focus:border-text-primary"
+              class="h-8 rounded-md border border-border-subtle bg-base-background px-2 text-sm text-base-foreground outline-none focus:border-base-foreground"
               @change="onPeriodChange(row.memberId, row.limit, $event)"
             >
               <option value="monthly">
@@ -84,10 +84,10 @@
           <td class="px-3 py-2 align-middle">
             <div class="flex flex-col gap-1">
               <div class="flex items-baseline gap-1 text-sm">
-                <span class="text-text-primary">
+                <span class="text-base-foreground">
                   {{ row.used.toLocaleString() }}
                 </span>
-                <span class="text-xs text-muted">
+                <span class="text-xs text-muted-foreground">
                   /
                   {{
                     row.limit > 0
@@ -105,7 +105,7 @@
                   :class="
                     row.used >= row.limit
                       ? 'bg-warning-background'
-                      : 'bg-text-primary'
+                      : 'bg-base-foreground'
                   "
                   :style="{ width: `${row.usagePct}%` }"
                 />
@@ -126,7 +126,7 @@
         <tr v-if="!rows.length">
           <td
             colspan="5"
-            class="px-3 py-6 text-center text-sm text-text-secondary"
+            class="px-3 py-6 text-center text-sm text-muted-foreground"
           >
             {{ t('prototype.views.settings.creditLimits.noMembers') }}
           </td>

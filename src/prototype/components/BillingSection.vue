@@ -19,7 +19,7 @@
       >
         <div class="flex flex-col gap-2">
           <div class="flex items-center gap-2">
-            <span class="text-sm font-bold text-text-primary">
+            <span class="text-sm font-bold text-base-foreground">
               {{ tierName }}
             </span>
             <span
@@ -30,8 +30,8 @@
             </span>
           </div>
           <div class="flex items-baseline gap-1 font-semibold">
-            <span class="text-2xl text-text-primary">${{ tierPrice }}</span>
-            <span class="text-base text-text-secondary">
+            <span class="text-2xl text-base-foreground">${{ tierPrice }}</span>
+            <span class="text-base text-muted-foreground">
               {{
                 tier === 'personal'
                   ? t('subscription.usdPerMonth')
@@ -39,7 +39,7 @@
               }}
             </span>
           </div>
-          <div class="text-sm text-text-secondary">
+          <div class="text-sm text-muted-foreground">
             {{
               billing.subscription.cancelsAt
                 ? t('subscription.expiresDate', {
@@ -70,19 +70,19 @@
       <div class="flex flex-col gap-6 lg:flex-row lg:items-stretch">
         <SettingsSubCard class="flex-1 lg:max-w-sm">
           <div class="flex flex-col gap-2">
-            <div class="text-sm text-muted">
+            <div class="text-sm text-muted-foreground">
               {{ t('subscription.totalCredits') }}
             </div>
-            <div class="text-2xl font-bold text-text-primary">
+            <div class="text-2xl font-bold text-base-foreground">
               {{ billing.creditBalance.remaining.toLocaleString() }}
             </div>
           </div>
 
-          <table class="text-sm text-muted">
+          <table class="text-sm text-muted-foreground">
             <tbody>
               <tr>
                 <td
-                  class="pr-4 text-left align-middle font-bold text-text-primary"
+                  class="pr-4 text-left align-middle font-bold text-base-foreground"
                 >
                   {{ billing.creditBalance.monthlyAllowance.toLocaleString() }}
                   /
@@ -100,7 +100,7 @@
               </tr>
               <tr>
                 <td
-                  class="pr-4 text-left align-middle font-bold text-text-primary"
+                  class="pr-4 text-left align-middle font-bold text-base-foreground"
                 >
                   0
                 </td>
@@ -123,7 +123,7 @@
         </SettingsSubCard>
 
         <div class="flex flex-col gap-2">
-          <div class="text-sm text-text-primary">
+          <div class="text-sm text-base-foreground">
             {{ t('subscription.yourPlanIncludes') }}
           </div>
           <div class="flex flex-col">
@@ -132,8 +132,8 @@
               :key="benefit.key"
               class="flex items-center gap-2 py-2"
             >
-              <i class="icon-[lucide--check] size-3 text-text-primary" />
-              <span class="text-sm text-text-secondary">
+              <i class="icon-[lucide--check] size-3 text-base-foreground" />
+              <span class="text-sm text-muted-foreground">
                 {{ benefit.label }}
               </span>
             </div>
@@ -145,7 +145,7 @@
     <SettingsPanel v-if="tier === 'team'">
       <div class="flex items-center justify-between gap-1">
         <div class="flex flex-col gap-2">
-          <h4 class="m-0 text-sm text-text-primary">
+          <h4 class="m-0 text-sm text-base-foreground">
             {{ t('subscription.nextMonthInvoice') }}
           </h4>
           <Button
@@ -158,17 +158,17 @@
           </Button>
         </div>
         <div class="flex flex-col items-end gap-2">
-          <h4 class="m-0 font-bold text-text-primary">
+          <h4 class="m-0 font-bold text-base-foreground">
             ${{ nextMonthInvoice }}
           </h4>
-          <h5 class="m-0 text-sm text-text-secondary">
+          <h5 class="m-0 text-sm text-muted-foreground">
             {{ t('subscription.memberCount', billableMemberCount) }}
           </h5>
         </div>
       </div>
     </SettingsPanel>
 
-    <p class="m-0 text-xs text-text-secondary italic">
+    <p class="m-0 text-xs text-muted-foreground italic">
       {{ t('prototype.views.settings.billing.ownershipNote') }}
     </p>
   </div>
