@@ -39,10 +39,11 @@
           <span v-if="isCopy" :class="copyBadgeClass">
             {{ t('prototype.workflowCard.copyBadge') }}
           </span>
-          <i
+          <StorageIcon
             v-if="workflow.storage"
-            :title="storageTitle"
-            :class="cn('size-3.5 shrink-0 text-muted-foreground', storageIcon)"
+            :storage="workflow.storage"
+            :label="storageTitle"
+            class="size-4 shrink-0 text-muted-foreground"
           />
         </span>
         <span class="text-xs text-muted-foreground">{{ metaText }}</span>
@@ -63,7 +64,7 @@
       @click="emit('open', workflow.id)"
     >
       <span
-        class="block size-9 shrink-0 overflow-hidden rounded-md"
+        class="block aspect-3/2 h-9 shrink-0 overflow-hidden rounded-md"
         :style="{ background: thumbnail }"
       />
       <span class="flex min-w-0 flex-1 items-center gap-1.5">
@@ -72,13 +73,12 @@
           {{ t('prototype.workflowCard.copyBadge') }}
         </span>
       </span>
-      <span
+      <StorageIcon
         v-if="workflow.storage"
-        class="flex shrink-0 items-center gap-1 text-xs text-muted-foreground"
-        :title="storageTitle"
-      >
-        <i :class="cn('size-3.5', storageIcon)" />
-      </span>
+        :storage="workflow.storage"
+        :label="storageTitle"
+        class="size-4 shrink-0 text-muted-foreground"
+      />
       <span class="shrink-0 text-xs text-muted-foreground">{{ metaText }}</span>
     </button>
 
@@ -98,6 +98,7 @@ import { cn } from '@comfyorg/tailwind-utils'
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
+import StorageIcon from './StorageIcon.vue'
 import WorkflowContextMenu from './WorkflowContextMenu.vue'
 import { useViewerWorkflowRole } from '../composables/useViewerWorkflowRole'
 import { usePrototypePersonaStore } from '../stores/personaStore'
@@ -128,12 +129,6 @@ const isCopy = computed(() => !!workflow.forkedFrom)
 
 const copyBadgeClass =
   'shrink-0 rounded-sm bg-secondary-background px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground'
-
-const storageIcon = computed(() =>
-  workflow.storage === 'local'
-    ? 'icon-[lucide--hard-drive]'
-    : 'icon-[lucide--cloud]'
-)
 
 const storageTitle = computed(() =>
   t(
