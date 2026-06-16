@@ -113,39 +113,16 @@
         {{ t('prototype.sidebar.upgradeCta') }}
       </button>
 
-      <div class="flex items-center justify-between px-1">
-        <div class="flex items-center gap-1">
-          <Button
-            variant="link"
-            size="icon-sm"
-            :aria-label="t('prototype.sidebar.help')"
-          >
-            <i class="icon-[lucide--circle-help] size-4" />
-          </Button>
-          <Button
-            variant="link"
-            size="icon-sm"
-            :aria-label="t('prototype.sidebar.notifications')"
-          >
-            <i class="icon-[lucide--bell] size-4" />
-          </Button>
-          <Button
-            variant="link"
-            size="icon-sm"
-            :aria-label="t('prototype.sidebar.theme')"
-          >
-            <i class="icon-[lucide--moon] size-4" />
-          </Button>
-        </div>
-        <Button
-          variant="link"
-          size="icon-sm"
-          :aria-label="t('prototype.sidebar.more')"
-          @click="uiStore.go({ kind: 'settings' })"
-        >
-          <i class="icon-[lucide--ellipsis] size-4" />
-        </Button>
-      </div>
+      <SidebarItem
+        :label="t('prototype.sidebar.settings')"
+        icon="icon-[lucide--settings]"
+        :active="activeView.kind === 'settings'"
+        @click="uiStore.go({ kind: 'settings' })"
+      />
+      <SidebarItem
+        :label="t('prototype.sidebar.help')"
+        icon="icon-[lucide--circle-help]"
+      />
     </div>
   </aside>
 </template>
@@ -154,8 +131,6 @@
 import { storeToRefs } from 'pinia'
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-
-import Button from '@/components/ui/button/Button.vue'
 
 import ComfyWordmark from './ComfyWordmark.vue'
 import SidebarGroup from './sidebar/SidebarGroup.vue'
