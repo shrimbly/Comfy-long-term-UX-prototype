@@ -424,6 +424,11 @@
         },
         "tutorialsPlaceholder": "Tutorials are coming soon."
       },
+      "templates": {
+        "title": "Templates",
+        "typeFilterLabel": "Filter templates by type",
+        "allTypes": "All types"
+      },
       "explore": {
         "searchPlaceholder": "Search or press ⌘K",
         "filterAll": "All",

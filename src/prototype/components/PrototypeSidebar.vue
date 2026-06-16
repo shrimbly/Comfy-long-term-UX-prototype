@@ -45,6 +45,12 @@
         :active="activeView.kind === 'recents'"
         @click="uiStore.go({ kind: 'recents' })"
       />
+      <SidebarItem
+        :label="t('prototype.sidebar.templates')"
+        icon="icon-[lucide--layout-template]"
+        :active="activeView.kind === 'templates'"
+        @click="uiStore.go({ kind: 'templates' })"
+      />
     </div>
 
     <nav class="flex flex-1 flex-col overflow-y-auto">

@@ -33,6 +33,7 @@
           :project-id="activeView.projectId"
         />
         <RecentsView v-else-if="activeView.kind === 'recents'" />
+        <TemplatesView v-else-if="activeView.kind === 'templates'" />
         <MembersView v-else-if="activeView.kind === 'members'" />
         <SettingsView v-else-if="activeView.kind === 'settings'" />
       </main>
@@ -66,6 +67,7 @@ import ProjectDetailView from '../views/ProjectDetailView.vue'
 import ProjectsView from '../views/ProjectsView.vue'
 import RecentsView from '../views/RecentsView.vue'
 import SettingsView from '../views/SettingsView.vue'
+import TemplatesView from '../views/TemplatesView.vue'
 
 const uiStore = usePrototypeUiStore()
 const tabsStore = usePrototypeTabsStore()
