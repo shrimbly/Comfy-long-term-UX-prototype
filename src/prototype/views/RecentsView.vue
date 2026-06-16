@@ -21,34 +21,14 @@
     <div v-if="recentWorkflows.length" class="flex flex-col gap-4">
       <div class="flex items-center justify-between gap-3">
         <div class="flex items-center gap-2">
-          <button
+          <FilterPill
             v-for="opt in filterOptions"
             :key="opt.value"
-            type="button"
-            :class="
-              cn(
-                'inline-flex cursor-pointer items-center gap-1.5 rounded-full px-3 py-1 text-sm transition-colors',
-                filter === opt.value
-                  ? 'bg-base-foreground text-base-background'
-                  : 'bg-secondary-background text-base-foreground hover:bg-secondary-background-hover'
-              )
-            "
+            :label="opt.label"
+            :count="opt.count"
+            :active="filter === opt.value"
             @click="filter = opt.value"
-          >
-            <span>{{ opt.label }}</span>
-            <span
-              :class="
-                cn(
-                  'rounded-full px-1.5 text-xs',
-                  filter === opt.value
-                    ? 'bg-base-background text-base-foreground'
-                    : 'bg-secondary-background-hover text-muted-foreground'
-                )
-              "
-            >
-              {{ opt.count }}
-            </span>
-          </button>
+          />
         </div>
 
         <div ref="sortMenuRef" class="relative inline-flex">
@@ -126,12 +106,12 @@
 </template>
 
 <script setup lang="ts">
-import { cn } from '@comfyorg/tailwind-utils'
 import { onClickOutside } from '@vueuse/core'
 import { storeToRefs } from 'pinia'
 import { computed, ref, useTemplateRef } from 'vue'
 import { useI18n } from 'vue-i18n'
 
+import FilterPill from '../components/FilterPill.vue'
 import WorkflowCard from '../components/WorkflowCard.vue'
 import { usePrototypePersonaStore } from '../stores/personaStore'
 import type { Workflow } from '../types'

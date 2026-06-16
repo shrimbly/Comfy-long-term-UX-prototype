@@ -27,28 +27,14 @@
 
     <div class="flex items-center justify-between gap-3">
       <div class="flex items-center gap-2">
-        <Button
+        <FilterPill
           v-for="opt in filterOptions"
           :key="opt.value"
-          :variant="filter === opt.value ? 'inverted' : 'secondary'"
-          size="unset"
-          class="h-8 gap-1.5 rounded-full px-3 text-sm"
+          :label="opt.label"
+          :count="opt.count"
+          :active="filter === opt.value"
           @click="filter = opt.value"
-        >
-          <span>{{ opt.label }}</span>
-          <span
-            :class="
-              cn(
-                'rounded-full px-1.5 text-xs',
-                filter === opt.value
-                  ? 'bg-base-background text-base-foreground'
-                  : 'bg-secondary-background-hover text-muted-foreground'
-              )
-            "
-          >
-            {{ opt.count }}
-          </span>
-        </Button>
+        />
       </div>
 
       <div class="flex items-center gap-2">
@@ -130,8 +116,7 @@ import { storeToRefs } from 'pinia'
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
-import Button from '@/components/ui/button/Button.vue'
-
+import FilterPill from '../components/FilterPill.vue'
 import ProjectCard from '../components/ProjectCard.vue'
 import ToolbarSelect from '../components/ToolbarSelect.vue'
 import { usePrototypePersonaStore } from '../stores/personaStore'
