@@ -54,7 +54,7 @@
             :value="workspace?.name ?? ''"
             :disabled="!canEditIdentity"
             type="text"
-            :class="inputClass"
+            :class="cn(inputClass, 'max-w-md')"
             @change="onNameChange(($event.target as HTMLInputElement).value)"
           />
         </div>
@@ -71,7 +71,7 @@
               t('prototype.views.settings.general.descriptionPlaceholder')
             "
             rows="2"
-            :class="cn(inputClass, 'h-auto resize-y py-2')"
+            :class="cn(inputClass, 'h-auto max-w-md resize-y py-2')"
             @change="
               onDescriptionChange(($event.target as HTMLTextAreaElement).value)
             "
@@ -83,7 +83,7 @@
             <dt class="text-xs text-muted-foreground">
               {{ t('prototype.views.settings.general.typeLabel') }}
             </dt>
-            <dd>
+            <dd class="m-0">
               <span
                 class="inline-flex h-6 items-center rounded-full bg-secondary-background-hover px-2 text-xs text-base-foreground"
               >
@@ -95,7 +95,7 @@
             <dt class="text-xs text-muted-foreground">
               {{ t('prototype.views.settings.general.ownerLabel') }}
             </dt>
-            <dd class="text-sm text-base-foreground">{{ ownerLabel }}</dd>
+            <dd class="m-0 text-sm text-base-foreground">{{ ownerLabel }}</dd>
           </div>
         </dl>
 
@@ -106,33 +106,6 @@
           {{ t('prototype.views.settings.general.readOnly') }}
         </p>
       </SettingsPanel>
-
-      <SettingsPanel
-        v-if="isAdmin || canConfigureWorkspace"
-        :title="t('prototype.views.settings.dataTraining.heading')"
-        :description="t('prototype.views.settings.dataTraining.description')"
-      >
-        <label class="flex items-start gap-3">
-          <input
-            :checked="!!workspace?.dataTrainingOptOut"
-            type="checkbox"
-            class="mt-0.5 size-4 cursor-pointer appearance-auto accent-base-foreground"
-            @change="
-              personaStore.setDataTrainingOptOut(
-                ($event.target as HTMLInputElement).checked
-              )
-            "
-          />
-          <span class="flex flex-col gap-0.5 text-sm">
-            <span class="text-base-foreground">
-              {{ t('prototype.views.settings.dataTraining.toggleLabel') }}
-            </span>
-            <span class="text-xs text-muted-foreground">
-              {{ t('prototype.views.settings.dataTraining.toggleHint') }}
-            </span>
-          </span>
-        </label>
-      </SettingsPanel>
     </template>
 
     <template v-if="activeTab === 'billing' && fixture.billing">
@@ -141,20 +114,9 @@
         :tier="workspace?.tier ?? 'team'"
         :billable-member-count="billableMemberCount"
       />
-
-      <MemberCreditLimitsSection
-        v-if="workspace?.tier === 'team'"
-        :members="fixture.members"
-        :limits="fixture.memberCreditLimits"
-        @set="
-          (memberId, limit, period) =>
-            personaStore.setMemberCreditLimit(memberId, limit, period)
-        "
-        @remove="(memberId) => personaStore.removeMemberCreditLimit(memberId)"
-      />
     </template>
 
-    <template v-if="activeTab === 'advanced'">
+    <template v-if="activeTab === 'danger'">
       <SettingsPanel
         v-if="canTransferOwnership"
         :title="t('prototype.views.settings.ownership.heading')"
@@ -199,12 +161,7 @@
         :description="t('prototype.views.settings.danger.description')"
       >
         <div>
-          <Button
-            variant="destructive-textonly"
-            size="lg"
-            class="border border-destructive-background/40"
-            @click="onDelete"
-          >
+          <Button variant="destructive" size="lg" @click="onDelete">
             {{ t('prototype.views.settings.danger.deleteButton') }}
           </Button>
         </div>
@@ -224,12 +181,11 @@ import PageTitle from '../components/PageTitle.vue'
 import Button from '@/components/ui/button/Button.vue'
 
 import BillingSection from '../components/BillingSection.vue'
-import MemberCreditLimitsSection from '../components/MemberCreditLimitsSection.vue'
 import SettingsPanel from '../components/settings/SettingsPanel.vue'
 import { usePrototypePersonaStore } from '../stores/personaStore'
 import type { WorkspaceRole } from '../types'
 
-type TabId = 'general' | 'billing' | 'advanced'
+type TabId = 'general' | 'billing' | 'danger'
 
 const inputClass =
   'h-10 rounded-lg border border-border-subtle bg-base-background px-3 text-sm text-base-foreground outline-none focus:border-base-foreground disabled:cursor-not-allowed disabled:opacity-60'
@@ -249,12 +205,6 @@ const isAdmin = computed(() => viewerRole.value === 'admin')
 const workspace = computed(() => currentWorkspace.value)
 
 const canEditIdentity = computed(() => viewerRole.value === 'admin')
-const canConfigureWorkspace = computed(
-  () =>
-    viewerRole.value === 'admin' ||
-    (viewerRole.value === 'member' &&
-      fixture.value.roleGrants['configure-workspace'])
-)
 
 const otherAdmins = computed(() =>
   fixture.value.members.filter(
@@ -281,8 +231,8 @@ const visibleTabs = computed(() => {
   }
   if (canTransferOwnership.value || canDeleteWorkspace.value) {
     tabs.push({
-      id: 'advanced',
-      label: t('prototype.views.settings.tabs.advanced')
+      id: 'danger',
+      label: t('prototype.views.settings.tabs.dangerZone')
     })
   }
   return tabs

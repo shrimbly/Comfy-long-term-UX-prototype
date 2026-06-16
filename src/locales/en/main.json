@@ -716,8 +716,8 @@
           "installs": "Installs",
           "review": "Review",
           "publishing": "Publishing",
-          "billing": "Billing & credit limits",
-          "advanced": "Advanced"
+          "billing": "Billing",
+          "dangerZone": "Danger zone"
         },
         "review": {
           "heading": "Submitted workflows",
