@@ -10,9 +10,7 @@
 <template>
   <div class="flex flex-col gap-6">
     <header>
-      <h1 class="text-2xl font-semibold">
-        {{ t('prototype.views.recents.title') }}
-      </h1>
+      <PageTitle>{{ t('prototype.views.recents.title') }}</PageTitle>
       <p class="mt-1 text-sm text-muted-foreground">
         {{ t('prototype.views.recents.subtitle') }}
       </p>
@@ -112,6 +110,7 @@ import { computed, ref, useTemplateRef } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import FilterPill from '../components/FilterPill.vue'
+import PageTitle from '../components/PageTitle.vue'
 import WorkflowCard from '../components/WorkflowCard.vue'
 import { usePrototypePersonaStore } from '../stores/personaStore'
 import type { Workflow } from '../types'

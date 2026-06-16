@@ -13,9 +13,7 @@
 <template>
   <div class="flex flex-col gap-6">
     <header class="flex items-center justify-between">
-      <h1 class="text-2xl font-semibold">
-        {{ t('prototype.views.projects.title') }}
-      </h1>
+      <PageTitle>{{ t('prototype.views.projects.title') }}</PageTitle>
       <button
         type="button"
         class="inline-flex h-10 cursor-pointer items-center gap-2 rounded-lg bg-primary-background px-4 py-2 text-sm font-medium text-button-surface-contrast transition-colors hover:bg-primary-background-hover"
@@ -117,6 +115,7 @@ import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import FilterPill from '../components/FilterPill.vue'
+import PageTitle from '../components/PageTitle.vue'
 import ProjectCard from '../components/ProjectCard.vue'
 import ToolbarSelect from '../components/ToolbarSelect.vue'
 import { usePrototypePersonaStore } from '../stores/personaStore'

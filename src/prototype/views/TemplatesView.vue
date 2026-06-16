@@ -10,9 +10,7 @@
 <template>
   <div class="flex flex-col gap-6">
     <header class="flex items-center justify-between gap-3">
-      <h1 class="text-2xl font-semibold">
-        {{ t('prototype.views.templates.title') }}
-      </h1>
+      <PageTitle>{{ t('prototype.views.templates.title') }}</PageTitle>
       <ToolbarSelect
         v-model="categoryFilter"
         :options="categoryOptions"
@@ -36,6 +34,7 @@
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
+import PageTitle from '../components/PageTitle.vue'
 import ShowcaseCard from '../components/ShowcaseCard.vue'
 import ToolbarSelect from '../components/ToolbarSelect.vue'
 import { workflowTemplates } from '../fixtures/templates'

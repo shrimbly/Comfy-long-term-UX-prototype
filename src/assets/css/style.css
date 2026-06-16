@@ -1,5 +1,15 @@
 @import '@comfyorg/design-system/css/style.css';
 
+/* PP Formula (brand display face, shared with the consumer website) — used for
+   prototype page titles. Medium only; that's the page-title weight. */
+@font-face {
+  font-family: 'PP Formula';
+  src: url('/fonts/PPFormula-Medium.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
 /* Use 0.001ms instead of 0s so transitionend/animationend events still fire
    and JS listeners aren't broken. */
 .disable-animations *,

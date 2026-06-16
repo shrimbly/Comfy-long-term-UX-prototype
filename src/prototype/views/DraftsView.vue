@@ -13,9 +13,7 @@
   <div class="flex flex-col gap-6">
     <header class="flex items-end justify-between">
       <div>
-        <h1 class="text-2xl font-semibold">
-          {{ t('prototype.views.drafts.title') }}
-        </h1>
+        <PageTitle>{{ t('prototype.views.drafts.title') }}</PageTitle>
         <p class="mt-1 text-sm text-muted-foreground">
           {{ t('prototype.views.drafts.subtitle') }}
         </p>
@@ -118,6 +116,8 @@
 import { storeToRefs } from 'pinia'
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+
+import PageTitle from '../components/PageTitle.vue'
 
 import Button from '@/components/ui/button/Button.vue'
 

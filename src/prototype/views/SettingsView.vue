@@ -16,9 +16,7 @@
 <template>
   <div class="flex flex-col gap-8">
     <header>
-      <h1 class="m-0 text-2xl font-semibold text-text-primary">
-        {{ t('prototype.views.settings.title') }}
-      </h1>
+      <PageTitle>{{ t('prototype.views.settings.title') }}</PageTitle>
       <p class="mt-1 text-sm text-text-secondary">
         {{ t('prototype.views.settings.subtitle') }}
       </p>
@@ -217,6 +215,8 @@ import { cn } from '@comfyorg/tailwind-utils'
 import { storeToRefs } from 'pinia'
 import { computed, ref, useId, watchEffect } from 'vue'
 import { useI18n } from 'vue-i18n'
+
+import PageTitle from '../components/PageTitle.vue'
 
 import Button from '@/components/ui/button/Button.vue'
 

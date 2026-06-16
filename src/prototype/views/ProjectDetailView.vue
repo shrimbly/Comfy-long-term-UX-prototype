@@ -26,7 +26,7 @@
 
     <header class="flex items-start justify-between gap-4">
       <div class="flex items-center gap-3">
-        <h1 class="m-0 text-2xl font-semibold">{{ project?.name }}</h1>
+        <PageTitle>{{ project?.name }}</PageTitle>
         <span
           v-if="project"
           class="rounded-sm bg-secondary-background-hover px-2 py-0.5 text-xs text-muted-foreground"
@@ -197,6 +197,8 @@ import { cn } from '@comfyorg/tailwind-utils'
 import { storeToRefs } from 'pinia'
 import { computed, onMounted, ref, watchEffect } from 'vue'
 import { useI18n } from 'vue-i18n'
+
+import PageTitle from '../components/PageTitle.vue'
 
 import ProjectSharingDialog from '../components/ProjectSharingDialog.vue'
 import ProjectUsageSection from '../components/ProjectUsageSection.vue'

@@ -20,9 +20,7 @@
   <div class="flex flex-col gap-6">
     <header class="flex items-start justify-between">
       <div>
-        <h1 class="text-2xl font-semibold">
-          {{ t('prototype.views.members.title') }}
-        </h1>
+        <PageTitle>{{ t('prototype.views.members.title') }}</PageTitle>
         <p class="mt-1 text-sm text-muted-foreground">
           {{ t('prototype.views.members.subtitle', { count: memberCount }) }}
         </p>
@@ -240,6 +238,8 @@ import { cn } from '@comfyorg/tailwind-utils'
 import { storeToRefs } from 'pinia'
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+
+import PageTitle from '../components/PageTitle.vue'
 
 import InviteMemberDialog from '../components/InviteMemberDialog.vue'
 import MemberRowActions from '../components/MemberRowActions.vue'

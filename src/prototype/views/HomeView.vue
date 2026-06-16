@@ -11,7 +11,11 @@
 <template>
   <div class="mx-auto flex w-full max-w-6xl flex-col gap-10">
     <section class="flex flex-col items-center gap-5 pt-6">
-      <h1 class="text-center text-3xl font-semibold">{{ greeting }}</h1>
+      <h1
+        class="text-center font-['PP_Formula'] text-3xl font-medium tracking-[-0.03em]"
+      >
+        {{ greeting }}
+      </h1>
       <label
         class="flex h-12 w-full max-w-2xl items-center gap-3 rounded-full border border-border-subtle bg-secondary-background px-5 transition-colors focus-within:border-muted-foreground"
       >
