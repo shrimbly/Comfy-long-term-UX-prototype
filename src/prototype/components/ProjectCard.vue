@@ -19,12 +19,18 @@
     @click="emit('open', project.id)"
   >
     <span
-      class="grid aspect-3/2 w-full grid-cols-2 grid-rows-2 gap-2 overflow-hidden rounded-md"
+      class="grid aspect-3/2 w-full gap-2 overflow-hidden rounded-md"
+      :class="mosaicClass"
     >
       <span
         v-for="(seed, i) in thumbnailSeeds"
         :key="i"
-        class="block rounded-sm"
+        :class="
+          cn(
+            'block rounded-sm',
+            thumbnailSeeds.length === 3 && i === 0 && 'row-span-2'
+          )
+        "
         :style="{ background: thumbnailGradient(seed) }"
       />
     </span>
@@ -77,12 +83,18 @@
     @click="emit('open', project.id)"
   >
     <span
-      class="grid size-10 shrink-0 grid-cols-2 grid-rows-2 gap-1 overflow-hidden rounded-md"
+      class="grid size-10 shrink-0 gap-1 overflow-hidden rounded-md"
+      :class="mosaicClass"
     >
       <span
         v-for="(seed, i) in thumbnailSeeds"
         :key="i"
-        class="block rounded-xs"
+        :class="
+          cn(
+            'block rounded-xs',
+            thumbnailSeeds.length === 3 && i === 0 && 'row-span-2'
+          )
+        "
         :style="{ background: thumbnailGradient(seed) }"
       />
     </span>
@@ -141,9 +153,21 @@ const emit = defineEmits<{
 
 const { t } = useI18n()
 
+// One tile per workflow (capped at 4); an empty project still shows a
+// single placeholder tile so the card never renders a blank thumbnail.
 const thumbnailSeeds = computed(() => {
-  const seeds = workflows.slice(0, 4).map((w) => w.id)
-  while (seeds.length < 4) seeds.push(`${project.id}-${seeds.length}`)
-  return seeds
+  const ids = workflows.slice(0, 4).map((w) => w.id)
+  return ids.length ? ids : [`${project.id}-empty`]
+})
+
+const mosaicClass = computed(() => {
+  switch (thumbnailSeeds.value.length) {
+    case 1:
+      return 'grid-cols-1 grid-rows-1'
+    case 2:
+      return 'grid-cols-2 grid-rows-1'
+    default:
+      return 'grid-cols-2 grid-rows-2'
+  }
 })
 </script>

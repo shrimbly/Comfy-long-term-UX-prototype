@@ -419,6 +419,117 @@ export const adminFixture: PersonaFixture = {
       kind: 'workflow',
       ownerUserId: 'user-jane',
       updatedAt: '2026-05-03'
+    },
+    // Extra project canonicals so most projects carry 4+ workflows.
+    // proj-launch (3) and proj-indie-short (2) stay under 4 on purpose,
+    // to exercise the count-matched thumbnail mosaic on the project cards.
+    {
+      id: 'wf-marketing-email',
+      projectId: 'proj-marketing',
+      name: 'Email header generator',
+      kind: 'workflow',
+      ownerUserId: user.id,
+      updatedAt: '2026-06-08',
+      storage: 'cloud'
+    },
+    {
+      id: 'wf-marketing-carousel',
+      projectId: 'proj-marketing',
+      name: 'Social carousel set',
+      kind: 'workflow',
+      ownerUserId: 'user-jane',
+      updatedAt: '2026-05-30',
+      storage: 'cloud'
+    },
+    {
+      id: 'wf-marketing-promo',
+      projectId: 'proj-marketing',
+      name: 'Promo video stills',
+      kind: 'workflow',
+      ownerUserId: user.id,
+      updatedAt: '2026-05-18',
+      storage: 'local'
+    },
+    {
+      id: 'wf-brand-icons',
+      projectId: 'proj-brand',
+      name: 'Icon set rasterizer',
+      kind: 'workflow',
+      ownerUserId: 'user-pablo',
+      updatedAt: '2026-06-02',
+      storage: 'cloud'
+    },
+    {
+      id: 'wf-brand-pattern',
+      projectId: 'proj-brand',
+      name: 'Brand pattern weaver',
+      kind: 'workflow',
+      ownerUserId: user.id,
+      updatedAt: '2026-05-20',
+      storage: 'cloud'
+    },
+    {
+      id: 'wf-brand-type',
+      projectId: 'proj-brand',
+      name: 'Typography poster',
+      kind: 'workflow',
+      ownerUserId: 'user-jane',
+      updatedAt: '2026-05-01',
+      storage: 'local'
+    },
+    {
+      id: 'wf-launch-tiles',
+      projectId: 'proj-launch',
+      name: 'Feature tile set',
+      kind: 'workflow',
+      ownerUserId: user.id,
+      updatedAt: '2026-06-04',
+      storage: 'cloud'
+    },
+    {
+      id: 'wf-launch-og',
+      projectId: 'proj-launch',
+      name: 'OG image generator',
+      kind: 'workflow',
+      ownerUserId: 'user-jane',
+      updatedAt: '2026-05-21',
+      storage: 'cloud'
+    },
+    {
+      id: 'wf-clientx-lookbook',
+      projectId: 'proj-client-x',
+      name: 'Lookbook layouts',
+      kind: 'workflow',
+      ownerUserId: user.id,
+      updatedAt: '2026-05-29',
+      storage: 'cloud'
+    },
+    {
+      id: 'wf-clientx-packaging',
+      projectId: 'proj-client-x',
+      name: 'Packaging mockups',
+      kind: 'workflow',
+      ownerUserId: user.id,
+      updatedAt: '2026-05-15',
+      storage: 'cloud'
+    },
+    {
+      id: 'wf-cocacola-splash',
+      projectId: 'proj-cocacola',
+      name: 'Bottle splash render',
+      kind: 'workflow',
+      ownerUserId: user.id,
+      updatedAt: '2026-06-06',
+      storage: 'cloud'
+    },
+    {
+      id: 'wf-cocacola-billboard',
+      projectId: 'proj-cocacola',
+      name: 'Billboard composite',
+      kind: 'workflow',
+      ownerUserId: 'user-alex',
+      updatedAt: '2026-05-12',
+      storage: 'local'
     }
   ],
   libraryAssets: [
