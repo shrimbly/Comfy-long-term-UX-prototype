@@ -19,10 +19,6 @@
   <aside
     class="flex h-full w-60 shrink-0 flex-col gap-2 border-r border-border-subtle bg-base-background p-4 text-base-foreground"
   >
-    <div class="flex items-center px-2 pt-3 pb-1">
-      <ComfyWordmark class="h-5 w-auto text-brand-yellow" />
-    </div>
-
     <WorkspaceChip
       v-if="isCloudMode && currentWorkspace"
       :workspace="currentWorkspace"
@@ -120,7 +116,6 @@ import { storeToRefs } from 'pinia'
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 
-import ComfyWordmark from './ComfyWordmark.vue'
 import SidebarGroup from './sidebar/SidebarGroup.vue'
 import SidebarItem from './sidebar/SidebarItem.vue'
 import UsageChip from './sidebar/UsageChip.vue'

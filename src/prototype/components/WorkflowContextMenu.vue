@@ -245,6 +245,15 @@ function onSetStorage(value: 'local' | 'cloud') {
   personaStore.setWorkflowStorage(workflow.id, value)
 }
 
+function onSetThumbnail() {
+  personaStore.cycleWorkflowThumbnail(workflow.id)
+  toast.add({
+    severity: 'success',
+    summary: t('prototype.workflowMenu.toast.thumbnailSummary'),
+    life: 1800
+  })
+}
+
 function onDelete() {
   const ok = window.confirm(
     t('prototype.workflowMenu.deleteConfirm', { name: workflow.name })
@@ -323,6 +332,11 @@ const items = computed<MenuItem[]>(() => {
           command: () => onSetStorage('cloud')
         }
       ]
+    })
+    out.push({
+      label: t('prototype.workflowMenu.setThumbnail'),
+      icon: 'icon-[lucide--image]',
+      command: onSetThumbnail
     })
   }
 

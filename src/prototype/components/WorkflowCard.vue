@@ -99,6 +99,7 @@ import { useI18n } from 'vue-i18n'
 import StorageIcon from './StorageIcon.vue'
 import WorkflowContextMenu from './WorkflowContextMenu.vue'
 import { useViewerWorkflowRole } from '../composables/useViewerWorkflowRole'
+import { usePrototypePersonaStore } from '../stores/personaStore'
 import { thumbnailGradient } from '../utils/thumbnail'
 import type { Workflow } from '../types'
 
@@ -120,7 +121,10 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
-const thumbnail = computed(() => thumbnailGradient(workflow.id))
+const personaStore = usePrototypePersonaStore()
+const thumbnail = computed(() =>
+  thumbnailGradient(personaStore.workflowThumbnailSeed(workflow.id))
+)
 
 const storageTitle = computed(() =>
   t(

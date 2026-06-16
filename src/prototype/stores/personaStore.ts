@@ -340,6 +340,23 @@ export const usePrototypePersonaStore = defineStore('prototype-persona', () => {
     return workflowStorageOverrides.value[workflowId] ?? fallback
   }
 
+  // Custom workflow thumbnails. The prototype has no real graph renders, so
+  // "set thumbnail" cycles the placeholder gradient: the override bumps a
+  // counter and the seed becomes `${id}#${n}`, yielding a different gradient.
+  const workflowThumbnailOverrides = ref<Record<string, number>>({})
+
+  function cycleWorkflowThumbnail(workflowId: string) {
+    workflowThumbnailOverrides.value = {
+      ...workflowThumbnailOverrides.value,
+      [workflowId]: (workflowThumbnailOverrides.value[workflowId] ?? 0) + 1
+    }
+  }
+
+  function workflowThumbnailSeed(workflowId: string): string {
+    const n = workflowThumbnailOverrides.value[workflowId]
+    return n ? `${workflowId}#${n}` : workflowId
+  }
+
   // Move a workflow into another project — the single "move asset to
   // another project" verb. Per concepts/cross-cutting-flows.md the wiki
   // frames promotion as this same verb applied to a My Workflows → shared
@@ -527,6 +544,8 @@ export const usePrototypePersonaStore = defineStore('prototype-persona', () => {
     deleteWorkflow,
     setWorkflowStorage,
     getEffectiveWorkflowStorage,
+    cycleWorkflowThumbnail,
+    workflowThumbnailSeed,
     moveWorkflowToProject,
     createProject,
     copyToMyWorkflows,
