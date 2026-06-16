@@ -29,7 +29,6 @@
           v-for="opt in filterOptions"
           :key="opt.value"
           :label="opt.label"
-          :count="opt.count"
           :active="filter === opt.value"
           @click="filter = opt.value"
         />
@@ -82,7 +81,7 @@
 
     <div
       v-if="sortedProjects.length && viewMode === 'grid'"
-      class="grid grid-cols-[repeat(auto-fill,minmax(14rem,18rem))] gap-4"
+      class="grid grid-cols-[repeat(auto-fill,minmax(14rem,1fr))] gap-4"
     >
       <ProjectCard
         v-for="p in sortedProjects"
@@ -145,32 +144,16 @@ const filter = ref<FilterValue>('all')
 const sort = ref<SortValue>('last-modified')
 const viewMode = ref<ViewMode>('grid')
 
-const workspaceWideCount = computed(
-  () => visibleProjects.value.filter((p) => p.tier === 'workspace-wide').length
+const filterOptions = computed<Array<{ value: FilterValue; label: string }>>(
+  () => [
+    { value: 'all', label: t('prototype.views.projects.filterAll') },
+    {
+      value: 'workspace-wide',
+      label: t('prototype.projectTier.workspace-wide')
+    },
+    { value: 'restricted', label: t('prototype.projectTier.restricted') }
+  ]
 )
-const restrictedCount = computed(
-  () => visibleProjects.value.filter((p) => p.tier === 'restricted').length
-)
-
-const filterOptions = computed<
-  Array<{ value: FilterValue; label: string; count: number }>
->(() => [
-  {
-    value: 'all',
-    label: t('prototype.views.projects.filterAll'),
-    count: visibleProjects.value.length
-  },
-  {
-    value: 'workspace-wide',
-    label: t('prototype.projectTier.workspace-wide'),
-    count: workspaceWideCount.value
-  },
-  {
-    value: 'restricted',
-    label: t('prototype.projectTier.restricted'),
-    count: restrictedCount.value
-  }
-])
 
 const sortOptions = computed<Array<{ value: SortValue; label: string }>>(() => [
   {

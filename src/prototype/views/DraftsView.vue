@@ -189,7 +189,7 @@ const displayed = computed(() => {
 
 const layoutClass = computed(() =>
   viewMode.value === 'grid'
-    ? 'grid grid-cols-[repeat(auto-fill,minmax(10rem,14rem))] gap-4'
+    ? 'grid grid-cols-[repeat(auto-fill,minmax(10rem,1fr))] gap-4'
     : 'flex flex-col gap-0.5'
 )
 </script>

@@ -1,44 +1,24 @@
 <!--
-  Filter pill for list-toolbar filter rows (Recents, Projects). Active =
-  inverted, inactive = secondary, with an optional count badge. Built on the
-  design-system Button so every filter row reads identically.
+  Filter chip for list-toolbar filter rows (Recents, Projects). Active =
+  inverted, inactive = secondary. Matches the toolbar dropdown's size + corner
+  radius (Button size md → h-8, rounded-lg) so the filter row reads as one set
+  of controls.
 -->
 <template>
   <Button
     :variant="active ? 'inverted' : 'secondary'"
-    size="unset"
-    class="h-8 gap-1.5 rounded-full px-3 text-sm"
+    size="md"
     @click="emit('click')"
   >
-    <span>{{ label }}</span>
-    <span
-      v-if="count != null"
-      :class="
-        cn(
-          'rounded-full px-1.5 text-xs',
-          active
-            ? 'bg-base-background text-base-foreground'
-            : 'bg-secondary-background-hover text-muted-foreground'
-        )
-      "
-    >
-      {{ count }}
-    </span>
+    {{ label }}
   </Button>
 </template>
 
 <script setup lang="ts">
-import { cn } from '@comfyorg/tailwind-utils'
-
 import Button from '@/components/ui/button/Button.vue'
 
-const {
-  label,
-  count = null,
-  active = false
-} = defineProps<{
+const { label, active = false } = defineProps<{
   label: string
-  count?: number | null
   active?: boolean
 }>()
 

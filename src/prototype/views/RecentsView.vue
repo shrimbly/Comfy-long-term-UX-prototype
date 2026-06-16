@@ -23,7 +23,6 @@
             v-for="opt in filterOptions"
             :key="opt.value"
             :label="opt.label"
-            :count="opt.count"
             :active="filter === opt.value"
             @click="filter = opt.value"
           />
@@ -64,7 +63,7 @@
 
       <div
         v-if="sortedWorkflows.length"
-        class="grid grid-cols-[repeat(auto-fill,minmax(10rem,14rem))] gap-4"
+        class="grid grid-cols-[repeat(auto-fill,minmax(10rem,1fr))] gap-4"
       >
         <WorkflowCard
           v-for="wf in sortedWorkflows"
@@ -143,20 +142,12 @@ const mineWorkflows = computed(() => {
   )
 })
 
-const filterOptions = computed<
-  Array<{ value: FilterValue; label: string; count: number }>
->(() => [
-  {
-    value: 'all',
-    label: t('prototype.views.recents.filterAll'),
-    count: recentWorkflows.value.length
-  },
-  {
-    value: 'mine',
-    label: t('prototype.views.recents.filterMine'),
-    count: mineWorkflows.value.length
-  }
-])
+const filterOptions = computed<Array<{ value: FilterValue; label: string }>>(
+  () => [
+    { value: 'all', label: t('prototype.views.recents.filterAll') },
+    { value: 'mine', label: t('prototype.views.recents.filterMine') }
+  ]
+)
 
 const sortOptions = computed<Array<{ value: SortValue; label: string }>>(() => [
   {
