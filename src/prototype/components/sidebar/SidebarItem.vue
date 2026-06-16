@@ -9,10 +9,8 @@
     tabindex="0"
     :class="
       cn(
-        'flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm text-base-foreground transition-colors select-none',
-        active
-          ? 'bg-interface-menu-component-surface-selected'
-          : 'hover:bg-interface-menu-component-surface-hovered',
+        'flex h-9 cursor-pointer items-center gap-2 rounded-md px-3 text-sm text-base-foreground transition-colors select-none',
+        active ? 'bg-secondary-background' : 'hover:bg-secondary-background',
         muted && 'text-muted-foreground'
       )
     "
@@ -20,7 +18,7 @@
     @keydown.enter.prevent="emit('click')"
     @keydown.space.prevent="emit('click')"
   >
-    <i v-if="icon" :class="cn(icon, 'text-neutral shrink-0 text-sm')" />
+    <i v-if="icon" :class="cn(icon, 'size-4 shrink-0')" />
     <span class="min-w-0 flex-1 truncate">{{ label }}</span>
     <span
       v-if="count != null"

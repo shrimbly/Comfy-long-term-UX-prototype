@@ -17,8 +17,12 @@
 -->
 <template>
   <aside
-    class="flex h-full w-64 shrink-0 flex-col gap-3 border-r border-border-subtle bg-base-background p-3 text-base-foreground"
+    class="flex h-full w-60 shrink-0 flex-col gap-2 border-r border-border-subtle bg-base-background p-3 text-base-foreground"
   >
+    <div class="flex items-center px-2 py-1">
+      <ComfyWordmark class="h-5 w-auto text-brand-yellow" />
+    </div>
+
     <WorkspaceChip
       v-if="isCloudMode && currentWorkspace"
       :workspace="currentWorkspace"
@@ -28,21 +32,7 @@
     />
     <WorkspaceCreateChip v-else-if="isLocalMode" />
 
-    <label
-      class="flex h-8 min-h-8 w-full cursor-text items-center gap-2 rounded-lg bg-secondary-background px-2 py-1.5 text-base-foreground"
-    >
-      <span
-        class="icon-[lucide--search] size-4 shrink-0 text-muted-foreground"
-      />
-      <input
-        v-model="searchQuery"
-        type="text"
-        :placeholder="t('prototype.sidebar.searchPlaceholder')"
-        class="min-w-0 flex-1 truncate bg-transparent text-xs outline-none placeholder:text-muted-foreground"
-      />
-    </label>
-
-    <div class="flex flex-col gap-1">
+    <div class="mt-1 flex flex-col gap-0.5">
       <SidebarItem
         :label="t('prototype.sidebar.recents')"
         icon="icon-[lucide--clock]"
@@ -51,7 +41,7 @@
       />
     </div>
 
-    <nav class="flex flex-1 flex-col gap-1 overflow-y-auto">
+    <nav class="flex flex-1 flex-col overflow-y-auto">
       <SidebarGroup
         v-if="draftsProject || isLocalMode"
         :label="t('prototype.sidebar.groupYourWork')"
@@ -126,9 +116,10 @@
 
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 
+import ComfyWordmark from './ComfyWordmark.vue'
 import SidebarGroup from './sidebar/SidebarGroup.vue'
 import SidebarItem from './sidebar/SidebarItem.vue'
 import UsageChip from './sidebar/UsageChip.vue'
@@ -149,8 +140,6 @@ const { fixture, currentWorkspace, draftsProject, currentPersonaId } =
   storeToRefs(personaStore)
 
 const { activeView } = storeToRefs(uiStore)
-
-const searchQuery = ref('')
 
 const isLocalMode = computed(() => fixture.value.mode === 'local')
 const isCloudMode = computed(() => fixture.value.mode === 'cloud')

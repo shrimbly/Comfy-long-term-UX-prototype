@@ -769,3 +769,21 @@ Two non-obvious calls worth recording:
 Wiki link: same as the scope-cut entry — when `mvp-scope.md` is drafted, it should state plainly that **external guests / asset-only access are out of MVP** (not merely "deferred"), narrowing [three-level-permissions](../../IA_Plan/wiki/concepts/three-level-permissions.md) to two levels (workspace + project) for launch.
 
 Promote? **with the parent entry** — this is the implementation of the scope cut, not a separate decision.
+
+---
+
+## [2026-06-17] Apply colleague's dashboard visual style + add Home page
+
+Applying a visual style developed by a colleague (Figma: `Onboarding - Errors ComfyUI`, frames Home `1641-14382`, Templates `1641-14256`, Projects `1641-14107`) to the surviving MVP surfaces — left nav, background colours, typography — and adding the Home landing page. Pages in the design that we cut (Explore, Models / Custom nodes / Prompts library sub-sections) are ignored.
+
+**Colours already match.** The colleague built on the same `@comfyorg/design-system` dark-theme tokens we already use — `base-background #171718`, `secondary-background #262729`, `secondary-background-hover #313235`, `border-subtle #3c3d42`, `muted-foreground #8a8a8a` all line up exactly. So "apply the background colours" required no recolour; the work is structural (layout, sidebar grouping, type scale). Only `brand-yellow` differs trivially (`#f0ff41` ours vs `#f2ff59` in the file) — kept ours.
+
+**Templates is NOT cut — restored.** Correcting a mis-classification: the formal scope cut (2026-06-16) removed **Explore** (a new IA discovery concept) but never Templates. The only prior note touching Templates is the 2026-05-12 "Templates folds into Comfy Hub" framing; Hub was then deferred (2026-06-16), orphaning that framing. Templates is a **pre-existing, shipping ComfyUI feature** (the template-workflows gallery), so it stands on its own as an MVP surface — sidebar item + Home tab + dedicated gallery page — **independent of the deferred Hub**. This supersedes the 2026-05-12 "Templates folds into Hub" note. (Willie, 2026-06-17.)
+
+**Search + Explore nav items omitted.** The Figma sidebar's top quick-links group is Home · Explore · Search · Recents · Templates. Explore is cut. **Search** is dropped as a sidebar nav item too: there is no global-search surface/backend in MVP, and the new Home search bar covers "find my own stuff" (decided: client-side filter over the viewer's workflows + media assets). The old inline sidebar search box (which was non-functional) is removed. Net surviving quick-links: **Home · Recents · Templates**.
+
+**Cards → single full-bleed 3:2.** Project + recents cards switch from the 2×2 gradient mosaic (2026-06-?? direction) to a single full-bleed 3:2 placeholder, matching the new style. (Willie, 2026-06-17.)
+
+Build order (separate commits): (1) sidebar restyle + Comfy wordmark, (2) Home view, (3) Templates gallery page, (4) Projects restyle + single-3:2 cards.
+
+Promote? **no** — prototype styling pass; no wiki impact beyond confirming Templates is in-MVP (fold into `mvp-scope.md` when drafted: "Templates is an MVP surface, decoupled from the deferred Hub").
