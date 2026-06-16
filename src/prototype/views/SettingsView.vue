@@ -14,7 +14,9 @@
   than rendering disabled placeholders.
 -->
 <template>
-  <div class="flex max-w-3xl flex-col gap-8">
+  <div
+    :class="cn('flex flex-col gap-8', activeTab !== 'members' && 'max-w-3xl')"
+  >
     <header>
       <PageTitle>{{ t('prototype.views.settings.title') }}</PageTitle>
     </header>
