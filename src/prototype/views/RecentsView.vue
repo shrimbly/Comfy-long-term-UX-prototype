@@ -11,9 +11,6 @@
   <div class="flex flex-col gap-6">
     <header>
       <PageTitle>{{ t('prototype.views.recents.title') }}</PageTitle>
-      <p class="mt-1 text-sm text-muted-foreground">
-        {{ t('prototype.views.recents.subtitle') }}
-      </p>
     </header>
 
     <div v-if="recentWorkflows.length" class="flex flex-col gap-4">

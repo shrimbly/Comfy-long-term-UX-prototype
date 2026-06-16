@@ -21,9 +21,6 @@
     <header class="flex items-start justify-between">
       <div>
         <PageTitle>{{ t('prototype.views.members.title') }}</PageTitle>
-        <p class="mt-1 text-sm text-muted-foreground">
-          {{ t('prototype.views.members.subtitle', { count: memberCount }) }}
-        </p>
       </div>
       <button
         type="button"
@@ -258,8 +255,6 @@ const showInvite = ref(false)
 const viewerRole = computed<WorkspaceRole>(
   () => currentWorkspace.value?.currentUserRole ?? 'member'
 )
-
-const memberCount = computed(() => fixture.value.members.length)
 
 const roleOrder: Record<WorkspaceRole, number> = {
   admin: 0,

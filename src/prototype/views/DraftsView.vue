@@ -14,9 +14,6 @@
     <header class="flex items-end justify-between">
       <div>
         <PageTitle>{{ t('prototype.views.drafts.title') }}</PageTitle>
-        <p class="mt-1 text-sm text-muted-foreground">
-          {{ t('prototype.views.drafts.subtitle') }}
-        </p>
       </div>
       <Button v-if="privateWorkflows.length" variant="primary" size="lg">
         {{ t('prototype.dashboard.newWorkflow') }}

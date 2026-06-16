@@ -17,9 +17,6 @@
   <div class="flex flex-col gap-8">
     <header>
       <PageTitle>{{ t('prototype.views.settings.title') }}</PageTitle>
-      <p class="mt-1 text-sm text-text-secondary">
-        {{ t('prototype.views.settings.subtitle') }}
-      </p>
     </header>
 
     <nav class="flex gap-1 border-b border-interface-stroke" role="tablist">
