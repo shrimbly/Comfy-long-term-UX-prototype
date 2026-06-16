@@ -19,15 +19,9 @@
     @click="emit('open', project.id)"
   >
     <span
-      class="grid aspect-3/2 w-full grid-cols-2 grid-rows-2 gap-2 overflow-hidden rounded-md"
-    >
-      <span
-        v-for="(tile, i) in tiles"
-        :key="i"
-        :class="cn('block rounded-sm', !tile && 'bg-base-background/50')"
-        :style="tile ? { background: thumbnailGradient(tile) } : undefined"
-      />
-    </span>
+      class="block aspect-3/2 w-full overflow-hidden rounded-md"
+      :style="{ background: thumbnailGradient(project.id) }"
+    />
     <span class="flex flex-col gap-1">
       <span class="flex items-center justify-between gap-2">
         <span class="truncate text-sm/tight">{{ project.name }}</span>
@@ -77,15 +71,9 @@
     @click="emit('open', project.id)"
   >
     <span
-      class="grid size-10 shrink-0 grid-cols-2 grid-rows-2 gap-1 overflow-hidden rounded-md"
-    >
-      <span
-        v-for="(tile, i) in tiles"
-        :key="i"
-        :class="cn('block rounded-xs', !tile && 'bg-base-background/50')"
-        :style="tile ? { background: thumbnailGradient(tile) } : undefined"
-      />
-    </span>
+      class="block aspect-3/2 h-10 shrink-0 overflow-hidden rounded-md"
+      :style="{ background: thumbnailGradient(project.id) }"
+    />
     <span class="min-w-0 flex-1 truncate text-sm/tight">{{
       project.name
     }}</span>
@@ -119,7 +107,6 @@
 
 <script setup lang="ts">
 import { cn } from '@comfyorg/tailwind-utils'
-import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import { thumbnailGradient } from '../utils/thumbnail'
@@ -140,11 +127,4 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
-
-// Always a 2x2 grid: one colour tile per workflow (capped at 4), with any
-// remaining slots rendered as empty recessed cells.
-const tiles = computed(() => {
-  const ids = workflows.slice(0, 4).map((w) => w.id)
-  return Array.from({ length: 4 }, (_, i) => ids[i] ?? null)
-})
 </script>

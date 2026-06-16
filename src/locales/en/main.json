@@ -497,11 +497,12 @@
       },
       "projects": {
         "title": "Projects",
-        "newProject": "+ Project",
+        "newProject": "New project",
         "noAccess": "No access",
         "filterAll": "All",
         "empty": "No projects in this view.",
         "workflowCount": "{count} workflow | {count} workflows",
+        "sortLabel": "Sort projects",
         "sort": {
           "lastModified": "Last modified",
           "oldest": "Oldest",
