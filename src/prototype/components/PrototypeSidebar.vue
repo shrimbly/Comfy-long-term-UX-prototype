@@ -34,6 +34,12 @@
 
     <div class="mt-1 flex flex-col gap-0.5">
       <SidebarItem
+        :label="t('prototype.sidebar.home')"
+        icon="icon-[lucide--house]"
+        :active="activeView.kind === 'home'"
+        @click="uiStore.go({ kind: 'home' })"
+      />
+      <SidebarItem
         :label="t('prototype.sidebar.recents')"
         icon="icon-[lucide--clock]"
         :active="activeView.kind === 'recents'"

@@ -126,6 +126,26 @@ export interface PublishedVersion {
   at: string
 }
 
+// Workflow templates — the live ComfyUI template gallery, a pre-existing
+// shipping feature restored to the MVP independent of the deferred Hub (see
+// design-decisions.md 2026-06-17). Global content, not persona-scoped. The
+// category drives the gallery's filter tabs; labels are i18n'd via
+// prototype.templateCategory.{category}.
+export type TemplateCategory =
+  | 'image'
+  | 'video'
+  | 'audio'
+  | '3d'
+  | 'upscaling'
+  | 'controlnet'
+
+export interface WorkflowTemplate {
+  id: string
+  name: string
+  category: TemplateCategory
+  author: string
+}
+
 // Origin of a media file per ../IA_Plan/wiki/entities/media-file.md.
 // `generated` (Comfy output dir) and `imported` (uploaded copy) are
 // Comfy-owned bytes. `referenced` is the NON-FINAL third origin under

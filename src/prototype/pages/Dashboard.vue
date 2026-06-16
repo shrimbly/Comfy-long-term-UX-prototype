@@ -24,7 +24,8 @@
       <main
         class="flex-1 overflow-auto bg-base-background p-6 text-base-foreground"
       >
-        <DraftsView v-if="activeView.kind === 'drafts'" />
+        <HomeView v-if="activeView.kind === 'home'" />
+        <DraftsView v-else-if="activeView.kind === 'drafts'" />
         <ProjectsView v-else-if="activeView.kind === 'projects'" />
         <ProjectDetailView
           v-else-if="activeView.kind === 'project'"
@@ -59,6 +60,7 @@ import { usePrototypePersonaStore } from '../stores/personaStore'
 import { MEDIA_ASSETS_TAB_ID, usePrototypeTabsStore } from '../stores/tabsStore'
 import { usePrototypeUiStore } from '../stores/uiStore'
 import DraftsView from '../views/DraftsView.vue'
+import HomeView from '../views/HomeView.vue'
 import MembersView from '../views/MembersView.vue'
 import ProjectDetailView from '../views/ProjectDetailView.vue'
 import ProjectsView from '../views/ProjectsView.vue'

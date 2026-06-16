@@ -1,6 +1,7 @@
 {
   "prototype": {
     "sidebar": {
+      "home": "Home",
       "drafts": "My Workflows",
       "explore": "Explore",
       "recents": "Recents",
@@ -66,6 +67,14 @@
       "workspace-wide": "Workspace",
       "restricted": "Restricted",
       "private": "Private"
+    },
+    "templateCategory": {
+      "image": "Image",
+      "video": "Video",
+      "audio": "Audio",
+      "3d": "3D",
+      "upscaling": "Upscaling",
+      "controlnet": "ControlNet"
     },
     "components": {
       "newWorkflowTile": {
@@ -394,6 +403,27 @@
       }
     },
     "views": {
+      "home": {
+        "greeting": {
+          "morning": "Good morning, start creating!",
+          "afternoon": "Good afternoon, start creating!",
+          "evening": "Good evening, start creating!"
+        },
+        "searchPlaceholder": "Search your workflows and assets…",
+        "clearSearch": "Clear search",
+        "noResults": "No matches for “{query}”.",
+        "resultsWorkflows": "Workflows",
+        "resultsAssets": "Media assets",
+        "recents": "Recents",
+        "allProjects": "All projects",
+        "projectFilterLabel": "Filter recents by project",
+        "tabs": {
+          "workflows": "Workflows",
+          "templates": "Templates",
+          "tutorials": "Tutorials"
+        },
+        "tutorialsPlaceholder": "Tutorials are coming soon."
+      },
       "explore": {
         "searchPlaceholder": "Search or press ⌘K",
         "filterAll": "All",

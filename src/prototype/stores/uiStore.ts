@@ -11,17 +11,19 @@ import type { AssetStorage } from '../types'
 type StorageFilter = 'all' | AssetStorage
 
 type ActiveView =
+  | { kind: 'home' }
   | { kind: 'drafts' }
   | { kind: 'projects' }
   | { kind: 'project'; projectId: string }
   | { kind: 'recents' }
+  | { kind: 'templates' }
   | { kind: 'members' }
   | { kind: 'settings' }
 
 export const usePrototypeUiStore = defineStore('prototype-ui', () => {
-  // Recents is the dashboard home — every dashboard mount lands here
+  // Home is the dashboard landing — every dashboard mount lands here
   // regardless of where the user navigated previously.
-  const activeView = ref<ActiveView>({ kind: 'recents' })
+  const activeView = ref<ActiveView>({ kind: 'home' })
 
   // Media library filters. 'all' = no filter applied. Click the active
   // project/folder again to deselect (toggle back to 'all').
@@ -50,7 +52,7 @@ export const usePrototypeUiStore = defineStore('prototype-ui', () => {
   }
 
   function goHome() {
-    activeView.value = { kind: 'recents' }
+    activeView.value = { kind: 'home' }
   }
 
   function selectProject(id: string) {
@@ -96,14 +98,14 @@ export const usePrototypeUiStore = defineStore('prototype-ui', () => {
   watch(
     () => personaStore.currentPersonaId,
     () => {
-      activeView.value = { kind: 'recents' }
+      activeView.value = { kind: 'home' }
       resetLibraryFilters()
     }
   )
   watch(
     () => personaStore.fixture.currentWorkspaceId,
     () => {
-      activeView.value = { kind: 'recents' }
+      activeView.value = { kind: 'home' }
       resetLibraryFilters()
     }
   )
