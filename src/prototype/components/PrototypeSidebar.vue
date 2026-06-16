@@ -19,7 +19,7 @@
   <aside
     class="flex h-full w-60 shrink-0 flex-col gap-2 border-r border-border-subtle bg-base-background p-4 text-base-foreground"
   >
-    <div class="flex items-center pt-3 pb-1">
+    <div class="flex items-center px-2 pt-3 pb-1">
       <ComfyWordmark class="h-5 w-auto text-brand-yellow" />
     </div>
 
