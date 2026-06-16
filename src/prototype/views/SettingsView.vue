@@ -14,7 +14,7 @@
   than rendering disabled placeholders.
 -->
 <template>
-  <div class="flex flex-col gap-8">
+  <div class="flex max-w-3xl flex-col gap-8">
     <header>
       <PageTitle>{{ t('prototype.views.settings.title') }}</PageTitle>
     </header>
