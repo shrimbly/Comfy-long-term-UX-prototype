@@ -154,38 +154,40 @@ import { usePrototypePersonaStore } from '../stores/personaStore'
 
 type FeaturedTab = 'whatsNew' | 'templates' | 'tutorials'
 
-// "What's new" promotes recent generative image models. Subtitles are a
-// short maker + hook; the placeholder gradient is seeded off the id.
+// "What's new" promotes the latest models supported in ComfyUI (per
+// blog.comfy.org) across modalities — image, audio, 3D, multimodal.
+// Subtitles are a short maker + modality hook; the placeholder gradient
+// is seeded off the id.
 const featuredModels: Array<{ id: string; title: string; subtitle: string }> = [
   {
-    id: 'model-nano-banana-pro',
-    title: 'Nano Banana Pro',
-    subtitle: 'Google · 4K multimodal reasoning'
+    id: 'model-ideogram-4',
+    title: 'Ideogram 4.0',
+    subtitle: 'Ideogram · open-weights image'
   },
   {
-    id: 'model-seedream-5',
-    title: 'Seedream 5.0',
-    subtitle: 'ByteDance · reasoning + web search'
+    id: 'model-stable-audio-3',
+    title: 'Stable Audio 3.0',
+    subtitle: 'Stability AI · music & sound'
   },
   {
-    id: 'model-flux-2-pro',
-    title: 'FLUX.2 [pro]',
-    subtitle: 'Black Forest Labs · photorealism'
+    id: 'model-triposplat',
+    title: 'TripoSplat',
+    subtitle: 'Tripo · 3D Gaussian splats'
   },
   {
-    id: 'model-gpt-image-1-5',
-    title: 'GPT Image 1.5',
-    subtitle: 'OpenAI · tiered quality'
+    id: 'model-krea-2',
+    title: 'Krea 2 Image',
+    subtitle: 'Krea · image with creative direction'
   },
   {
-    id: 'model-qwen-image-2',
-    title: 'Qwen-Image 2.0',
-    subtitle: 'Alibaba · bilingual text rendering'
+    id: 'model-luma-uni-1',
+    title: 'Luma Uni-1',
+    subtitle: 'Luma · image generation & editing'
   },
   {
-    id: 'model-flux-klein',
-    title: 'FLUX Klein',
-    subtitle: 'Black Forest Labs · open weights'
+    id: 'model-gemma-4',
+    title: 'Gemma 4',
+    subtitle: 'Google · open multimodal'
   }
 ]
 
