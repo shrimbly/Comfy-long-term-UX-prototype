@@ -12,7 +12,7 @@
       type="button"
       :class="
         cn(
-          'flex w-full cursor-pointer items-center gap-2 rounded-lg border border-border-subtle bg-base-background p-2 text-left text-base-foreground transition-colors',
+          'flex w-full cursor-pointer items-center gap-2 rounded-lg bg-base-background p-2 text-left text-base-foreground transition-colors',
           'hover:bg-secondary-background'
         )
       "
