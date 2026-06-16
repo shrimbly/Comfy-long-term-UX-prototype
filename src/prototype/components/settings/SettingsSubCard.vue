@@ -3,7 +3,7 @@
   grouped sub-blocks, callout hints.
 -->
 <template>
-  <div class="flex flex-col gap-3 rounded-2xl bg-secondary-background p-5">
+  <div class="flex flex-col gap-3 rounded-xl bg-secondary-background-hover p-5">
     <slot />
   </div>
 </template>

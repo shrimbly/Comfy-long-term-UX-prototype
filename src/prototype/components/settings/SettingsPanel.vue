@@ -7,7 +7,7 @@
 -->
 <template>
   <section
-    class="flex flex-col gap-6 rounded-2xl border border-border-subtle p-6"
+    class="flex flex-col gap-6 rounded-2xl border border-border-subtle bg-secondary-background p-6"
   >
     <header
       v-if="title || $slots.header"

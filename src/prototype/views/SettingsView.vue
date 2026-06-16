@@ -85,7 +85,7 @@
             </dt>
             <dd>
               <span
-                class="inline-flex h-6 items-center rounded-full bg-secondary-background px-2 text-xs text-base-foreground"
+                class="inline-flex h-6 items-center rounded-full bg-secondary-background-hover px-2 text-xs text-base-foreground"
               >
                 {{ tierLabel }}
               </span>
