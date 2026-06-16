@@ -217,24 +217,22 @@
 
     <hr class="m-0 w-full border-0 border-t border-border-subtle" />
 
-    <div class="flex items-center justify-between">
-      <div
-        class="flex flex-wrap items-center gap-4 text-xs text-muted-foreground"
+    <div
+      class="flex flex-wrap items-center gap-4 text-xs text-muted-foreground"
+    >
+      <button
+        v-for="link in helpLinks"
+        :key="link.key"
+        type="button"
+        class="flex cursor-pointer appearance-none items-center gap-1 border-0 bg-transparent p-0 text-muted-foreground transition-colors hover:text-base-foreground"
+        @click="onManageStub('help')"
       >
-        <button
-          v-for="link in helpLinks"
-          :key="link.key"
-          type="button"
-          class="flex cursor-pointer appearance-none items-center gap-1 border-0 bg-transparent p-0 text-muted-foreground transition-colors hover:text-base-foreground"
-          @click="onManageStub('help')"
-        >
-          <i :class="cn('size-4', link.icon)" />
-          <span>{{ link.label }}</span>
-        </button>
-      </div>
+        <i :class="cn('size-4', link.icon)" />
+        <span>{{ link.label }}</span>
+      </button>
       <button
         type="button"
-        class="flex cursor-pointer appearance-none items-center gap-1 border-0 bg-transparent p-0 text-xs text-muted-foreground transition-colors hover:text-base-foreground"
+        class="flex cursor-pointer appearance-none items-center gap-1 border-0 bg-transparent p-0 text-muted-foreground transition-colors hover:text-base-foreground"
         @click="onManageStub('invoices')"
       >
         <span>{{ t('subscription.invoiceHistory') }}</span>
