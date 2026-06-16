@@ -152,7 +152,42 @@ import WorkflowCard from '../components/WorkflowCard.vue'
 import { workflowTemplates } from '../fixtures/templates'
 import { usePrototypePersonaStore } from '../stores/personaStore'
 
-type FeaturedTab = 'workflows' | 'templates' | 'tutorials'
+type FeaturedTab = 'whatsNew' | 'templates' | 'tutorials'
+
+// "What's new" promotes recent generative image models. Subtitles are a
+// short maker + hook; the placeholder gradient is seeded off the id.
+const featuredModels: Array<{ id: string; title: string; subtitle: string }> = [
+  {
+    id: 'model-nano-banana-pro',
+    title: 'Nano Banana Pro',
+    subtitle: 'Google · 4K multimodal reasoning'
+  },
+  {
+    id: 'model-seedream-5',
+    title: 'Seedream 5.0',
+    subtitle: 'ByteDance · reasoning + web search'
+  },
+  {
+    id: 'model-flux-2-pro',
+    title: 'FLUX.2 [pro]',
+    subtitle: 'Black Forest Labs · photorealism'
+  },
+  {
+    id: 'model-gpt-image-1-5',
+    title: 'GPT Image 1.5',
+    subtitle: 'OpenAI · tiered quality'
+  },
+  {
+    id: 'model-qwen-image-2',
+    title: 'Qwen-Image 2.0',
+    subtitle: 'Alibaba · bilingual text rendering'
+  },
+  {
+    id: 'model-flux-klein',
+    title: 'FLUX Klein',
+    subtitle: 'Black Forest Labs · open weights'
+  }
+]
 
 const { t } = useI18n()
 const personaStore = usePrototypePersonaStore()
@@ -194,9 +229,6 @@ const hasResults = computed(
 
 // --- Recents strip, filterable by project ---
 
-const projectName = (projectId: string) =>
-  fixture.value.projects.find((p) => p.id === projectId)?.name ?? ''
-
 const recentsProject = ref<string>('all')
 
 const projectFilterOptions = computed(() => {
@@ -222,11 +254,11 @@ const recentsStrip = computed(() => {
 
 // --- Featured gallery ---
 
-const activeFeaturedTab = ref<FeaturedTab>('workflows')
+const activeFeaturedTab = ref<FeaturedTab>('whatsNew')
 
 const featuredTabs = computed<Array<{ value: FeaturedTab; label: string }>>(
   () => [
-    { value: 'workflows', label: t('prototype.views.home.tabs.workflows') },
+    { value: 'whatsNew', label: t('prototype.views.home.tabs.whatsNew') },
     { value: 'templates', label: t('prototype.views.home.tabs.templates') },
     { value: 'tutorials', label: t('prototype.views.home.tabs.tutorials') }
   ]
@@ -242,12 +274,8 @@ const featuredCards = computed<
       subtitle: t(`prototype.templateCategory.${tpl.category}`)
     }))
   }
-  if (activeFeaturedTab.value === 'workflows') {
-    return recentWorkflows.value.slice(0, 3).map((wf) => ({
-      id: wf.id,
-      title: wf.name,
-      subtitle: projectName(wf.projectId)
-    }))
+  if (activeFeaturedTab.value === 'whatsNew') {
+    return featuredModels
   }
   return []
 })
