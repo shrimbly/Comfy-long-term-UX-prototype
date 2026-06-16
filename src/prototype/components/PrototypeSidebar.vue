@@ -84,18 +84,6 @@
           @click="openMedia"
         />
       </SidebarGroup>
-
-      <SidebarGroup
-        v-if="showWorkspaceGroup"
-        :label="t('prototype.sidebar.groupWorkspace')"
-      >
-        <SidebarItem
-          :label="t('prototype.sidebar.members')"
-          icon="icon-[lucide--users]"
-          :active="activeView.kind === 'members'"
-          @click="uiStore.go({ kind: 'members' })"
-        />
-      </SidebarGroup>
     </nav>
 
     <div class="flex flex-col gap-2">
@@ -166,9 +154,6 @@ const isSoloPersona = computed(
     currentPersonaId.value === 'solo' || currentPersonaId.value === 'solo-local'
 )
 
-const showWorkspaceGroup = computed(
-  () => isCloudMode.value && currentWorkspace.value?.tier === 'team'
-)
 const showGroupHeaders = computed(() => !isSoloPersona.value)
 
 function openMedia() {

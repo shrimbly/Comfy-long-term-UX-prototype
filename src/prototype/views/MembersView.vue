@@ -19,9 +19,10 @@
 <template>
   <div class="flex flex-col gap-6">
     <header class="flex items-start justify-between">
-      <div>
+      <div v-if="!embedded">
         <PageTitle>{{ t('prototype.views.members.title') }}</PageTitle>
       </div>
+      <div v-else />
       <button
         type="button"
         class="inline-flex h-10 cursor-pointer items-center gap-2 rounded-lg bg-base-foreground px-4 text-sm font-medium text-base-background transition-opacity hover:opacity-90"
@@ -243,6 +244,8 @@ import MemberRowActions from '../components/MemberRowActions.vue'
 import PermissionsMatrix from '../components/PermissionsMatrix.vue'
 import { usePrototypePersonaStore } from '../stores/personaStore'
 import type { WorkspaceMember, WorkspaceRole } from '../types'
+
+const { embedded = false } = defineProps<{ embedded?: boolean }>()
 
 const { t } = useI18n()
 const personaStore = usePrototypePersonaStore()

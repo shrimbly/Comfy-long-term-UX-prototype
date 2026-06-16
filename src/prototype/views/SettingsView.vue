@@ -116,6 +116,10 @@
       />
     </template>
 
+    <template v-if="activeTab === 'members'">
+      <MembersView embedded />
+    </template>
+
     <template v-if="activeTab === 'danger'">
       <SettingsPanel
         v-if="canTransferOwnership"
@@ -180,12 +184,13 @@ import PageTitle from '../components/PageTitle.vue'
 
 import Button from '@/components/ui/button/Button.vue'
 
+import MembersView from './MembersView.vue'
 import BillingSection from '../components/BillingSection.vue'
 import SettingsPanel from '../components/settings/SettingsPanel.vue'
 import { usePrototypePersonaStore } from '../stores/personaStore'
 import type { WorkspaceRole } from '../types'
 
-type TabId = 'general' | 'billing' | 'danger'
+type TabId = 'general' | 'members' | 'billing' | 'danger'
 
 const inputClass =
   'h-10 rounded-lg border border-border-subtle bg-base-background px-3 text-sm text-base-foreground outline-none focus:border-base-foreground disabled:cursor-not-allowed disabled:opacity-60'
@@ -223,6 +228,12 @@ const visibleTabs = computed(() => {
   const tabs: Array<{ id: TabId; label: string }> = [
     { id: 'general', label: t('prototype.views.settings.tabs.general') }
   ]
+  if (workspace.value?.tier === 'team') {
+    tabs.push({
+      id: 'members',
+      label: t('prototype.views.settings.tabs.members')
+    })
+  }
   if (isAdmin.value && fixture.value.billing) {
     tabs.push({
       id: 'billing',

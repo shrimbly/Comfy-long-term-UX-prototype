@@ -34,7 +34,6 @@
         />
         <RecentsView v-else-if="activeView.kind === 'recents'" />
         <TemplatesView v-else-if="activeView.kind === 'templates'" />
-        <MembersView v-else-if="activeView.kind === 'members'" />
         <SettingsView v-else-if="activeView.kind === 'settings'" />
       </main>
     </div>
@@ -62,7 +61,6 @@ import { MEDIA_ASSETS_TAB_ID, usePrototypeTabsStore } from '../stores/tabsStore'
 import { usePrototypeUiStore } from '../stores/uiStore'
 import DraftsView from '../views/DraftsView.vue'
 import HomeView from '../views/HomeView.vue'
-import MembersView from '../views/MembersView.vue'
 import ProjectDetailView from '../views/ProjectDetailView.vue'
 import ProjectsView from '../views/ProjectsView.vue'
 import RecentsView from '../views/RecentsView.vue'
