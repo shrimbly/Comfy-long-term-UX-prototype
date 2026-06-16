@@ -1,35 +1,32 @@
 <!--
   Implements:
-    persistent footer credit-usage indicator. When the user is on the free
-    plan or out of credits, surface the prominent Upgrade CTA from the main
-    app (gradient variant) instead of the muted credits chip.
+    persistent footer credit indicator. Shows the workspace's available
+    credits + a Top up CTA, using the main-app credits icon. Free plan / no
+    credits surfaces the prominent gradient Upgrade CTA instead.
 -->
 <template>
-  <button
+  <Button
     v-if="isUpgradeMode"
-    type="button"
-    class="flex w-full cursor-pointer items-center justify-center gap-2 rounded-md bg-(image:--subscription-button-gradient) px-3 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90"
+    variant="gradient"
+    size="lg"
+    class="w-full gap-2"
   >
-    <span class="icon-[lucide--zap] size-4" />
+    <i class="icon-[lucide--zap] size-4" />
     {{ t('prototype.sidebar.upgradeCta') }}
-  </button>
+  </Button>
   <div
     v-else
     class="flex items-center justify-between rounded-md bg-modal-card-background px-2 py-1.5 text-xs text-base-foreground"
   >
     <span class="flex items-center gap-1.5">
-      <span class="icon-[lucide--zap] size-3.5 text-warning-background" />
+      <i class="icon-[comfy--credits] size-3.5 text-warning-background" />
       <span>{{
-        t('prototype.sidebar.creditsLeft', { pct: usage.creditsRemainingPct })
+        t('prototype.sidebar.creditsAvailable', { credits: formattedCredits })
       }}</span>
     </span>
-    <button
-      v-if="usage.showUpgrade"
-      type="button"
-      class="cursor-pointer text-muted-foreground hover:text-base-foreground"
-    >
-      {{ t('prototype.sidebar.upgrade') }}
-    </button>
+    <Button variant="link" size="unset" class="text-xs">
+      {{ t('prototype.sidebar.topUp') }}
+    </Button>
   </div>
 </template>
 
@@ -37,16 +34,17 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 
-import type { UsageState, WorkspacePlan } from '../../types'
+import Button from '@/components/ui/button/Button.vue'
 
-const { usage, plan } = defineProps<{
-  usage: UsageState
+import type { WorkspacePlan } from '../../types'
+
+const { credits = 0, plan } = defineProps<{
+  credits?: number
   plan?: WorkspacePlan
 }>()
 
 const { t } = useI18n()
 
-const isUpgradeMode = computed(
-  () => plan === 'free' || usage.creditsRemainingPct <= 0
-)
+const isUpgradeMode = computed(() => plan === 'free' || credits <= 0)
+const formattedCredits = computed(() => credits.toLocaleString())
 </script>

@@ -100,8 +100,8 @@
 
     <div class="flex flex-col gap-2">
       <UsageChip
-        v-if="fixture.usage"
-        :usage="fixture.usage"
+        v-if="availableCredits != null"
+        :credits="availableCredits"
         :plan="currentWorkspace?.plan"
       />
       <button
@@ -112,16 +112,40 @@
         <span class="icon-[lucide--zap] size-4" />
         {{ t('prototype.sidebar.upgradeCta') }}
       </button>
-      <SidebarItem
-        :label="t('prototype.sidebar.settings')"
-        icon="icon-[lucide--settings]"
-        :active="activeView.kind === 'settings'"
-        @click="uiStore.go({ kind: 'settings' })"
-      />
-      <SidebarItem
-        :label="t('prototype.sidebar.help')"
-        icon="icon-[lucide--circle-help]"
-      />
+
+      <div class="flex items-center justify-between px-1">
+        <div class="flex items-center gap-1">
+          <Button
+            variant="link"
+            size="icon-sm"
+            :aria-label="t('prototype.sidebar.help')"
+          >
+            <i class="icon-[lucide--circle-help] size-4" />
+          </Button>
+          <Button
+            variant="link"
+            size="icon-sm"
+            :aria-label="t('prototype.sidebar.notifications')"
+          >
+            <i class="icon-[lucide--bell] size-4" />
+          </Button>
+          <Button
+            variant="link"
+            size="icon-sm"
+            :aria-label="t('prototype.sidebar.theme')"
+          >
+            <i class="icon-[lucide--moon] size-4" />
+          </Button>
+        </div>
+        <Button
+          variant="link"
+          size="icon-sm"
+          :aria-label="t('prototype.sidebar.more')"
+          @click="uiStore.go({ kind: 'settings' })"
+        >
+          <i class="icon-[lucide--ellipsis] size-4" />
+        </Button>
+      </div>
     </div>
   </aside>
 </template>
@@ -130,6 +154,8 @@
 import { storeToRefs } from 'pinia'
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
+
+import Button from '@/components/ui/button/Button.vue'
 
 import ComfyWordmark from './ComfyWordmark.vue'
 import SidebarGroup from './sidebar/SidebarGroup.vue'
@@ -155,6 +181,10 @@ const { activeView } = storeToRefs(uiStore)
 
 const isLocalMode = computed(() => fixture.value.mode === 'local')
 const isCloudMode = computed(() => fixture.value.mode === 'cloud')
+
+const availableCredits = computed(
+  () => fixture.value.billing?.creditBalance.remaining ?? null
+)
 
 const isSoloPersona = computed(
   () =>
