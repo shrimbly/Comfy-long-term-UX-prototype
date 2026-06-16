@@ -6,7 +6,7 @@
   <div class="flex flex-col gap-1">
     <h2
       v-if="label && showHeader"
-      class="m-0 px-3 pt-5 pb-0 text-xs font-bold text-text-secondary uppercase"
+      class="m-0 px-3 pt-4 pb-0 text-xs font-bold text-text-secondary uppercase"
     >
       {{ label }}
     </h2>

@@ -9,7 +9,7 @@
     tabindex="0"
     :class="
       cn(
-        'flex h-9 cursor-pointer items-center gap-2 rounded-md px-3 text-sm text-base-foreground transition-colors select-none',
+        'flex h-9 cursor-pointer items-center gap-2 rounded-xl px-3 text-sm text-base-foreground transition-colors select-none',
         active ? 'bg-secondary-background' : 'hover:bg-secondary-background',
         muted && 'text-muted-foreground'
       )

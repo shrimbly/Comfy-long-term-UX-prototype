@@ -17,9 +17,9 @@
 -->
 <template>
   <aside
-    class="flex h-full w-60 shrink-0 flex-col gap-2 border-r border-border-subtle bg-base-background p-3 text-base-foreground"
+    class="flex h-full w-60 shrink-0 flex-col gap-2 border-r border-border-subtle bg-base-background p-4 text-base-foreground"
   >
-    <div class="flex items-center px-2 pt-3 pb-1">
+    <div class="flex items-center pt-3 pb-1">
       <ComfyWordmark class="h-5 w-auto text-brand-yellow" />
     </div>
 
@@ -32,7 +32,7 @@
     />
     <WorkspaceCreateChip v-else-if="isLocalMode" />
 
-    <div class="mt-1 flex flex-col gap-0.5">
+    <div class="mt-1 flex flex-col gap-1">
       <SidebarItem
         :label="t('prototype.sidebar.home')"
         icon="icon-[lucide--house]"
@@ -41,7 +41,7 @@
       />
       <SidebarItem
         :label="t('prototype.sidebar.recents')"
-        icon="icon-[lucide--clock]"
+        icon="icon-[lucide--history]"
         :active="activeView.kind === 'recents'"
         @click="uiStore.go({ kind: 'recents' })"
       />
@@ -61,7 +61,7 @@
       >
         <SidebarItem
           :label="t('prototype.sidebar.drafts')"
-          icon="icon-[lucide--file-pen]"
+          icon="icon-[lucide--workflow]"
           :active="activeView.kind === 'drafts'"
           @click="uiStore.go({ kind: 'drafts' })"
         />
@@ -120,7 +120,7 @@
       />
       <SidebarItem
         :label="t('prototype.sidebar.help')"
-        icon="icon-[lucide--help-circle]"
+        icon="icon-[lucide--circle-help]"
       />
     </div>
   </aside>
