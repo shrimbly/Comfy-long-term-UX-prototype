@@ -53,7 +53,7 @@
         <h2 class="text-sm font-semibold">
           {{ t('prototype.views.home.resultsWorkflows') }}
         </h2>
-        <div class="grid grid-cols-[repeat(auto-fill,minmax(11rem,1fr))] gap-4">
+        <div class="grid grid-cols-[repeat(auto-fill,minmax(14rem,1fr))] gap-4">
           <WorkflowCard
             v-for="wf in matchedWorkflows"
             :key="wf.id"
@@ -66,7 +66,7 @@
         <h2 class="text-sm font-semibold">
           {{ t('prototype.views.home.resultsAssets') }}
         </h2>
-        <div class="grid grid-cols-[repeat(auto-fill,minmax(11rem,1fr))] gap-4">
+        <div class="grid grid-cols-[repeat(auto-fill,minmax(14rem,1fr))] gap-4">
           <ShowcaseCard
             v-for="asset in matchedAssets"
             :key="asset.id"

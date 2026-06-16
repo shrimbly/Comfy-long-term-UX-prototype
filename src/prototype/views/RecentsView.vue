@@ -60,7 +60,7 @@
 
       <div
         v-if="sortedWorkflows.length"
-        class="grid grid-cols-[repeat(auto-fill,minmax(10rem,1fr))] gap-4"
+        class="grid grid-cols-[repeat(auto-fill,minmax(14rem,1fr))] gap-4"
       >
         <WorkflowCard
           v-for="wf in sortedWorkflows"
