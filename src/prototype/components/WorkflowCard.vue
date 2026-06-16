@@ -25,26 +25,25 @@
       <span
         :class="
           cn(
-            'relative block aspect-3/2 w-full overflow-hidden rounded-md ring-2 ring-offset-2 ring-offset-base-background transition-shadow',
+            'block aspect-3/2 w-full overflow-hidden rounded-md ring-2 ring-offset-2 ring-offset-base-background transition-shadow',
             selected ? 'ring-primary-background' : 'ring-transparent'
           )
         "
         :style="{ background: thumbnail }"
-      >
-        <span
-          v-if="workflow.storage"
-          :title="storageTitle"
-          class="absolute top-2 right-2 grid size-6 place-items-center rounded-sm bg-black/40 backdrop-blur-sm"
-        >
-          <i :class="cn('size-3.5 text-white', storageIcon)" />
-        </span>
-      </span>
+      />
       <span class="flex flex-col">
         <span class="flex items-center gap-1.5">
-          <span class="truncate text-xs/tight">{{ workflow.name }}</span>
+          <span class="min-w-0 flex-1 truncate text-xs/tight">{{
+            workflow.name
+          }}</span>
           <span v-if="isCopy" :class="copyBadgeClass">
             {{ t('prototype.workflowCard.copyBadge') }}
           </span>
+          <i
+            v-if="workflow.storage"
+            :title="storageTitle"
+            :class="cn('size-3.5 shrink-0 text-muted-foreground', storageIcon)"
+          />
         </span>
         <span class="text-xs text-muted-foreground">{{ metaText }}</span>
       </span>
