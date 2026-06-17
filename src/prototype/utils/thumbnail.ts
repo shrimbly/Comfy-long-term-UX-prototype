@@ -29,8 +29,13 @@ export function thumbnailGradient(seed: string): string {
 // same image. Returns a CSS `background` shorthand value.
 const WORKFLOW_THUMBNAIL_COUNT = 7
 
+// CSS `background` shorthand for an image at any URL.
+export function imageThumbnail(url: string): string {
+  return `url("${url}") center / cover no-repeat`
+}
+
 function thumbnailBackground(file: string): string {
-  return `url("/wf-thumbs/${file}") center / cover no-repeat`
+  return imageThumbnail(`/wf-thumbs/${file}`)
 }
 
 export function workflowThumbnailImage(seed: string): string {
@@ -39,7 +44,7 @@ export function workflowThumbnailImage(seed: string): string {
   )
 }
 
-// App-mode workflows all share the App-mode capture.
+// App-mode workflows without an explicit thumbnail fall back to this capture.
 export function appThumbnailImage(): string {
   return thumbnailBackground('app.png')
 }

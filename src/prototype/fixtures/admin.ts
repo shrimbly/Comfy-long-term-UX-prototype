@@ -164,6 +164,7 @@ export const adminFixture: PersonaFixture = {
       projectId: myWorkflows.id,
       name: 'Portrait retoucher',
       kind: 'app',
+      thumbnailUrl: '/wf-thumbs/app.png',
       updatedAt: '2026-06-15',
       storage: 'cloud'
     },
@@ -194,6 +195,7 @@ export const adminFixture: PersonaFixture = {
       projectId: myWorkflows.id,
       name: 'Background remover',
       kind: 'app',
+      thumbnailUrl: '/wf-thumbs/app2.png',
       updatedAt: '2026-06-11',
       storage: 'cloud'
     },
@@ -216,6 +218,7 @@ export const adminFixture: PersonaFixture = {
       projectId: myWorkflows.id,
       name: 'Flux dev portrait',
       kind: 'app',
+      thumbnailUrl: '/wf-thumbs/app3.png',
       updatedAt: '2026-06-05',
       storage: 'cloud'
     },
@@ -242,6 +245,7 @@ export const adminFixture: PersonaFixture = {
       projectId: myWorkflows.id,
       name: 'Batch face swap',
       kind: 'app',
+      thumbnailUrl: '/wf-thumbs/app4.png',
       updatedAt: '2026-05-28',
       storage: 'cloud'
     },

@@ -106,7 +106,11 @@ import StorageIcon from './StorageIcon.vue'
 import WorkflowContextMenu from './WorkflowContextMenu.vue'
 import { useViewerWorkflowRole } from '../composables/useViewerWorkflowRole'
 import { usePrototypePersonaStore } from '../stores/personaStore'
-import { appThumbnailImage, workflowThumbnailImage } from '../utils/thumbnail'
+import {
+  appThumbnailImage,
+  imageThumbnail,
+  workflowThumbnailImage
+} from '../utils/thumbnail'
 import type { Workflow } from '../types'
 
 const {
@@ -135,11 +139,12 @@ const fileIcon = computed(() =>
   isApp.value ? 'icon-[lucide--panels-top-left]' : 'icon-[comfy--workflow]'
 )
 
-const thumbnail = computed(() =>
-  isApp.value
+const thumbnail = computed(() => {
+  if (workflow.thumbnailUrl) return imageThumbnail(workflow.thumbnailUrl)
+  return isApp.value
     ? appThumbnailImage()
     : workflowThumbnailImage(personaStore.workflowThumbnailSeed(workflow.id))
-)
+})
 
 const storageTitle = computed(() =>
   t(
