@@ -13,9 +13,23 @@ const palette = [
   ['#fef08a', '#fdba74']
 ]
 
-export function thumbnailGradient(seed: string): string {
+function hashSeed(seed: string): number {
   let hash = 0
   for (const ch of seed) hash = (hash * 31 + ch.charCodeAt(0)) | 0
-  const [from, to] = palette[Math.abs(hash) % palette.length]
+  return Math.abs(hash)
+}
+
+export function thumbnailGradient(seed: string): string {
+  const [from, to] = palette[hashSeed(seed) % palette.length]
   return `linear-gradient(135deg, ${from} 0%, ${to} 100%)`
+}
+
+// Experimental: deterministically pick one of the example workflow thumbnail
+// images (served from public/wf-thumbs) so the same workflow always shows the
+// same image. Returns a CSS `background` shorthand value.
+const WORKFLOW_THUMBNAIL_COUNT = 6
+
+export function workflowThumbnailImage(seed: string): string {
+  const index = (hashSeed(seed) % WORKFLOW_THUMBNAIL_COUNT) + 1
+  return `url("/wf-thumbs/${index}.png") center / cover no-repeat`
 }
