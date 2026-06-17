@@ -73,8 +73,8 @@
       "video": "Video",
       "audio": "Audio",
       "3d": "3D",
-      "upscaling": "Upscaling",
-      "controlnet": "ControlNet"
+      "llm": "LLM",
+      "utility": "Utility"
     },
     "components": {
       "newWorkflowTile": {
@@ -86,6 +86,11 @@
         "placeholder": "All projects",
         "allProjects": "All projects"
       }
+    },
+    "mediaAssetsNotice": {
+      "title": "Media Assets",
+      "body": "This will open Alex's Media Assets tab.",
+      "ok": "Got it"
     },
     "libraryPage": {
       "back": "Back",
@@ -428,8 +433,22 @@
       },
       "templates": {
         "title": "Templates",
-        "typeFilterLabel": "Filter templates by type",
-        "allTypes": "All types"
+        "searchPlaceholder": "Search templates",
+        "allCategories": "All",
+        "runtimeLabel": "Filter by runtime",
+        "runtime": {
+          "all": "Any runtime",
+          "comfyui": "ComfyUI",
+          "api": "Partner Nodes"
+        },
+        "sortLabel": "Sort templates",
+        "sort": {
+          "recommended": "Recommended",
+          "popular": "Popular",
+          "newest": "Newest",
+          "az": "A–Z"
+        },
+        "empty": "No templates match these filters."
       },
       "explore": {
         "searchPlaceholder": "Search or press ⌘K",

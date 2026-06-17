@@ -76,8 +76,7 @@
         <SidebarItem
           :label="t('prototype.sidebar.libraryMedia')"
           icon="icon-[lucide--image]"
-          :active="activeTabId === MEDIA_ASSETS_TAB_ID"
-          @click="openMedia"
+          @click="showMediaAssetsNotice = true"
         />
       </SidebarGroup>
     </nav>
@@ -110,34 +109,38 @@
         @click="uiStore.toggleCustomThumbnails()"
       />
     </div>
+
+    <MediaAssetsNoticeDialog
+      v-if="showMediaAssetsNotice"
+      @close="showMediaAssetsNotice = false"
+    />
   </aside>
 </template>
 
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
+import MediaAssetsNoticeDialog from './MediaAssetsNoticeDialog.vue'
 import SidebarGroup from './sidebar/SidebarGroup.vue'
 import SidebarItem from './sidebar/SidebarItem.vue'
 import UsageChip from './sidebar/UsageChip.vue'
 import WorkspaceChip from './sidebar/WorkspaceChip.vue'
 import WorkspaceCreateChip from './sidebar/WorkspaceCreateChip.vue'
 import { usePrototypePersonaStore } from '../stores/personaStore'
-import { MEDIA_ASSETS_TAB_ID, usePrototypeTabsStore } from '../stores/tabsStore'
 import { usePrototypeUiStore } from '../stores/uiStore'
 
 const { t } = useI18n()
 const personaStore = usePrototypePersonaStore()
-const tabsStore = usePrototypeTabsStore()
 const uiStore = usePrototypeUiStore()
-
-const { activeTabId } = storeToRefs(tabsStore)
 
 const { fixture, currentWorkspace, draftsProject, currentPersonaId } =
   storeToRefs(personaStore)
 
 const { activeView, customThumbnails } = storeToRefs(uiStore)
+
+const showMediaAssetsNotice = ref(false)
 
 const isLocalMode = computed(() => fixture.value.mode === 'local')
 const isCloudMode = computed(() => fixture.value.mode === 'cloud')
@@ -152,8 +155,4 @@ const isSoloPersona = computed(
 )
 
 const showGroupHeaders = computed(() => !isSoloPersona.value)
-
-function openMedia() {
-  tabsStore.openMediaAssets(t('prototype.sidebar.libraryMedia'))
-}
 </script>

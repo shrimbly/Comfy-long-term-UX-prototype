@@ -128,22 +128,45 @@ export interface PublishedVersion {
 
 // Workflow templates — the live ComfyUI template gallery, a pre-existing
 // shipping feature restored to the MVP independent of the deferred Hub (see
-// design-decisions.md 2026-06-17). Global content, not persona-scoped. The
-// category drives the gallery's filter tabs; labels are i18n'd via
-// prototype.templateCategory.{category}.
+// design-decisions.md 2026-06-17). Global content, not persona-scoped.
+//
+// Categorization mirrors the production library + ComfyHub: `category` is the
+// generation type driving the chip-filter row (labels i18n'd via
+// prototype.templateCategory.{category}); `useCases` are the cross-cutting task
+// tags (Text to Image, ControlNet, Upscale…) shown as the on-card pill + fed to
+// search; `runtime` splits open-source/local ComfyUI workflows from partner/
+// external API workflows; `model` is the primary model/provider shown under the
+// title. `popularity` and `addedAt` back the Popular / Newest sorts.
+//
+// `id` is the REAL upstream template slug (from Comfy-Org/workflow_templates'
+// index.json), so it doubles as the key for the real thumbnail media — see
+// utils/thumbnail.ts `templateThumbnailUrl`.
 export type TemplateCategory =
   | 'image'
   | 'video'
   | 'audio'
   | '3d'
-  | 'upscaling'
-  | 'controlnet'
+  | 'llm'
+  | 'utility'
+
+export type TemplateRuntime = 'comfyui' | 'api'
 
 export interface WorkflowTemplate {
   id: string
   name: string
+  description: string
   category: TemplateCategory
-  author: string
+  model: string
+  // Partner/provider name for the top-left logo badge (the prod LogoOverlay).
+  // Must be a key in utils/thumbnail.ts `PROVIDER_LOGO_PATHS`. Omitted = no badge.
+  provider?: string
+  // `compareSlider` = the prod before/after wipe (needs a `-2` overlay image);
+  // omitted = a plain single-image thumbnail with hover zoom.
+  thumbnailVariant?: 'compareSlider'
+  useCases: string[]
+  runtime: TemplateRuntime
+  popularity: number
+  addedAt: string
 }
 
 // Origin of a media file per ../IA_Plan/wiki/entities/media-file.md.

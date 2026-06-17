@@ -749,7 +749,7 @@ Wiki link: **supersedes** for MVP — [branch-vs-personal-copy](../../IA_Plan/wi
 
 Open question dependency: closes the MVP cut of `workflow-promotion-flow`, `project-collaborator-library-publish` (moot — no guests), `member-overwrite-request-flow` (moot — open overwrite). Defers `local-media-as-references`.
 
-Promote? **yes — high priority.** This is a major direction change that must go back to the wiki as a formal `wiki/decisions/mvp-scope.md` once the team confirms, with the four superseded decisions marked accordingly. Confirm before propagating.
+Promote? **yes — promoted to wiki 2026-06-18.** Landed as [`wiki/decisions/mvp-scope.md`](../../IA_Plan/wiki/decisions/mvp-scope.md) (the authoritative in/out decision, incl. the replacement publish model + the supersede list) and [`wiki/mvp.md`](../../IA_Plan/wiki/mvp.md) (the MVP-in-one-page overview with the full-vision-vs-MVP diff table); `wiki/index.md` + `wiki/overview.md` got pointers. Per the agreed scope, the superseded full-vision decision pages were left **intact** — `mvp-scope.md` is the single record of what's in/out — rather than rewritten. The 2026-06-16 Phase 3 persona/guest entry below is folded into the same `mvp-scope.md`.
 
 ---
 
@@ -787,3 +787,52 @@ Applying a visual style developed by a colleague (Figma: `Onboarding - Errors Co
 Build order (separate commits): (1) sidebar restyle + Comfy wordmark, (2) Home view, (3) Templates gallery page, (4) Projects restyle + single-3:2 cards.
 
 Promote? **no** — prototype styling pass; no wiki impact beyond confirming Templates is in-MVP (fold into `mvp-scope.md` when drafted: "Templates is an MVP surface, decoupled from the deferred Hub").
+
+---
+
+## [2026-06-18] Templates gallery — categorization, filters, and sort
+
+Fleshed out the restored Templates gallery (`TemplatesView.vue`) to mirror the categorization/filter/sort of the two shipping surfaces it stands in for: the **production template library** (`WorkflowTemplateSelectorDialog` + `useTemplateFiltering`, fed by `Comfy-Org/workflow_templates`' `index.json` — 534 templates) and the **ComfyHub** browse page (`comfy.org/workflows`).
+
+What those surfaces do, and how it maps here under the no-second-sidebar constraint:
+
+- **Categorization = generation type.** Production's primary axis is a left-rail tree grouped under `GENERATION TYPE` (Use Cases · Image · Video · Audio · 3D · LLM · Utility), and ComfyHub's top chips are media types too (Image, Video…). We can't add a second sidebar, so that axis becomes the **chip-filter row** (Projects/Recents pattern): `All · Image · Video · Audio · 3D · LLM · Utility`. Note: the prototype's old `controlnet` / `upscaling` categories were really _use-cases_ in prod, so they moved out of `TemplateCategory` into use-case tags.
+- **Use Case filter.** Prod has an 84-tag "Use Case" multiselect (Text to Image, Image Edit, ControlNet, Inpainting, Upscale…). Modeled as a `ToolbarSelect` dropdown over the distinct `useCases` tags present in the fixture.
+- **Runtime filter ("Runs on").** Prod splits ComfyUI (open-source/local) vs External/Remote API (partner), derived from `openSource`; ComfyHub surfaces this as "Partner Nodes". Modeled as a `runtime: 'comfyui' | 'api'` field + dropdown.
+- **Search.** Prod has fuzzy search (Fuse.js); ComfyHub has a search box. Modeled as a client-side substring match over name / author / use-cases.
+- **Sort.** Prod offers default · recommended · popular · newest · alphabetical · VRAM · model-size. Kept the four meaningful for a fixture: **Recommended** (authored order) · **Popular** (`popularity`) · **Newest** (`addedAt`) · **A–Z**. Dropped VRAM / model-size (need per-template hardware metadata not worth fixturing) and **Model** as a filter axis (Willie, 2026-06-18 — chips by generation type, secondary filters = use-case + runtime + search, no model filter).
+
+Fixture (`fixtures/templates.ts`) grew 13 → 28 entries spanning all six generation types with realistic models/runtimes/dates so the filters and sorts actually differentiate. `WorkflowTemplate` gained `useCases`, `runtime`, `popularity`, `addedAt` (additive — Home's featured-tab consumer only reads `id`/`name`).
+
+Promote? **no** — prototype fidelity pass against shipping behavior; no new IA position. Worth noting in `mvp-scope.md` only as "Templates gallery mirrors the production library's type/use-case/runtime/sort model."
+
+---
+
+## [2026-06-18] Templates gallery — real thumbnail media + ComfyHub card chrome
+
+Replaced the gradient placeholder cards with real template media and a card modeled on ComfyHub / the production template library.
+
+- **Real media, pulled live.** Thumbnails come from the upstream `Comfy-Org/workflow_templates` repo via jsDelivr: `https://cdn.jsdelivr.net/gh/Comfy-Org/workflow_templates@main/templates/<slug>-1.webp` (helper `templateThumbnailUrl` in `utils/thumbnail.ts`). Verified the URLs resolve (200, `image/webp`); they're animated webp previews. No backend / no local copies — the prototype has no `/templates` static server, so the CDN is the source.
+- **Fixture rebuilt from real templates.** The 13→28 invented entries became 28 _real_ upstream templates (curated across the six generation types, ComfyUI/API mix). `id` = the real upstream slug (doubles as the media key); `name`, `model`, `useCases` (tags), `popularity` (usage), `addedAt` (date) are the real values. `WorkflowTemplate.author` → `model` (the provider/model is what the card shows + what ComfyHub/the library surface).
+- **Aspect ratio = 1:1.** The source media is square (≈350²/400²) and the production library renders `ratio="square"`; ComfyHub's live DOM isn't scrapable (JS-rendered) but the media being square settles it. New `TemplateCard.vue` uses `aspect-square`, `object-cover`.
+- **Card chrome (mocked).** Runtime badge ("API") top-left for partner templates, a use-case pill bottom-left, and a hover "Open" CTA over a scrim — mirroring the library's overlay tags + click-to-load. Title + model beneath. The hover CTA is presentational (no template-detail route in the prototype yet). Scrims are black-on-media (legibility over arbitrary imagery), intentionally not themed.
+
+Open question / caveat: media is hot-linked from jsDelivr `@main`, so it tracks upstream and needs network. If we ever want offline/pinned media, snapshot into `public/` and pin a tag. Logged here rather than solved.
+
+Revised same day (Willie): dropped the API badge and the hover "Open" CTA; added the real `description` to the fixture + a 2-line clamp under the title (replacing the model line); enlarged the cards (4-up → 3-up on large screens). Surviving on-thumbnail chrome is just the use-case pill. `runtime` stays (still the Runs-on filter), `model` stays (search only).
+
+Revised again (Willie): ported the prod gallery's before/after **wipe** thumbnail (`CompareSliderThumbnail`) — a `thumbnailVariant: 'compareSlider'` field renders the real `-2` overlay clip-revealed to the pointer X with a divider line; 7 of the 28 fixtures already carry the variant upstream (verified the `-2.webp` media exists), the rest keep the plain hover-zoom image. Also matched the gallery card typography/spacing: title `text-sm`/`line-clamp-1` (normal weight), description `text-sm`/`line-clamp-2`/muted, `gap-2 pt-3`, with `title` attrs for full-text on hover. (hoverDissolve, the other prod variant, left as plain image — only the wipe was requested.)
+
+Revised again (Willie): added the **provider logo badge** (top-left), ported from the prod `LogoOverlay` — new `TemplateProviderBadge.vue` renders the partner logo + name in a pill. A `provider` field on the fixture drives it; logo media resolves from the same upstream repo (`templates/logo/<provider>.<ext>`, mapped in `templateProviderLogoUrl`) via the CDN — verified the images resolve. Following the real upstream `logos` data, the badge appears on the 9 partner templates that actually carry it (Google, Anthropic, ElevenLabs, ByteDance, Tripo, Grok, Sonilo, Rodin). NOTE: real data is sparse — some partner templates (e.g. Grok Video, Hunyuan3D) have no upstream logo, so they show no badge; could extend to all `runtime: 'api'` templates if fuller coverage is wanted.
+
+Also relabeled the Runs-on filter's API option **"External API" → "Partner Nodes"** to match ComfyHub's terminology (the underlying `runtime: 'api'` value is unchanged).
+
+Promote? **no** — prototype fidelity; no IA impact.
+
+---
+
+## [2026-06-18] Media assets stubbed in the dashboard prototype
+
+The sidebar "Media assets" item no longer opens the media-library workbench tab (`tabsStore.openMediaAssets`); it now shows a placeholder dialog ("This will open Alex's Media Assets tab.") via a new `MediaAssetsNoticeDialog`. The media library is a workbench surface outside this dashboard prototype's scope — the stub acknowledges the destination without building it here. (`openMediaAssets` still exists; `ProjectDetailView` uses it.)
+
+Promote? **no** — prototype scoping stub.
