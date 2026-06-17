@@ -102,3 +102,4 @@ vitest.config.*.timestamp*
 .amp
 
 willie-comfy/
+.vercel
