@@ -2,6 +2,8 @@
 // has no real thumbnail images yet; this keeps cards visually distinct so
 // the grid reads like a board of artifacts, not a list with padding.
 
+import type { Workflow } from '../types'
+
 const palette = [
   ['#fef3c7', '#fde68a'],
   ['#fed7aa', '#fecaca'],
@@ -30,7 +32,7 @@ export function thumbnailGradient(seed: string): string {
 const WORKFLOW_THUMBNAIL_COUNT = 7
 
 // CSS `background` shorthand for an image at any URL.
-export function imageThumbnail(url: string): string {
+function imageThumbnail(url: string): string {
   return `url("${url}") center / cover no-repeat`
 }
 
@@ -38,13 +40,25 @@ function thumbnailBackground(file: string): string {
   return imageThumbnail(`/wf-thumbs/${file}`)
 }
 
-export function workflowThumbnailImage(seed: string): string {
+function workflowThumbnailImage(seed: string): string {
   return thumbnailBackground(
     `${(hashSeed(seed) % WORKFLOW_THUMBNAIL_COUNT) + 1}.png`
   )
 }
 
 // App-mode workflows without an explicit thumbnail fall back to this capture.
-export function appThumbnailImage(): string {
+function appThumbnailImage(): string {
   return thumbnailBackground('app.png')
+}
+
+// Resolve a workflow's thumbnail background: an explicit thumbnailUrl wins,
+// then the App-mode capture for apps, otherwise a seeded example image.
+export function workflowThumbnail(
+  workflow: Pick<Workflow, 'id' | 'kind' | 'thumbnailUrl'>,
+  seed: string = workflow.id
+): string {
+  if (workflow.thumbnailUrl) return imageThumbnail(workflow.thumbnailUrl)
+  return workflow.kind === 'app'
+    ? appThumbnailImage()
+    : workflowThumbnailImage(seed)
 }

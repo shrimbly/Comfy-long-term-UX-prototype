@@ -31,7 +31,7 @@
           v-for="(tile, i) in tiles"
           :key="i"
           :class="cn('block rounded-sm', !tile && 'bg-base-background/40')"
-          :style="tile ? { background: thumbnailGradient(tile) } : undefined"
+          :style="tile ? { background: workflowThumbnail(tile) } : undefined"
         />
       </span>
     </span>
@@ -105,7 +105,7 @@ import { cn } from '@comfyorg/tailwind-utils'
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 
-import { thumbnailGradient } from '../utils/thumbnail'
+import { workflowThumbnail } from '../utils/thumbnail'
 import type { Project, Workflow } from '../types'
 
 const {
@@ -124,10 +124,11 @@ const emit = defineEmits<{
 
 const { t } = useI18n()
 
-// Contents preview: one tile per workflow (capped at 4), empty slots recessed.
+// Contents preview: one tile per workflow (capped at 4), each showing the
+// workflow's own thumbnail; empty slots recessed.
 const tiles = computed(() => {
-  const ids = workflows.slice(0, 4).map((w) => w.id)
-  return Array.from({ length: 4 }, (_, i) => ids[i] ?? null)
+  const items = workflows.slice(0, 4)
+  return Array.from({ length: 4 }, (_, i) => items[i] ?? null)
 })
 
 // List chip second line: workflow count + the project's scope as "location".
@@ -145,7 +146,7 @@ const tierBadgeClass = computed(() =>
   cn(
     'shrink-0 rounded-full px-2 py-0.5 text-xs',
     project.tier === 'restricted'
-      ? 'bg-warning-background text-button-surface-contrast'
+      ? 'bg-modal-card-tag-background text-modal-card-tag-foreground'
       : 'bg-secondary-background-hover text-muted-foreground'
   )
 )
