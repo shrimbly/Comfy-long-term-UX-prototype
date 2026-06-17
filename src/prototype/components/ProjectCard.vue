@@ -22,18 +22,15 @@
     :disabled="!project.currentUserHasAccess"
     @click="emit('open', project.id)"
   >
-    <span class="block w-full">
-      <span class="block h-2 w-12 rounded-t-sm bg-secondary-background-hover" />
+    <span
+      class="grid aspect-3/2 w-full grid-cols-2 grid-rows-2 gap-1 overflow-hidden rounded-md"
+    >
       <span
-        class="grid aspect-3/2 w-full grid-cols-2 grid-rows-2 gap-1.5 overflow-hidden rounded-md rounded-tl-none bg-secondary-background-hover p-1.5"
-      >
-        <span
-          v-for="(tile, i) in tiles"
-          :key="i"
-          :class="cn('block rounded-sm', !tile && 'bg-base-background/40')"
-          :style="tile ? { background: workflowThumbnail(tile) } : undefined"
-        />
-      </span>
+        v-for="(tile, i) in tiles"
+        :key="i"
+        :class="cn('block', !tile && 'bg-base-background/40')"
+        :style="tile ? { background: workflowThumbnail(tile) } : undefined"
+      />
     </span>
     <span class="flex flex-col gap-1">
       <span class="flex items-center justify-between gap-2">
