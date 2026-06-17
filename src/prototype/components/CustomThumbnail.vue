@@ -2,24 +2,37 @@
   A copy of the Comfy "Thumbnail" frame
     (Figma: hutzmEKvsruHfgpMBlPIRw, node 1:5)
   with the "UI DESIGN" subtitle swapped for the workflow name. Stands in
-  for a user-supplied custom thumbnail. Sizes everything in container-query
-  units so the same frame reads correctly at card, strip, and tile scales.
+  for a user-supplied custom thumbnail. Drawn as an SVG with a 3:2 viewBox
+  so the Comfy wordmark + title scale crisply at card, strip, and tile
+  sizes (the card thumbnail areas are all 3:2).
 -->
 <template>
-  <div
-    class="@container flex size-full flex-col items-center justify-center gap-[6cqw] bg-[#211927] px-[8cqw]"
+  <svg
+    viewBox="0 0 300 200"
+    preserveAspectRatio="xMidYMid meet"
+    class="size-full"
   >
-    <img
-      src="/wf-thumbs/comfy-wordmark.svg"
-      alt=""
-      class="w-[44cqw] max-w-[180px]"
+    <rect width="300" height="200" fill="#211927" />
+    <image
+      href="/wf-thumbs/comfy-wordmark.svg"
+      x="90"
+      y="50"
+      width="120"
+      height="73"
+      preserveAspectRatio="xMidYMid meet"
     />
-    <p
-      class="m-0 line-clamp-2 text-center text-[8cqw] leading-[1.15] font-medium text-[#f2ff59]"
+    <text
+      x="150"
+      y="162"
+      fill="#f2ff59"
+      font-family="Inter, ui-sans-serif, sans-serif"
+      font-size="16"
+      font-weight="500"
+      text-anchor="middle"
     >
       {{ title }}
-    </p>
-  </div>
+    </text>
+  </svg>
 </template>
 
 <script setup lang="ts">
