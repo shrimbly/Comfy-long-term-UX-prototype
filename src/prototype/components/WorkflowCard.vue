@@ -26,10 +26,14 @@
       "
       @click="emit('open', workflow.id)"
     >
-      <span
-        class="block aspect-3/2 w-full"
-        :style="{ background: thumbnail }"
-      />
+      <span class="block aspect-3/2 w-full overflow-hidden">
+        <CustomThumbnail v-if="customThumbnails" :title="workflow.name" />
+        <span
+          v-else
+          class="block size-full"
+          :style="{ background: thumbnail }"
+        />
+      </span>
       <span class="flex items-center gap-2.5 px-3 py-2.5">
         <span
           class="grid size-7 shrink-0 place-items-center rounded-md bg-secondary-background-hover"
@@ -68,10 +72,14 @@
       "
       @click="emit('open', workflow.id)"
     >
-      <span
-        class="block aspect-3/2 h-9 shrink-0 overflow-hidden rounded-md"
-        :style="{ background: thumbnail }"
-      />
+      <span class="block aspect-3/2 h-9 shrink-0 overflow-hidden rounded-md">
+        <CustomThumbnail v-if="customThumbnails" :title="workflow.name" />
+        <span
+          v-else
+          class="block size-full"
+          :style="{ background: thumbnail }"
+        />
+      </span>
       <span class="flex min-w-0 flex-1 items-center gap-1.5">
         <span class="truncate text-sm">{{ workflow.name }}</span>
       </span>
@@ -99,13 +107,16 @@
 
 <script setup lang="ts">
 import { cn } from '@comfyorg/tailwind-utils'
+import { storeToRefs } from 'pinia'
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
+import CustomThumbnail from './CustomThumbnail.vue'
 import StorageIcon from './StorageIcon.vue'
 import WorkflowContextMenu from './WorkflowContextMenu.vue'
 import { useViewerWorkflowRole } from '../composables/useViewerWorkflowRole'
 import { usePrototypePersonaStore } from '../stores/personaStore'
+import { usePrototypeUiStore } from '../stores/uiStore'
 import { workflowThumbnail } from '../utils/thumbnail'
 import type { Workflow } from '../types'
 
@@ -128,6 +139,7 @@ const emit = defineEmits<{
 
 const { t } = useI18n()
 const personaStore = usePrototypePersonaStore()
+const { customThumbnails } = storeToRefs(usePrototypeUiStore())
 
 const isApp = computed(() => workflow.kind === 'app')
 

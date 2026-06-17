@@ -106,6 +106,8 @@
       <SidebarItem
         :label="t('prototype.sidebar.help')"
         icon="icon-[lucide--circle-help]"
+        :active="customThumbnails"
+        @click="uiStore.toggleCustomThumbnails()"
       />
     </div>
   </aside>
@@ -135,7 +137,7 @@ const { activeTabId } = storeToRefs(tabsStore)
 const { fixture, currentWorkspace, draftsProject, currentPersonaId } =
   storeToRefs(personaStore)
 
-const { activeView } = storeToRefs(uiStore)
+const { activeView, customThumbnails } = storeToRefs(uiStore)
 
 const isLocalMode = computed(() => fixture.value.mode === 'local')
 const isCloudMode = computed(() => fixture.value.mode === 'cloud')

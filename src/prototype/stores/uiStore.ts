@@ -37,6 +37,14 @@ export const usePrototypeUiStore = defineStore('prototype-ui', () => {
   // share settings opened on arrival. ProjectDetailView consumes it once.
   const shareIntentProjectId = ref<string | null>(null)
 
+  // Prototype toggle (Help button): swap every workflow thumbnail for a
+  // branded custom thumbnail so we can compare custom vs. generated.
+  const customThumbnails = ref(false)
+
+  function toggleCustomThumbnails() {
+    customThumbnails.value = !customThumbnails.value
+  }
+
   function requestShareSettings(id: string) {
     shareIntentProjectId.value = id
   }
@@ -128,6 +136,8 @@ export const usePrototypeUiStore = defineStore('prototype-ui', () => {
     clearTagFilter,
     setSearchQuery,
     setStorageFilter,
-    resetLibraryFilters
+    resetLibraryFilters,
+    customThumbnails,
+    toggleCustomThumbnails
   }
 })
