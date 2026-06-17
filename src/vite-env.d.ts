@@ -19,6 +19,7 @@ declare global {
 
   interface ImportMetaEnv {
     VITE_APP_VERSION?: string
+    readonly VITE_PROTOTYPE_DEPLOY?: boolean
   }
 
   interface ImportMeta {

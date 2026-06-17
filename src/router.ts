@@ -35,6 +35,8 @@ const isFileProtocol = window.location.protocol === 'file:'
  */
 function getBasePath(): string {
   if (isDesktop) return '/'
+  // Standalone /prototype deploy is served from the domain root.
+  if (import.meta.env.VITE_PROTOTYPE_DEPLOY) return '/'
   if (isCloud) return import.meta.env?.BASE_URL || '/'
   return window.location.pathname
 }

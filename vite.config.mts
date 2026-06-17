@@ -56,6 +56,11 @@ const DISTRIBUTION: 'desktop' | 'localhost' | 'cloud' =
 // Can be overridden via IS_NIGHTLY env var for testing
 const IS_NIGHTLY = process.env.IS_NIGHTLY === 'true'
 
+// Standalone static deploy of the /prototype dashboard (e.g. Vercel). Serves
+// the app from the domain root, so assets and router both need an absolute
+// base path. See `pnpm build:prototype`.
+const PROTOTYPE_DEPLOY = process.env.PROTOTYPE_DEPLOY === 'true'
+
 // Resolve the frontend git commit hash at build time.
 // Priority: FRONTEND_COMMIT_HASH env var → git rev-parse HEAD → 'unknown'
 // FRONTEND_COMMIT_HASH is an escape hatch for non-git environments (e.g. Docker
@@ -157,7 +162,7 @@ const gcsRedirectProxyConfig: ProxyOptions = {
 }
 
 export default defineConfig({
-  base: DISTRIBUTION === 'cloud' ? '/' : '',
+  base: PROTOTYPE_DEPLOY || DISTRIBUTION === 'cloud' ? '/' : '',
   server: {
     host: VITE_REMOTE_DEV ? '0.0.0.0' : undefined,
     watch: {
@@ -614,6 +619,7 @@ export default defineConfig({
   },
 
   define: {
+    'import.meta.env.VITE_PROTOTYPE_DEPLOY': JSON.stringify(PROTOTYPE_DEPLOY),
     __COMFYUI_FRONTEND_VERSION__: JSON.stringify(
       process.env.npm_package_version
     ),

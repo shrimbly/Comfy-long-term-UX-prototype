@@ -9,6 +9,7 @@
   "type": "module",
   "scripts": {
     "build:cloud": "cross-env DISTRIBUTION=cloud NODE_OPTIONS='--max-old-space-size=8192' nx build",
+    "build:prototype": "cross-env PROTOTYPE_DEPLOY=true NODE_OPTIONS='--max-old-space-size=8192' nx build",
     "build:desktop": "nx build @comfyorg/desktop-ui",
     "build-storybook": "storybook build",
     "build:types": "nx build --config vite.types.config.mts && node scripts/prepare-types.js",
