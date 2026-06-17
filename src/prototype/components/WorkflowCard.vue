@@ -34,7 +34,7 @@
         <span
           class="grid size-7 shrink-0 place-items-center rounded-md bg-secondary-background-hover"
         >
-          <i class="icon-[lucide--workflow] size-3.5 text-muted-foreground" />
+          <i :class="cn('size-3.5 text-muted-foreground', fileIcon)" />
         </span>
         <span class="flex min-w-0 flex-1 flex-col">
           <span class="flex items-center gap-1.5">
@@ -106,7 +106,7 @@ import StorageIcon from './StorageIcon.vue'
 import WorkflowContextMenu from './WorkflowContextMenu.vue'
 import { useViewerWorkflowRole } from '../composables/useViewerWorkflowRole'
 import { usePrototypePersonaStore } from '../stores/personaStore'
-import { workflowThumbnailImage } from '../utils/thumbnail'
+import { appThumbnailImage, workflowThumbnailImage } from '../utils/thumbnail'
 import type { Workflow } from '../types'
 
 const {
@@ -128,8 +128,17 @@ const emit = defineEmits<{
 
 const { t } = useI18n()
 const personaStore = usePrototypePersonaStore()
+
+const isApp = computed(() => workflow.kind === 'app')
+
+const fileIcon = computed(() =>
+  isApp.value ? 'icon-[lucide--panels-top-left]' : 'icon-[comfy--workflow]'
+)
+
 const thumbnail = computed(() =>
-  workflowThumbnailImage(personaStore.workflowThumbnailSeed(workflow.id))
+  isApp.value
+    ? appThumbnailImage()
+    : workflowThumbnailImage(personaStore.workflowThumbnailSeed(workflow.id))
 )
 
 const storageTitle = computed(() =>

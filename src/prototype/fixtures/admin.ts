@@ -163,6 +163,7 @@ export const adminFixture: PersonaFixture = {
       id: 'wf-mw-portrait-retouch',
       projectId: myWorkflows.id,
       name: 'Portrait retoucher',
+      kind: 'app',
       updatedAt: '2026-06-15',
       storage: 'cloud'
     },
@@ -192,6 +193,7 @@ export const adminFixture: PersonaFixture = {
       id: 'wf-mw-bg-remove',
       projectId: myWorkflows.id,
       name: 'Background remover',
+      kind: 'app',
       updatedAt: '2026-06-11',
       storage: 'cloud'
     },
@@ -213,6 +215,7 @@ export const adminFixture: PersonaFixture = {
       id: 'wf-mw-flux-portrait',
       projectId: myWorkflows.id,
       name: 'Flux dev portrait',
+      kind: 'app',
       updatedAt: '2026-06-05',
       storage: 'cloud'
     },
@@ -238,6 +241,7 @@ export const adminFixture: PersonaFixture = {
       id: 'wf-mw-faceswap-batch',
       projectId: myWorkflows.id,
       name: 'Batch face swap',
+      kind: 'app',
       updatedAt: '2026-05-28',
       storage: 'cloud'
     },

@@ -27,9 +27,19 @@ export function thumbnailGradient(seed: string): string {
 // Experimental: deterministically pick one of the example workflow thumbnail
 // images (served from public/wf-thumbs) so the same workflow always shows the
 // same image. Returns a CSS `background` shorthand value.
-const WORKFLOW_THUMBNAIL_COUNT = 6
+const WORKFLOW_THUMBNAIL_COUNT = 7
+
+function thumbnailBackground(file: string): string {
+  return `url("/wf-thumbs/${file}") center / cover no-repeat`
+}
 
 export function workflowThumbnailImage(seed: string): string {
-  const index = (hashSeed(seed) % WORKFLOW_THUMBNAIL_COUNT) + 1
-  return `url("/wf-thumbs/${index}.png") center / cover no-repeat`
+  return thumbnailBackground(
+    `${(hashSeed(seed) % WORKFLOW_THUMBNAIL_COUNT) + 1}.png`
+  )
+}
+
+// App-mode workflows all share the App-mode capture.
+export function appThumbnailImage(): string {
+  return thumbnailBackground('app.png')
 }
