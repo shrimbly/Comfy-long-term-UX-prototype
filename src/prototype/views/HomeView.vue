@@ -91,7 +91,7 @@
             :aria-label="t('prototype.views.home.projectFilterLabel')"
           />
         </header>
-        <div class="grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-6">
+        <div class="grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-5">
           <WorkflowCard
             v-for="wf in recentsStrip"
             :key="wf.id"
@@ -124,14 +124,13 @@
         </p>
         <div
           v-else
-          class="grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-4"
+          class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
         >
           <ShowcaseCard
             v-for="card in featuredCards"
             :key="card.id"
             :title="card.title"
             :seed="card.id"
-            aspect="3/2"
           />
         </div>
       </section>
@@ -226,7 +225,7 @@ const recentsStrip = computed(() => {
       : recentWorkflows.value.filter(
           (w) => w.projectId === recentsProject.value
         )
-  return list.slice(0, 6)
+  return list.slice(0, 5)
 })
 
 // --- Featured gallery ---
