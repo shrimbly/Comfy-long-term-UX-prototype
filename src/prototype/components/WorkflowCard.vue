@@ -3,49 +3,55 @@
     entity: ../IA_Plan/wiki/entities/workflow.md
     log:    ../prototype/design-decisions.md (2026-05-15 Workflow context menu)
 
-  Bare thumbnail + caption. The thumbnail is the card. Right-clicking
-  anywhere on the card opens a role-gated WorkflowContextMenu.
+  Grid: a hairline-bordered card — full-bleed thumbnail with rounded top
+  corners over a caption row (file-type icon, name, storage, modified).
+  List: a compact row. Right-clicking either opens a role-gated
+  WorkflowContextMenu.
 -->
 <template>
   <div
-    :class="
-      cn(
-        'group text-base-foreground select-none',
-        layout === 'grid' ? 'flex flex-col gap-2' : 'block'
-      )
-    "
+    class="text-base-foreground select-none"
     @contextmenu.prevent.stop="onContextMenu"
   >
     <button
       v-if="layout === 'grid'"
       type="button"
-      class="flex cursor-pointer flex-col gap-2 text-left text-base-foreground"
+      :class="
+        cn(
+          'flex w-full cursor-pointer flex-col overflow-hidden rounded-xl border bg-secondary-background text-left text-base-foreground transition-colors',
+          selected
+            ? 'border-primary-background'
+            : 'border-border-subtle hover:border-muted-foreground'
+        )
+      "
       @click="emit('open', workflow.id)"
     >
       <span
-        :class="
-          cn(
-            'block aspect-3/2 w-full overflow-hidden rounded-md ring-2 ring-offset-2 ring-offset-base-background transition-shadow',
-            selected ? 'ring-primary-background' : 'ring-transparent'
-          )
-        "
+        class="block aspect-3/2 w-full"
         :style="{ background: thumbnail }"
       />
-      <span class="flex flex-col">
-        <span class="flex items-center gap-1.5">
-          <span class="min-w-0 flex-1 truncate text-xs/tight">{{
-            workflow.name
-          }}</span>
-          <StorageIcon
-            v-if="workflow.storage"
-            :storage="workflow.storage"
-            :label="storageTitle"
-            class="size-4 shrink-0 text-muted-foreground"
-          />
+      <span class="flex items-center gap-2.5 px-3 py-2.5">
+        <span
+          class="grid size-7 shrink-0 place-items-center rounded-md bg-secondary-background-hover"
+        >
+          <i class="icon-[lucide--workflow] size-3.5 text-muted-foreground" />
         </span>
-        <span class="text-xs text-muted-foreground">{{
-          workflow.updatedAt
-        }}</span>
+        <span class="flex min-w-0 flex-1 flex-col">
+          <span class="flex items-center gap-1.5">
+            <span class="min-w-0 flex-1 truncate text-xs/tight font-medium">{{
+              workflow.name
+            }}</span>
+            <StorageIcon
+              v-if="workflow.storage"
+              :storage="workflow.storage"
+              :label="storageTitle"
+              class="size-4 shrink-0 text-muted-foreground"
+            />
+          </span>
+          <span class="truncate text-xs text-muted-foreground">{{
+            workflow.updatedAt
+          }}</span>
+        </span>
       </span>
     </button>
 
