@@ -34,28 +34,21 @@
           :style="{ background: thumbnail }"
         />
       </span>
-      <span class="flex items-center gap-2.5 px-3 py-2.5">
-        <span
-          class="grid size-7 shrink-0 place-items-center rounded-md bg-secondary-background-hover"
-        >
-          <i :class="cn('size-3.5 text-muted-foreground', fileIcon)" />
-        </span>
-        <span class="flex min-w-0 flex-1 flex-col">
-          <span class="flex items-center gap-1.5">
-            <span class="min-w-0 flex-1 truncate text-xs/tight font-medium">{{
-              workflow.name
-            }}</span>
-            <StorageIcon
-              v-if="workflow.storage"
-              :storage="workflow.storage"
-              :label="storageTitle"
-              class="size-4 shrink-0 text-muted-foreground"
-            />
-          </span>
-          <span class="truncate text-xs text-muted-foreground">{{
-            workflow.updatedAt
+      <span class="flex flex-col px-3 py-2.5">
+        <span class="flex items-center gap-1.5">
+          <span class="min-w-0 flex-1 truncate text-xs/tight font-medium">{{
+            workflow.name
           }}</span>
+          <StorageIcon
+            v-if="workflow.storage"
+            :storage="workflow.storage"
+            :label="storageTitle"
+            class="size-4 shrink-0 text-muted-foreground"
+          />
         </span>
+        <span class="truncate text-xs text-muted-foreground">{{
+          workflow.updatedAt
+        }}</span>
       </span>
     </button>
 
@@ -140,12 +133,6 @@ const emit = defineEmits<{
 const { t } = useI18n()
 const personaStore = usePrototypePersonaStore()
 const { customThumbnails } = storeToRefs(usePrototypeUiStore())
-
-const isApp = computed(() => workflow.kind === 'app')
-
-const fileIcon = computed(() =>
-  isApp.value ? 'icon-[lucide--panels-top-left]' : 'icon-[comfy--workflow]'
-)
 
 const thumbnail = computed(() =>
   workflowThumbnail(workflow, personaStore.workflowThumbnailSeed(workflow.id))

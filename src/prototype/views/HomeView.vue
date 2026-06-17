@@ -124,13 +124,14 @@
         </p>
         <div
           v-else
-          class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
+          class="grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-4"
         >
           <ShowcaseCard
             v-for="card in featuredCards"
             :key="card.id"
             :title="card.title"
             :seed="card.id"
+            aspect="3/2"
           />
         </div>
       </section>
