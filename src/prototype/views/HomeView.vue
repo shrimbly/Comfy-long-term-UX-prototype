@@ -53,7 +53,7 @@
         <h2 class="text-sm font-semibold">
           {{ t('prototype.views.home.resultsWorkflows') }}
         </h2>
-        <div class="grid grid-cols-[repeat(auto-fill,minmax(14rem,1fr))] gap-4">
+        <div class="grid grid-cols-[repeat(auto-fill,minmax(14rem,1fr))] gap-6">
           <WorkflowCard
             v-for="wf in matchedWorkflows"
             :key="wf.id"
@@ -66,7 +66,7 @@
         <h2 class="text-sm font-semibold">
           {{ t('prototype.views.home.resultsAssets') }}
         </h2>
-        <div class="grid grid-cols-[repeat(auto-fill,minmax(14rem,1fr))] gap-4">
+        <div class="grid grid-cols-[repeat(auto-fill,minmax(14rem,1fr))] gap-6">
           <ShowcaseCard
             v-for="asset in matchedAssets"
             :key="asset.id"
@@ -91,7 +91,7 @@
             :aria-label="t('prototype.views.home.projectFilterLabel')"
           />
         </header>
-        <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
+        <div class="grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-6">
           <WorkflowCard
             v-for="wf in recentsStrip"
             :key="wf.id"
@@ -124,7 +124,7 @@
         </p>
         <div
           v-else
-          class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3"
+          class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
         >
           <ShowcaseCard
             v-for="card in featuredCards"
