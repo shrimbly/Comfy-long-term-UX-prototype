@@ -60,9 +60,9 @@
   </ContextMenu>
 
   <PromoteToProjectDialog
-    v-if="promoteDialogOpen"
-    :source-workflow-id="workflow.id"
-    @close="promoteDialogOpen = false"
+    v-if="publishSourceId"
+    :source-workflow-id="publishSourceId"
+    @close="closePublish"
     @publish="onPublished"
   />
 </template>
@@ -79,8 +79,8 @@ import { useI18n } from 'vue-i18n'
 import Button from '@/components/ui/button/Button.vue'
 
 import PromoteToProjectDialog from './PromoteToProjectDialog.vue'
+import { useWorkflowPublish } from '../composables/useWorkflowPublish'
 import { usePrototypePersonaStore } from '../stores/personaStore'
-import { usePrototypeUiStore } from '../stores/uiStore'
 import type { ViewerWorkflowRole } from '../composables/useViewerWorkflowRole'
 import type { Workflow } from '../types'
 
@@ -103,6 +103,8 @@ const { t } = useI18n()
 const toast = useToast()
 const personaStore = usePrototypePersonaStore()
 const { fixture } = storeToRefs(personaStore)
+const { publishSourceId, openPublish, closePublish, onPublished } =
+  useWorkflowPublish()
 
 type ContextMenuHandle = {
   show: (event: MouseEvent) => void
@@ -115,9 +117,6 @@ const contextMenu = ref<ContextMenuHandle | null>(null)
 // event from reaching PrimeVue's outside-click dismissal). Track the
 // open menu at module scope and dismiss it before showing the next.
 let closeActiveMenu: (() => void) | null = null
-
-const promoteDialogOpen = ref(false)
-const uiStore = usePrototypeUiStore()
 
 const isOwner = computed(() => viewerRole === 'owner')
 const isRunner = computed(() => viewerRole === 'runner')
@@ -199,62 +198,7 @@ function onSaveCopy() {
 }
 
 function onPromoteToProject() {
-  promoteDialogOpen.value = true
-}
-
-function onPublished(payload: {
-  projectId: string
-  isNewProject: boolean
-  targetWorkflowId: string | null
-  newName: string | null
-}) {
-  promoteDialogOpen.value = false
-  const project = fixture.value.projects.find((p) => p.id === payload.projectId)
-  if (payload.targetWorkflowId) {
-    // Overwrite an existing workflow in the project with this one's content.
-    const target = fixture.value.workflows.find(
-      (w) => w.id === payload.targetWorkflowId
-    )
-    const ok = personaStore.publishOverWorkflow(
-      workflow.id,
-      payload.targetWorkflowId
-    )
-    if (!ok) return
-    toast.add({
-      severity: 'success',
-      summary: t('prototype.promoteToProject.overwriteToastSummary'),
-      detail: t('prototype.promoteToProject.overwriteToastDetail', {
-        workflow: target?.name ?? workflow.name,
-        project: project?.name ?? ''
-      }),
-      life: 2800
-    })
-  } else {
-    // Publish as a new canonical in the project (named via the dialog).
-    const ok = personaStore.moveWorkflowToProject(
-      workflow.id,
-      payload.projectId,
-      payload.newName ?? undefined
-    )
-    if (!ok) return
-    toast.add({
-      severity: 'success',
-      summary: t('prototype.promoteToProject.toastSummary'),
-      detail: t('prototype.promoteToProject.toastDetail', {
-        workflow: workflow.name,
-        project: project?.name ?? ''
-      }),
-      life: 2800
-    })
-    if (payload.isNewProject) {
-      // Brand-new project — open share settings so the user can invite
-      // collaborators straight away.
-      uiStore.requestShareSettings(payload.projectId)
-    }
-  }
-  // Land on the destination project; the published workflow appears in its
-  // grid (select it to see the version history in the sidebar).
-  uiStore.go({ kind: 'project', projectId: payload.projectId })
+  openPublish(workflow.id)
 }
 
 function onUploadToCloud() {

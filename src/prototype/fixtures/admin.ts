@@ -133,6 +133,20 @@ export const adminFixture: PersonaFixture = {
         { userId: 'user-alex', role: 'collaborator' }
       ],
       creditsThisMonth: 3620
+    },
+    {
+      // Private: restricted with nobody else shared (owner only). Reads as
+      // "Private" in the access badge + filter; the owner can add people to
+      // promote it to Limited.
+      id: 'proj-personal-rnd',
+      workspaceId: comfyOrg.id,
+      name: 'Personal R&D',
+      tier: 'restricted',
+      ownerUserId: user.id,
+      isDrafts: false,
+      currentUserHasAccess: true,
+      members: [{ userId: user.id, role: 'owner' }],
+      creditsThisMonth: 150
     }
   ],
   workflows: [
@@ -174,7 +188,37 @@ export const adminFixture: PersonaFixture = {
       name: 'Product hero v3',
       updatedAt: '2026-06-14',
       storage: 'local',
-      forkedFrom: { workflowId: 'wf-cocacola-hero' }
+      provenanceProjectId: 'proj-cocacola',
+      forkedFrom: { workflowId: 'wf-cocacola-hero', atVersion: '2026-05-10' }
+    },
+    {
+      // Drift case: forked from an older published version → "2 versions behind".
+      id: 'wf-mw-coke-hero-wip',
+      projectId: myWorkflows.id,
+      name: 'Coke can hero — bokeh test',
+      updatedAt: '2026-06-15',
+      storage: 'local',
+      provenanceProjectId: 'proj-cocacola',
+      forkedFrom: { workflowId: 'wf-cocacola-hero', atVersion: '2026-04-20' }
+    },
+    {
+      // Created-in-project case: no source → "New in this project".
+      id: 'wf-mw-coke-new-angle',
+      projectId: myWorkflows.id,
+      name: 'Coke can — top-down angle',
+      updatedAt: '2026-06-10',
+      storage: 'local',
+      provenanceProjectId: 'proj-cocacola'
+    },
+    {
+      // Source-removed case: forkedFrom resolves to nothing → "Source removed".
+      id: 'wf-mw-coke-orphan',
+      projectId: myWorkflows.id,
+      name: 'Coke can — retired variant',
+      updatedAt: '2026-05-30',
+      storage: 'local',
+      provenanceProjectId: 'proj-cocacola',
+      forkedFrom: { workflowId: 'wf-cocacola-deleted', atVersion: '2026-04-20' }
     },
     {
       id: 'wf-mw-upscale-4x',
@@ -235,6 +279,7 @@ export const adminFixture: PersonaFixture = {
       name: 'Moodboard explorer — rework',
       updatedAt: '2026-06-01',
       storage: 'cloud',
+      provenanceProjectId: 'proj-client-x',
       forkedFrom: {
         workflowId: 'wf-clientx-moodboard',
         atVersion: '2026-05-11'
@@ -276,6 +321,7 @@ export const adminFixture: PersonaFixture = {
       name: 'Establishing shot — my cut',
       updatedAt: '2026-05-16',
       storage: 'cloud',
+      provenanceProjectId: 'proj-indie-short',
       forkedFrom: { workflowId: 'wf-indie-establishing' }
     },
     {
@@ -383,7 +429,12 @@ export const adminFixture: PersonaFixture = {
       kind: 'workflow',
       ownerUserId: user.id,
       access: [{ userId: 'user-alex', role: 'runner' }],
-      updatedAt: '2026-05-10'
+      updatedAt: '2026-05-10',
+      publishedVersions: [
+        { byUserId: user.id, at: '2026-04-20' },
+        { byUserId: 'user-alex', at: '2026-05-02' },
+        { byUserId: user.id, at: '2026-05-10' }
+      ]
     },
     {
       id: 'wf-cocacola-upscale',
@@ -428,6 +479,24 @@ export const adminFixture: PersonaFixture = {
       ownerUserId: 'user-jane',
       updatedAt: '2026-05-03'
     },
+    {
+      id: 'wf-rnd-style-probe',
+      projectId: 'proj-personal-rnd',
+      name: 'Style probe — film grain',
+      kind: 'workflow',
+      ownerUserId: user.id,
+      updatedAt: '2026-06-12',
+      storage: 'cloud'
+    },
+    {
+      id: 'wf-rnd-latent-walk',
+      projectId: 'proj-personal-rnd',
+      name: 'Latent walk experiment',
+      kind: 'workflow',
+      ownerUserId: user.id,
+      updatedAt: '2026-06-02',
+      storage: 'cloud'
+    },
     // Extra project canonicals so most projects carry 4+ workflows.
     // proj-launch (3) and proj-indie-short (2) stay under 4 on purpose,
     // to exercise the count-matched thumbnail mosaic on the project cards.
@@ -447,7 +516,10 @@ export const adminFixture: PersonaFixture = {
       kind: 'workflow',
       ownerUserId: 'user-jane',
       updatedAt: '2026-05-30',
-      storage: 'cloud'
+      publishedVersions: [
+        { byUserId: 'user-jane', at: '2026-05-20' },
+        { byUserId: user.id, at: '2026-05-30' }
+      ]
     },
     {
       id: 'wf-marketing-promo',
@@ -456,7 +528,7 @@ export const adminFixture: PersonaFixture = {
       kind: 'workflow',
       ownerUserId: user.id,
       updatedAt: '2026-05-18',
-      storage: 'local'
+      publishedVersions: [{ byUserId: user.id, at: '2026-05-18' }]
     },
     {
       id: 'wf-brand-icons',
@@ -537,7 +609,10 @@ export const adminFixture: PersonaFixture = {
       kind: 'workflow',
       ownerUserId: 'user-alex',
       updatedAt: '2026-05-12',
-      storage: 'local'
+      publishedVersions: [
+        { byUserId: 'user-alex', at: '2026-04-28' },
+        { byUserId: user.id, at: '2026-05-12' }
+      ]
     }
   ],
   libraryAssets: [

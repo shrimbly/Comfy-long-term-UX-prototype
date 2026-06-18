@@ -5,8 +5,9 @@
 
   Dashboard landing. Time-based greeting + a search that filters the viewer's
   own workflows + media assets (no global search in MVP). Below: a Recents
-  strip (filterable by project) and a featured gallery tabbed across
-  Workflows / Templates / Tutorials (Tutorials is a placeholder for now).
+  strip (top 5, with a "Show all" link to the full Recents view) and a
+  featured gallery tabbed across Workflows / Templates / Tutorials
+  (Tutorials is a placeholder for now).
 -->
 <template>
   <div class="mx-auto flex w-full max-w-6xl flex-col gap-10">
@@ -84,12 +85,15 @@
           <h2 class="text-sm font-semibold">
             {{ t('prototype.views.home.recents') }}
           </h2>
-          <ToolbarSelect
-            v-if="projectFilterOptions.length > 1"
-            v-model="recentsProject"
-            :options="projectFilterOptions"
-            :aria-label="t('prototype.views.home.projectFilterLabel')"
-          />
+          <Button
+            variant="link"
+            size="sm"
+            class="gap-1"
+            @click="uiStore.go({ kind: 'recents' })"
+          >
+            {{ t('prototype.views.home.showAll') }}
+            <i class="icon-[lucide--chevron-right] size-4" />
+          </Button>
         </header>
         <div class="grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-5">
           <WorkflowCard
@@ -146,10 +150,10 @@ import { useI18n } from 'vue-i18n'
 import Button from '@/components/ui/button/Button.vue'
 
 import ShowcaseCard from '../components/ShowcaseCard.vue'
-import ToolbarSelect from '../components/ToolbarSelect.vue'
 import WorkflowCard from '../components/WorkflowCard.vue'
 import { workflowTemplates } from '../fixtures/templates'
 import { usePrototypePersonaStore } from '../stores/personaStore'
+import { usePrototypeUiStore } from '../stores/uiStore'
 
 type FeaturedTab = 'whatsNew' | 'templates' | 'tutorials'
 
@@ -166,9 +170,9 @@ const featuredModels: Array<{ id: string; title: string }> = [
 ]
 
 const { t } = useI18n()
+const uiStore = usePrototypeUiStore()
 const personaStore = usePrototypePersonaStore()
-const { recentWorkflows, visibleProjects, draftsProject, fixture } =
-  storeToRefs(personaStore)
+const { recentWorkflows, fixture } = storeToRefs(personaStore)
 
 const greeting = computed(() => {
   const hour = new Date().getHours()
@@ -203,30 +207,9 @@ const hasResults = computed(
   () => matchedWorkflows.value.length > 0 || matchedAssets.value.length > 0
 )
 
-// --- Recents strip, filterable by project ---
+// --- Recents strip (top 5; "Show all" opens the full Recents view) ---
 
-const recentsProject = ref<string>('all')
-
-const projectFilterOptions = computed(() => {
-  const projects = [
-    ...(draftsProject.value ? [draftsProject.value] : []),
-    ...visibleProjects.value
-  ]
-  return [
-    { value: 'all', label: t('prototype.views.home.allProjects') },
-    ...projects.map((p) => ({ value: p.id, label: p.name }))
-  ]
-})
-
-const recentsStrip = computed(() => {
-  const list =
-    recentsProject.value === 'all'
-      ? recentWorkflows.value
-      : recentWorkflows.value.filter(
-          (w) => w.projectId === recentsProject.value
-        )
-  return list.slice(0, 5)
-})
+const recentsStrip = computed(() => recentWorkflows.value.slice(0, 5))
 
 // --- Featured gallery ---
 

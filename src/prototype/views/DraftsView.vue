@@ -76,10 +76,11 @@
 
       <div v-if="displayed.length" :class="layoutClass">
         <WorkflowCard
-          v-for="wf in displayed"
-          :key="wf.id"
-          :workflow="wf"
+          v-for="d in displayedWithMeta"
+          :key="d.wf.id"
+          :workflow="d.wf"
           :layout="viewMode"
+          :draft-meta="d.meta"
         />
       </div>
       <p
@@ -121,6 +122,7 @@ import Button from '@/components/ui/button/Button.vue'
 import ToolbarSelect from '../components/ToolbarSelect.vue'
 import WorkflowCard from '../components/WorkflowCard.vue'
 import { usePrototypePersonaStore } from '../stores/personaStore'
+import { deriveDraftMeta } from '../utils/draftMeta'
 
 type FilterValue = 'all' | 'cloud' | 'local'
 type SortValue = 'last-modified' | 'oldest' | 'az' | 'za'
@@ -183,6 +185,15 @@ const displayed = computed(() => {
       return list.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
   }
 })
+
+// Surface a provenance link on any workflow connected to a project (a copy
+// or created-in-project draft); plain personal workflows get no badge.
+const displayedWithMeta = computed(() =>
+  displayed.value.map((wf) => ({
+    wf,
+    meta: deriveDraftMeta(wf, fixture.value.workflows, fixture.value.projects)
+  }))
+)
 
 const layoutClass = computed(() =>
   viewMode.value === 'grid'

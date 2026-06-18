@@ -10,7 +10,7 @@
 -->
 <template>
   <div
-    class="text-base-foreground select-none"
+    class="group relative text-base-foreground select-none"
     @contextmenu.prevent.stop="onContextMenu"
   >
     <button
@@ -24,7 +24,7 @@
             : 'border-border-subtle hover:border-muted-foreground'
         )
       "
-      @click="emit('open', workflow.id)"
+      @click="onCardClick"
     >
       <span class="block aspect-3/2 w-full overflow-hidden">
         <CustomThumbnail v-if="customThumbnails" :title="workflow.name" />
@@ -34,21 +34,32 @@
           :style="{ background: thumbnail }"
         />
       </span>
-      <span class="flex flex-col px-3 py-2.5">
+      <span class="flex flex-col gap-1 px-3 py-2.5">
         <span class="flex items-center gap-1.5">
           <span class="min-w-0 flex-1 truncate text-xs/tight font-medium">{{
             workflow.name
           }}</span>
+          <i
+            v-if="isPublishedInProject"
+            class="icon-[lucide--users-round] size-4 shrink-0 text-muted-foreground"
+            :title="teamTitle"
+          />
           <StorageIcon
-            v-if="workflow.storage"
+            v-else-if="workflow.storage"
             :storage="workflow.storage"
             :label="storageTitle"
             class="size-4 shrink-0 text-muted-foreground"
           />
         </span>
-        <span class="truncate text-xs text-muted-foreground">{{
-          workflow.updatedAt
-        }}</span>
+        <span class="flex items-center gap-1.5 text-xs text-muted-foreground">
+          <span class="min-w-0 flex-1 truncate">{{ workflow.updatedAt }}</span>
+          <WorkflowVersionBadge
+            v-if="isPublishedInProject"
+            :name="workflow.name"
+            :versions="workflow.publishedVersions ?? []"
+          />
+          <DraftProvenanceBadge v-if="draftMeta" :meta="draftMeta" />
+        </span>
       </span>
     </button>
 
@@ -63,7 +74,7 @@
             : 'hover:bg-secondary-background-hover'
         )
       "
-      @click="emit('open', workflow.id)"
+      @click="onCardClick"
     >
       <span class="block aspect-3/2 h-9 shrink-0 overflow-hidden rounded-md">
         <CustomThumbnail v-if="customThumbnails" :title="workflow.name" />
@@ -76,8 +87,13 @@
       <span class="flex min-w-0 flex-1 items-center gap-1.5">
         <span class="truncate text-sm">{{ workflow.name }}</span>
       </span>
+      <i
+        v-if="isPublishedInProject"
+        class="icon-[lucide--users-round] size-4 shrink-0 text-muted-foreground"
+        :title="teamTitle"
+      />
       <StorageIcon
-        v-if="workflow.storage"
+        v-else-if="workflow.storage"
         :storage="workflow.storage"
         :label="storageTitle"
         class="size-4 shrink-0 text-muted-foreground"
@@ -85,7 +101,55 @@
       <span class="shrink-0 text-xs text-muted-foreground">{{
         workflow.updatedAt
       }}</span>
+      <WorkflowVersionBadge
+        v-if="isPublishedInProject"
+        :name="workflow.name"
+        :versions="workflow.publishedVersions ?? []"
+      />
+      <DraftProvenanceBadge v-if="draftMeta" :meta="draftMeta" />
     </button>
+
+    <div
+      v-if="actions && layout === 'grid'"
+      class="pointer-events-none absolute inset-x-0 top-0 flex aspect-3/2 items-end justify-end gap-2 p-2 opacity-0 transition-opacity duration-150 group-hover:opacity-100"
+    >
+      <template v-if="actions === 'published'">
+        <Button
+          variant="secondary"
+          size="sm"
+          class="pointer-events-auto"
+          @click.stop="emit('copy', workflow.id)"
+        >
+          <i class="icon-[lucide--copy] size-4" />
+          {{ t('prototype.workflowCard.copyAction') }}
+        </Button>
+        <CopyOpenButton
+          v-if="copies.length"
+          :copies
+          @open="emit('open', $event)"
+        />
+      </template>
+      <template v-else>
+        <Button
+          variant="secondary"
+          size="sm"
+          class="pointer-events-auto"
+          @click.stop="emit('publish', workflow.id)"
+        >
+          <i class="icon-[lucide--folder-up] size-4" />
+          {{ t('prototype.workflowCard.publishAction') }}
+        </Button>
+        <Button
+          variant="primary"
+          size="sm"
+          class="pointer-events-auto"
+          @click.stop="emit('open', workflow.id)"
+        >
+          <i class="icon-[lucide--square-arrow-out-up-right] size-4" />
+          {{ t('prototype.workflowCard.openAction') }}
+        </Button>
+      </template>
+    </div>
 
     <WorkflowContextMenu
       ref="menuRef"
@@ -104,31 +168,53 @@ import { storeToRefs } from 'pinia'
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
+import Button from '@/components/ui/button/Button.vue'
+
+import CopyOpenButton from './CopyOpenButton.vue'
 import CustomThumbnail from './CustomThumbnail.vue'
+import DraftProvenanceBadge from './DraftProvenanceBadge.vue'
 import StorageIcon from './StorageIcon.vue'
 import WorkflowContextMenu from './WorkflowContextMenu.vue'
+import WorkflowVersionBadge from './WorkflowVersionBadge.vue'
 import { useViewerWorkflowRole } from '../composables/useViewerWorkflowRole'
 import { usePrototypePersonaStore } from '../stores/personaStore'
 import { usePrototypeUiStore } from '../stores/uiStore'
 import { workflowThumbnail } from '../utils/thumbnail'
-import type { Workflow } from '../types'
+import type { DraftMeta, Workflow } from '../types'
 
 const {
   workflow,
   layout = 'grid',
   showOpenContainingProject = true,
-  selected = false
+  selected = false,
+  draftMeta,
+  actions,
+  copies = []
 } = defineProps<{
   workflow: Workflow
   layout?: 'grid' | 'list'
   showOpenContainingProject?: boolean
   selected?: boolean
+  draftMeta?: DraftMeta
+  actions?: 'published' | 'draft'
+  // The viewer's existing copies of this canonical (published cards only) —
+  // drives the "Open" CTA + its multi-copy selector.
+  copies?: Workflow[]
 }>()
 
 const emit = defineEmits<{
   open: [workflowId: string]
+  copy: [workflowId: string]
+  publish: [workflowId: string]
   'open-project': [projectId: string]
 }>()
+
+// With hover actions the card body is inert — only the explicit buttons act.
+// Without them, clicking the card opens the workflow (Recents / Home).
+function onCardClick() {
+  if (actions) return
+  emit('open', workflow.id)
+}
 
 const { t } = useI18n()
 const personaStore = usePrototypePersonaStore()
@@ -145,6 +231,19 @@ const storageTitle = computed(() =>
       : 'prototype.workflowCard.storageCloud'
   )
 )
+
+// A canonical (not a copy) living in a real, non-Drafts project is a
+// "published in a project" team workflow — always cloud, shown with a team
+// icon + version badge instead of the personal cloud/local storage icon.
+const isPublishedInProject = computed(() => {
+  if (workflow.forkedFrom) return false
+  const project = personaStore.fixture.projects.find(
+    (p) => p.id === workflow.projectId
+  )
+  return !!project && !project.isDrafts
+})
+
+const teamTitle = computed(() => t('prototype.workflowCard.team'))
 
 const workflowRef = computed(() => workflow)
 const viewerRole = useViewerWorkflowRole(workflowRef)

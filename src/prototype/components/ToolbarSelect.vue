@@ -19,7 +19,7 @@
     </Button>
     <div
       v-if="isOpen"
-      class="absolute top-full right-0 z-20 mt-1 flex w-44 flex-col gap-0.5 rounded-lg border border-border-default bg-interface-menu-surface p-1 shadow-[1px_1px_8px_0_rgb(0_0_0/0.4)]"
+      class="absolute top-full right-0 z-50 mt-1 flex w-44 flex-col gap-0.5 rounded-lg border border-border-default bg-interface-menu-surface p-1 shadow-[1px_1px_8px_0_rgb(0_0_0/0.4)]"
     >
       <Button
         v-for="opt in options"

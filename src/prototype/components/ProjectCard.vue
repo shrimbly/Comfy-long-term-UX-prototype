@@ -40,9 +40,7 @@
           />
           <span class="truncate text-sm/tight">{{ project.name }}</span>
         </span>
-        <span :class="tierBadgeClass">
-          {{ t(`prototype.projectTier.${project.tier}`) }}
-        </span>
+        <ProjectAccessBadge :project="project" />
       </span>
       <span class="flex items-center justify-between gap-2">
         <span class="text-xs text-muted-foreground">
@@ -94,6 +92,7 @@
         {{ metaText }}
       </span>
     </span>
+    <ProjectAccessBadge :project="project" />
   </button>
 </template>
 
@@ -104,6 +103,8 @@ import { useI18n } from 'vue-i18n'
 
 import { workflowThumbnail } from '../utils/thumbnail'
 import type { Project, Workflow } from '../types'
+
+import ProjectAccessBadge from './ProjectAccessBadge.vue'
 
 const {
   project,
@@ -128,23 +129,10 @@ const tiles = computed(() => {
   return Array.from({ length: 4 }, (_, i) => items[i] ?? null)
 })
 
-// List chip second line: workflow count + the project's scope as "location".
-const metaText = computed(() => {
-  if (!project.currentUserHasAccess) {
-    return t('prototype.views.projects.noAccess')
-  }
-  const count = t('prototype.views.projects.workflowCount', {
-    count: workflows.length
-  })
-  return `${count} · ${t(`prototype.projectTier.${project.tier}`)}`
-})
-
-const tierBadgeClass = computed(() =>
-  cn(
-    'shrink-0 rounded-full px-2 py-0.5 text-xs',
-    project.tier === 'restricted'
-      ? 'bg-modal-card-tag-background text-modal-card-tag-foreground'
-      : 'bg-secondary-background-hover text-muted-foreground'
-  )
+// List chip second line: workflow count (access is shown by the badge).
+const metaText = computed(() =>
+  project.currentUserHasAccess
+    ? t('prototype.views.projects.workflowCount', { count: workflows.length })
+    : t('prototype.views.projects.noAccess')
 )
 </script>

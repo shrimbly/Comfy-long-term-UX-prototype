@@ -419,29 +419,14 @@ export const usePrototypePersonaStore = defineStore('prototype-persona', () => {
     return id
   }
 
-  // Generate a non-colliding copy name within a project. Keep-every-copy
-  // (design-decisions.md 2026-06-16) means re-copying never overwrites, so
-  // names disambiguate: "X (copy)", "X (copy 2)", …
-  function uniqueCopyName(baseName: string, projectId: string): string {
-    const existing = new Set(
-      fixture.value.workflows
-        .filter((w) => w.projectId === projectId)
-        .map((w) => w.name)
-    )
-    const first = `${baseName} (copy)`
-    if (!existing.has(first)) return first
-    let n = 2
-    while (existing.has(`${baseName} (copy ${n})`)) n++
-    return `${baseName} (copy ${n})`
-  }
-
   // Copy-on-access (design-decisions.md 2026-06-16). Taking a working copy
   // of a workflow lands a fresh copy in the actor's My Workflows in the host
   // workspace (the workspace containing the source's project). Every call
-  // yields a NEW copy — keep-every-copy: no reuse, no dedup, names
-  // disambiguate. The copy carries `forkedFrom` lineage so it can be
-  // published back over the canonical (Publish to workspace) or published
-  // as a new workflow into a project. Returns the new copy's id.
+  // yields a NEW copy — keep-every-copy: no reuse, no dedup. The copy keeps
+  // the original name (its provenance link, not a "(copy)" suffix, marks it).
+  // It carries `forkedFrom` lineage so it can be published back over the
+  // canonical (Publish to workspace) or published as a new workflow into a
+  // project. Returns the new copy's id.
   function copyToMyWorkflows(workflowId: string): string | undefined {
     const source = fixture.value.workflows.find((w) => w.id === workflowId)
     if (!source) return
@@ -458,16 +443,31 @@ export const usePrototypePersonaStore = defineStore('prototype-persona', () => {
     const newId = `wf-copy-${Date.now()}`
     const today = new Date().toISOString().slice(0, 10)
     const atVersion = canonical.publishedVersions?.at(-1)?.at
+    // Stamp the copy with the project it came from so it surfaces in that
+    // project's "My drafts". A copy of a personal (drafts-project) workflow
+    // keeps whatever provenance the source already carried, if any.
+    const fromPublishedCanonical = !!sourceProject && !sourceProject.isDrafts
+    const provenanceProjectId = fromPublishedCanonical
+      ? canonical.projectId
+      : source.provenanceProjectId
+    // A copy of a published canonical is labelled with the version it was
+    // taken from (e.g. "Promo video stills v1"); publishing it later
+    // increments to the next version.
+    const currentVersion = canonical.publishedVersions?.length || 1
+    const copyName = fromPublishedCanonical
+      ? `${canonical.name} v${currentVersion}`
+      : canonical.name
     fixture.value.workflows = [
       ...fixture.value.workflows,
       {
         ...source,
         id: newId,
         projectId: targetProjectId,
-        name: uniqueCopyName(canonical.name, targetProjectId),
+        name: copyName,
         ownerUserId: fixture.value.currentUser.id,
         updatedAt: today,
         forkedFrom: { workflowId: canonicalId, atVersion },
+        provenanceProjectId,
         access: []
       }
     ]
@@ -497,7 +497,9 @@ export const usePrototypePersonaStore = defineStore('prototype-persona', () => {
       // name + identity + project membership are preserved; the source's
       // working state (thumbnail here as a stand-in for graph contents)
       // and a fresh updatedAt land on it, plus a new entry on the
-      // published-version history timeline.
+      // published-version history timeline. Published canonicals always carry
+      // a baseline V1 (seeded at store init), so appending lands the publish
+      // at the displayed version + 1.
       return {
         ...w,
         updatedAt: today,

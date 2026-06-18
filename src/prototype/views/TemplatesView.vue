@@ -88,7 +88,7 @@ import { workflowTemplates } from '../fixtures/templates'
 import type { TemplateCategory } from '../types'
 
 type CategoryFilter = TemplateCategory | 'all'
-type RuntimeFilter = 'all' | 'comfyui' | 'api'
+type RuntimeFilter = 'all' | 'comfyui'
 type SortValue = 'recommended' | 'popular' | 'newest' | 'az'
 
 const { t } = useI18n()
@@ -116,8 +116,7 @@ const presentCategories = computed(() =>
 const runtimeOptions = computed<Array<{ value: RuntimeFilter; label: string }>>(
   () => [
     { value: 'all', label: t('prototype.views.templates.runtime.all') },
-    { value: 'comfyui', label: t('prototype.views.templates.runtime.comfyui') },
-    { value: 'api', label: t('prototype.views.templates.runtime.api') }
+    { value: 'comfyui', label: t('prototype.views.templates.runtime.comfyui') }
   ]
 )
 

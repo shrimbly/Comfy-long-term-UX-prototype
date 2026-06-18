@@ -68,6 +68,11 @@
       "restricted": "Restricted",
       "private": "Private"
     },
+    "projectAccess": {
+      "everyone": "Everyone",
+      "limited": "Some people",
+      "private": "Just me"
+    },
     "templateCategory": {
       "image": "Image",
       "video": "Video",
@@ -134,40 +139,23 @@
     "workflowCard": {
       "storageLocal": "Saved locally",
       "storageCloud": "Saved to cloud",
+      "team": "Team workflow",
+      "version": "v {n}",
+      "versionHistory": "Version history",
       "copyBadge": "Copy",
+      "copyAction": "Save a copy",
+      "publishAction": "Publish",
+      "openAction": "Open",
+      "openCopyHeading": "Open a copy",
+      "openedSummary": "Opening workflow",
+      "openedDetail": "“{name}” would open in the editor.",
+      "openVersionSummary": "Opening version",
+      "openVersionDetail": "“{name}” v{n} would open in the editor.",
+      "copiedSummary": "Saved a copy",
+      "copiedDetail": "“{name}” is now in My drafts below.",
       "meta": "{date} · {user}",
       "forkOnOpenSummary": "Branch in this project",
       "forkOnOpenDetail": "You're editing a branch of \"{name}\". Publish to workspace to update the team version."
-    },
-    "workflowSidebar": {
-      "openCopy": "Open a copy",
-      "createBranch": "Create a branch",
-      "openBranch": "Open branch",
-      "historyHeading": "Version history",
-      "submission": {
-        "pending": "Submitted for review",
-        "changesRequested": "Changes requested",
-        "resubmit": "Resubmit"
-      },
-      "toast": {
-        "copySummary": "Copied to My Workflows",
-        "copyDetail": "“{name}” is now in My Workflows.",
-        "branchSummary": "Branch created",
-        "branchDetail": "Editing your branch of “{name}”.",
-        "openBranchSummary": "Opened branch",
-        "openBranchDetail": "Opened your branch of “{name}”.",
-        "openedVersionSummary": "Opened version",
-        "openedVersionDetail": "Opened “{name}” · V{number}.",
-        "resubmittedSummary": "Resubmitted for review",
-        "resubmittedDetail": "Sent “{name}” back for review."
-      }
-    },
-    "history": {
-      "heading": "Published versions",
-      "empty": "Not published yet.",
-      "version": "V{number}",
-      "current": "Current",
-      "versionMeta": "{date} · {user}"
     },
     "installNotice": {
       "title": "Install-locked project",
@@ -243,6 +231,12 @@
       "cancel": "Keep in My Workflows",
       "askOwner": "Submit",
       "publish": "Publish"
+    },
+    "publishConfirm": {
+      "title": "Publish as '{workflow}' v{n}",
+      "body": "This will publish to the '{project}' project. The current version stays in history.",
+      "cancel": "Cancel",
+      "confirm": "Publish"
     },
     "promoteToProject": {
       "title": "Publish to a project",
@@ -422,8 +416,7 @@
         "resultsWorkflows": "Workflows",
         "resultsAssets": "Media assets",
         "recents": "Recents",
-        "allProjects": "All projects",
-        "projectFilterLabel": "Filter recents by project",
+        "showAll": "Show all",
         "tabs": {
           "whatsNew": "What's new",
           "templates": "Templates",
@@ -435,11 +428,10 @@
         "title": "Templates",
         "searchPlaceholder": "Search templates",
         "allCategories": "All",
-        "runtimeLabel": "Filter by runtime",
+        "runtimeLabel": "Filter by partner nodes",
         "runtime": {
-          "all": "Any runtime",
-          "comfyui": "ComfyUI",
-          "api": "Partner Nodes"
+          "all": "Incl. partner nodes",
+          "comfyui": "Excl. partner nodes"
         },
         "sortLabel": "Sort templates",
         "sort": {
@@ -507,7 +499,8 @@
         "createWorkflow": "+ Workflow",
         "templatesHeading": "Starter templates",
         "filterAll": "All",
-        "filterMine": "Mine",
+        "filterCloud": "Cloud",
+        "filterLocal": "Local",
         "filterEmpty": "No workflows match the current filter.",
         "sort": {
           "lastModified": "Last modified",
@@ -538,8 +531,24 @@
       "project": {
         "back": "All projects",
         "notFound": "Project not found in current workspace.",
-        "workflowsHeading": "Workflows",
+        "workflowsHeading": "Published",
         "workflowCount": "{count} workflows",
+        "publishedInfo": {
+          "shared": "Shared with everyone in this project.",
+          "copy": "Save a copy to edit it in your own workflows.",
+          "publish": "Publish your copy to release a new version."
+        },
+        "draftsHeading": "My drafts",
+        "draftsInfo": {
+          "private": "Your private copies — only you can see them.",
+          "publish": "Publish a draft to release a new version."
+        },
+        "draftCount": "{count} draft | {count} drafts",
+        "draftsEmpty": "No local drafts yet. Open a published workflow above and it'll appear here as your own copy.",
+        "draftProvenance": {
+          "link": "{project}: {workflow}",
+          "sourceRemoved": "Source removed"
+        },
         "membersHeading": "Members",
         "memberCount": "{count} members",
         "empty": "No workflows in this project yet.",
@@ -610,6 +619,7 @@
           "close": "Close",
           "summaryAnyone": "Anyone in {workspace}",
           "summaryRestricted": "{count} person | {count} people",
+          "summaryPrivate": "Just me",
           "summaryMore": "+{count}",
           "removeFromProject": "Remove from project",
           "footerNote": "Workflows and apps in this project can also be shared or published individually.",

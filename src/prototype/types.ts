@@ -114,6 +114,13 @@ export interface Workflow {
   // themselves. `atVersion` is the canonical published-version date this
   // copy diverged from — drives the history graph's offshoot point.
   forkedFrom?: { workflowId: string; atVersion?: string }
+  // The project this workflow is a draft *for* (provenance), even though the
+  // draft itself lives in the owner's My Workflows. Set when the workflow was
+  // copied from a project canonical (= that canonical's project) or created
+  // via a project's "New workflow" button. Surfaces the draft in that
+  // project's "My drafts" section and survives the source canonical being
+  // deleted. See ../IA_Plan/wiki/entities/project.md §"Project surface (MVP)".
+  provenanceProjectId?: string
   // On a canonical: the full Publish-to-workspace timeline (who/when).
   // Display/audit record; the latest publish is the current content. Per
   // ../IA_Plan/wiki/decisions/published-workflow-model.md §"Published-
@@ -124,6 +131,17 @@ export interface Workflow {
 export interface PublishedVersion {
   byUserId: string
   at: string
+}
+
+// Provenance for a workflow connected to a project, surfaced as a link badge.
+// `linked` shows a link glyph whose tooltip reads "{project}: {workflow}" —
+// the project it belongs to and the workflow it tracks (the source canonical
+// for a copy, or its own name for one created in the project).
+// `source-removed` is a copy whose source canonical no longer resolves.
+export interface DraftMeta {
+  state: 'linked' | 'source-removed'
+  projectName: string
+  workflowName: string
 }
 
 // Workflow templates — the live ComfyUI template gallery, a pre-existing

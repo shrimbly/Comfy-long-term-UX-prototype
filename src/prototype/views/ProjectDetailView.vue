@@ -25,15 +25,7 @@
     </button>
 
     <header class="flex items-start justify-between gap-4">
-      <div class="flex items-center gap-3">
-        <PageTitle>{{ project?.name }}</PageTitle>
-        <span
-          v-if="project"
-          class="rounded-sm bg-secondary-background-hover px-2 py-0.5 text-xs text-muted-foreground"
-        >
-          {{ t(`prototype.projectTier.${project.tier}`) }}
-        </span>
-      </div>
+      <PageTitle>{{ project?.name }}</PageTitle>
       <div v-if="project" class="flex items-center gap-2">
         <button
           v-if="project.tier !== 'private'"
@@ -41,9 +33,12 @@
           class="inline-flex h-9 cursor-pointer items-center gap-2 rounded-lg bg-secondary-background pr-3 pl-1.5 text-sm transition-colors hover:bg-secondary-background-hover"
           @click="isSharingOpen = true"
         >
-          <span v-if="avatarStack.length" class="flex items-center">
+          <span
+            v-if="accessLevel !== 'private' && visibleAvatars.length"
+            class="flex items-center"
+          >
             <span
-              v-for="(a, i) in avatarStack"
+              v-for="(a, i) in visibleAvatars"
               :key="a.userId"
               :class="
                 cn(
@@ -128,15 +123,30 @@
         </button>
       </nav>
 
-      <div class="flex gap-6">
-        <div class="flex min-w-0 flex-1 flex-col gap-6">
-          <section v-if="activeTab === 'workflows'" class="flex flex-col gap-3">
+      <div class="flex flex-col gap-6">
+        <template v-if="activeTab === 'workflows'">
+          <section class="flex flex-col gap-3">
             <div class="flex items-baseline justify-between">
-              <h2
-                class="text-sm font-semibold tracking-wide text-muted-foreground uppercase"
-              >
-                {{ t('prototype.views.project.workflowsHeading') }}
-              </h2>
+              <div class="flex items-center gap-1.5">
+                <h2
+                  class="text-sm font-semibold tracking-wide text-muted-foreground uppercase"
+                >
+                  {{ t('prototype.views.project.workflowsHeading') }}
+                </h2>
+                <InfoTooltip
+                  :label="t('prototype.views.project.workflowsHeading')"
+                >
+                  <span>{{
+                    t('prototype.views.project.publishedInfo.shared')
+                  }}</span>
+                  <span>{{
+                    t('prototype.views.project.publishedInfo.copy')
+                  }}</span>
+                  <span>{{
+                    t('prototype.views.project.publishedInfo.publish')
+                  }}</span>
+                </InfoTooltip>
+              </div>
               <span
                 v-if="workflows.length"
                 class="text-xs text-muted-foreground"
@@ -156,8 +166,10 @@
                 v-for="wf in workflows"
                 :key="wf.id"
                 :workflow="wf"
-                :selected="wf.id === selectedWorkflowId"
-                @open="onSelectWorkflow"
+                actions="published"
+                :copies="copiesByCanonical[wf.id] ?? []"
+                @copy="onCopyWorkflow"
+                @open="onOpenDraft"
                 @open-project="onOpenProject"
               />
             </div>
@@ -169,17 +181,64 @@
             </div>
           </section>
 
-          <ProjectUsageSection
-            v-else-if="activeTab === 'usage'"
-            :project-credits="projectCredits"
-            :workspace-credits="workspaceCredits"
-          />
-        </div>
-        <WorkflowSidebar
-          v-if="selectedWorkflowId && activeTab === 'workflows'"
-          :key="selectedWorkflowId"
-          :workflow-id="selectedWorkflowId"
-          @close="selectedWorkflowId = null"
+          <section class="flex flex-col gap-3">
+            <div class="flex items-baseline justify-between">
+              <div class="flex items-center gap-1.5">
+                <h2
+                  class="text-sm font-semibold tracking-wide text-muted-foreground uppercase"
+                >
+                  {{ t('prototype.views.project.draftsHeading') }}
+                </h2>
+                <InfoTooltip
+                  :label="t('prototype.views.project.draftsHeading')"
+                >
+                  <span>{{
+                    t('prototype.views.project.draftsInfo.private')
+                  }}</span>
+                  <span>{{
+                    t('prototype.views.project.draftsInfo.publish')
+                  }}</span>
+                </InfoTooltip>
+              </div>
+              <span
+                v-if="myDraftsWithMeta.length"
+                class="text-xs text-muted-foreground"
+              >
+                {{
+                  t('prototype.views.project.draftCount', {
+                    count: myDraftsWithMeta.length
+                  })
+                }}
+              </span>
+            </div>
+            <div
+              v-if="myDraftsWithMeta.length"
+              class="grid grid-cols-[repeat(auto-fill,minmax(14rem,1fr))] gap-6"
+            >
+              <WorkflowCard
+                v-for="d in myDraftsWithMeta"
+                :key="d.wf.id"
+                :workflow="d.wf"
+                :draft-meta="d.meta"
+                actions="draft"
+                @open="onOpenDraft"
+                @publish="publishDraft"
+                @open-project="onOpenProject"
+              />
+            </div>
+            <div
+              v-else
+              class="rounded-xl border border-dashed border-border-subtle p-10 text-center text-sm text-muted-foreground"
+            >
+              {{ t('prototype.views.project.draftsEmpty') }}
+            </div>
+          </section>
+        </template>
+
+        <ProjectUsageSection
+          v-else-if="activeTab === 'usage'"
+          :project-credits="projectCredits"
+          :workspace-credits="workspaceCredits"
         />
       </div>
     </template>
@@ -189,24 +248,46 @@
       :project="project"
       @close="isSharingOpen = false"
     />
+
+    <PromoteToProjectDialog
+      v-if="publishSourceId"
+      :source-workflow-id="publishSourceId"
+      @close="closePublish"
+      @publish="onPublished"
+    />
+
+    <PublishConfirmDialog
+      v-if="pendingPublish"
+      :workflow-name="pendingPublish.workflowName"
+      :project-name="pendingPublish.projectName"
+      :next-version="pendingPublish.nextVersion"
+      @confirm="confirmPublishDraft"
+      @close="cancelPublishConfirm"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { cn } from '@comfyorg/tailwind-utils'
+import { useToast } from 'primevue/usetoast'
 import { storeToRefs } from 'pinia'
 import { computed, onMounted, ref, watchEffect } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import PageTitle from '../components/PageTitle.vue'
 
+import InfoTooltip from '../components/InfoTooltip.vue'
 import ProjectSharingDialog from '../components/ProjectSharingDialog.vue'
 import ProjectUsageSection from '../components/ProjectUsageSection.vue'
+import PromoteToProjectDialog from '../components/PromoteToProjectDialog.vue'
+import PublishConfirmDialog from '../components/PublishConfirmDialog.vue'
 import WorkflowCard from '../components/WorkflowCard.vue'
-import WorkflowSidebar from '../components/WorkflowSidebar.vue'
+import { useProjectAccess } from '../composables/useProjectAccess'
+import { useWorkflowPublish } from '../composables/useWorkflowPublish'
 import { usePrototypePersonaStore } from '../stores/personaStore'
 import { usePrototypeTabsStore } from '../stores/tabsStore'
 import { usePrototypeUiStore } from '../stores/uiStore'
+import { deriveDraftMeta } from '../utils/draftMeta'
 
 type ProjectTabId = 'workflows' | 'usage'
 
@@ -215,13 +296,22 @@ const { projectId } = defineProps<{
 }>()
 
 const { t } = useI18n()
+const toast = useToast()
 const personaStore = usePrototypePersonaStore()
 const uiStore = usePrototypeUiStore()
 const tabsStore = usePrototypeTabsStore()
-const { fixture, currentWorkspace } = storeToRefs(personaStore)
+const { fixture, currentWorkspace, draftsProject } = storeToRefs(personaStore)
+const {
+  publishSourceId,
+  closePublish,
+  onPublished,
+  publishDraft,
+  pendingPublish,
+  confirmPublishDraft,
+  cancelPublishConfirm
+} = useWorkflowPublish()
 
 const isSharingOpen = ref(false)
-const selectedWorkflowId = ref<string | null>(null)
 const activeTab = ref<ProjectTabId>('workflows')
 
 onMounted(() => {
@@ -230,9 +320,31 @@ onMounted(() => {
   if (uiStore.consumeShareIntent(projectId)) isSharingOpen.value = true
 })
 
-function onSelectWorkflow(workflowId: string) {
-  selectedWorkflowId.value =
-    selectedWorkflowId.value === workflowId ? null : workflowId
+// Published card primary action: take a personal copy into My Workflows
+// (copy-on-access). The copy then surfaces in this project's "My drafts".
+function onCopyWorkflow(workflowId: string) {
+  const newId = personaStore.copyToMyWorkflows(workflowId)
+  if (!newId) return
+  const copy = fixture.value.workflows.find((w) => w.id === newId)
+  toast.add({
+    severity: 'success',
+    summary: t('prototype.workflowCard.copiedSummary'),
+    detail: t('prototype.workflowCard.copiedDetail', {
+      name: copy?.name ?? ''
+    }),
+    life: 2800
+  })
+}
+
+// Draft primary action. No editor in the prototype — opening a draft toasts.
+function onOpenDraft(workflowId: string) {
+  const wf = fixture.value.workflows.find((w) => w.id === workflowId)
+  toast.add({
+    severity: 'info',
+    summary: t('prototype.workflowCard.openedSummary'),
+    detail: t('prototype.workflowCard.openedDetail', { name: wf?.name ?? '' }),
+    life: 2200
+  })
 }
 
 const project = computed(() =>
@@ -295,12 +407,49 @@ function onOpenProject(id: string) {
   uiStore.go({ kind: 'project', projectId: id })
 }
 
-// Canonicals only. Working copies live in the actor's My Workflows, not
-// the project grid.
+// Canonicals only — the "Published" registry. Working copies live in the
+// actor's My Workflows, not the project grid.
 const workflows = computed(() =>
   fixture.value.workflows
     .filter((w) => w.projectId === projectId && !w.forkedFrom)
     .toSorted((a, b) => b.updatedAt.localeCompare(a.updatedAt))
+)
+
+// The viewer's own copies, keyed by the canonical they forked from — drives
+// each published card's "Open" CTA + multi-copy selector.
+const copiesByCanonical = computed(() => {
+  const viewerId = fixture.value.currentUser.id
+  const buckets: Record<string, typeof fixture.value.workflows> = {}
+  for (const w of fixture.value.workflows) {
+    const canonicalId = w.forkedFrom?.workflowId
+    if (!canonicalId || w.ownerUserId !== viewerId) continue
+    ;(buckets[canonicalId] ??= []).push(w)
+  }
+  for (const list of Object.values(buckets)) {
+    list.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
+  }
+  return buckets
+})
+
+// "My drafts" — the viewer's own unpublished copies that live in My
+// Workflows but carry this project as their provenance. Surfaced here (not
+// moved) so the project keeps the association. Per
+// ../IA_Plan/wiki/entities/project.md §"Project surface (MVP)".
+const myDrafts = computed(() => {
+  const draftsId = draftsProject.value?.id
+  if (!draftsId) return []
+  return fixture.value.workflows
+    .filter(
+      (w) => w.projectId === draftsId && w.provenanceProjectId === projectId
+    )
+    .toSorted((a, b) => b.updatedAt.localeCompare(a.updatedAt))
+})
+
+const myDraftsWithMeta = computed(() =>
+  myDrafts.value.map((wf) => ({
+    wf,
+    meta: deriveDraftMeta(wf, fixture.value.workflows, fixture.value.projects)
+  }))
 )
 
 function onViewMediaAssets() {
@@ -308,52 +457,22 @@ function onViewMediaAssets() {
   tabsStore.openMediaAssets(t('prototype.sidebar.libraryMedia'))
 }
 
-// People with access to drive the avatar stack + member-count summary.
-// Mirrors the resolver in ProjectSharing — owner + explicit members +
-// (for workspace-wide) all workspace Admins.
-const peopleIds = computed<string[]>(() => {
-  const p = project.value
-  if (!p) return []
-  const ids = new Set<string>()
-  ids.add(p.ownerUserId)
-  for (const m of p.members ?? []) ids.add(m.userId)
-  if (p.tier === 'workspace-wide') {
-    for (const m of fixture.value.members) {
-      if (m.role === 'admin') ids.add(m.id)
-    }
-  }
-  return [...ids]
-})
-
-const MAX_VISIBLE_AVATARS = 3
-
-const avatarStack = computed(() =>
-  peopleIds.value.slice(0, MAX_VISIBLE_AVATARS).map((id) => {
-    const wsMember = fixture.value.members.find((m) => m.id === id)
-    const invite = fixture.value.pendingInvites.find((i) => i.id === id)
-    const name = wsMember?.name ?? invite?.email ?? id
-    return {
-      userId: id,
-      name,
-      avatarColor: wsMember?.avatarColor ?? '#7c7c7c',
-      initial: name.trim().charAt(0).toUpperCase()
-    }
-  })
-)
-
-const hiddenAvatarCount = computed(() =>
-  Math.max(0, peopleIds.value.length - MAX_VISIBLE_AVATARS)
-)
+// People with access drive the Share button's avatar stack + summary.
+const { accessLevel, visibleAvatars, hiddenAvatarCount, peopleCount } =
+  useProjectAccess(project)
 
 const sharingSummary = computed(() => {
-  if (!project.value) return ''
-  if (project.value.tier === 'workspace-wide') {
-    return t('prototype.views.project.sharing.summaryAnyone', {
-      workspace: currentWorkspace.value?.name ?? ''
-    })
+  switch (accessLevel.value) {
+    case 'everyone':
+      return t('prototype.views.project.sharing.summaryAnyone', {
+        workspace: currentWorkspace.value?.name ?? ''
+      })
+    case 'private':
+      return t('prototype.views.project.sharing.summaryPrivate')
+    default:
+      return t('prototype.views.project.sharing.summaryRestricted', {
+        count: peopleCount.value
+      })
   }
-  return t('prototype.views.project.sharing.summaryRestricted', {
-    count: peopleIds.value.length
-  })
 })
 </script>

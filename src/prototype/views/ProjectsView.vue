@@ -122,8 +122,9 @@ import ProjectCard from '../components/ProjectCard.vue'
 import ToolbarSelect from '../components/ToolbarSelect.vue'
 import { usePrototypePersonaStore } from '../stores/personaStore'
 import { usePrototypeUiStore } from '../stores/uiStore'
+import { projectAccessLevel } from '../utils/projectAccess'
 
-type FilterValue = 'all' | 'workspace-wide' | 'restricted'
+type FilterValue = 'all' | 'everyone' | 'limited' | 'private'
 type SortValue = 'last-modified' | 'oldest' | 'az' | 'za'
 type ViewMode = 'grid' | 'list'
 
@@ -150,11 +151,9 @@ const viewMode = ref<ViewMode>('grid')
 const filterOptions = computed<Array<{ value: FilterValue; label: string }>>(
   () => [
     { value: 'all', label: t('prototype.views.projects.filterAll') },
-    {
-      value: 'workspace-wide',
-      label: t('prototype.projectTier.workspace-wide')
-    },
-    { value: 'restricted', label: t('prototype.projectTier.restricted') }
+    { value: 'everyone', label: t('prototype.projectAccess.everyone') },
+    { value: 'limited', label: t('prototype.projectAccess.limited') },
+    { value: 'private', label: t('prototype.projectAccess.private') }
   ]
 )
 
@@ -170,7 +169,9 @@ const sortOptions = computed<Array<{ value: SortValue; label: string }>>(() => [
 
 const filteredProjects = computed(() => {
   if (filter.value === 'all') return visibleProjects.value
-  return visibleProjects.value.filter((p) => p.tier === filter.value)
+  return visibleProjects.value.filter(
+    (p) => projectAccessLevel(p) === filter.value
+  )
 })
 
 function lastModified(projectId: string): string {

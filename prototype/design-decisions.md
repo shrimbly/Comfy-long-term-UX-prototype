@@ -836,3 +836,55 @@ Promote? **no** — prototype fidelity; no IA impact.
 The sidebar "Media assets" item no longer opens the media-library workbench tab (`tabsStore.openMediaAssets`); it now shows a placeholder dialog ("This will open Alex's Media Assets tab.") via a new `MediaAssetsNoticeDialog`. The media library is a workbench surface outside this dashboard prototype's scope — the stub acknowledges the destination without building it here. (`openMediaAssets` still exists; `ProjectDetailView` uses it.)
 
 Promote? **no** — prototype scoping stub.
+
+---
+
+## [2026-06-18] Project page — provenance-tracked "My drafts" section (design-team catch-up)
+
+The project page now stacks two sections: **Published** (the canonical registry, unchanged) and a new **My drafts** below it — the viewer's own unpublished copies whose provenance points at this project. Keeps the workflow↔project association without putting WIP in shared team space (drafts stay private, surfaced not moved).
+
+Decisions (with Willie, this session):
+
+- **Copy-on-access stays "every access = a copy"; no dedup / no resume.** Willie's call: resuming a stale draft would silently hide that it diverged from the canonical. Instead, each draft is labelled with its provenance + **drift** ("Copy of X · N versions behind"); a fresh copy each time keeps divergence explicit.
+- **One new field — `provenanceProjectId`** on `Workflow` (denormalized). Set on copy (= source canonical's project) or create-in-project. Derivable-from-`forkedFrom` for the copy case, but denormalizing also powers the **Source removed** state (canonical deleted → `forkedFrom` no longer resolves, provenance still known). `forkedFrom.atVersion` + the canonical's `publishedVersions` give the drift count.
+- **Three draft states surfaced:** _Copy of <canonical>_ (+ "N versions behind" when drift > 0, amber), _New in this project_ (created-in-project, no source), _Source removed_ (danger).
+- Publish from My drafts → becomes/overwrites the canonical and leaves My drafts. Drafts live in My Workflows; the project page surfaces by `provenanceProjectId` (no move). Section labelled "My drafts". The project "+ New workflow" button is the create-in-project entry point (presentational stub in the prototype).
+
+Fixtures: `wf-cocacola-hero` gained `publishedVersions`; the cocacola project now demonstrates all four states (in-sync copy, 2-versions-behind, new-in-project, source-removed). client-x + indie-short also seed a draft each.
+
+Not built this pass (deliberate): the live "open Published → creates the copy + a copy-time toast" interaction — the dashboard's open = preview sidebar, so there's no clean access event to hook without the editor-open flow. The provenance/drift labels + the empty-state hint carry the copy-model clarity for now.
+
+Wiki: promoted same day — resolved the parked dedup sub-question in [`mvp-scope.md`](../../IA_Plan/wiki/decisions/mvp-scope.md) (copy-on-access bullet) and added [§"Project surface (MVP)"](../../IA_Plan/wiki/entities/project.md) describing the Published + My drafts model.
+
+Promote? **yes — promoted to wiki 2026-06-18** (mvp-scope.md + project.md).
+
+Revised same day (Willie): published-in-project workflows are **always cloud** (no local shared workflows) — confirmed no project canonical carries `storage: 'local'`. On their cards the personal cloud/local storage icon is replaced with a **team icon** (`lucide--users-round`) and a **version badge** (`v{n}` from `publishedVersions.length`, default v1) after the date. Derived in `WorkflowCard` from the workflow itself (`!forkedFrom` + canonical lives in a real non-Drafts project), so it applies wherever such a card renders; drafts/copies keep their cloud/local icon.
+
+---
+
+## [2026-06-18] Project workflows — card hover actions replace the detail sidebar
+
+Now that the version badge/popover lives on the card (above), the right-hand `WorkflowSidebar` (name + Open-a-copy + version history) is redundant. Selecting a workflow on the project page no longer opens it — the sidebar is **deleted**. Actions moved onto the card as a hover overlay (grid only) over the thumbnail:
+
+- **Published** cards → one **Copy** button (copy-on-access into My Workflows). Clicking the card body does the same (primary action).
+- **My drafts** cards → **Open** (primary) + **Publish** (secondary). Card-body click = Open. Open is a toast in the prototype (no editor); Publish reuses the existing promote flow.
+
+Mechanics: overlay buttons are rendered as **siblings** of the card's root `<button>` (not children) to avoid invalid nested buttons, revealed via `group-hover`, `pointer-events-none` container + `pointer-events-auto` buttons so the rest of the card still hovers/clicks. New optional `actions?: 'published' | 'draft'` prop on `WorkflowCard` gates the overlay (so Recents/Home cards are unaffected) and `copy`/`publish` emits were added.
+
+Refactor: the publish handler (overwrite-vs-new canonical + toasts + navigate) was duplicated between the context menu and would have been again here, so it was extracted to **`useWorkflowPublish`** (drives `PromoteToProjectDialog`). `WorkflowContextMenu` now consumes it too. Deleted the dead `prototype.workflowSidebar.*` and `prototype.history.*` i18n namespaces (copy-toast strings relocated to `workflowCard.copied*`).
+
+Promote? **no** — interaction-model fidelity; no new IA rule. (Reinforces version-history-as-safety-net already in mvp-scope.md.)
+
+---
+
+## [2026-06-18] Publishing a draft-copy updates its source canonical in place
+
+Refines the My-drafts publish behavior from the 2026-06-18 provenance entry (which had publishing _leave_ My drafts). New rule, per Willie: clicking **Publish** on a draft that is a copy of a project canonical publishes **over that canonical** (appends a published version → the canonical's version badge increments) and **leaves the draft in the drafts section**, link intact. There's no destination to choose — it always targets the source canonical in its original project, so the publish dialog is skipped for this case.
+
+A draft with no resolvable source (created-in-project, or `source-removed`) still falls back to the choose-a-destination `PromoteToProjectDialog`.
+
+Implementation: new `publishDraft(workflowId)` in `useWorkflowPublish` (resolves `forkedFrom` → source, calls `publishOverWorkflow`, no navigation); the project page's draft cards call it instead of `openPublish`. The draft's `forkedFrom.atVersion` is intentionally left pointing at the pre-publish version, but drift is no longer surfaced (removed earlier), so this is invisible.
+
+Consistent with the wiki's "drafts are surfaced, not moved" ([project.md §Project surface (MVP)](../../IA_Plan/wiki/entities/project.md)).
+
+Promote? **no** — interaction refinement within the existing published-workflow model.

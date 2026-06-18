@@ -1,11 +1,12 @@
 <!--
   Implements:
-    Recents view — workflows from every accessible project (visible
-    projects + Drafts).
+    decision: ../IA_Plan/wiki/decisions/save-destination-workflow-level.md
 
-    Filter + sort affordances mirror the Projects index (filter pills
-    with counts; sort dropdown). Skipped the grid/list view-mode toggle
-    in this pass — the WorkflowCard currently only renders as a tile.
+    Recents view — the user's recently-opened workflows. Chip filter by
+    storage (All / Cloud / Local) on the left, sort dropdown on the right.
+    Replaces the old All/Mine owner filter, which is meaningless in the
+    copy-on-access MVP model where every workflow is the user's. Grid
+    renders WorkflowCard tiles.
 -->
 <template>
   <div class="flex flex-col gap-6">
@@ -39,7 +40,7 @@
           </button>
           <div
             v-if="isSortOpen"
-            class="absolute top-full right-0 z-20 mt-1 flex w-48 flex-col gap-0.5 rounded-lg border border-border-default bg-interface-menu-surface p-1 text-sm shadow-[1px_1px_8px_0_rgb(0_0_0/0.4)]"
+            class="absolute top-full right-0 z-50 mt-1 flex w-48 flex-col gap-0.5 rounded-lg border border-border-default bg-interface-menu-surface p-1 text-sm shadow-[1px_1px_8px_0_rgb(0_0_0/0.4)]"
           >
             <button
               v-for="opt in sortOptions"
@@ -109,14 +110,13 @@ import FilterPill from '../components/FilterPill.vue'
 import PageTitle from '../components/PageTitle.vue'
 import WorkflowCard from '../components/WorkflowCard.vue'
 import { usePrototypePersonaStore } from '../stores/personaStore'
-import type { Workflow } from '../types'
 
-type FilterValue = 'all' | 'mine'
+type FilterValue = 'all' | 'cloud' | 'local'
 type SortValue = 'last-modified' | 'oldest' | 'az' | 'za'
 
 const { t } = useI18n()
 const personaStore = usePrototypePersonaStore()
-const { recentWorkflows, draftsProject, fixture } = storeToRefs(personaStore)
+const { recentWorkflows } = storeToRefs(personaStore)
 
 const filter = ref<FilterValue>('all')
 const sort = ref<SortValue>('last-modified')
@@ -132,17 +132,11 @@ function onSelectSort(next: SortValue) {
   isSortOpen.value = false
 }
 
-const mineWorkflows = computed(() => {
-  const viewerId = fixture.value.currentUser.id
-  return recentWorkflows.value.filter(
-    (w) => w.projectId === draftsProject.value?.id || w.ownerUserId === viewerId
-  )
-})
-
 const filterOptions = computed<Array<{ value: FilterValue; label: string }>>(
   () => [
     { value: 'all', label: t('prototype.views.recents.filterAll') },
-    { value: 'mine', label: t('prototype.views.recents.filterMine') }
+    { value: 'cloud', label: t('prototype.views.recents.filterCloud') },
+    { value: 'local', label: t('prototype.views.recents.filterLocal') }
   ]
 )
 
@@ -162,9 +156,9 @@ const currentSortLabel = computed(
     sortOptions.value[0].label
 )
 
-const filteredWorkflows = computed<Workflow[]>(() => {
-  if (filter.value === 'mine') return mineWorkflows.value
-  return recentWorkflows.value
+const filteredWorkflows = computed(() => {
+  if (filter.value === 'all') return recentWorkflows.value
+  return recentWorkflows.value.filter((w) => w.storage === filter.value)
 })
 
 const sortedWorkflows = computed(() => {
