@@ -262,6 +262,7 @@
       :project-name="pendingPublish.projectName"
       :next-version="pendingPublish.nextVersion"
       @confirm="confirmPublishDraft"
+      @publish-new="publishDraftAsNew"
       @close="cancelPublishConfirm"
     />
   </div>
@@ -308,7 +309,8 @@ const {
   publishDraft,
   pendingPublish,
   confirmPublishDraft,
-  cancelPublishConfirm
+  cancelPublishConfirm,
+  publishDraftAsNew
 } = useWorkflowPublish()
 
 const isSharingOpen = ref(false)

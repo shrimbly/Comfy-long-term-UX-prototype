@@ -18,7 +18,7 @@
   <Dialog :open="true" @update:open="(v) => !v && emit('close')">
     <DialogPortal>
       <DialogOverlay />
-      <DialogContent size="sm">
+      <DialogContent size="md">
         <DialogHeader class="items-start pb-0">
           <DialogTitle>
             {{
@@ -31,71 +31,78 @@
         </DialogHeader>
 
         <!-- Step 1 — select project -->
-        <div v-if="step === 1" class="flex flex-col px-2 py-1">
+        <div v-if="step === 1" class="px-4 py-2">
           <div
-            v-if="isNewProject"
-            class="flex items-center gap-3 rounded-lg bg-interface-menu-component-surface-selected p-2"
+            class="flex flex-col gap-0.5 rounded-lg bg-secondary-background p-1.5"
           >
-            <span
-              class="grid size-8 shrink-0 place-items-center rounded-md bg-secondary-background text-muted-foreground"
-              aria-hidden="true"
-            >
-              <i class="icon-[lucide--folder-plus] size-4" />
-            </span>
-            <input
-              ref="newProjectInput"
-              v-model="newProjectName"
-              type="text"
-              class="min-w-0 flex-1 rounded-md border border-border-default bg-base-background px-2.5 py-1.5 text-sm text-base-foreground outline-none placeholder:text-muted-foreground"
-              :placeholder="
-                t('prototype.promoteToProject.newProjectPlaceholder')
-              "
-              @keydown.enter="canContinue && goToStep2()"
-            />
-          </div>
-
-          <div
-            v-if="candidates.length"
-            class="flex max-h-64 flex-col gap-0.5 overflow-y-auto py-1 pr-0.5"
-          >
-            <Button
-              v-for="p in candidates"
-              :key="p.id"
-              variant="textonly"
-              size="unset"
-              :class="rowClass(selectedId === p.id)"
-              @click="selectProject(p.id)"
+            <div
+              v-if="isNewProject"
+              class="flex items-center gap-3 rounded-md bg-interface-menu-component-surface-selected p-2"
             >
               <span
-                class="grid size-8 shrink-0 grid-cols-2 grid-rows-2 gap-0.5 overflow-hidden rounded-md"
+                class="grid size-8 shrink-0 place-items-center rounded-md bg-secondary-background-hover text-muted-foreground"
                 aria-hidden="true"
               >
-                <span
-                  v-for="(seed, i) in seedsFor(p)"
-                  :key="i"
-                  class="block rounded-[2px]"
-                  :style="{ background: thumbnailGradient(seed) }"
-                />
+                <i class="icon-[lucide--folder-plus] size-4" />
               </span>
-              <span class="flex min-w-0 flex-1 flex-col">
-                <span class="truncate text-sm text-base-foreground">{{
-                  p.name
-                }}</span>
-                <span class="truncate text-xs text-muted-foreground">{{
-                  t(`prototype.projectTier.${p.tier}`)
-                }}</span>
-              </span>
-              <i
-                v-if="selectedId === p.id"
-                class="icon-[lucide--check] size-4 shrink-0 text-base-foreground"
+              <input
+                ref="newProjectInput"
+                v-model="newProjectName"
+                type="text"
+                class="min-w-0 flex-1 rounded-md border border-border-default bg-base-background px-2.5 py-1.5 text-sm text-base-foreground outline-none placeholder:text-muted-foreground"
+                :placeholder="
+                  t('prototype.promoteToProject.newProjectPlaceholder')
+                "
+                @keydown.enter="canContinue && goToStep2()"
               />
-            </Button>
+            </div>
+
+            <div
+              v-if="candidates.length"
+              class="flex max-h-72 flex-col gap-0.5 overflow-y-auto pr-0.5"
+            >
+              <Button
+                v-for="p in candidates"
+                :key="p.id"
+                variant="textonly"
+                size="unset"
+                :class="rowClass(selectedId === p.id)"
+                @click="selectProject(p.id)"
+              >
+                <span
+                  class="grid size-8 shrink-0 place-items-center rounded-md bg-secondary-background-hover text-muted-foreground"
+                  aria-hidden="true"
+                >
+                  <i class="icon-[lucide--folder] size-4" />
+                </span>
+                <span class="flex min-w-0 flex-1 flex-col">
+                  <span class="truncate text-sm text-base-foreground">{{
+                    p.name
+                  }}</span>
+                  <span class="truncate text-xs text-muted-foreground">{{
+                    t(`prototype.projectTier.${p.tier}`)
+                  }}</span>
+                </span>
+                <i
+                  v-if="selectedId === p.id"
+                  class="icon-[lucide--check] size-4 shrink-0 text-base-foreground"
+                />
+              </Button>
+            </div>
           </div>
         </div>
 
         <!-- Step 2 — name the workflow, or replace an existing one -->
-        <div v-else class="flex flex-col gap-2 px-2 py-1">
-          <label class="flex items-center gap-2 px-2 pt-1">
+        <div v-else class="flex flex-col gap-2 px-4 py-2">
+          <p class="text-xs text-muted-foreground">
+            {{
+              t('prototype.promoteToProject.step2Subtitle', {
+                project: targetProjectName
+              })
+            }}
+          </p>
+
+          <label class="flex items-center gap-2">
             <span class="shrink-0 text-sm text-muted-foreground">
               {{ t('prototype.promoteToProject.saveAs') }}
             </span>
@@ -112,53 +119,49 @@
             />
           </label>
 
-          <p class="px-2 text-xs text-muted-foreground">
-            {{
-              t('prototype.promoteToProject.step2Subtitle', {
-                project: targetProjectName
-              })
-            }}
-          </p>
-
           <div
             v-if="targetCandidates.length"
-            class="flex min-h-0 flex-col gap-0.5"
+            class="flex min-h-0 flex-col gap-1"
           >
             <p
-              class="px-2 pt-1 text-xs font-semibold tracking-wide text-muted-foreground uppercase"
+              class="pt-1 text-xs font-semibold tracking-wide text-muted-foreground uppercase"
             >
               {{ t('prototype.promoteToProject.replaceHeading') }}
             </p>
             <div
-              class="flex max-h-44 flex-col gap-0.5 overflow-y-auto py-1 pr-0.5"
+              class="flex flex-col gap-0.5 rounded-lg bg-secondary-background p-1.5"
             >
-              <Button
-                v-for="w in targetCandidates"
-                :key="w.id"
-                variant="textonly"
-                size="unset"
-                :class="rowClass(targetWorkflowId === w.id)"
-                @click="toggleTarget(w.id)"
+              <div
+                class="flex max-h-44 flex-col gap-0.5 overflow-y-auto pr-0.5"
               >
-                <span
-                  class="grid size-8 shrink-0 place-items-center rounded-md bg-secondary-background text-muted-foreground"
-                  aria-hidden="true"
+                <Button
+                  v-for="w in targetCandidates"
+                  :key="w.id"
+                  variant="textonly"
+                  size="unset"
+                  :class="rowClass(targetWorkflowId === w.id)"
+                  @click="toggleTarget(w.id)"
                 >
-                  <i class="icon-[lucide--file] size-4" />
-                </span>
-                <span class="flex min-w-0 flex-1 flex-col text-left">
-                  <span class="truncate text-sm text-base-foreground">{{
-                    w.name
-                  }}</span>
-                  <span class="truncate text-xs text-muted-foreground">
-                    {{ t('prototype.promoteToProject.overwriteHint') }}
+                  <span
+                    class="grid size-8 shrink-0 place-items-center rounded-md bg-secondary-background-hover text-muted-foreground"
+                    aria-hidden="true"
+                  >
+                    <i class="icon-[lucide--file] size-4" />
                   </span>
-                </span>
-                <i
-                  v-if="targetWorkflowId === w.id"
-                  class="icon-[lucide--check] size-4 shrink-0 text-base-foreground"
-                />
-              </Button>
+                  <span class="flex min-w-0 flex-1 flex-col text-left">
+                    <span class="truncate text-sm text-base-foreground">{{
+                      w.name
+                    }}</span>
+                    <span class="truncate text-xs text-muted-foreground">
+                      {{ t('prototype.promoteToProject.overwriteHint') }}
+                    </span>
+                  </span>
+                  <i
+                    v-if="targetWorkflowId === w.id"
+                    class="icon-[lucide--check] size-4 shrink-0 text-base-foreground"
+                  />
+                </Button>
+              </div>
             </div>
           </div>
         </div>
@@ -227,8 +230,6 @@ import DialogPortal from '@/components/ui/dialog/DialogPortal.vue'
 import DialogTitle from '@/components/ui/dialog/DialogTitle.vue'
 
 import { usePrototypePersonaStore } from '../stores/personaStore'
-import { thumbnailGradient } from '../utils/thumbnail'
-import type { Project } from '../types'
 
 const { sourceWorkflowId } = defineProps<{
   // The workflow being published (a copy, or a My Workflows original).
@@ -257,18 +258,31 @@ const NEW_PROJECT = '__new__'
 
 const step = ref<1 | 2>(1)
 
-const candidates = computed(() => visibleProjects.value)
+// The workflow's original project — the canonical it forked from, or its
+// recorded provenance. Surfaced first + selected by default.
+const parentProjectId = computed(() => {
+  const source = fixture.value.workflows.find((w) => w.id === sourceWorkflowId)
+  if (!source) return undefined
+  const canonicalId = source.forkedFrom?.workflowId
+  const canonical = canonicalId
+    ? fixture.value.workflows.find((w) => w.id === canonicalId)
+    : undefined
+  return canonical?.projectId ?? source.provenanceProjectId
+})
+
+const candidates = computed(() => {
+  const projects = visibleProjects.value
+  const parentId = parentProjectId.value
+  if (!parentId) return projects
+  const parent = projects.find((p) => p.id === parentId)
+  if (!parent) return projects
+  return [parent, ...projects.filter((p) => p.id !== parentId)]
+})
 
 const sourceName = computed(
   () =>
     fixture.value.workflows.find((w) => w.id === sourceWorkflowId)?.name ?? ''
 )
-
-// Four colour-tile seeds per project — the same identity glyph used on
-// project cards, so projects read as projects rather than plain rows.
-function seedsFor(project: Project): string[] {
-  return [0, 1, 2, 3].map((i) => `${project.id}-${i}`)
-}
 
 function rowClass(selected: boolean): string {
   return cn(
@@ -342,14 +356,10 @@ async function goToStep2() {
 
 onMounted(() => {
   newWorkflowName.value = sourceName.value
-  // Pre-select the source copy's project so step 1 opens on the likely
-  // destination. Only when that project is a visible candidate.
-  const source = fixture.value.workflows.find((w) => w.id === sourceWorkflowId)
-  const canonicalId = source?.forkedFrom?.workflowId
-  if (!canonicalId) return
-  const canonical = fixture.value.workflows.find((w) => w.id === canonicalId)
-  if (canonical && candidates.value.some((p) => p.id === canonical.projectId)) {
-    selectedId.value = canonical.projectId
+  // Open on the workflow's original project (now first in the list).
+  const parentId = parentProjectId.value
+  if (parentId && candidates.value.some((p) => p.id === parentId)) {
+    selectedId.value = parentId
   }
 })
 

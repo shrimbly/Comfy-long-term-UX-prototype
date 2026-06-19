@@ -6,8 +6,9 @@
   Dashboard landing. Time-based greeting + a search that filters the viewer's
   own workflows + media assets (no global search in MVP). Below: a Recents
   strip (top 5, with a "Show all" link to the full Recents view) and a
-  featured gallery tabbed across Workflows / Templates / Tutorials
-  (Tutorials is a placeholder for now).
+  featured gallery tabbed across What's new / Templates / Tutorials. Tutorials
+  surfaces the getting-started curriculum and leads (first tab, selected) for
+  new users with an empty Recents.
 -->
 <template>
   <div class="mx-auto flex w-full max-w-6xl flex-col gap-10">
@@ -104,6 +105,35 @@
         </div>
       </section>
 
+      <section v-else class="flex flex-col gap-3">
+        <header class="flex h-6 items-center">
+          <h2 class="text-sm font-semibold">
+            {{ t('prototype.views.home.recents') }}
+          </h2>
+        </header>
+        <div
+          class="flex flex-col items-center justify-center gap-5 rounded-xl border border-dashed border-border-subtle bg-base-background px-6 py-12 text-center"
+        >
+          <h3 class="text-base font-normal">
+            {{ t('prototype.views.home.recentsEmpty.heading') }}
+          </h3>
+          <div class="flex flex-wrap items-center justify-center gap-3">
+            <Button variant="secondary" size="md">
+              <i class="icon-[lucide--plus] size-4" />
+              {{ t('prototype.views.home.recentsEmpty.startScratch') }}
+            </Button>
+            <Button
+              variant="primary"
+              size="md"
+              @click="uiStore.go({ kind: 'templates' })"
+            >
+              <i class="icon-[lucide--layout-template] size-4" />
+              {{ t('prototype.views.home.recentsEmpty.openTemplates') }}
+            </Button>
+          </div>
+        </div>
+      </section>
+
       <section class="flex flex-col gap-4">
         <div class="flex items-center gap-2">
           <Button
@@ -120,12 +150,17 @@
           </Button>
         </div>
 
-        <p
+        <div
           v-if="activeFeaturedTab === 'tutorials'"
-          class="rounded-2xl border border-dashed border-border-subtle py-12 text-center text-sm text-muted-foreground"
+          class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
         >
-          {{ t('prototype.views.home.tutorialsPlaceholder') }}
-        </p>
+          <TemplateCard
+            v-for="tpl in gettingStartedTemplates"
+            :key="tpl.id"
+            :template="tpl"
+            aspect="video"
+          />
+        </div>
         <div
           v-else
           class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
@@ -144,14 +179,18 @@
 
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import Button from '@/components/ui/button/Button.vue'
 
 import ShowcaseCard from '../components/ShowcaseCard.vue'
+import TemplateCard from '../components/TemplateCard.vue'
 import WorkflowCard from '../components/WorkflowCard.vue'
-import { workflowTemplates } from '../fixtures/templates'
+import {
+  gettingStartedTemplates,
+  workflowTemplates
+} from '../fixtures/templates'
 import { usePrototypePersonaStore } from '../stores/personaStore'
 import { usePrototypeUiStore } from '../stores/uiStore'
 
@@ -213,15 +252,43 @@ const recentsStrip = computed(() => recentWorkflows.value.slice(0, 5))
 
 // --- Featured gallery ---
 
-const activeFeaturedTab = ref<FeaturedTab>('whatsNew')
+// A new user (nothing in Recents) leads with Tutorials — the getting-started
+// curriculum — promoted to the first tab and selected by default. Established
+// users keep What's new first. Reset on persona switch via the watch below.
+const isNewUser = computed(() => recentWorkflows.value.length === 0)
 
-const featuredTabs = computed<Array<{ value: FeaturedTab; label: string }>>(
-  () => [
-    { value: 'whatsNew', label: t('prototype.views.home.tabs.whatsNew') },
-    { value: 'templates', label: t('prototype.views.home.tabs.templates') },
-    { value: 'tutorials', label: t('prototype.views.home.tabs.tutorials') }
-  ]
+const activeFeaturedTab = ref<FeaturedTab>('whatsNew')
+watch(
+  isNewUser,
+  (newUser) => {
+    activeFeaturedTab.value = newUser ? 'tutorials' : 'whatsNew'
+  },
+  { immediate: true }
 )
+
+const tabLabels = computed<
+  Record<FeaturedTab, { value: FeaturedTab; label: string }>
+>(() => ({
+  whatsNew: {
+    value: 'whatsNew',
+    label: t('prototype.views.home.tabs.whatsNew')
+  },
+  templates: {
+    value: 'templates',
+    label: t('prototype.views.home.tabs.templates')
+  },
+  tutorials: {
+    value: 'tutorials',
+    label: t('prototype.views.home.tabs.tutorials')
+  }
+}))
+
+const featuredTabs = computed(() => {
+  const { whatsNew, templates, tutorials } = tabLabels.value
+  return isNewUser.value
+    ? [tutorials, whatsNew, templates]
+    : [whatsNew, templates, tutorials]
+})
 
 const featuredCards = computed<Array<{ id: string; title: string }>>(() => {
   if (activeFeaturedTab.value === 'templates') {

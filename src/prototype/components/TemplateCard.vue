@@ -22,7 +22,12 @@
     @click="emit('open')"
   >
     <span
-      class="relative block aspect-square w-full overflow-hidden rounded-xl bg-secondary-background ring-1 ring-border-subtle transition-shadow select-none group-hover:ring-2 group-hover:ring-border-default"
+      :class="
+        cn(
+          'relative block w-full overflow-hidden rounded-xl bg-secondary-background ring-1 ring-border-subtle transition-shadow select-none group-hover:ring-2 group-hover:ring-border-default',
+          aspectClass
+        )
+      "
       @mousemove="onMouseMove"
     >
       <template v-if="isWipe">
@@ -82,6 +87,7 @@
 </template>
 
 <script setup lang="ts">
+import { cn } from '@comfyorg/tailwind-utils'
 import { computed, ref } from 'vue'
 
 import type { WorkflowTemplate } from '../types'
@@ -91,10 +97,23 @@ import {
 } from '../utils/thumbnail'
 import TemplateProviderBadge from './TemplateProviderBadge.vue'
 
-const { template } = defineProps<{ template: WorkflowTemplate }>()
+// Thumbnail ratio. Defaults to the upstream media's native square; the Home
+// featured gallery passes 'video' so tutorial cards match the other landscape
+// featured tiles.
+const { template, aspect = 'square' } = defineProps<{
+  template: WorkflowTemplate
+  aspect?: 'square' | 'video' | '3/2'
+}>()
 
 const emit = defineEmits<{ open: [] }>()
 
+const aspectClass = computed(() =>
+  aspect === 'video'
+    ? 'aspect-video'
+    : aspect === '3/2'
+      ? 'aspect-3/2'
+      : 'aspect-square'
+)
 const primaryUseCase = computed(() => template.useCases[0] ?? '')
 const isWipe = computed(() => template.thumbnailVariant === 'compareSlider')
 

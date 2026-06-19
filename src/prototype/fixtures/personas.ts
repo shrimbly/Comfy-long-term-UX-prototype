@@ -6,6 +6,8 @@
 // test-coverage matrix; see fixtures/<persona>.ts for the concrete shape.
 
 import { adminFixture } from './admin'
+import { soloCloudActiveFixture } from './solo-cloud-active'
+import { soloLocalActiveFixture } from './solo-local-active'
 import { soloLocalFixture } from './solo-local'
 import { soloFixture } from './solo'
 import { workspaceMemberFixture } from './workspace-member'
@@ -20,17 +22,31 @@ export const personas: PersonaDef[] = [
   },
   {
     id: 'solo',
-    label: 'Solo creator (cloud)',
+    label: 'New solo creator — Cloud',
     description:
-      'Default for every new account. One workspace, no team, no guests.',
+      'Default for every new account. One workspace, no team, no guests — and no workflows yet (first-run empty state).',
     fixture: soloFixture
   },
   {
-    id: 'solo-local',
-    label: 'Solo creator (local-only)',
+    id: 'solo-cloud-active',
+    label: 'Solo creator — Cloud',
     description:
-      'Persona 1b — desktop install, no cloud. No projects, no workspace switcher, filesystem-driven library.',
+      'Established cloud solo creator: one workspace, a full My Workflows of cloud-stored workflows.',
+    fixture: soloCloudActiveFixture
+  },
+  {
+    id: 'solo-local',
+    label: 'New solo creator — Local only',
+    description:
+      'Persona 1b — desktop install, no cloud. No projects, no workspace switcher, filesystem-driven library, no workflows yet.',
     fixture: soloLocalFixture
+  },
+  {
+    id: 'solo-local-active',
+    label: 'Solo creator — Local only',
+    description:
+      'Established local-only solo creator: a full My Workflows of local-stored workflows.',
+    fixture: soloLocalActiveFixture
   },
   {
     id: 'workspace-member',

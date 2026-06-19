@@ -82,6 +82,15 @@ export function useWorkflowPublish() {
     publishConfirmDraftId.value = null
   }
 
+  // Escape hatch from the confirm step: publish as a NEW workflow instead of
+  // overwriting the source canonical. Hands off to the choose-a-destination
+  // dialog, where the user can pick (or create) a project and name it.
+  function publishDraftAsNew() {
+    const workflowId = publishConfirmDraftId.value
+    publishConfirmDraftId.value = null
+    if (workflowId) openPublish(workflowId)
+  }
+
   // Confirmed: overwrite the source canonical in place (appends a published
   // version) and leave the draft where it is — the project link persists.
   function confirmPublishDraft() {
@@ -169,6 +178,7 @@ export function useWorkflowPublish() {
     publishDraft,
     pendingPublish,
     confirmPublishDraft,
-    cancelPublishConfirm
+    cancelPublishConfirm,
+    publishDraftAsNew
   }
 }

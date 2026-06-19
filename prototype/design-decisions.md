@@ -888,3 +888,46 @@ Implementation: new `publishDraft(workflowId)` in `useWorkflowPublish` (resolves
 Consistent with the wiki's "drafts are surfaced, not moved" ([project.md §Project surface (MVP)](../../IA_Plan/wiki/entities/project.md)).
 
 Promote? **no** — interaction refinement within the existing published-workflow model.
+
+---
+
+## [2026-06-20] Solo-creator personas split into a New × Established / Cloud × Local-only matrix
+
+Reworked the persona toggle's solo entries from two empty personas into a 2×2:
+
+- **New solo creator — Cloud** (`solo`, unchanged fixture) — first-run empty cloud account.
+- **Solo creator — Cloud** (`solo-cloud-active`, new) — established; a full My Workflows, every workflow `storage: 'cloud'`.
+- **New solo creator — Local only** (`solo-local`, unchanged fixture) — first-run empty desktop install.
+- **Solo creator — Local only** (`solo-local-active`, new) — established; a full My Workflows, every workflow `storage: 'local'`.
+
+The "New" pair stays empty to demo the first-run zero-state; the "Established" pair carries ~18 workflows each so the Drafts / Recents / Home density, search, sort, and the cloud/local storage icon all have something to render. Cloud-only vs local-only is the defining split (mirror images), so the two storage states are each exercised in isolation.
+
+`isSoloPersona` in `PrototypeSidebar` was switched from an explicit id list to a tier check (`currentWorkspace.tier === 'personal'`) so all four solo flavors — and any future one — get the flatter, Projects-less sidebar without per-id maintenance.
+
+**Local My Workflows modeled as an isDrafts "project".** The empty local persona had `projects: []`, but the Drafts view keys off `draftsProject` (an isDrafts project in the current workspace), so a local persona's workflows had nowhere to surface. `solo-local-active` therefore carries a single isDrafts project. This does **not** violate [`projects-are-cloud-only.md`](../../IA_Plan/wiki/decisions/projects-are-cloud-only.md): My Workflows is the on-disk workflow folder, not a shareable cloud Project, and it is filtered out of every Projects listing by `isDrafts` (and the Projects nav is cloud-only regardless). Same modeling the cloud personas already use.
+
+Promote? **no** — prototype fixture/demo scaffolding; no new IA rule.
+
+---
+
+## [2026-06-20] Home Recents empty state — tutorials-first onboarding
+
+New users (no workflows yet) previously saw the Recents section simply vanish (`v-if="recentWorkflows.length"`). It now renders an empty state in that slot that mirrors the populated section: the same "Recents" header (top-left, height-matched), then — in place of the card grid — a dashed-outline box on the page background (no fill). Inside: just the heading "No recent workflows yet" + two CTAs, no description copy. **Open tutorials** is primary and sits on the right (switches the featured gallery below to its Tutorials tab); **Start from scratch** is secondary on the left. Tutorials-first is deliberate — first-run guidance over a blank canvas for someone who has nothing yet.
+
+Prototype fidelity: "Start from scratch" is a presentational stub (no editor to open), matching the existing no-op "+ Workflow" buttons in DraftsView. "Open tutorials" activates the in-page Tutorials tab (still a "coming soon" placeholder). The empty state only shows in the non-search view; the featured gallery remains below it.
+
+Promote? **no** — onboarding UX detail; no new IA rule.
+
+---
+
+## [2026-06-20] Home featured gallery — Tutorials tab leads for new users, shows the Getting Started curriculum
+
+The featured gallery's **Tutorials** tab was a "coming soon" placeholder. It now renders the production **Getting Started** curriculum — the `gsc_*` learning series (Starter 1.1–1.3, Creator 2.1–2.3) from Comfy-Org/workflow_templates' "Getting Started" category — as real `TemplateCard`s with the upstream thumbnail media.
+
+For new users (empty Recents, `isNewUser`), Tutorials is promoted to the **first** tab and is **selected by default**; established users keep What's new first. The default resets on persona switch via a `watch(isNewUser, …, { immediate: true })`.
+
+Data: a separate `gettingStartedTemplates` array in `fixtures/templates.ts` (kept out of `workflowTemplates` so it doesn't leak into the generation-type-grouped Templates page). `popularity`/`addedAt` are nominal there — the tab renders authored order and never sorts. Removed the now-dead `tutorialsPlaceholder` i18n key.
+
+Prototype fidelity: tutorial cards are presentational (no editor to open), matching the Templates page's `TemplateCard` (also no-op on click).
+
+Promote? **no** — onboarding surfacing of existing template content; no new IA rule.

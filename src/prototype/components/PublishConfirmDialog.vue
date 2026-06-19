@@ -33,8 +33,11 @@
           <Button variant="textonly" @click="emit('close')">
             {{ t('prototype.publishConfirm.cancel') }}
           </Button>
+          <Button variant="secondary" @click="emit('publish-new')">
+            {{ t('prototype.publishConfirm.publishNew') }}
+          </Button>
           <Button variant="primary" @click="emit('confirm')">
-            {{ t('prototype.publishConfirm.confirm') }}
+            {{ t('prototype.publishConfirm.confirm', { n: nextVersion }) }}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -65,6 +68,7 @@ const { workflowName, projectName, nextVersion } = defineProps<{
 const emit = defineEmits<{
   close: []
   confirm: []
+  'publish-new': []
 }>()
 
 const { t } = useI18n()

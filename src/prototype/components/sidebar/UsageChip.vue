@@ -8,7 +8,7 @@
   <Button
     v-if="isUpgradeMode"
     variant="gradient"
-    size="lg"
+    size="md"
     class="w-full gap-2"
   >
     <i class="icon-[lucide--zap] size-4" />

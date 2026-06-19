@@ -385,10 +385,13 @@ export const usePrototypePersonaStore = defineStore('prototype-persona', () => {
             ...(trimmedName ? { name: trimmedName } : {}),
             ...(publishing
               ? {
+                  // Publish-as-new mints a brand-new canonical — lineage is
+                  // cleared and it always starts at v1, never inheriting the
+                  // source's version history.
                   forkedFrom: undefined,
-                  publishedVersions: w.publishedVersions?.length
-                    ? w.publishedVersions
-                    : [{ byUserId: fixture.value.currentUser.id, at: today }]
+                  publishedVersions: [
+                    { byUserId: fixture.value.currentUser.id, at: today }
+                  ]
                 }
               : {})
           }
@@ -450,24 +453,26 @@ export const usePrototypePersonaStore = defineStore('prototype-persona', () => {
     const provenanceProjectId = fromPublishedCanonical
       ? canonical.projectId
       : source.provenanceProjectId
-    // A copy of a published canonical is labelled with the version it was
-    // taken from (e.g. "Promo video stills v1"); publishing it later
-    // increments to the next version.
-    const currentVersion = canonical.publishedVersions?.length || 1
-    const copyName = fromPublishedCanonical
-      ? `${canonical.name} v${currentVersion}`
-      : canonical.name
+    // The copy keeps the canonical's name — the version it was taken from is
+    // shown as a badge (derived from `forkedFrom.atVersion`), never baked into
+    // the editable name string.
     fixture.value.workflows = [
       ...fixture.value.workflows,
       {
         ...source,
         id: newId,
         projectId: targetProjectId,
-        name: copyName,
+        name: canonical.name,
         ownerUserId: fixture.value.currentUser.id,
         updatedAt: today,
         forkedFrom: { workflowId: canonicalId, atVersion },
         provenanceProjectId,
+        // A working copy is not itself published — it carries no published
+        // history of its own (the canonical's history isn't inherited).
+        publishedVersions: undefined,
+        // A fresh copy lands as the user's local working file (prototype: a
+        // copy always reads as local, so the card shows the local storage icon).
+        storage: 'local',
         access: []
       }
     ]
@@ -487,30 +492,43 @@ export const usePrototypePersonaStore = defineStore('prototype-persona', () => {
     targetWorkflowId: string
   ): boolean {
     const source = fixture.value.workflows.find((w) => w.id === sourceId)
-    if (!source) return false
+    const target = fixture.value.workflows.find(
+      (w) => w.id === targetWorkflowId
+    )
+    if (!source || !target) return false
     const today = new Date().toISOString().slice(0, 10)
-    let overwritten = false
     fixture.value.workflows = fixture.value.workflows.map((w) => {
-      if (w.id !== targetWorkflowId) return w
-      overwritten = true
-      // Overwrite the target's content with the source's. The target's
-      // name + identity + project membership are preserved; the source's
-      // working state (thumbnail here as a stand-in for graph contents)
-      // and a fresh updatedAt land on it, plus a new entry on the
-      // published-version history timeline. Published canonicals always carry
-      // a baseline V1 (seeded at store init), so appending lands the publish
-      // at the displayed version + 1.
-      return {
-        ...w,
-        updatedAt: today,
-        thumbnailUrl: source.thumbnailUrl ?? w.thumbnailUrl,
-        publishedVersions: [
-          ...(w.publishedVersions ?? []),
-          { byUserId: fixture.value.currentUser.id, at: today }
-        ]
+      if (w.id === targetWorkflowId) {
+        // Overwrite the target's content with the source's. The target's
+        // name + identity + project membership are preserved; the source's
+        // working state (thumbnail here as a stand-in for graph contents)
+        // and a fresh updatedAt land on it, plus a new entry on the
+        // published-version history timeline. Published canonicals always
+        // carry a baseline V1 (seeded at store init), so appending lands the
+        // publish at the displayed version + 1.
+        return {
+          ...w,
+          updatedAt: today,
+          thumbnailUrl: source.thumbnailUrl ?? w.thumbnailUrl,
+          publishedVersions: [
+            ...(w.publishedVersions ?? []),
+            { byUserId: fixture.value.currentUser.id, at: today }
+          ]
+        }
       }
+      if (w.id === sourceId) {
+        // The published copy now reflects the version it just created —
+        // advance its fork point so its version badge tracks the new
+        // published version (e.g. v2 → v3).
+        return {
+          ...w,
+          updatedAt: today,
+          forkedFrom: { workflowId: targetWorkflowId, atVersion: today }
+        }
+      }
+      return w
     })
-    return overwritten
+    return true
   }
 
   return {

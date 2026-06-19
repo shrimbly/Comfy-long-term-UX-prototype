@@ -9,6 +9,8 @@
 export type PersonaId =
   | 'solo'
   | 'solo-local'
+  | 'solo-cloud-active'
+  | 'solo-local-active'
   | 'workspace-admin'
   | 'workspace-member'
 

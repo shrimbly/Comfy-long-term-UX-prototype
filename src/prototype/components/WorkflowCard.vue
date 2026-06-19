@@ -41,7 +41,7 @@
           }}</span>
           <i
             v-if="isPublishedInProject"
-            class="icon-[lucide--users-round] size-4 shrink-0 text-muted-foreground"
+            class="mb-1 icon-[lucide--users-round] size-4 shrink-0 text-muted-foreground"
             :title="teamTitle"
           />
           <StorageIcon
@@ -58,7 +58,14 @@
             :name="workflow.name"
             :versions="workflow.publishedVersions ?? []"
           />
-          <DraftProvenanceBadge v-if="draftMeta" :meta="draftMeta" />
+          <span
+            v-else-if="copyVersion"
+            :class="versionTagClass"
+            :title="provenanceTitle"
+          >
+            {{ t('prototype.workflowCard.version', { n: copyVersion }) }}
+          </span>
+          <DraftProvenanceBadge v-else-if="draftMeta" :meta="draftMeta" />
         </span>
       </span>
     </button>
@@ -89,7 +96,7 @@
       </span>
       <i
         v-if="isPublishedInProject"
-        class="icon-[lucide--users-round] size-4 shrink-0 text-muted-foreground"
+        class="mb-1 icon-[lucide--users-round] size-4 shrink-0 text-muted-foreground"
         :title="teamTitle"
       />
       <StorageIcon
@@ -106,7 +113,14 @@
         :name="workflow.name"
         :versions="workflow.publishedVersions ?? []"
       />
-      <DraftProvenanceBadge v-if="draftMeta" :meta="draftMeta" />
+      <span
+        v-else-if="copyVersion"
+        :class="versionTagClass"
+        :title="provenanceTitle"
+      >
+        {{ t('prototype.workflowCard.version', { n: copyVersion }) }}
+      </span>
+      <DraftProvenanceBadge v-else-if="draftMeta" :meta="draftMeta" />
     </button>
 
     <div
@@ -242,6 +256,42 @@ const isPublishedInProject = computed(() => {
   )
   return !!project && !project.isDrafts
 })
+
+// The version this copy was taken from — derived from its fork point rather
+// than baked into the (user-editable) name. Any copy of a resolvable source
+// shows a version tag (the tag and the link badge convey the same provenance,
+// so the tag wins); it is absent only when the source no longer resolves, which
+// the source-removed badge then handles.
+const copyVersion = computed(() => {
+  const fork = workflow.forkedFrom
+  if (!fork) return undefined
+  const canonical = personaStore.fixture.workflows.find(
+    (w) => w.id === fork.workflowId
+  )
+  if (!canonical) return undefined
+  const versions = canonical.publishedVersions ?? []
+  if (fork.atVersion) {
+    const index = versions.findIndex((v) => v.at === fork.atVersion)
+    if (index >= 0) return index + 1
+  }
+  // Fork point can't be pinned (missing/stale atVersion) — show the source's
+  // current version rather than dropping back to the redundant link badge.
+  return Math.max(versions.length, 1)
+})
+
+const versionTagClass =
+  'inline-flex shrink-0 items-center rounded-md bg-border-subtle px-1.5 py-0.5 text-xs font-medium text-base-foreground'
+
+// The version badge carries the copy's provenance (formerly the link icon's
+// tooltip): which project + workflow it tracks.
+const provenanceTitle = computed(() =>
+  draftMeta?.state === 'linked'
+    ? t('prototype.views.project.draftProvenance.link', {
+        project: draftMeta.projectName,
+        workflow: draftMeta.workflowName
+      })
+    : undefined
+)
 
 const teamTitle = computed(() => t('prototype.workflowCard.team'))
 

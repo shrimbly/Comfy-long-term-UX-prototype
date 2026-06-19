@@ -16,6 +16,87 @@
 
 import type { WorkflowTemplate } from '../types'
 
+// The production "Getting Started" curriculum — the `gsc_*` learning series from
+// Comfy-Org/workflow_templates' "Getting Started" category (real upstream slugs
+// → real thumbnail media via utils/thumbnail). Surfaced in the Home featured
+// gallery's Tutorials tab, which leads for new users. Kept separate from
+// `workflowTemplates` so it stays out of the generation-type-grouped Templates
+// page. `popularity`/`addedAt` are inert here (the tab renders authored order,
+// never sorts), so they carry nominal values to satisfy the shared type.
+export const gettingStartedTemplates: WorkflowTemplate[] = [
+  {
+    id: 'gsc_starter_1',
+    name: '1.1 Starter – Text to Image',
+    description:
+      'Learn how to generate an image, connect nodes, run a workflow and download an image using Z-Image Turbo.',
+    category: 'image',
+    model: 'Z-Image-Turbo',
+    useCases: ['Text to Image'],
+    runtime: 'comfyui',
+    popularity: 0,
+    addedAt: '2026-06-01'
+  },
+  {
+    id: 'gsc_starter_2',
+    name: '1.2 Starter – Image to Video',
+    description:
+      'Learn how to load images, generate a video and how to find a node using Wan 2.2.',
+    category: 'video',
+    model: 'Wan 2.2',
+    useCases: ['Image to Video'],
+    runtime: 'comfyui',
+    popularity: 0,
+    addedAt: '2026-06-01'
+  },
+  {
+    id: 'gsc_starter_3',
+    name: '1.3 Starter – Product Photography',
+    description:
+      'Learn how to create product photography with image inputs, enter a subgraph, unbypass a node and get to know partner nodes using Nano Banana Pro.',
+    category: 'image',
+    model: 'Nano Banana Pro',
+    useCases: ['Image Edit'],
+    runtime: 'api',
+    popularity: 0,
+    addedAt: '2026-06-01'
+  },
+  {
+    id: 'gsc_creator_2_1',
+    name: '2.1 Creator – Diffusion Basics',
+    description: 'Learn the diffusion basics using Z-Image-Turbo.',
+    category: 'image',
+    model: 'Z-Image-Turbo',
+    useCases: ['Text to Image'],
+    runtime: 'comfyui',
+    popularity: 0,
+    addedAt: '2026-06-01'
+  },
+  {
+    id: 'gsc_creator_2_2',
+    name: '2.2 Creator – Diffusion Guidance',
+    description:
+      'Learn how to guide diffusion for precise image editing with inpainting and ControlNet using Z-Image-Turbo.',
+    category: 'image',
+    model: 'Z-Image-Turbo',
+    useCases: ['Inpainting'],
+    runtime: 'comfyui',
+    popularity: 0,
+    addedAt: '2026-06-01'
+  },
+  {
+    id: 'gsc_creator_2_3',
+    name: '2.3 Creator – Image Upscale & Analysis',
+    description:
+      'Learn how to upscale an image and auto-generate a prompt using Z-Image-Turbo.',
+    category: 'image',
+    model: 'Z-Image-Turbo',
+    useCases: ['Image Upscale'],
+    runtime: 'comfyui',
+    popularity: 0,
+    addedAt: '2026-06-01'
+  }
+]
+
 export const workflowTemplates: WorkflowTemplate[] = [
   {
     id: 'image_z_image_turbo',

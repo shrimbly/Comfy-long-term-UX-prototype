@@ -39,7 +39,7 @@
     </div>
 
     <div
-      v-if="isDev"
+      v-if="showPersonaSwitcher"
       class="fixed right-4 bottom-4 z-50 rounded-lg border border-border-subtle bg-secondary-background p-2 shadow-lg"
     >
       <PersonaSwitcher />
@@ -79,5 +79,9 @@ const isMediaAssetsTabActive = computed(
 )
 const isLocalMode = computed(() => fixture.value.mode === 'local')
 
-const isDev = import.meta.env.DEV
+// The persona toggle is a prototype affordance: surface it on the dev server
+// and on the deployed prototype (Vercel, built with PROTOTYPE_DEPLOY=true),
+// but never in a real ComfyUI production build.
+const showPersonaSwitcher =
+  import.meta.env.DEV || import.meta.env.VITE_PROTOTYPE_DEPLOY
 </script>

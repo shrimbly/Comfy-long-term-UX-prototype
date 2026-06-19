@@ -185,7 +185,7 @@ export const adminFixture: PersonaFixture = {
     {
       id: 'wf-mw-product-hero',
       projectId: myWorkflows.id,
-      name: 'Product hero v3',
+      name: 'Product hero',
       updatedAt: '2026-06-14',
       storage: 'local',
       provenanceProjectId: 'proj-cocacola',
@@ -202,13 +202,14 @@ export const adminFixture: PersonaFixture = {
       forkedFrom: { workflowId: 'wf-cocacola-hero', atVersion: '2026-04-20' }
     },
     {
-      // Created-in-project case: no source → "New in this project".
+      // Copy of the can-hero canonical at v2 — a top-down variant.
       id: 'wf-mw-coke-new-angle',
       projectId: myWorkflows.id,
       name: 'Coke can — top-down angle',
       updatedAt: '2026-06-10',
       storage: 'local',
-      provenanceProjectId: 'proj-cocacola'
+      provenanceProjectId: 'proj-cocacola',
+      forkedFrom: { workflowId: 'wf-cocacola-hero', atVersion: '2026-05-02' }
     },
     {
       // Source-removed case: forkedFrom resolves to nothing → "Source removed".
@@ -322,7 +323,10 @@ export const adminFixture: PersonaFixture = {
       updatedAt: '2026-05-16',
       storage: 'cloud',
       provenanceProjectId: 'proj-indie-short',
-      forkedFrom: { workflowId: 'wf-indie-establishing' }
+      forkedFrom: {
+        workflowId: 'wf-indie-establishing',
+        atVersion: '2026-05-11'
+      }
     },
     {
       id: 'wf-mw-outpaint-wide',

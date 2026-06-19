@@ -87,14 +87,15 @@
         :credits="availableCredits"
         :plan="currentWorkspace?.plan"
       />
-      <button
+      <Button
         v-else-if="isLocalMode"
-        type="button"
-        class="flex w-full cursor-pointer items-center justify-center gap-2 rounded-md bg-(image:--subscription-button-gradient) px-3 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90"
+        variant="gradient"
+        size="md"
+        class="w-full gap-2"
       >
-        <span class="icon-[lucide--zap] size-4" />
+        <i class="icon-[lucide--zap] size-4" />
         {{ t('prototype.sidebar.upgradeCta') }}
-      </button>
+      </Button>
 
       <SidebarItem
         :label="t('prototype.sidebar.settings')"
@@ -122,6 +123,8 @@ import { storeToRefs } from 'pinia'
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
+import Button from '@/components/ui/button/Button.vue'
+
 import MediaAssetsNoticeDialog from './MediaAssetsNoticeDialog.vue'
 import SidebarGroup from './sidebar/SidebarGroup.vue'
 import SidebarItem from './sidebar/SidebarItem.vue'
@@ -135,8 +138,7 @@ const { t } = useI18n()
 const personaStore = usePrototypePersonaStore()
 const uiStore = usePrototypeUiStore()
 
-const { fixture, currentWorkspace, draftsProject, currentPersonaId } =
-  storeToRefs(personaStore)
+const { fixture, currentWorkspace, draftsProject } = storeToRefs(personaStore)
 
 const { activeView, customThumbnails } = storeToRefs(uiStore)
 
@@ -149,9 +151,11 @@ const availableCredits = computed(
   () => fixture.value.billing?.creditBalance.remaining ?? null
 )
 
+// A solo persona is anyone whose current workspace is a personal one — no
+// team, so no shared Projects nav and a flatter, header-less sidebar. Tier-
+// based so every solo flavor (new/established × cloud/local) is covered.
 const isSoloPersona = computed(
-  () =>
-    currentPersonaId.value === 'solo' || currentPersonaId.value === 'solo-local'
+  () => currentWorkspace.value?.tier === 'personal'
 )
 
 const showGroupHeaders = computed(() => !isSoloPersona.value)

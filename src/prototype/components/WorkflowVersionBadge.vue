@@ -16,8 +16,8 @@
       :aria-expanded="hasHistory ? open : undefined"
       :class="
         cn(
-          'inline-flex items-center gap-0.5 rounded-md bg-border-subtle px-1.5 py-0.5 text-xs font-medium text-base-foreground',
-          hasHistory && 'cursor-pointer hover:bg-secondary-background-selected'
+          'inline-flex items-center gap-0.5 rounded-md bg-base-foreground px-1.5 py-0.5 text-xs font-medium text-base-background',
+          hasHistory && 'cursor-pointer hover:bg-base-foreground/80'
         )
       "
       @click.stop.prevent="onTrigger"
@@ -27,7 +27,7 @@
       {{ t('prototype.workflowCard.version', { n: currentVersion }) }}
       <i
         v-if="hasHistory"
-        class="icon-[lucide--chevron-down] size-3 text-muted-foreground"
+        class="icon-[lucide--chevron-down] size-3 text-base-background/60"
       />
     </span>
 

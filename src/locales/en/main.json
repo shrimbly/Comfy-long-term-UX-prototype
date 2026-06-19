@@ -140,7 +140,7 @@
       "storageLocal": "Saved locally",
       "storageCloud": "Saved to cloud",
       "team": "Team workflow",
-      "version": "v {n}",
+      "version": "v{n}",
       "versionHistory": "Version history",
       "copyBadge": "Copy",
       "copyAction": "Save a copy",
@@ -236,7 +236,8 @@
       "title": "Publish as '{workflow}' v{n}",
       "body": "This will publish to the '{project}' project. The current version stays in history.",
       "cancel": "Cancel",
-      "confirm": "Publish"
+      "publishNew": "Publish new",
+      "confirm": "Publish v{n}"
     },
     "promoteToProject": {
       "title": "Publish to a project",
@@ -422,7 +423,11 @@
           "templates": "Templates",
           "tutorials": "Tutorials"
         },
-        "tutorialsPlaceholder": "Tutorials are coming soon."
+        "recentsEmpty": {
+          "heading": "Your recent workflows will show up here",
+          "openTemplates": "Open templates",
+          "startScratch": "Blank canvas"
+        }
       },
       "templates": {
         "title": "Templates",
@@ -535,7 +540,7 @@
         "workflowCount": "{count} workflows",
         "publishedInfo": {
           "shared": "Shared with everyone in this project.",
-          "copy": "Save a copy to edit it in your own workflows.",
+          "copy": "Save a copy to edit and run the workflow.",
           "publish": "Publish your copy to release a new version."
         },
         "draftsHeading": "My drafts",
