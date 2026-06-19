@@ -91,22 +91,10 @@
       </p>
     </template>
 
-    <section
+    <WorkflowsEmptyState
       v-else
-      class="flex flex-col items-center gap-6 rounded-2xl border border-border-subtle bg-secondary-background px-8 py-10 text-center"
-    >
-      <div class="flex flex-col gap-1">
-        <h2 class="text-lg/tight font-semibold">
-          {{ t('prototype.views.drafts.emptyHeading') }}
-        </h2>
-        <p class="text-sm text-muted-foreground">
-          {{ t('prototype.views.drafts.emptySubtitle') }}
-        </p>
-      </div>
-      <Button variant="primary" size="lg">
-        {{ t('prototype.views.drafts.createWorkflow') }}
-      </Button>
-    </section>
+      :heading="t('prototype.views.drafts.emptyHeading')"
+    />
   </div>
 </template>
 
@@ -121,6 +109,7 @@ import Button from '@/components/ui/button/Button.vue'
 
 import ToolbarSelect from '../components/ToolbarSelect.vue'
 import WorkflowCard from '../components/WorkflowCard.vue'
+import WorkflowsEmptyState from '../components/WorkflowsEmptyState.vue'
 import { usePrototypePersonaStore } from '../stores/personaStore'
 import { deriveDraftMeta } from '../utils/draftMeta'
 

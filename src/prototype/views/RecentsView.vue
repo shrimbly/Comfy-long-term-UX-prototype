@@ -77,26 +77,10 @@
       </p>
     </div>
 
-    <template v-else>
-      <section
-        class="flex flex-col items-center gap-6 rounded-2xl border border-border-subtle bg-secondary-background px-8 py-10 text-center"
-      >
-        <div class="flex flex-col gap-1">
-          <h2 class="text-lg/tight font-semibold">
-            {{ t('prototype.views.recents.emptyHeading') }}
-          </h2>
-          <p class="text-sm text-muted-foreground">
-            {{ t('prototype.views.recents.emptySubtitle') }}
-          </p>
-        </div>
-        <button
-          type="button"
-          class="inline-flex h-10 cursor-pointer items-center gap-2 rounded-lg bg-primary-background px-5 text-sm font-medium text-button-surface-contrast transition-colors hover:bg-primary-background-hover"
-        >
-          {{ t('prototype.views.recents.createWorkflow') }}
-        </button>
-      </section>
-    </template>
+    <WorkflowsEmptyState
+      v-else
+      :heading="t('prototype.views.recents.emptyHeading')"
+    />
   </div>
 </template>
 
@@ -109,6 +93,7 @@ import { useI18n } from 'vue-i18n'
 import FilterPill from '../components/FilterPill.vue'
 import PageTitle from '../components/PageTitle.vue'
 import WorkflowCard from '../components/WorkflowCard.vue'
+import WorkflowsEmptyState from '../components/WorkflowsEmptyState.vue'
 import { usePrototypePersonaStore } from '../stores/personaStore'
 
 type FilterValue = 'all' | 'cloud' | 'local'

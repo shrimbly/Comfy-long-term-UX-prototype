@@ -959,3 +959,11 @@ Promote? **no** — prototype create+open flow; no new IA rule.
 Publishing a draft "as a new workflow" in a project previously **moved** the draft into the project as the new canonical, removing it from My drafts. Fixed: `personaStore.publishAsNewWorkflow` now mints a fresh **v1** canonical from the draft's content and **keeps the draft** in My Workflows, re-pointing its `forkedFrom` at the new canonical (`atVersion = today`) and its `provenanceProjectId` at the target. So the draft stays in the project's "My drafts" and shows the **v1** tag — symmetric with publishing OVER an existing canonical (which also leaves the draft in place). Replaced the unused `moveWorkflowToProject` verb.
 
 Promote? **no** — corrects the prototype to match the published-workflow model (draft is surfaced, not moved).
+
+---
+
+## [2026-06-20] Shared workflows empty-state across Home / Recents / My Workflows
+
+Extracted the Home Recents empty state into a reusable `WorkflowsEmptyState` component (dashed-outline box on the page background, a heading prop, and Blank canvas + Open templates CTAs) and applied it to the **Recents page** and **My Workflows page** too — so new users (New solo creator, cloud and local) get one consistent empty state everywhere workflows are listed, instead of the older filled-panel "+ Workflow" variants. Button labels live in a shared `prototype.workflowsEmpty.*` namespace; each page passes its own heading ("Your recent workflows will show up here" / "Your workflows will show up here"). Removed the per-page `emptySubtitle` / `createWorkflow` strings.
+
+Promote? **no** — UI consistency; no new IA rule.

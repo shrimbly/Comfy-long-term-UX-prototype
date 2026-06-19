@@ -111,27 +111,9 @@
             {{ t('prototype.views.home.recents') }}
           </h2>
         </header>
-        <div
-          class="flex flex-col items-center justify-center gap-5 rounded-xl border border-dashed border-border-subtle bg-base-background px-6 py-12 text-center"
-        >
-          <h3 class="text-base font-normal">
-            {{ t('prototype.views.home.recentsEmpty.heading') }}
-          </h3>
-          <div class="flex flex-wrap items-center justify-center gap-3">
-            <Button variant="secondary" size="md">
-              <i class="icon-[lucide--plus] size-4" />
-              {{ t('prototype.views.home.recentsEmpty.startScratch') }}
-            </Button>
-            <Button
-              variant="primary"
-              size="md"
-              @click="uiStore.go({ kind: 'templates' })"
-            >
-              <i class="icon-[lucide--layout-template] size-4" />
-              {{ t('prototype.views.home.recentsEmpty.openTemplates') }}
-            </Button>
-          </div>
-        </div>
+        <WorkflowsEmptyState
+          :heading="t('prototype.views.home.recentsEmpty.heading')"
+        />
       </section>
 
       <section class="flex flex-col gap-4">
@@ -187,6 +169,7 @@ import Button from '@/components/ui/button/Button.vue'
 import ShowcaseCard from '../components/ShowcaseCard.vue'
 import TemplateCard from '../components/TemplateCard.vue'
 import WorkflowCard from '../components/WorkflowCard.vue'
+import WorkflowsEmptyState from '../components/WorkflowsEmptyState.vue'
 import {
   gettingStartedTemplates,
   workflowTemplates

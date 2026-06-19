@@ -102,6 +102,10 @@
       "body": "This will open the workflow in a tab.",
       "ok": "Got it"
     },
+    "workflowsEmpty": {
+      "blankCanvas": "Blank canvas",
+      "openTemplates": "Open templates"
+    },
     "libraryPage": {
       "back": "Back",
       "projectHeading": "Project",
@@ -429,9 +433,7 @@
           "tutorials": "Tutorials"
         },
         "recentsEmpty": {
-          "heading": "Your recent workflows will show up here",
-          "openTemplates": "Open templates",
-          "startScratch": "Blank canvas"
+          "heading": "Your recent workflows will show up here"
         }
       },
       "templates": {
@@ -476,9 +478,7 @@
         "subtitle": "Your private space for new work",
         "recentHeading": "Recent",
         "empty": "Nothing here yet. Tap \"New Workflow\" to start.",
-        "emptyHeading": "Save your first workflow",
-        "emptySubtitle": "My Workflows is the default home for new work. Spin one up or start from a template.",
-        "createWorkflow": "+ Workflow",
+        "emptyHeading": "Your workflows will show up here",
         "templatesHeading": "Starter templates",
         "searchPlaceholder": "Search My Workflows…",
         "filterEmpty": "No workflows match your search.",
@@ -504,9 +504,7 @@
         "title": "Recents",
         "subtitle": "Workflows you've recently opened across every project",
         "empty": "Nothing here yet. Open a workflow to see it land in Recents.",
-        "emptyHeading": "Start building your first workflow",
-        "emptySubtitle": "Spin up a blank graph or pick a starter template below.",
-        "createWorkflow": "+ Workflow",
+        "emptyHeading": "Your recent workflows will show up here",
         "templatesHeading": "Starter templates",
         "filterAll": "All",
         "filterCloud": "Cloud",
