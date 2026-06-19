@@ -42,6 +42,15 @@ export const usePrototypeTabsStore = defineStore('prototype-tabs', () => {
     activeTabId.value = id
   }
 
+  // Open a named workflow in a new tab and activate it (e.g. the project
+  // page's "+ Workflow" simulating the editor opening the freshly-created
+  // draft).
+  function openWorkflow(label: string) {
+    const id = nextId()
+    openTabs.value.push({ id, label, kind: 'workflow', isDirty: true })
+    activeTabId.value = id
+  }
+
   function openMediaAssets(label: string) {
     const existing = openTabs.value.find((t) => t.id === MEDIA_ASSETS_TAB_ID)
     if (!existing) {
@@ -70,6 +79,7 @@ export const usePrototypeTabsStore = defineStore('prototype-tabs', () => {
     activeTabId,
     select,
     addBlank,
+    openWorkflow,
     openMediaAssets,
     close
   }

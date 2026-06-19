@@ -17,6 +17,7 @@
       <button
         type="button"
         class="inline-flex h-10 cursor-pointer items-center gap-2 rounded-lg bg-primary-background px-4 py-2 text-sm font-medium text-button-surface-contrast transition-colors hover:bg-primary-background-hover"
+        @click="showNewProject = true"
       >
         <span class="icon-[lucide--plus] size-4" />
         {{ t('prototype.views.projects.newProject') }}
@@ -107,6 +108,12 @@
     <p v-else class="text-sm text-muted-foreground">
       {{ t('prototype.views.projects.empty') }}
     </p>
+
+    <NewProjectDialog
+      v-if="showNewProject"
+      @close="showNewProject = false"
+      @created="onCreated"
+    />
   </div>
 </template>
 
@@ -117,6 +124,7 @@ import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import FilterPill from '../components/FilterPill.vue'
+import NewProjectDialog from '../components/NewProjectDialog.vue'
 import PageTitle from '../components/PageTitle.vue'
 import ProjectCard from '../components/ProjectCard.vue'
 import ToolbarSelect from '../components/ToolbarSelect.vue'
@@ -147,6 +155,7 @@ const workflowsByProject = computed(() => {
 const filter = ref<FilterValue>('all')
 const sort = ref<SortValue>('last-modified')
 const viewMode = ref<ViewMode>('grid')
+const showNewProject = ref(false)
 
 const filterOptions = computed<Array<{ value: FilterValue; label: string }>>(
   () => [
@@ -199,6 +208,11 @@ const sortedProjects = computed(() => {
 })
 
 function onOpen(projectId: string) {
+  uiStore.go({ kind: 'project', projectId })
+}
+
+function onCreated(projectId: string) {
+  showNewProject.value = false
   uiStore.go({ kind: 'project', projectId })
 }
 </script>

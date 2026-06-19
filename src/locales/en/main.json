@@ -97,6 +97,11 @@
       "body": "This will open Alex's Media Assets tab.",
       "ok": "Got it"
     },
+    "workflowEditorNotice": {
+      "title": "Opening workflow",
+      "body": "This will open the workflow in a tab.",
+      "ok": "Got it"
+    },
     "libraryPage": {
       "back": "Back",
       "projectHeading": "Project",
@@ -517,6 +522,16 @@
       "projects": {
         "title": "Projects",
         "newProject": "New project",
+        "newProjectDialog": {
+          "title": "New project",
+          "subtitle": "Name your project and choose who can access it.",
+          "nameLabel": "Name",
+          "namePlaceholder": "e.g. Summer Campaign",
+          "peopleHeading": "People with access",
+          "removePerson": "Remove {name}",
+          "cancel": "Cancel",
+          "create": "Create project"
+        },
         "noAccess": "No access",
         "filterAll": "All",
         "empty": "No projects in this view.",

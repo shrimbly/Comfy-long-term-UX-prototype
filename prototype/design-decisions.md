@@ -931,3 +931,31 @@ Data: a separate `gettingStartedTemplates` array in `fixtures/templates.ts` (kep
 Prototype fidelity: tutorial cards are presentational (no editor to open), matching the Templates page's `TemplateCard` (also no-op on click).
 
 Promote? **no** — onboarding surfacing of existing template content; no new IA rule.
+
+---
+
+## [2026-06-20] New-project dialog with inline General access
+
+The Projects page "New project" button now opens a `NewProjectDialog` instead of being inert. It carries a name field, then the **General access** section from the sharing surface (tier icon + label + description + `TierDropdown`). A fresh project **defaults to Workspace-wide** ("Anyone in {workspace}") — the common case is a shared team project. Switching the dropdown to **Restricted** reveals a "People with access" picker (search workspace members → add as collaborators, each removable) so invitees can be seeded at creation rather than in a second step.
+
+Commit happens on **Create**: `personaStore.createProject(name, tier, collaborators)` (extended with optional `tier` + `collaboratorIds`; the bare `PromoteToProjectDialog` caller still gets the restricted/owner-only default). The view then navigates to the new project's detail page.
+
+Reuse: `TierDropdown` and the sharing tier i18n (`views.project.sharing.tier.*`, `generalAccessHeading`, `addPlaceholder`) are shared with `ProjectSharing`; the picker/people-list is a local reimplementation because the dialog drives local state (the project doesn't exist until Create) rather than mutating a stored project.
+
+Promote? **no** — UI flow over the existing project-creation + three-level-permissions model.
+
+---
+
+## [2026-06-20] Project "+ Workflow" creates a draft, opens a tab, with an editor placeholder
+
+The project page "+ Workflow" button was inert. It now creates a fresh draft in the viewer's My Workflows tied to the project (`personaStore.createDraftInProject` → `provenanceProjectId` set), so it surfaces in that project's "My drafts" without entering the shared Published registry. It then simulates opening the editor: a new workflow tab is pushed to the top tab strip (`tabsStore.openWorkflow`) and a placeholder dialog (`WorkflowEditorNoticeDialog`, "This will open the workflow in a tab.") stands in for the out-of-scope editor.
+
+Promote? **no** — prototype create+open flow; no new IA rule.
+
+---
+
+## [2026-06-20] Publish-as-new keeps the draft (fix)
+
+Publishing a draft "as a new workflow" in a project previously **moved** the draft into the project as the new canonical, removing it from My drafts. Fixed: `personaStore.publishAsNewWorkflow` now mints a fresh **v1** canonical from the draft's content and **keeps the draft** in My Workflows, re-pointing its `forkedFrom` at the new canonical (`atVersion = today`) and its `provenanceProjectId` at the target. So the draft stays in the project's "My drafts" and shows the **v1** tag — symmetric with publishing OVER an existing canonical (which also leaves the draft in place). Replaced the unused `moveWorkflowToProject` verb.
+
+Promote? **no** — corrects the prototype to match the published-workflow model (draft is surfaced, not moved).

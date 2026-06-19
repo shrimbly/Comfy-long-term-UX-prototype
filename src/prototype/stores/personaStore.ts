@@ -357,66 +357,106 @@ export const usePrototypePersonaStore = defineStore('prototype-persona', () => {
     return n ? `${workflowId}#${n}` : workflowId
   }
 
-  // Move a workflow into another project — the single "move asset to
-  // another project" verb. Per concepts/cross-cutting-flows.md the wiki
-  // frames promotion as this same verb applied to a My Workflows → shared
-  // move, so the destination decides behaviour: moving into a SHARED
-  // (non-Drafts, non-private) project publishes it as that project's
-  // canonical (lineage cleared, V1 seeded if it had no history); moving
-  // into My Workflows / a private project is a plain relocation. Returns
-  // success.
-  function moveWorkflowToProject(
-    workflowId: string,
+  // Publish a draft as a NEW canonical in the target project. Mints a fresh v1
+  // canonical from the draft's content and KEEPS the draft in My Workflows,
+  // re-pointing its lineage at the new canonical — so the draft stays in that
+  // project's "My drafts" and now shows the v1 tag (mirror of publishing OVER
+  // an existing canonical, which also leaves the draft in place). Returns the
+  // new canonical's id, or undefined if the draft / project can't resolve.
+  function publishAsNewWorkflow(
+    draftId: string,
     targetProjectId: string,
     newName?: string
-  ): boolean {
-    const source = fixture.value.workflows.find((w) => w.id === workflowId)
+  ): string | undefined {
+    const draft = fixture.value.workflows.find((w) => w.id === draftId)
     const target = fixture.value.projects.find((p) => p.id === targetProjectId)
-    if (!source || !target) return false
+    if (!draft || !target) return
     const today = new Date().toISOString().slice(0, 10)
-    const publishing = !target.isDrafts && target.tier !== 'private'
-    const trimmedName = newName?.trim()
-    fixture.value.workflows = fixture.value.workflows.map((w) =>
-      w.id === workflowId
-        ? {
-            ...w,
-            projectId: targetProjectId,
-            updatedAt: today,
-            ...(trimmedName ? { name: trimmedName } : {}),
-            ...(publishing
-              ? {
-                  // Publish-as-new mints a brand-new canonical — lineage is
-                  // cleared and it always starts at v1, never inheriting the
-                  // source's version history.
-                  forkedFrom: undefined,
-                  publishedVersions: [
-                    { byUserId: fixture.value.currentUser.id, at: today }
-                  ]
-                }
-              : {})
-          }
-        : w
-    )
-    return true
+    const canonicalId = `wf-pub-${Date.now()}`
+    const canonicalName = newName?.trim() || draft.name
+    fixture.value.workflows = [
+      ...fixture.value.workflows.map((w) =>
+        w.id === draftId
+          ? {
+              ...w,
+              updatedAt: today,
+              provenanceProjectId: targetProjectId,
+              forkedFrom: { workflowId: canonicalId, atVersion: today }
+            }
+          : w
+      ),
+      {
+        id: canonicalId,
+        projectId: targetProjectId,
+        name: canonicalName,
+        description: draft.description,
+        thumbnailUrl: draft.thumbnailUrl,
+        kind: draft.kind ?? 'workflow',
+        ownerUserId: fixture.value.currentUser.id,
+        updatedAt: today,
+        publishedVersions: [
+          { byUserId: fixture.value.currentUser.id, at: today }
+        ]
+      }
+    ]
+    return canonicalId
   }
 
   // Create a new shared project in the current workspace, owned by the
-  // current user. Defaults to the restricted (scoped) tier — a fresh
-  // project starts private to its creator + invitees, not workspace-wide.
-  // Returns the new id.
-  function createProject(name: string): string {
+  // current user. `tier` defaults to restricted (the bare PromoteToProject
+  // caller); the New-project dialog passes the user's chosen tier and, when
+  // restricted, the collaborators to seed. Returns the new id.
+  function createProject(
+    name: string,
+    tier: ProjectTier = 'restricted',
+    collaboratorIds: string[] = []
+  ): string {
     const id = `proj-${Date.now()}`
+    const ownerId = fixture.value.currentUser.id
     fixture.value.projects = [
       ...fixture.value.projects,
       {
         id,
         workspaceId: fixture.value.currentWorkspaceId,
         name: name.trim(),
-        tier: 'restricted',
-        ownerUserId: fixture.value.currentUser.id,
+        tier,
+        ownerUserId: ownerId,
         isDrafts: false,
         currentUserHasAccess: true,
-        members: [{ userId: fixture.value.currentUser.id, role: 'owner' }]
+        members: [
+          { userId: ownerId, role: 'owner' },
+          ...collaboratorIds
+            .filter((uid) => uid !== ownerId)
+            .map((uid) => ({ userId: uid, role: 'collaborator' as const }))
+        ]
+      }
+    ]
+    return id
+  }
+
+  // Create a fresh workflow in the viewer's My Workflows that is a draft *for*
+  // the given project (provenanceProjectId), surfacing in that project's "My
+  // drafts" section without living in the shared project itself — per
+  // ../IA_Plan/wiki/entities/project.md §"Project surface (MVP)". Returns the
+  // new id, or undefined if the project / host drafts can't resolve.
+  function createDraftInProject(projectId: string): string | undefined {
+    const project = fixture.value.projects.find((p) => p.id === projectId)
+    if (!project) return
+    const draftsId = findHostMyWorkflows(project.workspaceId)
+    if (!draftsId) return
+    const id = `wf-draft-${Date.now()}`
+    const today = new Date().toISOString().slice(0, 10)
+    fixture.value.workflows = [
+      ...fixture.value.workflows,
+      {
+        id,
+        projectId: draftsId,
+        name: 'Untitled workflow',
+        kind: 'workflow',
+        ownerUserId: fixture.value.currentUser.id,
+        updatedAt: today,
+        provenanceProjectId: projectId,
+        storage: 'cloud'
       }
     ]
     return id
@@ -566,8 +606,9 @@ export const usePrototypePersonaStore = defineStore('prototype-persona', () => {
     getEffectiveWorkflowStorage,
     cycleWorkflowThumbnail,
     workflowThumbnailSeed,
-    moveWorkflowToProject,
+    publishAsNewWorkflow,
     createProject,
+    createDraftInProject,
     copyToMyWorkflows,
     publishOverWorkflow
   }

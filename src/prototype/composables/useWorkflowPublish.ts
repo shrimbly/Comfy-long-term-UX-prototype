@@ -144,8 +144,9 @@ export function useWorkflowPublish() {
         life: 2800
       })
     } else {
-      // Publish as a new canonical in the project (named via the dialog).
-      const ok = personaStore.moveWorkflowToProject(
+      // Publish as a new canonical in the project (named via the dialog). The
+      // draft stays in My Workflows and now tracks the new canonical at v1.
+      const ok = personaStore.publishAsNewWorkflow(
         sourceId,
         payload.projectId,
         payload.newName ?? undefined
