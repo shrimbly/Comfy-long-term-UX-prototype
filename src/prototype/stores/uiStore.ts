@@ -41,6 +41,12 @@ export const usePrototypeUiStore = defineStore('prototype-ui', () => {
   // mounts — set by the projects-list context menu. Consumed once on arrival.
   const projectTabIntent = ref<{ id: string; tab: string } | null>(null)
 
+  // One-shot intent: open a specific folder when its container view mounts —
+  // set by a folder search result. Consumed once by useFolderBrowser.
+  const folderIntent = ref<{ containerId: string; folderId: string } | null>(
+    null
+  )
+
   // Prototype toggle (Help button): swap every workflow thumbnail for a
   // branded custom thumbnail so we can compare custom vs. generated.
   const customThumbnails = ref(false)
@@ -68,6 +74,17 @@ export const usePrototypeUiStore = defineStore('prototype-ui', () => {
     const tab = projectTabIntent.value.tab
     projectTabIntent.value = null
     return tab
+  }
+
+  function requestFolder(containerId: string, folderId: string) {
+    folderIntent.value = { containerId, folderId }
+  }
+
+  function consumeFolder(containerId: string): string | null {
+    if (folderIntent.value?.containerId !== containerId) return null
+    const folderId = folderIntent.value.folderId
+    folderIntent.value = null
+    return folderId
   }
 
   function go(view: ActiveView) {
@@ -144,6 +161,8 @@ export const usePrototypeUiStore = defineStore('prototype-ui', () => {
     consumeShareIntent,
     requestProjectTab,
     consumeProjectTab,
+    requestFolder,
+    consumeFolder,
     go,
     goHome,
     selectProject,

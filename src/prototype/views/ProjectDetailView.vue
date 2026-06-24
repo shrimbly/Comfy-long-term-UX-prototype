@@ -15,14 +15,7 @@
 -->
 <template>
   <div class="flex flex-col gap-6">
-    <button
-      type="button"
-      class="flex w-fit cursor-pointer items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-base-foreground"
-      @click="onBack"
-    >
-      <span class="icon-[lucide--arrow-left] size-4" />
-      {{ backLabel }}
-    </button>
+    <PrototypeBreadcrumb :items="breadcrumbItems" @navigate="onBreadcrumb" />
 
     <header class="flex items-start justify-between gap-4">
       <PageTitle>{{ project?.name }}</PageTitle>
@@ -171,20 +164,6 @@
               </div>
             </div>
 
-            <nav v-if="currentFolder" class="flex items-center gap-1.5 text-sm">
-              <button
-                type="button"
-                class="cursor-pointer text-muted-foreground transition-colors hover:text-base-foreground"
-                @click="goToRoot"
-              >
-                {{ t('prototype.views.project.workflowsHeading') }}
-              </button>
-              <i
-                class="icon-[lucide--chevron-right] size-4 text-muted-foreground"
-              />
-              <span class="font-medium">{{ currentFolder.name }}</span>
-            </nav>
-
             <div
               v-if="showFolders"
               class="grid grid-cols-[repeat(auto-fill,minmax(13rem,1fr))] gap-3"
@@ -260,22 +239,22 @@
                 </InfoTooltip>
               </div>
               <span
-                v-if="myDraftsWithMeta.length"
+                v-if="draftsWithMeta.length"
                 class="text-xs text-muted-foreground"
               >
                 {{
                   t('prototype.views.project.draftCount', {
-                    count: myDraftsWithMeta.length
+                    count: draftsWithMeta.length
                   })
                 }}
               </span>
             </div>
             <div
-              v-if="myDraftsWithMeta.length"
+              v-if="draftsWithMeta.length"
               class="grid grid-cols-[repeat(auto-fill,minmax(14rem,1fr))] gap-6"
             >
               <WorkflowCard
-                v-for="d in myDraftsWithMeta"
+                v-for="d in draftsWithMeta"
                 :key="d.wf.id"
                 :workflow="d.wf"
                 :draft-meta="d.meta"
@@ -289,7 +268,7 @@
               v-else
               class="rounded-xl border border-dashed border-border-subtle p-10 text-center text-sm text-muted-foreground"
             >
-              {{ t('prototype.views.project.draftsEmpty') }}
+              {{ draftsEmptyMessage }}
             </div>
           </section>
         </template>
@@ -358,6 +337,7 @@ import ProjectSharingDialog from '../components/ProjectSharingDialog.vue'
 import ProjectUsageSection from '../components/ProjectUsageSection.vue'
 import PromoteToProjectDialog from '../components/PromoteToProjectDialog.vue'
 import PromptDialog from '../components/PromptDialog.vue'
+import PrototypeBreadcrumb from '../components/PrototypeBreadcrumb.vue'
 import PublishConfirmDialog from '../components/PublishConfirmDialog.vue'
 import SelectableWorkflowGrid from '../components/SelectableWorkflowGrid.vue'
 import WorkflowCard from '../components/WorkflowCard.vue'
@@ -487,10 +467,17 @@ watchEffect(() => {
   }
 })
 
-const backLabel = computed(() => t('prototype.views.project.back'))
+// Top-of-page trail: Projects › <project> [› <folder>]. The folder segment
+// reflects the Published section's open folder.
+const breadcrumbItems = computed(() => {
+  const items = [t('prototype.sidebar.projects'), project.value?.name ?? '']
+  if (currentFolder.value) items.push(currentFolder.value.name)
+  return items
+})
 
-function onBack() {
-  uiStore.go({ kind: 'projects' })
+function onBreadcrumb(index: number) {
+  if (index === 0) uiStore.go({ kind: 'projects' })
+  else if (index === 1) goToRoot()
 }
 
 function onOpenProject(id: string) {
@@ -551,25 +538,48 @@ const copiesByCanonical = computed(() => {
   return buckets
 })
 
-// "My drafts" — the viewer's own unpublished copies that live in My
-// Workflows but carry this project as their provenance. Surfaced here (not
-// moved) so the project keeps the association. Per
+// "Drafts" — the viewer's own unpublished copies that live in My Workflows
+// but carry this project as their provenance. Surfaced here (not moved) so
+// the project keeps the association. Per
 // ../IA_Plan/wiki/entities/project.md §"Project surface (MVP)".
-const myDrafts = computed(() => {
+const projectDrafts = computed(() => {
   const draftsId = draftsProject.value?.id
   if (!draftsId) return []
-  return fixture.value.workflows
+  return fixture.value.workflows.filter(
+    (w) => w.projectId === draftsId && w.provenanceProjectId === projectId
+  )
+})
+
+// The whole project's drafts at root; inside a folder, only the drafts
+// checked out from a published workflow that lives in that folder. Drafts
+// created fresh in the project (no source workflow) belong to the root only.
+const draftsHere = computed(() => {
+  const folderId = currentFolder.value?.id
+  const canonicalsInFolder = folderId
+    ? new Set(
+        workflows.value.filter((w) => w.folderId === folderId).map((w) => w.id)
+      )
+    : null
+  return projectDrafts.value
     .filter(
-      (w) => w.projectId === draftsId && w.provenanceProjectId === projectId
+      (d) =>
+        !canonicalsInFolder ||
+        (!!d.forkedFrom && canonicalsInFolder.has(d.forkedFrom.workflowId))
     )
     .toSorted((a, b) => b.updatedAt.localeCompare(a.updatedAt))
 })
 
-const myDraftsWithMeta = computed(() =>
-  myDrafts.value.map((wf) => ({
+const draftsWithMeta = computed(() =>
+  draftsHere.value.map((wf) => ({
     wf,
     meta: deriveDraftMeta(wf, fixture.value.workflows, fixture.value.projects)
   }))
+)
+
+const draftsEmptyMessage = computed(() =>
+  currentFolder.value
+    ? t('prototype.views.project.draftsFolderEmpty')
+    : t('prototype.views.project.draftsEmpty')
 )
 
 function onViewMediaAssets() {

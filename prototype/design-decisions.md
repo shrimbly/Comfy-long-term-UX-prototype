@@ -1144,3 +1144,71 @@ Checkbox + shift-range + marquee + bulk context menu, in the foldered grids (My 
 **Bulk drag (added same day).** Dragging a card that's part of a multi-selection drags the **whole selection** into a folder; an unselected card drags just itself. `useWorkflowDrag` now carries `draggingWorkflowIds: string[]`; `WorkflowCard` emits `dragstart` (no longer decides the ids) and `SelectableWorkflowGrid` resolves them from the selection (`onDragStart` slot prop). `FolderCard` accepts every dragged id that belongs to its container and isn't already inside, and toasts a count.
 
 Promote? **no** — UI interaction; no IA change.
+
+---
+
+## [2026-06-24] Breadcrumb navigation + folder-dialog Enter fix
+
+Two tidy-ups.
+
+- **Page breadcrumbs.** New reusable `PrototypeBreadcrumb` (items[] + `navigate(index)` emit; last item = current, earlier items are links). Project detail's `← All projects` back link is replaced by a full trail **Projects › ‹project› [› ‹folder›]**; My Workflows shows **My Workflows › ‹folder›** only when inside a folder. The folder segment reflects the open Published/My-Workflows folder, so the duplicated in-section folder navs are removed from both views. Retired the now-orphaned `views.project.back` string.
+- **New-folder dialog reopened on Enter.** Confirming with Enter closed the dialog, reka-ui restored focus to the "New folder" trigger button, and Enter's default action re-activated it (classic focus-restore bleed-through). Fixed with `@keydown.enter.prevent` in `PromptDialog` — applies to every single-field dialog (new folder + renames).
+
+Promote? **no** — UI navigation polish + bug fix; no IA change.
+
+---
+
+## [2026-06-25] Project "Drafts" section — folder-scoped
+
+- **Renamed** the project-detail "My drafts" heading to **Drafts** (`views.project.draftsHeading`). Still the viewer's own private copies (the InfoTooltip "only you can see them" is unchanged) — no cross-user broadening, consistent with `drafts-as-default-private-project`.
+- **Folder scoping.** At the project root the section shows every draft for the project; inside a folder it shows only the drafts checked out from a published workflow that lives in that folder (`draft.forkedFrom.workflowId` ∈ the folder's canonicals). Drafts created fresh in-project (no `forkedFrom`) have no source workflow, so they belong to the root only. New `draftsFolderEmpty` empty-state copy for an empty folder.
+
+Promote? **maybe** — `entities/project.md §"Project surface (MVP)"` still labels this section "My drafts"; worth aligning the wiki name + noting drafts now mirror the Published folder structure. Flagged, not yet edited.
+
+---
+
+## [2026-06-25] Custom collapsing drag ghost
+
+Dragging a workflow card onto a folder no longer drags the full-size card image.
+
+- **Suppress the native drag image** (`setDragImage` with a 1×1 transparent pixel) and render a custom ghost (`WorkflowDragGhost`, mounted once in `Dashboard`, teleported to body, `pointer-events-none`).
+- **Collapse animation.** The ghost appears at the source card's captured width + 3:2 thumbnail height, then the thumbnail height/opacity transition to 0 over 150ms (triggered one frame after mount via rAF), leaving just the card's text area to follow the cursor.
+- **Single vs multi.** Single shows the workflow name + modified date (the card's text area). Multi keeps the same width/collapse but the detail reads "{n} workflows" (`dragGhost.count`).
+- `useWorkflowDrag` now also carries `ghostGeometry` (width + thumbHeight captured from the source card's rect) and a `pointer` ref updated from a document-level `dragover` listener.
+
+Promote? **no** — drag-interaction polish; no IA change.
+
+---
+
+## [2026-06-25] Move-to-folder dialog regains a root option
+
+Refines the 2026-06-24 "folders-only" call. The move dialog now lists the **container root** as its first option, labelled with the container's own name — **"My Workflows"** for the personal drafts project, otherwise the **project name** — with an open-folder icon to set it apart from the closed-folder sub-folders. Picking it calls `moveWorkflowToFolder(id, null)`, so a workflow sitting in a folder can be pulled back out (the earlier "delete the folder" route is no longer the only way). For a single workflow the dialog pre-selects its current location (its folder, or the root when it has none). Applies to both the per-card and bulk (multi-select) move paths.
+
+Earlier rejection of "No folder" stands in spirit — the difference is the option is now a concrete, named destination (the container) rather than a vague negation.
+
+Promote? **no** — folder-interaction polish; no IA change.
+
+---
+
+## [2026-06-25] Home search returns Projects
+
+Home dashboard search now matches across three result groups — **Workflows**, **Media assets**, and **Projects** (in that order) — and the input placeholder reads "Search your workflows, media and projects…". Projects come from `visibleProjects` (the same accessible, current-workspace, non-drafts set the Projects page uses), so the confidentiality contract holds — still scoped to the viewer, not global search. A project result opens via `uiStore.go({ kind: 'project' })`.
+
+Plan pruned (user): dropped **Onboarding** (deferred) and the **Per-project Assets tab** (a per-project assets link already exists; tab may not make MVP).
+
+Promote? **no** — search-scope refinement within the existing "no global search in MVP" stance.
+
+---
+
+## [2026-06-25] Home search: folders + typed result chips
+
+Built on the same-day "search returns Projects" change.
+
+- **Folders in results.** Folder matches (from the viewer's accessible containers — My Workflows + visible projects) now appear as a result group. Clicking one opens its container with the folder pre-selected, via a new one-shot `folderIntent` on `uiStore` (`requestFolder`/`consumeFolder`) that `useFolderBrowser` consumes when the matching container mounts — mirrors the existing `projectTabIntent` pattern.
+- **Typed result groups + filter chips.** Workflow matches are split into **Published** (canonicals in real projects), **Drafts** (personal-project workflows carrying a real project's provenance), and **My Workflows** (purely personal). Combined with **Projects**, **Folders**, and **Media assets**, results render as up to six labelled groups in that order. When more than one type is present, a chip row (All + one chip per present type) filters to a single type; a new query resets to All.
+- **Media kept.** The user's chip list named Projects/Folders/Published/Drafts/My Workflows; Media assets is retained as a sixth group + chip since the search still covers media (placeholder unchanged). Flag for confirmation.
+- Retired the single "Workflows" results heading (`resultsWorkflows`) now that workflows are bucketed.
+
+Promote? **no** — search-results presentation; no IA change.
+
+**Chip styling (same day).** The Home search result-filter chips now use the shared `FilterPill` component (active = inverted, inactive = secondary, `size="md"`) — the same control the Templates page uses for its category row — rather than bespoke rounded pills, so the two filter rows read identically.

@@ -44,6 +44,8 @@
     >
       <PersonaSwitcher />
     </div>
+
+    <WorkflowDragGhost />
   </div>
 </template>
 
@@ -56,6 +58,7 @@ import LocalMediaView from '../components/LocalMediaView.vue'
 import PersonaSwitcher from '../components/PersonaSwitcher.vue'
 import PrototypeSidebar from '../components/PrototypeSidebar.vue'
 import PrototypeTabs from '../components/PrototypeTabs.vue'
+import WorkflowDragGhost from '../components/WorkflowDragGhost.vue'
 import { usePrototypePersonaStore } from '../stores/personaStore'
 import { MEDIA_ASSETS_TAB_ID, usePrototypeTabsStore } from '../stores/tabsStore'
 import { usePrototypeUiStore } from '../stores/uiStore'

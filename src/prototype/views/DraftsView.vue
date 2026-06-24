@@ -13,6 +13,11 @@
 -->
 <template>
   <div class="flex flex-col gap-6">
+    <PrototypeBreadcrumb
+      v-if="currentFolder"
+      :items="breadcrumbItems"
+      @navigate="onBreadcrumb"
+    />
     <header class="flex items-end justify-between">
       <div>
         <PageTitle>{{ t('prototype.views.drafts.title') }}</PageTitle>
@@ -86,18 +91,6 @@
           </div>
         </div>
       </div>
-
-      <nav v-if="currentFolder" class="flex items-center gap-1.5 text-sm">
-        <button
-          type="button"
-          class="cursor-pointer text-muted-foreground transition-colors hover:text-base-foreground"
-          @click="goToRoot"
-        >
-          {{ t('prototype.views.drafts.title') }}
-        </button>
-        <i class="icon-[lucide--chevron-right] size-4 text-muted-foreground" />
-        <span class="font-medium">{{ currentFolder.name }}</span>
-      </nav>
 
       <div
         v-if="showFolders"
@@ -178,6 +171,7 @@ import Button from '@/components/ui/button/Button.vue'
 
 import FolderCard from '../components/FolderCard.vue'
 import PromptDialog from '../components/PromptDialog.vue'
+import PrototypeBreadcrumb from '../components/PrototypeBreadcrumb.vue'
 import SelectableWorkflowGrid from '../components/SelectableWorkflowGrid.vue'
 import ToolbarSelect from '../components/ToolbarSelect.vue'
 import WorkflowCard from '../components/WorkflowCard.vue'
@@ -303,11 +297,25 @@ const emptyMessage = computed(() => {
   return null
 })
 
+// Grid fills the content area (auto-fill gallery); the single-column list is
+// capped so rows don't stretch uncomfortably wide on large screens.
 const layoutClass = computed(() =>
   viewMode.value === 'grid'
     ? 'grid grid-cols-[repeat(auto-fill,minmax(14rem,1fr))] gap-6'
-    : 'flex flex-col gap-0.5'
+    : 'flex max-w-5xl flex-col gap-0.5'
 )
+
+// Shown only inside a folder: My Workflows › <folder>. The root segment
+// returns to the top level.
+const breadcrumbItems = computed(() => {
+  const items = [t('prototype.views.drafts.title')]
+  if (currentFolder.value) items.push(currentFolder.value.name)
+  return items
+})
+
+function onBreadcrumb(index: number) {
+  if (index === 0) goToRoot()
+}
 
 function onCreateFolder(name: string) {
   creatingFolder.value = false

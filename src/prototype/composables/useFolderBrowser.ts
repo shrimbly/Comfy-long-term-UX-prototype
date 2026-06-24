@@ -6,6 +6,7 @@ import { storeToRefs } from 'pinia'
 import { computed, ref, watch } from 'vue'
 
 import { usePrototypePersonaStore } from '../stores/personaStore'
+import { usePrototypeUiStore } from '../stores/uiStore'
 import type { ComputedRef, Ref } from 'vue'
 import type { Workflow } from '../types'
 
@@ -14,6 +15,7 @@ export function useFolderBrowser(
   workflows: Ref<Workflow[]> | ComputedRef<Workflow[]>
 ) {
   const personaStore = usePrototypePersonaStore()
+  const uiStore = usePrototypeUiStore()
   const { fixture } = storeToRefs(personaStore)
 
   const currentFolderId = ref<string | null>(null)
@@ -26,6 +28,20 @@ export function useFolderBrowser(
 
   const currentFolder = computed(
     () => folders.value.find((f) => f.id === currentFolderId.value) ?? null
+  )
+
+  // A folder search result requests its folder be opened on arrival; consume
+  // that intent once the matching container resolves.
+  watch(
+    containerId,
+    (id) => {
+      if (!id) return
+      const folderId = uiStore.consumeFolder(id)
+      if (folderId && folders.value.some((f) => f.id === folderId)) {
+        currentFolderId.value = folderId
+      }
+    },
+    { immediate: true }
   )
 
   // Drop back to the root if the container changes or the open folder is gone.

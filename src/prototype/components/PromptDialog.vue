@@ -20,7 +20,7 @@
             type="text"
             class="w-full rounded-md border border-border-default bg-base-background px-2.5 py-1.5 text-sm text-base-foreground outline-none placeholder:text-muted-foreground"
             :placeholder="placeholder"
-            @keydown.enter="onConfirm"
+            @keydown.enter.prevent="onConfirm"
           />
         </div>
 

@@ -1,7 +1,9 @@
 <!--
-  Pick a destination folder for a workflow within its container (My Workflows
-  or a project). "No folder" returns it to the container root. Folders are
-  created from the container's "New folder" button, not here.
+  Pick a destination for a workflow within its container (My Workflows or a
+  project). The first option is the container root — labelled with the
+  container's own name (e.g. "My Workflows" / the project name) — so a workflow
+  sitting in a folder can be moved back out. Folders are created from the
+  container's "New folder" button, not here.
 -->
 <template>
   <Dialog :open="true" @update:open="onOpenChange">
@@ -26,7 +28,14 @@
               @click="selected = opt.id"
             >
               <i
-                class="icon-[lucide--folder] size-4 shrink-0 text-muted-foreground"
+                :class="
+                  cn(
+                    opt.isRoot
+                      ? 'icon-[lucide--folder-open]'
+                      : 'icon-[lucide--folder]',
+                    'size-4 shrink-0 text-muted-foreground'
+                  )
+                "
               />
               <span
                 class="min-w-0 flex-1 truncate text-sm text-base-foreground"
@@ -79,22 +88,44 @@ const { t } = useI18n()
 const personaStore = usePrototypePersonaStore()
 const { fixture } = storeToRefs(personaStore)
 
+// Sentinel destination for the container root (out of any folder).
+const ROOT_ID = '__root__'
+
 // All ids share a container (same grid); key folder options off the first.
 const firstWorkflow = computed(() =>
   fixture.value.workflows.find((w) => w.id === workflowIds[0])
 )
 const containerId = computed(() => firstWorkflow.value?.projectId)
+const containerProject = computed(() =>
+  fixture.value.projects.find((p) => p.id === containerId.value)
+)
 const containerFolders = computed(() =>
   (fixture.value.folders ?? []).filter((f) => f.projectId === containerId.value)
 )
 
-// Pre-select the current folder only when moving a single workflow.
-const selected = ref<string | null>(
-  workflowIds.length === 1 ? (firstWorkflow.value?.folderId ?? null) : null
+// The root option wears the container's own name — "My Workflows" for the
+// personal drafts project, otherwise the project's name.
+const rootLabel = computed(() =>
+  containerProject.value?.isDrafts
+    ? t('prototype.views.drafts.title')
+    : (containerProject.value?.name ?? '')
 )
 
-const options = computed<Array<{ id: string; label: string }>>(() =>
-  containerFolders.value.map((f) => ({ id: f.id, label: f.name }))
+// Pre-select the current location only when moving a single workflow — its
+// folder, or the root when it isn't in one.
+const selected = ref<string | null>(
+  workflowIds.length === 1 ? (firstWorkflow.value?.folderId ?? ROOT_ID) : null
+)
+
+const options = computed<Array<{ id: string; label: string; isRoot: boolean }>>(
+  () => [
+    { id: ROOT_ID, label: rootLabel.value, isRoot: true },
+    ...containerFolders.value.map((f) => ({
+      id: f.id,
+      label: f.name,
+      isRoot: false
+    }))
+  ]
 )
 
 function rowClass(isSelected: boolean): string {
@@ -108,8 +139,9 @@ function rowClass(isSelected: boolean): string {
 
 function onConfirm() {
   if (!selected.value) return
+  const target = selected.value === ROOT_ID ? null : selected.value
   for (const id of workflowIds) {
-    personaStore.moveWorkflowToFolder(id, selected.value)
+    personaStore.moveWorkflowToFolder(id, target)
   }
   emit('moved')
 }
