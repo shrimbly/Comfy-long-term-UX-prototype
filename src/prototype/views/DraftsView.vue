@@ -1,13 +1,15 @@
 <!--
   Implements:
     decision: ../IA_Plan/wiki/decisions/drafts-as-default-private-project.md
+    decision: ../IA_Plan/wiki/decisions/mvp-scope.md
+    log:      ../prototype/design-decisions.md (2026-06-24 My Workflows = personal project; folders)
 
-  Drafts is the default save target. Shows the workflows in the viewer's
-  own Drafts / My-Workflows project. "+ New workflow" saves into it.
+  My Workflows — the viewer's personal project. Shows only *personal*
+  workflows: copies/drafts tied to a real shared project live in that
+  project's "My drafts", not here. Organized with single-level folders.
 
-  The listing can get long, so it has a toolbar: search by name, filter
-  by storage, sort, and a grid/list view toggle. Defaults to the dense
-  list view.
+  Toolbar: search by name (container-wide), filter by storage, sort, and a
+  grid/list view toggle.
 -->
 <template>
   <div class="flex flex-col gap-6">
@@ -15,12 +17,23 @@
       <div>
         <PageTitle>{{ t('prototype.views.drafts.title') }}</PageTitle>
       </div>
-      <Button v-if="privateWorkflows.length" variant="primary" size="lg">
-        {{ t('prototype.dashboard.newWorkflow') }}
-      </Button>
+      <div v-if="hasContent" class="flex items-center gap-2">
+        <Button
+          v-if="!currentFolder"
+          variant="secondary"
+          size="lg"
+          @click="creatingFolder = true"
+        >
+          <i class="icon-[lucide--folder-plus] size-4" />
+          {{ t('prototype.folders.newFolder') }}
+        </Button>
+        <Button variant="primary" size="lg">
+          {{ t('prototype.dashboard.newWorkflow') }}
+        </Button>
+      </div>
     </header>
 
-    <template v-if="privateWorkflows.length">
+    <template v-if="hasContent">
       <div class="flex flex-wrap items-center justify-between gap-2">
         <label
           class="flex h-8 max-w-xs min-w-48 flex-1 items-center gap-2 rounded-lg bg-secondary-background px-2.5 text-base-foreground"
@@ -74,26 +87,82 @@
         </div>
       </div>
 
-      <div v-if="displayed.length" :class="layoutClass">
-        <WorkflowCard
-          v-for="d in displayedWithMeta"
-          :key="d.wf.id"
-          :workflow="d.wf"
-          :layout="viewMode"
-          :draft-meta="d.meta"
+      <nav v-if="currentFolder" class="flex items-center gap-1.5 text-sm">
+        <button
+          type="button"
+          class="cursor-pointer text-muted-foreground transition-colors hover:text-base-foreground"
+          @click="goToRoot"
+        >
+          {{ t('prototype.views.drafts.title') }}
+        </button>
+        <i class="icon-[lucide--chevron-right] size-4 text-muted-foreground" />
+        <span class="font-medium">{{ currentFolder.name }}</span>
+      </nav>
+
+      <div
+        v-if="showFolders"
+        class="grid grid-cols-[repeat(auto-fill,minmax(13rem,1fr))] gap-3"
+      >
+        <FolderCard
+          v-for="f in folders"
+          :key="f.id"
+          :folder="f"
+          :count="workflowCount(f.id)"
+          @open="enterFolder"
         />
       </div>
+
+      <SelectableWorkflowGrid
+        v-if="displayed.length"
+        :workflows="displayed"
+        :container-id="containerId ?? ''"
+        :layout-class="layoutClass"
+      >
+        <template
+          #default="{
+            isSelected,
+            selectionActive,
+            onSelect,
+            onContextMenu,
+            onDragStart
+          }"
+        >
+          <WorkflowCard
+            v-for="d in displayedWithMeta"
+            :key="d.wf.id"
+            :workflow="d.wf"
+            :layout="viewMode"
+            :draft-meta="d.meta"
+            :draggable="!searching"
+            selectable
+            :selected="isSelected(d.wf.id)"
+            :selection-active="selectionActive"
+            @select="onSelect(d.wf.id, $event)"
+            @context-menu="onContextMenu($event)"
+            @dragstart="onDragStart(d.wf.id, $event)"
+          />
+        </template>
+      </SelectableWorkflowGrid>
       <p
-        v-else
+        v-else-if="emptyMessage"
         class="rounded-xl border border-dashed border-border-subtle p-10 text-center text-sm text-muted-foreground"
       >
-        {{ t('prototype.views.drafts.filterEmpty') }}
+        {{ emptyMessage }}
       </p>
     </template>
 
     <WorkflowsEmptyState
       v-else
       :heading="t('prototype.views.drafts.emptyHeading')"
+    />
+
+    <PromptDialog
+      v-if="creatingFolder"
+      :title="t('prototype.folders.newFolderTitle')"
+      :placeholder="t('prototype.folders.namePlaceholder')"
+      :confirm-label="t('prototype.folders.create')"
+      @confirm="onCreateFolder"
+      @cancel="creatingFolder = false"
     />
   </div>
 </template>
@@ -107,9 +176,13 @@ import PageTitle from '../components/PageTitle.vue'
 
 import Button from '@/components/ui/button/Button.vue'
 
+import FolderCard from '../components/FolderCard.vue'
+import PromptDialog from '../components/PromptDialog.vue'
+import SelectableWorkflowGrid from '../components/SelectableWorkflowGrid.vue'
 import ToolbarSelect from '../components/ToolbarSelect.vue'
 import WorkflowCard from '../components/WorkflowCard.vue'
 import WorkflowsEmptyState from '../components/WorkflowsEmptyState.vue'
+import { useFolderBrowser } from '../composables/useFolderBrowser'
 import { usePrototypePersonaStore } from '../stores/personaStore'
 import { deriveDraftMeta } from '../utils/draftMeta'
 
@@ -125,12 +198,50 @@ const searchQuery = ref('')
 const filter = ref<FilterValue>('all')
 const sort = ref<SortValue>('last-modified')
 const viewMode = ref<ViewMode>('grid')
+const creatingFolder = ref(false)
 
-const privateWorkflows = computed(() => {
-  const drafts = draftsProject.value
-  if (!drafts) return []
-  return fixture.value.workflows.filter((w) => w.projectId === drafts.id)
+const containerId = computed(() => draftsProject.value?.id)
+
+// Personal workflows only. A copy/draft whose provenance is a real shared
+// project belongs to that project's "My drafts", not here (My Workflows = your
+// personal project). Orphans (provenance project gone) fall back to here.
+const personalWorkflows = computed(() => {
+  const id = containerId.value
+  if (!id) return []
+  const inRealProject = (pid?: string) =>
+    !!pid && fixture.value.projects.some((p) => p.id === pid && !p.isDrafts)
+  return fixture.value.workflows.filter(
+    (w) => w.projectId === id && !inRealProject(w.provenanceProjectId)
+  )
 })
+
+const {
+  currentFolderId,
+  currentFolder,
+  folders,
+  workflowsHere,
+  workflowCount,
+  enterFolder,
+  goToRoot
+} = useFolderBrowser(containerId, personalWorkflows)
+
+const searching = computed(() => searchQuery.value.trim().length > 0)
+
+// Search is container-wide; otherwise list the active folder level.
+const base = computed(() =>
+  searching.value ? personalWorkflows.value : workflowsHere.value
+)
+
+const hasContent = computed(
+  () => personalWorkflows.value.length > 0 || folders.value.length > 0
+)
+
+const showFolders = computed(
+  () =>
+    !searching.value &&
+    currentFolderId.value === null &&
+    folders.value.length > 0
+)
 
 const filterOptions = computed<Array<{ value: FilterValue; label: string }>>(
   () => [
@@ -152,7 +263,7 @@ const sortOptions = computed<Array<{ value: SortValue; label: string }>>(() => [
 
 const filtered = computed(() => {
   const q = searchQuery.value.trim().toLowerCase()
-  return privateWorkflows.value.filter((w) => {
+  return base.value.filter((w) => {
     if (q && !w.name.toLowerCase().includes(q)) return false
     if (filter.value === 'cloud') return w.storage === 'cloud'
     if (filter.value === 'local') return w.storage === 'local'
@@ -175,8 +286,8 @@ const displayed = computed(() => {
   }
 })
 
-// Surface a provenance link on any workflow connected to a project (a copy
-// or created-in-project draft); plain personal workflows get no badge.
+// Surface a provenance link on any workflow connected to a project; plain
+// personal workflows get no badge.
 const displayedWithMeta = computed(() =>
   displayed.value.map((wf) => ({
     wf,
@@ -184,9 +295,23 @@ const displayedWithMeta = computed(() =>
   }))
 )
 
+const emptyMessage = computed(() => {
+  if (displayed.value.length > 0) return null
+  if (searching.value) return t('prototype.views.drafts.filterEmpty')
+  if (currentFolder.value) return t('prototype.folders.empty')
+  if (!showFolders.value) return t('prototype.views.drafts.filterEmpty')
+  return null
+})
+
 const layoutClass = computed(() =>
   viewMode.value === 'grid'
     ? 'grid grid-cols-[repeat(auto-fill,minmax(14rem,1fr))] gap-6'
     : 'flex flex-col gap-0.5'
 )
+
+function onCreateFolder(name: string) {
+  creatingFolder.value = false
+  const id = containerId.value
+  if (id) personaStore.createFolder(id, name)
+}
 </script>

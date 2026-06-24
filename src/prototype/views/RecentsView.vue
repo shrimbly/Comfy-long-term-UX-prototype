@@ -2,11 +2,11 @@
   Implements:
     decision: ../IA_Plan/wiki/decisions/save-destination-workflow-level.md
 
-    Recents view — the user's recently-opened workflows. Chip filter by
-    storage (All / Cloud / Local) on the left, sort dropdown on the right.
-    Replaces the old All/Mine owner filter, which is meaningless in the
-    copy-on-access MVP model where every workflow is the user's. Grid
-    renders WorkflowCard tiles.
+    Recents view — the user's recently-opened workflows. Search by name on
+    the left; chip filter by storage (All / Cloud / Local) and sort dropdown
+    on the right. Replaces the old All/Mine owner filter, which is
+    meaningless in the copy-on-access MVP model where every workflow is the
+    user's. Grid renders WorkflowCard tiles.
 -->
 <template>
   <div class="flex flex-col gap-6">
@@ -15,7 +15,21 @@
     </header>
 
     <div v-if="recentWorkflows.length" class="flex flex-col gap-4">
-      <div class="flex items-center justify-between gap-3">
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <label
+          class="flex h-8 max-w-xs min-w-48 flex-1 items-center gap-2 rounded-lg bg-secondary-background px-2.5 text-base-foreground"
+        >
+          <i
+            class="icon-[lucide--search] size-4 shrink-0 text-muted-foreground"
+          />
+          <input
+            v-model="searchQuery"
+            type="text"
+            :placeholder="t('prototype.views.recents.searchPlaceholder')"
+            class="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+          />
+        </label>
+
         <div class="flex items-center gap-2">
           <FilterPill
             v-for="opt in filterOptions"
@@ -24,37 +38,37 @@
             :active="filter === opt.value"
             @click="filter = opt.value"
           />
-        </div>
 
-        <div ref="sortMenuRef" class="relative inline-flex">
-          <button
-            type="button"
-            class="inline-flex h-8 cursor-pointer appearance-none items-center gap-1.5 rounded-md border-0 bg-secondary-background px-3 text-sm text-base-foreground transition-colors hover:bg-secondary-background-hover focus:outline-none"
-            :aria-expanded="isSortOpen"
-            @click="isSortOpen = !isSortOpen"
-          >
-            <span>{{ currentSortLabel }}</span>
-            <span
-              class="icon-[lucide--chevron-down] size-3.5 text-muted-foreground"
-            />
-          </button>
-          <div
-            v-if="isSortOpen"
-            class="absolute top-full right-0 z-50 mt-1 flex w-48 flex-col gap-0.5 rounded-lg border border-border-default bg-interface-menu-surface p-1 text-sm shadow-[1px_1px_8px_0_rgb(0_0_0/0.4)]"
-          >
+          <div ref="sortMenuRef" class="relative inline-flex">
             <button
-              v-for="opt in sortOptions"
-              :key="opt.value"
               type="button"
-              class="flex w-full cursor-pointer appearance-none items-center justify-between rounded-sm border-0 bg-transparent px-3 py-2 text-left text-base-foreground transition-colors hover:bg-interface-menu-component-surface-hovered focus:bg-interface-menu-component-surface-hovered focus:outline-none"
-              @click="onSelectSort(opt.value)"
+              class="inline-flex h-8 cursor-pointer appearance-none items-center gap-1.5 rounded-md border-0 bg-secondary-background px-3 text-sm text-base-foreground transition-colors hover:bg-secondary-background-hover focus:outline-none"
+              :aria-expanded="isSortOpen"
+              @click="isSortOpen = !isSortOpen"
             >
-              <span>{{ opt.label }}</span>
+              <span>{{ currentSortLabel }}</span>
               <span
-                v-if="opt.value === sort"
-                class="icon-[lucide--check] size-3.5 text-muted-foreground"
+                class="icon-[lucide--chevron-down] size-3.5 text-muted-foreground"
               />
             </button>
+            <div
+              v-if="isSortOpen"
+              class="absolute top-full right-0 z-50 mt-1 flex w-48 flex-col gap-0.5 rounded-lg border border-border-default bg-interface-menu-surface p-1 text-sm shadow-[1px_1px_8px_0_rgb(0_0_0/0.4)]"
+            >
+              <button
+                v-for="opt in sortOptions"
+                :key="opt.value"
+                type="button"
+                class="flex w-full cursor-pointer appearance-none items-center justify-between rounded-sm border-0 bg-transparent px-3 py-2 text-left text-base-foreground transition-colors hover:bg-interface-menu-component-surface-hovered focus:bg-interface-menu-component-surface-hovered focus:outline-none"
+                @click="onSelectSort(opt.value)"
+              >
+                <span>{{ opt.label }}</span>
+                <span
+                  v-if="opt.value === sort"
+                  class="icon-[lucide--check] size-3.5 text-muted-foreground"
+                />
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -103,6 +117,7 @@ const { t } = useI18n()
 const personaStore = usePrototypePersonaStore()
 const { recentWorkflows } = storeToRefs(personaStore)
 
+const searchQuery = ref('')
 const filter = ref<FilterValue>('all')
 const sort = ref<SortValue>('last-modified')
 
@@ -142,8 +157,12 @@ const currentSortLabel = computed(
 )
 
 const filteredWorkflows = computed(() => {
-  if (filter.value === 'all') return recentWorkflows.value
-  return recentWorkflows.value.filter((w) => w.storage === filter.value)
+  const q = searchQuery.value.trim().toLowerCase()
+  return recentWorkflows.value.filter((w) => {
+    if (q && !w.name.toLowerCase().includes(q)) return false
+    if (filter.value !== 'all' && w.storage !== filter.value) return false
+    return true
+  })
 })
 
 const sortedWorkflows = computed(() => {

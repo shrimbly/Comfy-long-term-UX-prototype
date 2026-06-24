@@ -5,9 +5,9 @@
     working:  ../IA_Plan/wiki/prototype-log.md — Workspace / Restricted tiers
               (Private collapses into Drafts; Scoped → Restricted)
 
-  Projects index for the current workspace. Filter pills toggle the
-  visible tier. Each card carries its tier badge. Restricted projects the
-  user wasn't invited to are NOT shown (filtered out upstream in the
+  Projects index for the current workspace. Search by name + sort, with a
+  grid/list toggle. Each card carries its access badge. Restricted projects
+  the user wasn't invited to are NOT shown (filtered out upstream in the
   personaStore) — confidentiality contract.
 -->
 <template>
@@ -24,16 +24,20 @@
       </button>
     </header>
 
-    <div class="flex items-center justify-between gap-3">
-      <div class="flex items-center gap-2">
-        <FilterPill
-          v-for="opt in filterOptions"
-          :key="opt.value"
-          :label="opt.label"
-          :active="filter === opt.value"
-          @click="filter = opt.value"
+    <div class="flex flex-wrap items-center justify-between gap-2">
+      <label
+        class="flex h-8 max-w-xs min-w-48 flex-1 items-center gap-2 rounded-lg bg-secondary-background px-2.5 text-base-foreground"
+      >
+        <i
+          class="icon-[lucide--search] size-4 shrink-0 text-muted-foreground"
         />
-      </div>
+        <input
+          v-model="searchQuery"
+          type="text"
+          :placeholder="t('prototype.views.projects.searchPlaceholder')"
+          class="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+        />
+      </label>
 
       <div class="flex items-center gap-2">
         <ToolbarSelect
@@ -106,7 +110,11 @@
       />
     </div>
     <p v-else class="text-sm text-muted-foreground">
-      {{ t('prototype.views.projects.empty') }}
+      {{
+        searchQuery
+          ? t('prototype.views.projects.searchEmpty')
+          : t('prototype.views.projects.empty')
+      }}
     </p>
 
     <NewProjectDialog
@@ -123,16 +131,13 @@ import { storeToRefs } from 'pinia'
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
-import FilterPill from '../components/FilterPill.vue'
 import NewProjectDialog from '../components/NewProjectDialog.vue'
 import PageTitle from '../components/PageTitle.vue'
 import ProjectCard from '../components/ProjectCard.vue'
 import ToolbarSelect from '../components/ToolbarSelect.vue'
 import { usePrototypePersonaStore } from '../stores/personaStore'
 import { usePrototypeUiStore } from '../stores/uiStore'
-import { projectAccessLevel } from '../utils/projectAccess'
 
-type FilterValue = 'all' | 'everyone' | 'limited' | 'private'
 type SortValue = 'last-modified' | 'oldest' | 'az' | 'za'
 type ViewMode = 'grid' | 'list'
 
@@ -152,19 +157,16 @@ const workflowsByProject = computed(() => {
   return buckets
 })
 
-const filter = ref<FilterValue>('all')
+const searchQuery = ref('')
 const sort = ref<SortValue>('last-modified')
 const viewMode = ref<ViewMode>('grid')
 const showNewProject = ref(false)
 
-const filterOptions = computed<Array<{ value: FilterValue; label: string }>>(
-  () => [
-    { value: 'all', label: t('prototype.views.projects.filterAll') },
-    { value: 'everyone', label: t('prototype.projectAccess.everyone') },
-    { value: 'limited', label: t('prototype.projectAccess.limited') },
-    { value: 'private', label: t('prototype.projectAccess.private') }
-  ]
-)
+const searchedProjects = computed(() => {
+  const q = searchQuery.value.trim().toLowerCase()
+  if (!q) return visibleProjects.value
+  return visibleProjects.value.filter((p) => p.name.toLowerCase().includes(q))
+})
 
 const sortOptions = computed<Array<{ value: SortValue; label: string }>>(() => [
   {
@@ -176,20 +178,13 @@ const sortOptions = computed<Array<{ value: SortValue; label: string }>>(() => [
   { value: 'za', label: t('prototype.views.projects.sort.za') }
 ])
 
-const filteredProjects = computed(() => {
-  if (filter.value === 'all') return visibleProjects.value
-  return visibleProjects.value.filter(
-    (p) => projectAccessLevel(p) === filter.value
-  )
-})
-
 function lastModified(projectId: string): string {
   const list = workflowsByProject.value[projectId]
   return list && list.length ? list[0].updatedAt : ''
 }
 
 const sortedProjects = computed(() => {
-  const list = [...filteredProjects.value]
+  const list = [...searchedProjects.value]
   switch (sort.value) {
     case 'az':
       return list.sort((a, b) => a.name.localeCompare(b.name))

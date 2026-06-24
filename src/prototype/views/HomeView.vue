@@ -152,6 +152,8 @@
             :key="card.id"
             :title="card.title"
             :seed="card.id"
+            :image="card.image"
+            :image-position="card.imagePosition"
           />
         </div>
       </section>
@@ -180,15 +182,48 @@ import { usePrototypeUiStore } from '../stores/uiStore'
 type FeaturedTab = 'whatsNew' | 'templates' | 'tutorials'
 
 // "What's new" promotes the latest models supported in ComfyUI (per
-// blog.comfy.org) across modalities — image, audio, 3D, multimodal.
-// The placeholder gradient is seeded off the id.
-const featuredModels: Array<{ id: string; title: string }> = [
-  { id: 'model-ideogram-4', title: 'Ideogram 4.0' },
-  { id: 'model-stable-audio-3', title: 'Stable Audio 3.0' },
-  { id: 'model-triposplat', title: 'TripoSplat' },
-  { id: 'model-krea-2', title: 'Krea 2 Image' },
-  { id: 'model-luma-uni-1', title: 'Luma Uni-1' },
-  { id: 'model-gemma-4', title: 'Gemma 4' }
+// blog.comfy.org) across modalities — image, audio, 3D, multimodal. The
+// artwork is square (400²); `imagePosition` picks the vertical band to keep
+// when it crops into the landscape (16:9) tile — biased toward each image's
+// subject (text band, face, headphones/label).
+type FeaturedCard = {
+  id: string
+  title: string
+  image?: string
+  imagePosition?: string
+}
+
+const featuredModels: FeaturedCard[] = [
+  {
+    id: 'model-ideogram-4',
+    title: 'Ideogram 4.0',
+    image: '/whats-new/ideogram-4.webp',
+    imagePosition: 'center 20%'
+  },
+  {
+    id: 'model-stable-audio-3',
+    title: 'Stable Audio 3.0',
+    image: '/whats-new/stable-audio-3.webp',
+    imagePosition: 'center 70%'
+  },
+  {
+    id: 'model-triposplat',
+    title: 'TripoSplat',
+    image: '/whats-new/triposplat.webp'
+  },
+  {
+    id: 'model-krea-2',
+    title: 'Krea 2 Image',
+    image: '/whats-new/krea-2.webp',
+    imagePosition: 'center 35%'
+  },
+  {
+    id: 'model-luma-uni-1',
+    title: 'Luma Uni-1',
+    image: '/whats-new/luma-uni-1.webp',
+    imagePosition: 'center 30%'
+  },
+  { id: 'model-gemma-4', title: 'Gemma 4', image: '/whats-new/gemma-4.webp' }
 ]
 
 const { t } = useI18n()
@@ -273,7 +308,7 @@ const featuredTabs = computed(() => {
     : [whatsNew, templates, tutorials]
 })
 
-const featuredCards = computed<Array<{ id: string; title: string }>>(() => {
+const featuredCards = computed<FeaturedCard[]>(() => {
   if (activeFeaturedTab.value === 'templates') {
     return workflowTemplates.slice(0, 3).map((tpl) => ({
       id: tpl.id,

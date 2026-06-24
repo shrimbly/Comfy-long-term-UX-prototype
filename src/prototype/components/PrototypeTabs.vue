@@ -164,6 +164,6 @@ const userColor = computed(() => {
 
 function onSelectHome() {
   tabsStore.select(HOME_TAB_ID)
-  uiStore.go({ kind: 'drafts' })
+  uiStore.go({ kind: 'home' })
 }
 </script>

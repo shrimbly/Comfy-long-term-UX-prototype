@@ -10,7 +10,7 @@
 
 import type { Project } from '../types'
 
-export type ProjectAccessLevel = 'everyone' | 'limited' | 'private'
+type ProjectAccessLevel = 'everyone' | 'limited' | 'private'
 
 export function projectAccessLevel(project: Project): ProjectAccessLevel {
   if (project.tier === 'workspace-wide') return 'everyone'

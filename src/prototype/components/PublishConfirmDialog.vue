@@ -21,12 +21,19 @@
           <DialogClose />
         </DialogHeader>
 
-        <div class="px-4 py-2">
+        <div class="flex flex-col gap-2 px-4 py-2">
           <DialogDescription>
             <i18n-t keypath="prototype.publishConfirm.body" tag="span">
               <template #project>{{ projectName }}</template>
             </i18n-t>
           </DialogDescription>
+
+          <textarea
+            v-model="comment"
+            rows="3"
+            :placeholder="t('prototype.publishConfirm.commentPlaceholder')"
+            class="w-full resize-none rounded-md border border-border-default bg-base-background px-2.5 py-1.5 text-sm text-base-foreground outline-none placeholder:text-muted-foreground"
+          />
         </div>
 
         <DialogFooter>
@@ -36,7 +43,7 @@
           <Button variant="secondary" @click="emit('publish-new')">
             {{ t('prototype.publishConfirm.publishNew') }}
           </Button>
-          <Button variant="primary" @click="emit('confirm')">
+          <Button variant="primary" @click="emit('confirm', comment.trim())">
             {{ t('prototype.publishConfirm.confirm', { n: nextVersion }) }}
           </Button>
         </DialogFooter>
@@ -46,6 +53,7 @@
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import Button from '@/components/ui/button/Button.vue'
@@ -67,11 +75,12 @@ const { workflowName, projectName, nextVersion } = defineProps<{
 
 const emit = defineEmits<{
   close: []
-  confirm: []
+  confirm: [comment: string]
   'publish-new': []
 }>()
 
 const { t } = useI18n()
+const comment = ref('')
 
 function onOpenChange(open: boolean) {
   if (!open) emit('close')

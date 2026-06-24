@@ -148,37 +148,95 @@
                   }}</span>
                 </InfoTooltip>
               </div>
-              <span
-                v-if="workflows.length"
-                class="text-xs text-muted-foreground"
-              >
-                {{
-                  t('prototype.views.project.workflowCount', {
-                    count: workflows.length
-                  })
-                }}
-              </span>
+              <div class="flex items-center gap-2">
+                <Button
+                  v-if="!currentFolder"
+                  variant="textonly"
+                  size="sm"
+                  @click="creatingFolder = true"
+                >
+                  <i class="icon-[lucide--folder-plus] size-4" />
+                  {{ t('prototype.folders.newFolder') }}
+                </Button>
+                <span
+                  v-if="workflows.length"
+                  class="text-xs text-muted-foreground"
+                >
+                  {{
+                    t('prototype.views.project.workflowCount', {
+                      count: workflows.length
+                    })
+                  }}
+                </span>
+              </div>
             </div>
+
+            <nav v-if="currentFolder" class="flex items-center gap-1.5 text-sm">
+              <button
+                type="button"
+                class="cursor-pointer text-muted-foreground transition-colors hover:text-base-foreground"
+                @click="goToRoot"
+              >
+                {{ t('prototype.views.project.workflowsHeading') }}
+              </button>
+              <i
+                class="icon-[lucide--chevron-right] size-4 text-muted-foreground"
+              />
+              <span class="font-medium">{{ currentFolder.name }}</span>
+            </nav>
+
             <div
-              v-if="workflows.length"
-              class="grid grid-cols-[repeat(auto-fill,minmax(14rem,1fr))] gap-6"
+              v-if="showFolders"
+              class="grid grid-cols-[repeat(auto-fill,minmax(13rem,1fr))] gap-3"
             >
-              <WorkflowCard
-                v-for="wf in workflows"
-                :key="wf.id"
-                :workflow="wf"
-                actions="published"
-                :copies="copiesByCanonical[wf.id] ?? []"
-                @copy="onCopyWorkflow"
-                @open="onOpenDraft"
-                @open-project="onOpenProject"
+              <FolderCard
+                v-for="f in folders"
+                :key="f.id"
+                :folder="f"
+                :count="workflowCount(f.id)"
+                @open="enterFolder"
               />
             </div>
+
+            <SelectableWorkflowGrid
+              v-if="publishedHere.length"
+              :workflows="publishedHere"
+              :container-id="projectId"
+              layout-class="grid grid-cols-[repeat(auto-fill,minmax(14rem,1fr))] gap-6"
+            >
+              <template
+                #default="{
+                  isSelected,
+                  selectionActive,
+                  onSelect,
+                  onContextMenu,
+                  onDragStart
+                }"
+              >
+                <WorkflowCard
+                  v-for="wf in publishedHere"
+                  :key="wf.id"
+                  :workflow="wf"
+                  actions="published"
+                  draggable
+                  selectable
+                  :selected="isSelected(wf.id)"
+                  :selection-active="selectionActive"
+                  :copies="copiesByCanonical[wf.id] ?? []"
+                  @copy="onCopyWorkflow"
+                  @open="onOpenDraft"
+                  @open-project="onOpenProject"
+                  @select="onSelect(wf.id, $event)"
+                  @context-menu="onContextMenu($event)"
+                  @dragstart="onDragStart(wf.id, $event)"
+                />
+              </template>
+            </SelectableWorkflowGrid>
             <div
-              v-else
+              v-else-if="publishedEmpty"
               class="rounded-xl border border-dashed border-border-subtle p-10 text-center text-sm text-muted-foreground"
             >
-              {{ t('prototype.views.project.empty') }}
+              {{ publishedEmpty }}
             </div>
           </section>
 
@@ -238,8 +296,8 @@
 
         <ProjectUsageSection
           v-else-if="activeTab === 'usage'"
-          :project-credits="projectCredits"
-          :workspace-credits="workspaceCredits"
+          :usage="project?.monthlyUsage ?? []"
+          :project-name="project?.name ?? ''"
         />
       </div>
     </template>
@@ -271,6 +329,15 @@
       @publish-new="publishDraftAsNew"
       @close="cancelPublishConfirm"
     />
+
+    <PromptDialog
+      v-if="creatingFolder"
+      :title="t('prototype.folders.newFolderTitle')"
+      :placeholder="t('prototype.folders.namePlaceholder')"
+      :confirm-label="t('prototype.folders.create')"
+      @confirm="onCreateFolder"
+      @cancel="creatingFolder = false"
+    />
   </div>
 </template>
 
@@ -283,13 +350,19 @@ import { useI18n } from 'vue-i18n'
 
 import PageTitle from '../components/PageTitle.vue'
 
+import Button from '@/components/ui/button/Button.vue'
+
+import FolderCard from '../components/FolderCard.vue'
 import InfoTooltip from '../components/InfoTooltip.vue'
 import ProjectSharingDialog from '../components/ProjectSharingDialog.vue'
 import ProjectUsageSection from '../components/ProjectUsageSection.vue'
 import PromoteToProjectDialog from '../components/PromoteToProjectDialog.vue'
+import PromptDialog from '../components/PromptDialog.vue'
 import PublishConfirmDialog from '../components/PublishConfirmDialog.vue'
+import SelectableWorkflowGrid from '../components/SelectableWorkflowGrid.vue'
 import WorkflowCard from '../components/WorkflowCard.vue'
 import WorkflowEditorNoticeDialog from '../components/WorkflowEditorNoticeDialog.vue'
+import { useFolderBrowser } from '../composables/useFolderBrowser'
 import { useProjectAccess } from '../composables/useProjectAccess'
 import { useWorkflowPublish } from '../composables/useWorkflowPublish'
 import { usePrototypePersonaStore } from '../stores/personaStore'
@@ -328,6 +401,10 @@ onMounted(() => {
   // A project just created via workflow promotion asks to open its share
   // settings on arrival.
   if (uiStore.consumeShareIntent(projectId)) isSharingOpen.value = true
+  // The projects-list "View usage" action requests the Usage tab on arrival.
+  if (uiStore.consumeProjectTab(projectId) === 'usage' && canViewUsage.value) {
+    activeTab.value = 'usage'
+  }
 })
 
 // Published card primary action: take a personal copy into My Workflows
@@ -404,16 +481,6 @@ const visibleTabs = computed(() => {
   return tabs
 })
 
-const projectCredits = computed(() => project.value?.creditsThisMonth ?? 0)
-
-const workspaceCredits = computed(() => {
-  const ws = project.value?.workspaceId
-  if (!ws) return 0
-  return fixture.value.projects
-    .filter((p) => p.workspaceId === ws)
-    .reduce((sum, p) => sum + (p.creditsThisMonth ?? 0), 0)
-})
-
 watchEffect(() => {
   if (!visibleTabs.value.some((tab) => tab.id === activeTab.value)) {
     activeTab.value = visibleTabs.value[0]?.id ?? 'workflows'
@@ -437,6 +504,36 @@ const workflows = computed(() =>
     .filter((w) => w.projectId === projectId && !w.forkedFrom)
     .toSorted((a, b) => b.updatedAt.localeCompare(a.updatedAt))
 )
+
+// Folders organize the Published canonicals (single-level). My drafts stays
+// flat.
+const containerId = computed(() => projectId)
+const {
+  currentFolderId,
+  currentFolder,
+  folders,
+  workflowsHere: publishedHere,
+  workflowCount,
+  enterFolder,
+  goToRoot
+} = useFolderBrowser(containerId, workflows)
+
+const showFolders = computed(
+  () => currentFolderId.value === null && folders.value.length > 0
+)
+
+const publishedEmpty = computed(() => {
+  if (publishedHere.value.length > 0) return null
+  if (currentFolder.value) return t('prototype.folders.empty')
+  if (!showFolders.value) return t('prototype.views.project.empty')
+  return null
+})
+
+const creatingFolder = ref(false)
+function onCreateFolder(name: string) {
+  creatingFolder.value = false
+  personaStore.createFolder(projectId, name)
+}
 
 // The viewer's own copies, keyed by the canonical they forked from — drives
 // each published card's "Open" CTA + multi-copy selector.

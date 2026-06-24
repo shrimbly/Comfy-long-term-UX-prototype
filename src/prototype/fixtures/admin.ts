@@ -67,7 +67,15 @@ export const adminFixture: PersonaFixture = {
       ownerUserId: user.id,
       isDrafts: false,
       currentUserHasAccess: true,
-      creditsThisMonth: 1840
+      creditsThisMonth: 1840,
+      monthlyUsage: [
+        { month: '2026-01', credits: 1200 },
+        { month: '2026-02', credits: 1450 },
+        { month: '2026-03', credits: 1600 },
+        { month: '2026-04', credits: 1720 },
+        { month: '2026-05', credits: 1640 },
+        { month: '2026-06', credits: 1840 }
+      ]
     },
     {
       id: 'proj-brand',
@@ -77,7 +85,15 @@ export const adminFixture: PersonaFixture = {
       ownerUserId: user.id,
       isDrafts: false,
       currentUserHasAccess: true,
-      creditsThisMonth: 420
+      creditsThisMonth: 420,
+      monthlyUsage: [
+        { month: '2026-01', credits: 380 },
+        { month: '2026-02', credits: 360 },
+        { month: '2026-03', credits: 410 },
+        { month: '2026-04', credits: 450 },
+        { month: '2026-05', credits: 480 },
+        { month: '2026-06', credits: 420 }
+      ]
     },
     {
       id: 'proj-launch',
@@ -89,7 +105,15 @@ export const adminFixture: PersonaFixture = {
       ownerUserId: 'user-jane',
       isDrafts: false,
       currentUserHasAccess: true,
-      creditsThisMonth: 980
+      creditsThisMonth: 980,
+      monthlyUsage: [
+        { month: '2026-01', credits: 200 },
+        { month: '2026-02', credits: 350 },
+        { month: '2026-03', credits: 540 },
+        { month: '2026-04', credits: 700 },
+        { month: '2026-05', credits: 880 },
+        { month: '2026-06', credits: 980 }
+      ]
     },
     {
       id: 'proj-client-x',
@@ -103,7 +127,15 @@ export const adminFixture: PersonaFixture = {
         { userId: user.id, role: 'owner' },
         { userId: 'user-jane', role: 'collaborator' }
       ],
-      creditsThisMonth: 2240
+      creditsThisMonth: 2240,
+      monthlyUsage: [
+        { month: '2026-01', credits: 2600 },
+        { month: '2026-02', credits: 2400 },
+        { month: '2026-03', credits: 2500 },
+        { month: '2026-04', credits: 2300 },
+        { month: '2026-05', credits: 2100 },
+        { month: '2026-06', credits: 2240 }
+      ]
     },
     {
       // Restricted by membership. A collaborator (Jane) can open, work on
@@ -132,7 +164,43 @@ export const adminFixture: PersonaFixture = {
         { userId: user.id, role: 'owner' },
         { userId: 'user-alex', role: 'collaborator' }
       ],
-      creditsThisMonth: 3620
+      creditsThisMonth: 3620,
+      monthlyUsage: [
+        { month: '2026-01', credits: 1500 },
+        { month: '2026-02', credits: 2100 },
+        { month: '2026-03', credits: 2800 },
+        { month: '2026-04', credits: 3300 },
+        { month: '2026-05', credits: 3900 },
+        { month: '2026-06', credits: 3620 }
+      ]
+    },
+    {
+      // VFX studio demo: a feature show run as a Restricted project. The
+      // supervisor (Willie) owns it; comp/FX/lighting artists collaborate.
+      // Workflows follow shot-based naming (SHOW_SEQ_SHOT_TASK). Render-heavy,
+      // so credits dwarf the other projects and ramp toward delivery.
+      id: 'proj-the-matrix',
+      workspaceId: comfyOrg.id,
+      name: 'The Matrix',
+      tier: 'restricted',
+      ownerUserId: user.id,
+      isDrafts: false,
+      currentUserHasAccess: true,
+      members: [
+        { userId: user.id, role: 'owner' },
+        { userId: 'user-jane', role: 'collaborator' },
+        { userId: 'user-marcus', role: 'collaborator' },
+        { userId: 'user-alex', role: 'collaborator' }
+      ],
+      creditsThisMonth: 9800,
+      monthlyUsage: [
+        { month: '2026-01', credits: 3200 },
+        { month: '2026-02', credits: 4800 },
+        { month: '2026-03', credits: 6100 },
+        { month: '2026-04', credits: 7400 },
+        { month: '2026-05', credits: 9200 },
+        { month: '2026-06', credits: 9800 }
+      ]
     },
     {
       // Private: restricted with nobody else shared (owner only). Reads as
@@ -146,8 +214,26 @@ export const adminFixture: PersonaFixture = {
       isDrafts: false,
       currentUserHasAccess: true,
       members: [{ userId: user.id, role: 'owner' }],
-      creditsThisMonth: 150
+      creditsThisMonth: 150,
+      monthlyUsage: [
+        { month: '2026-01', credits: 0 },
+        { month: '2026-02', credits: 40 },
+        { month: '2026-03', credits: 90 },
+        { month: '2026-04', credits: 120 },
+        { month: '2026-05', credits: 210 },
+        { month: '2026-06', credits: 150 }
+      ]
     }
+  ],
+  folders: [
+    {
+      id: 'folder-mw-experiments',
+      projectId: myWorkflows.id,
+      name: 'Experiments'
+    },
+    { id: 'folder-mtx-bul', projectId: 'proj-the-matrix', name: 'BUL' },
+    { id: 'folder-mtx-lob', projectId: 'proj-the-matrix', name: 'LOB' },
+    { id: 'folder-mtx-run', projectId: 'proj-the-matrix', name: 'RUN' }
   ],
   workflows: [
     {
@@ -162,14 +248,16 @@ export const adminFixture: PersonaFixture = {
       projectId: myWorkflows.id,
       name: 'Untitled workflow 2',
       updatedAt: '2026-05-09',
-      storage: 'cloud'
+      storage: 'cloud',
+      folderId: 'folder-mw-experiments'
     },
     {
       id: 'wf-3',
       projectId: myWorkflows.id,
       name: 'Untitled workflow 3',
       updatedAt: '2026-05-08',
-      storage: 'local'
+      storage: 'local',
+      folderId: 'folder-mw-experiments'
     },
     // A fuller My Workflows set — exercises the list density, search, the
     // storage filter (cloud/local), and the Copy badge (forkedFrom).
@@ -453,6 +541,177 @@ export const adminFixture: PersonaFixture = {
       access: [{ userId: user.id, role: 'runner' }],
       updatedAt: '2026-05-07'
     },
+
+    // --- The Matrix (VFX studio demo) ---------------------------------------
+    // Published canonicals: the team's shot + tool registry, named
+    // SHOW_SEQ_SHOT_TASK (MTX = show, BUL/LOB/RUN/SEN/CON = sequences, LIB =
+    // shared tools; comp/fx/light/dmp = departments). Comp shots iterate the
+    // most, so they carry the deepest published-version history across artists.
+    {
+      id: 'wf-mtx-bul-fx',
+      projectId: 'proj-the-matrix',
+      name: 'MTX_BUL_0010_fx',
+      folderId: 'folder-mtx-bul',
+      description:
+        'Bullet-time rig — reconstructs the frozen-moment camera array and retimes the 120-cam sweep for the rooftop dodge.',
+      kind: 'workflow',
+      ownerUserId: 'user-marcus',
+      access: [{ userId: user.id, role: 'runner' }],
+      updatedAt: '2026-05-02',
+      publishedVersions: [
+        { byUserId: user.id, at: '2026-04-15' },
+        { byUserId: 'user-marcus', at: '2026-05-02' }
+      ]
+    },
+    {
+      id: 'wf-mtx-bul-comp',
+      projectId: 'proj-the-matrix',
+      name: 'MTX_BUL_0010_comp',
+      folderId: 'folder-mtx-bul',
+      description:
+        'Rooftop bullet-time comp — plate integration, ripple distortion on the dodge, and frame-blend cleanup.',
+      kind: 'workflow',
+      ownerUserId: 'user-jane',
+      access: [{ userId: user.id, role: 'runner' }],
+      updatedAt: '2026-06-18',
+      publishedVersions: [
+        {
+          byUserId: user.id,
+          at: '2026-05-05',
+          comment:
+            'First comp pass — rooftop plate integrated, holds roughed in.'
+        },
+        {
+          byUserId: 'user-jane',
+          at: '2026-05-22',
+          comment: 'Added ripple distortion on the dodge and the bullet trails.'
+        },
+        {
+          byUserId: user.id,
+          at: '2026-06-09',
+          comment: 'Frame-blend cleanup across the retime; fixed the strobing.',
+          pinned: true
+        },
+        {
+          byUserId: 'user-jane',
+          at: '2026-06-18',
+          comment: 'Final grade + edge despill for the dailies review.'
+        }
+      ]
+    },
+    {
+      id: 'wf-mtx-lob-comp',
+      projectId: 'proj-the-matrix',
+      name: 'MTX_LOB_0200_comp',
+      folderId: 'folder-mtx-lob',
+      description:
+        'Lobby shootout comp — muzzle flashes, marble debris interaction, and column-collapse integration.',
+      kind: 'workflow',
+      ownerUserId: 'user-jane',
+      access: [{ userId: 'user-marcus', role: 'runner' }],
+      updatedAt: '2026-06-20',
+      publishedVersions: [
+        { byUserId: 'user-jane', at: '2026-04-28' },
+        {
+          byUserId: 'user-marcus',
+          at: '2026-05-15',
+          comment: 'Muzzle-flash interactive light pass on the columns.'
+        },
+        { byUserId: 'user-jane', at: '2026-05-29' },
+        { byUserId: user.id, at: '2026-06-11' },
+        {
+          byUserId: 'user-marcus',
+          at: '2026-06-20',
+          comment: 'Column-collapse debris integrated; supe notes addressed.'
+        }
+      ]
+    },
+    {
+      id: 'wf-mtx-run-fx',
+      projectId: 'proj-the-matrix',
+      name: 'MTX_RUN_0050_fx',
+      folderId: 'folder-mtx-run',
+      description:
+        'Digital rain generator — procedural green-glyph cascade with depth-driven density and trailing falloff.',
+      kind: 'workflow',
+      ownerUserId: 'user-marcus',
+      updatedAt: '2026-06-14',
+      publishedVersions: [
+        { byUserId: 'user-marcus', at: '2026-05-10' },
+        { byUserId: 'user-marcus', at: '2026-06-14' }
+      ]
+    },
+    {
+      id: 'wf-mtx-sen-light',
+      projectId: 'proj-the-matrix',
+      name: 'MTX_SEN_0300_light',
+      description:
+        'Sentinel swarm lighting — relights the squid-bot crowd against the core-tunnel volumetrics.',
+      kind: 'workflow',
+      ownerUserId: 'user-alex',
+      updatedAt: '2026-06-06'
+    },
+    {
+      id: 'wf-mtx-con-dmp',
+      projectId: 'proj-the-matrix',
+      name: 'MTX_CON_0010_dmp',
+      description:
+        'Construct load-in matte — the white void with infinite reflection falloff and the racked-weapons reveal.',
+      kind: 'workflow',
+      ownerUserId: user.id,
+      updatedAt: '2026-05-26'
+    },
+    {
+      id: 'wf-mtx-greenkey',
+      projectId: 'proj-the-matrix',
+      name: 'MTX_LIB_greenKey',
+      description:
+        'Stage green-screen key + despill — shared keyer with edge-matte refine, reused across every stage shot.',
+      kind: 'workflow',
+      ownerUserId: user.id,
+      access: [
+        { userId: 'user-jane', role: 'runner' },
+        { userId: 'user-marcus', role: 'runner' }
+      ],
+      updatedAt: '2026-06-05',
+      publishedVersions: [
+        { byUserId: user.id, at: '2026-03-10' },
+        { byUserId: 'user-alex', at: '2026-04-22' },
+        { byUserId: user.id, at: '2026-06-05' }
+      ]
+    },
+    // The viewer's own in-progress copies — surface in The Matrix's "My drafts".
+    {
+      // Copy of the lobby comp at its latest version (in sync).
+      id: 'wf-mw-mtx-lob-comp',
+      projectId: myWorkflows.id,
+      name: 'MTX_LOB_0200_comp',
+      updatedAt: '2026-06-23',
+      storage: 'cloud',
+      provenanceProjectId: 'proj-the-matrix',
+      forkedFrom: { workflowId: 'wf-mtx-lob-comp', atVersion: '2026-06-20' }
+    },
+    {
+      // Copy from an early version (v1) — two behind the pinned stable v3,
+      // so it surfaces the amber "behind" tag + Get latest (syncs to the pin).
+      id: 'wf-mw-mtx-bul-comp',
+      projectId: myWorkflows.id,
+      name: 'MTX_BUL_0010_comp',
+      updatedAt: '2026-06-19',
+      storage: 'cloud',
+      provenanceProjectId: 'proj-the-matrix',
+      forkedFrom: { workflowId: 'wf-mtx-bul-comp', atVersion: '2026-05-05' }
+    },
+    {
+      // Created in-project (no source) — a new code-rain shot being set up.
+      id: 'wf-mw-mtx-run-new',
+      projectId: myWorkflows.id,
+      name: 'MTX_RUN_0080_fx',
+      updatedAt: '2026-06-22',
+      storage: 'local',
+      provenanceProjectId: 'proj-the-matrix'
+    },
+
     {
       id: 'wf-marketing-banner',
       projectId: 'proj-marketing',

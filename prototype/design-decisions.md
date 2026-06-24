@@ -967,3 +967,180 @@ Promote? **no** — corrects the prototype to match the published-workflow model
 Extracted the Home Recents empty state into a reusable `WorkflowsEmptyState` component (dashed-outline box on the page background, a heading prop, and Blank canvas + Open templates CTAs) and applied it to the **Recents page** and **My Workflows page** too — so new users (New solo creator, cloud and local) get one consistent empty state everywhere workflows are listed, instead of the older filled-panel "+ Workflow" variants. Button labels live in a shared `prototype.workflowsEmpty.*` namespace; each page passes its own heading ("Your recent workflows will show up here" / "Your workflows will show up here"). Removed the per-page `emptySubtitle` / `createWorkflow` strings.
 
 Promote? **no** — UI consistency; no new IA rule.
+
+---
+
+## [2026-06-24] Project Usage tab — trend + recent months + mocked export
+
+The Usage tab grew from a single this-month count to: the current-month credit count, a **month-over-month delta** (↗ amber for an increase in spend / ↘ green for a decrease, "{pct}% vs last month"), the **last 3 months** as compact cells, and an **Export usage history** button.
+
+Export is **mocked client-side**: it serialises the project's full monthly history to CSV and downloads it via a Blob URL — no backend. Real data would come from the billing service.
+
+Data: added **`monthlyUsage?: { month: 'YYYY-MM'; credits }[]`** (most recent last, includes the current month) to `Project`. This is a **prototype extension** — the wiki ([project.md](../../IA_Plan/wiki/entities/project.md), [workspace.md](../../IA_Plan/wiki/entities/workspace.md)) models only the `creditsThisMonth` scalar. The array's last entry mirrors `creditsThisMonth`; the tab derives current/delta/recent/export from the array, and `creditsThisMonth` is retained for wiki fidelity. Seeded 6 months on each admin-fixture project (varied up/down deltas). The component caps at `max-w-md` so it doesn't span wide screens.
+
+Promote? **maybe** — if usage history/export becomes a real surface, the wiki's project/workspace billing model should gain a monthly-history shape (today it's current-month only). Flagged here pending that.
+
+---
+
+## [2026-06-24] Copies/drafts mirror their source's thumbnail
+
+A copy's thumbnail now always matches the workflow it was copied from. Previously the placeholder image was seeded off the workflow's own id, so a copy (fresh `wf-copy-…` id) hashed to a different example image than its source.
+
+Fix is by **derivation, not stored data**: `personaStore.resolveWorkflowThumbnail(workflow)` walks `forkedFrom` to the resolvable lineage-root canonical and resolves _its_ image (explicit `thumbnailUrl` or seeded fallback). This covers runtime copy-on-access **and** all mocked fixture drafts uniformly — any draft whose `forkedFrom` resolves to an existing published workflow shares that workflow's image, with no fixture edits. A copy whose source was deleted (`wf-cocacola-deleted`) falls back to its own image. The thumbnail-override ("Set thumbnail") counter keys off the lineage root, so cycling a source updates its copies.
+
+Promote? **no** — placeholder-media fidelity; no IA impact.
+
+---
+
+## [2026-06-24] Project context menu on the projects listing
+
+Right-clicking a project card (`ProjectCard`) opens a role-gated `ProjectContextMenu`, mirroring `WorkflowContextMenu` (PrimeVue `ContextMenu`, `role`-filtered `items`, `separator` dividers, module-scope single-open tracking). Gated on the three-level model:
+
+- **Anyone with access:** Open · Media assets · Copy link (+ **Share** unless the project is private)
+- **Owner / workspace-Admin (on workspace-wide):** View usage · Rename · **Delete** (danger-styled)
+- **Non-owner members (restricted/private):** Leave project
+
+Deliberately **omits New workflow** (per request). Right-click is suppressed on inaccessible (grayed) cards.
+
+New store ops: `renameProject`, `deleteProject` (also removes the project's canonical workflows → their copies become "source removed"), `leaveProject` (drops membership **and** flips `currentUserHasAccess` so a restricted project falls out of `visibleProjects` — plain `removeProjectMember` wouldn't, since the list also keys off that flag). **View usage** uses a new one-shot `uiStore` tab intent (`requestProjectTab`/`consumeProjectTab`, mirroring the share intent) consumed in `ProjectDetailView.onMounted` to land on the Usage tab. **Copy link** writes a mock `…/prototype/projects/<id>` URL to the clipboard + toasts.
+
+Promote? **no** — surfaces existing wiki lifecycle ops (rename/delete/leave/share/usage); no new IA rule.
+
+---
+
+## [2026-06-24] Optional publish comment → version-history note
+
+Publishing a workflow now offers an **optional comment** ("Add a comment (optional)"), skippable. It's captured in both publish surfaces: `PublishConfirmDialog` (the overwrite-the-canonical confirm — the common draft-publish path) and `PromoteToProjectDialog` step 2 (publish-as-new / choose-destination). The comment is attached to the resulting published version.
+
+Data: `PublishedVersion` gains `comment?: string`. Threaded through `publishOverWorkflow` / `publishAsNewWorkflow` (both take an optional `comment`), the `useWorkflowPublish` payload, and the two dialogs. Empty/whitespace comments are dropped (stored only when non-blank).
+
+Display: the `WorkflowVersionBadge` history popover shows a `message-square-text` glyph next to a version's number when it has a comment; hovering it reveals the note (native `title`). Versions without a comment show nothing — so the column reads as a mix.
+
+Seeded the Matrix comp shots with comments (the bullet-time comp has one per version; the lobby comp mixes commented + uncommented) so the popover demonstrates it out of the box.
+
+Promote? **maybe** — published-version history is a wiki concept ([published-workflow-model.md](../../IA_Plan/wiki/decisions/published-workflow-model.md)); a per-version commit message is a natural addition there if it sticks.
+
+---
+
+## [2026-06-24] "Check out" replaces "Save a copy"; publish-as-new name validation; scrollable version-comment popout
+
+Three changes from the 2026-06-23 Team workspace sync (Doug + Pablo + Willie). Source: Fireflies `01KVRP1N9QWJ4VE2H5KKXY2993`. Tracked in `temp/in_progress/workspace-sync-jun23-todos.md`.
+
+**1. Terminology: "Save a copy" → "Check out".** Doug found "save a copy" misleading — his mental model is checking out a library book (pull → edit → publish back). Pablo: it's the same as branch-out/branch-in. The underlying mechanism is unchanged copy-on-access; only the user-facing label moved. Strings updated: `workflowCard.copyAction`, `copiedSummary`, `workflowMenu.toast.savedCopySummary`/`savedCopyDetail`, `views.project.publishedInfo.copy`. Removed the dead `workflowCard.copyBadge` string (the copy badge was retired earlier for the link icon). Internal code names (`copyToMyWorkflows`, the `copy` emit) stay — the operation _is_ a copy; "Check out" is just its label.
+
+**2. Publish-as-new name-conflict validation.** Doug: publishing a new workflow into a project should reject a name that collides with an existing canonical there, with a nudge. `PromoteToProjectDialog` now computes `nameConflict` (case-insensitive match against the target project's existing canonicals, only when publishing-as-new — not when replacing or into a new project), gates the confirm button, and shows an inline `text-danger` message (`promoteToProject.nameConflict`).
+
+**3. Version comments pop out to the side, hoverable + scrollable.** Doug: long multi-line publish notes shouldn't stack as messy hover tooltips. `WorkflowVersionBadge`'s comment glyph swapped from the reka-ui `Tooltip` (auto-dismiss, non-interactive, `max-w-xs`) to a reka-ui `HoverCard` (`side="right"`, `max-h-60 overflow-y-auto`, `whitespace-pre-wrap`) — it stays open when the pointer moves into it, so long notes scroll. The glyph `@click.stop.prevent`s so reading a comment doesn't fire the row's open-version.
+
+Wiki: items 1 + 2 recorded in [mvp-scope.md](../../IA_Plan/wiki/decisions/mvp-scope.md) ("Check out" verb under the replacement publish model; publish-as-new name-collision rule on the open-publish bullet). Item 3 is pure UI — log only.
+
+Promote? **done** for 1 + 2 (folded into mvp-scope). **No** for 3.
+
+---
+
+## [2026-06-24] Admin curation of version history — pin "stable" + soft-delete; comment hover on whole row
+
+From the 2026-06-23 sync (Pablo's asks). Source: Fireflies `01KVRP1N9QWJ4VE2H5KKXY2993`.
+
+**Pin a stable version + delete a version (admin/owner only).** The version-history popover (`WorkflowVersionBadge`) gains, for viewers who can manage the canonical's project (owner, or workspace admin on a workspace-wide project — `canManageVersions` in `WorkflowCard`, mirroring `ProjectContextMenu.canManage`), two per-row hover actions: **pin as stable** (at most one; clears any other pin; re-clicking unpins) and **delete version**. A pinned version shows a persistent pin glyph + "Stable version" tooltip next to its number. Non-managers see the history read-only (unchanged).
+
+Data: `PublishedVersion` gains `pinned?` and `deleted?`. Store: `pinVersion(workflowId, n)` / `deleteVersion(workflowId, n)`, `n` = 1-based version number. **Delete is soft** — the entry stays in the array, flagged `deleted`, and display filters it out — so version numbers (chronological index + 1) stay stable across deletes (history reads 1, 2, 4, 5, per Pablo/Willie's "numbers don't renumber"). Seeded `wf-mtx-bul-comp` v3 as pinned to demo.
+
+**Comment hover moved to the whole row.** The publish-comment popout now triggers on hovering anywhere in the version row (not just the comment glyph, which stays as an indicator), no special cursor, and is anchored to the right of the popover with a ~4px gap (reka-ui HoverCard, `side="right"`, `side-offset=9` to clear the panel's 4px padding + 1px border). The row became a `div role="button"` (was `<button>`) so the pin/delete `Button`s can nest without invalid button-in-button.
+
+**Pin sets the card's effective current version (= the MVP restore).** Follow-up from Willie same day: restoring a prior version is **not** out of scope. Pinning a version makes it the **effective current version** — the published card's version badge shows the pinned version's number (not the latest), and **check-out forks from the pinned version** (`copyToMyWorkflows` reads pinned-else-latest, filtering soft-deleted). Re-pin/unpin to change what the canonical serves; later publishes aren't lost. `WorkflowVersionBadge.currentVersion` and the store's check-out both prefer the pinned version.
+
+Wiki: **promoted** (now a settled decision). [mvp-scope.md](../../IA_Plan/wiki/decisions/mvp-scope.md) — added the admin version-curation bullet (pin-as-restore + soft delete) and corrected the copy-on-access line to "effective current version." [published-workflow-model.md](../../IA_Plan/wiki/decisions/published-workflow-model.md) — revised the version-history note and marked the "Version restore" open question **resolved for MVP** (via pin-a-stable-version).
+
+Promote? **done.**
+
+---
+
+## [2026-06-24] Outdated-copy affordance — amber "behind" version tag + Get latest
+
+Group 2 follow-up (Pablo's stale-pin scenario). A checked-out copy whose forked version trails the canonical's **effective current version** (pinned-else-latest) is now surfaced and fixable.
+
+**Behind detection** (`personaStore.versionsBehind(workflow)`): resolves the canonical, computes its effective version (`effectiveVersion` helper: pinned non-deleted, else latest non-deleted), and returns `effective.n − copyForkedVersion` when positive (0 if not a copy, current, or ahead of a pinned older version — version numbers are the stable chronological index, matching the soft-delete model).
+
+**Tag** (`WorkflowCard`): the copy's version chip turns **soft amber** (`bg-amber-500/15 text-amber-500`) with a `circle-alert` glyph when behind; tooltip leads with "{n} versions behind the current" (+ provenance). No amber semantic token exists in the theme, so Tailwind's amber palette is used.
+
+**Get latest** (`WorkflowContextMenu`): when behind, a "Get latest version" item appears; it opens a styled confirm ("…replaces this workflow and any content in it with the current published version") then calls `personaStore.updateToLatest`, which advances the copy's `forkedFrom.atVersion` to the effective version + bumps `updatedAt` (the prototype's stand-in for replacing content). After it, `versionsBehind` → 0 and the tag returns to neutral.
+
+The confirm uses a **new reusable `ConfirmDialog`** (design-system Dialog) instead of the native `window.confirm` — same Comfy styling as the publish dialogs, with an optional `danger` (destructive Button) variant.
+
+**Follow-up — swept the menus off native dialogs.** Added a sibling `PromptDialog` (styled single-field text input, replaces `window.prompt`). Converted the rest of the context-menu confirms/prompts: delete-version (`WorkflowVersionBadge`), rename + delete (`WorkflowContextMenu`), rename + delete + leave (`ProjectContextMenu`). Each menu now drives a small `activeDialog` discriminated ref (`'rename' | 'delete' | …`) and renders the right dialog. Reused existing menu-label/confirm strings as dialog titles/bodies (only `workflowMenu.renameTitle`/`deleteTitle` + `projectMenu.leaveAction` are new; `workflowMenu.renamePrompt` removed). Remaining native confirms live in **MembersView** (remove member) and **SettingsView** (danger zone, type-the-name) — out of this batch's scope.
+
+**Pinning interaction:** "behind" is measured against the _effective_ (pinned) version, and Get latest syncs to the pin — not necessarily the newest publish. Demo: retargeted `wf-mw-mtx-bul-comp` to fork from v1 so it reads "2 behind" the pinned v3 and Get latest pulls v3 (not the latest v4). The Coke drift copies (`wf-mw-coke-hero-wip` etc.) demo the no-pin case.
+
+Note: this re-adds a "versions behind" signal that was cut earlier in the project ("users can handle this themselves") — now wanted back, and made actionable, off the back of pinning.
+
+Wiki: the "fallen behind" label was already in [mvp-scope.md](../../IA_Plan/wiki/decisions/mvp-scope.md) copy-on-access bullet; appended the amber-tag + **Get latest** re-sync to it.
+
+Promote? **done** (folded into mvp-scope).
+
+---
+
+## [2026-06-24] Copy version chip stays a read-only indicator (no per-version switcher)
+
+Doug asked (2026-06-23) for the copy's version chip to open a dropdown for switching between versions, like the project (canonical) cards. **Declined.** A click-to-switch dropdown on the chip makes it too easy to blow away local changes — switching/overwriting a working copy should be a **deliberate** action, not a one-click on a hover chip. The copy chip stays a static indicator (version number + amber "behind" treatment); changing which version you're on goes through the explicit **Get latest** (with its replace-content confirm). Reinforces the copy-on-access / deliberate-publish stance already in [mvp-scope.md](../../IA_Plan/wiki/decisions/mvp-scope.md).
+
+Promote? **no** — a UI-affordance call consistent with the existing model; nothing new for the wiki.
+
+---
+
+## [2026-06-24] Kebab (⋯) menu on workflow cards
+
+Doug's discoverability ask: right-click worked but wasn't obvious. Added a **vertical-ellipsis kebab Button** in the **upper-right of the grid card's thumbnail**, revealed on hover (and `group-focus-within` for keyboard). It opens the same role-gated `WorkflowContextMenu` as right-click — so Rename / Set thumbnail / Delete / etc. are now reachable without right-clicking.
+
+Built as a sibling overlay of the card `<button>` (not nested — avoids button-in-button), `pointer-events-none` container + `pointer-events-auto` button so thumbnail clicks still pass through to open the workflow. The right-click handler and the kebab share one `openMenu(event)` (PrimeVue `ContextMenu.show` positions at the event coords for both). Grid layout only; list rows keep right-click. Sits top-right; the existing Check out / Open hover actions stay bottom-right.
+
+Promote? **no** — surfaces existing actions; no IA change.
+
+---
+
+## [2026-06-24] My Workflows = personal project; single-level folders in My Workflows + projects
+
+Two features (built together, user gave autonomy).
+
+**1. My Workflows = personal project.** Per the 2026-06-23 sync (Pablo + Doug + Willie): My Workflows no longer shows _other projects'_ drafts. `DraftsView` now lists only **personal** workflows — drafts-project workflows whose `provenanceProjectId` is _not_ a real shared project (those live in that project's "My drafts"). Orphans (provenance project deleted) fall back to My Workflows so nothing is stranded.
+
+- **Recents kept (not dropped).** The meeting's resolution was "My Workflows = personal, **Recents = everything**" — so Recents becomes the cross-project recency view (it already shows all accessible workflows). Dropping it would have removed the only place project copies surface by recency. Left the Recents nav as-is.
+
+**2. Folders.** Users can add folders to **My Workflows** and to a **project's Published section** (the two foldered containers; a project's "My drafts" stays flat). Single-level (no nesting) — `Folder.parentFolderId` is reserved for later. Pablo's "everything is a folder" was an architecture concept, not a user requirement, so it's not modelled.
+
+- Data: `Folder { id, projectId (container), name }`; `Workflow.folderId`; `PersonaFixture.folders?` (normalized to `[]` at store init). Store: `createFolder`/`renameFolder`/`deleteFolder` (non-destructive — contained workflows fall back to root)/`moveWorkflowToFolder`.
+- UI: `useFolderBrowser(containerId, workflows)` composable (current-folder nav, drops to root if the container changes or the open folder is deleted); `FolderCard` (folder tile, click to enter, kebab/right-click → Rename/Delete via the styled dialogs); `MoveToFolderDialog`; "New folder" buttons + breadcrumb in both views; "Move to folder…" in the workflow context menu (gated to canonicals + personal My Workflows workflows). Search in My Workflows is container-wide (hides folders); otherwise the view shows the active folder level.
+- Permissions: the prototype does **not** gate folder edits by role (any viewer who sees a card can move/organize). Real folder-management permissions are out of scope — noted for the wiki.
+- Demo (admin persona): **The Matrix** seeds folders **BUL / LOB / RUN** with the matching comp/fx canonicals inside (greenkey/sen/con stay at root); **My Workflows** seeds an **Experiments** folder holding two untitled workflows.
+
+Wiki: not yet promoted — folders weren't in the IA model. Worth a short addition to [mvp-scope.md](../../IA_Plan/wiki/decisions/mvp-scope.md) (folders as a per-container org layer for My Workflows + project published) once the shape settles; flagged, not written, pending confirmation.
+
+Promote? **maybe** (folders) — pending confirmation. My-Workflows-as-personal-project is already implied by the copy-on-access model; the personal-only filter is the implementation.
+
+---
+
+## [2026-06-24] Folder UX refinements — drag-and-drop, no-X prompt, move dialog is folders-only
+
+Follow-ups from the user same day.
+
+- **Drag a workflow onto a folder.** New `useWorkflowDrag` (module-scope `draggingWorkflowId` + start/end). `WorkflowCard` gains an opt-in `draggable` prop (HTML5 DnD on the card root; passed by the foldered grids — My Workflows when not searching, project Published). `FolderCard` is a drop target: highlights (primary border) only for a same-container workflow not already in it, and on drop calls `moveWorkflowToFolder` + toasts. Click-to-open still works (a click without movement isn't a drag).
+- **Prompt dialog loses its top-right X.** Removed `DialogClose` from `PromptDialog` (Cancel + Esc + overlay remain) — affects all single-field dialogs (new folder + renames).
+- **Move-to-folder dialog is folders-only.** Dropped the "No folder" (move-to-root) option per request; Move is disabled until a folder is picked, and the "Move to folder…" menu item now only shows when the container actually has folders. Net: organizing _into_ folders is the dialog's job (and drag-and-drop); pulling a workflow back to root is via deleting the folder (non-destructive — its workflows pop back to root).
+
+Promote? **no** — interaction polish on the folder feature above.
+
+---
+
+## [2026-06-24] Multi-select for workflow grids
+
+Checkbox + shift-range + marquee + bulk context menu, in the foldered grids (My Workflows + project Published).
+
+- **Composables:** `useMultiSelect(orderedIds)` (selection Set, anchor, toggle, shift-range, `setSelection`, and drops ids that leave the list); `useMarquee(containerRef, …)` (rubber-band over empty space, intersects `[data-wf-id]` boxes; a no-drag mousedown = click-empty → clear).
+- **Wrapper:** `SelectableWorkflowGrid` renders the cards via slot inside the marquee container and owns the bulk **context menu** (Move N to folder… / Delete N / Deselect all) + the move/delete dialogs. The slot exposes `{ isSelected, selectionActive, onSelect, onContextMenu }`. Esc clears.
+- **WorkflowCard:** opt-in `selectable` + `selectionActive`; a subtle top-left checkbox (hover/selected/active-revealed) toggles without opening; plain click still opens; shift/cmd/ctrl-click selects; right-click routes to the bulk menu when 2+ are selected, else the card's own menu. `data-wf-id` added for marquee hit-testing.
+- **Bulk move** reuses `MoveToFolderDialog` (now takes `workflowIds: string[]`; single callers pass `[id]`). **Bulk delete** loops `deleteWorkflow`.
+- Scope: checkbox is grid-only (list view selects via modifier-click/marquee).
+
+**Bulk drag (added same day).** Dragging a card that's part of a multi-selection drags the **whole selection** into a folder; an unselected card drags just itself. `useWorkflowDrag` now carries `draggingWorkflowIds: string[]`; `WorkflowCard` emits `dragstart` (no longer decides the ids) and `SelectableWorkflowGrid` resolves them from the selection (`onDragStart` slot prop). `FolderCard` accepts every dragged id that belongs to its container and isn't already inside, and toasts a count.
+
+Promote? **no** — UI interaction; no IA change.

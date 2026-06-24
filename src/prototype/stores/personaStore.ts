@@ -8,6 +8,7 @@ import { defineStore } from 'pinia'
 import { computed, reactive, ref } from 'vue'
 
 import { personas } from '../fixtures/personas'
+import { workflowThumbnail } from '../utils/thumbnail'
 import type {
   CreditLimitPeriod,
   DelegableCapability,
@@ -16,6 +17,7 @@ import type {
   Project,
   ProjectRole,
   ProjectTier,
+  Workflow,
   WorkspaceRole
 } from '../types'
 
@@ -27,6 +29,7 @@ export const usePrototypePersonaStore = defineStore('prototype-persona', () => {
   // has at least V1 in its history. Backfill that baseline for fixtures
   // that didn't seed it explicitly, so a later publish bumps to V2.
   for (const persona of personas) {
+    persona.fixture.folders ??= []
     const { workflows, projects } = persona.fixture
     for (const wf of workflows) {
       if (wf.forkedFrom || wf.publishedVersions?.length) continue
@@ -289,6 +292,43 @@ export const usePrototypePersonaStore = defineStore('prototype-persona', () => {
     })
   }
 
+  function renameProject(projectId: string, name: string) {
+    const trimmed = name.trim()
+    if (!trimmed) return
+    fixture.value.projects = fixture.value.projects.map((p) =>
+      p.id === projectId ? { ...p, name: trimmed } : p
+    )
+  }
+
+  // Delete a project and its canonical workflows. Drafts in My Workflows that
+  // were copied from those canonicals survive (they live in the Drafts
+  // project) and surface as "source removed" via their now-dangling
+  // forkedFrom lineage.
+  function deleteProject(projectId: string) {
+    fixture.value.projects = fixture.value.projects.filter(
+      (p) => p.id !== projectId
+    )
+    fixture.value.workflows = fixture.value.workflows.filter(
+      (w) => w.projectId !== projectId
+    )
+  }
+
+  // The current user leaves a project: drop their membership and access so the
+  // project falls out of the visible list. Only meaningful for restricted /
+  // private projects — workspace-wide access is implicit via the workspace.
+  function leaveProject(projectId: string) {
+    const userId = fixture.value.currentUser.id
+    fixture.value.projects = fixture.value.projects.map((p) =>
+      p.id === projectId
+        ? {
+            ...p,
+            currentUserHasAccess: false,
+            members: (p.members ?? []).filter((m) => m.userId !== userId)
+          }
+        : p
+    )
+  }
+
   // --- Workflow operations --------------------------------------------
   //
   // Owner-only mutations (rename / delete / move) are not store-gated —
@@ -352,9 +392,31 @@ export const usePrototypePersonaStore = defineStore('prototype-persona', () => {
     }
   }
 
-  function workflowThumbnailSeed(workflowId: string): string {
-    const n = workflowThumbnailOverrides.value[workflowId]
-    return n ? `${workflowId}#${n}` : workflowId
+  // Walk copy lineage (forkedFrom) to the resolvable root canonical, so a copy
+  // or draft shows the same thumbnail as the published workflow it descends
+  // from. Stops at the workflow itself if its source no longer resolves.
+  function thumbnailLineageRoot(workflow: Workflow): Workflow {
+    let current = workflow
+    const seen = new Set<string>([current.id])
+    while (current.forkedFrom?.workflowId) {
+      const parent = fixture.value.workflows.find(
+        (w) => w.id === current.forkedFrom!.workflowId
+      )
+      if (!parent || seen.has(parent.id)) break
+      seen.add(parent.id)
+      current = parent
+    }
+    return current
+  }
+
+  // Resolve a workflow's thumbnail background. Copies/drafts mirror their
+  // lineage root, so a copy always shares the image of the workflow it was
+  // copied from; the override counter keys off that root so cycling the source
+  // updates its copies too.
+  function resolveWorkflowThumbnail(workflow: Workflow): string {
+    const source = thumbnailLineageRoot(workflow)
+    const n = workflowThumbnailOverrides.value[source.id]
+    return workflowThumbnail(source, n ? `${source.id}#${n}` : source.id)
   }
 
   // Publish a draft as a NEW canonical in the target project. Mints a fresh v1
@@ -366,7 +428,8 @@ export const usePrototypePersonaStore = defineStore('prototype-persona', () => {
   function publishAsNewWorkflow(
     draftId: string,
     targetProjectId: string,
-    newName?: string
+    newName?: string,
+    comment?: string
   ): string | undefined {
     const draft = fixture.value.workflows.find((w) => w.id === draftId)
     const target = fixture.value.projects.find((p) => p.id === targetProjectId)
@@ -395,7 +458,11 @@ export const usePrototypePersonaStore = defineStore('prototype-persona', () => {
         ownerUserId: fixture.value.currentUser.id,
         updatedAt: today,
         publishedVersions: [
-          { byUserId: fixture.value.currentUser.id, at: today }
+          {
+            byUserId: fixture.value.currentUser.id,
+            at: today,
+            ...(comment?.trim() ? { comment: comment.trim() } : {})
+          }
         ]
       }
     ]
@@ -485,7 +552,14 @@ export const usePrototypePersonaStore = defineStore('prototype-persona', () => {
     const targetProjectId = myWorkflowsId ?? canonical.projectId
     const newId = `wf-copy-${Date.now()}`
     const today = new Date().toISOString().slice(0, 10)
-    const atVersion = canonical.publishedVersions?.at(-1)?.at
+    // Check out from the effective current version — the pinned "stable"
+    // version if the admin set one, else the latest publish.
+    const liveVersions = (canonical.publishedVersions ?? []).filter(
+      (v) => !v.deleted
+    )
+    const atVersion = (
+      liveVersions.find((v) => v.pinned) ?? liveVersions.at(-1)
+    )?.at
     // Stamp the copy with the project it came from so it surfaces in that
     // project's "My drafts". A copy of a personal (drafts-project) workflow
     // keeps whatever provenance the source already carried, if any.
@@ -529,7 +603,8 @@ export const usePrototypePersonaStore = defineStore('prototype-persona', () => {
   // recoverability safety net). Returns true if a workflow was overwritten.
   function publishOverWorkflow(
     sourceId: string,
-    targetWorkflowId: string
+    targetWorkflowId: string,
+    comment?: string
   ): boolean {
     const source = fixture.value.workflows.find((w) => w.id === sourceId)
     const target = fixture.value.workflows.find(
@@ -552,7 +627,11 @@ export const usePrototypePersonaStore = defineStore('prototype-persona', () => {
           thumbnailUrl: source.thumbnailUrl ?? w.thumbnailUrl,
           publishedVersions: [
             ...(w.publishedVersions ?? []),
-            { byUserId: fixture.value.currentUser.id, at: today }
+            {
+              byUserId: fixture.value.currentUser.id,
+              at: today,
+              ...(comment?.trim() ? { comment: comment.trim() } : {})
+            }
           ]
         }
       }
@@ -569,6 +648,134 @@ export const usePrototypePersonaStore = defineStore('prototype-persona', () => {
       return w
     })
     return true
+  }
+
+  // The canonical's effective current published version — the pinned "stable"
+  // version if an admin set one, else the latest non-deleted publish. `n` is
+  // the 1-based version number (chronological index + 1). undefined if it has
+  // no live versions.
+  function effectiveVersion(
+    canonical: Workflow
+  ): { at: string; n: number } | undefined {
+    const live = (canonical.publishedVersions ?? [])
+      .map((v, i) => ({ v, n: i + 1 }))
+      .filter(({ v }) => !v.deleted)
+    if (!live.length) return
+    const chosen = live.find(({ v }) => v.pinned) ?? live[live.length - 1]
+    return { at: chosen.v.at, n: chosen.n }
+  }
+
+  // How many published versions a checked-out copy trails its canonical's
+  // effective current version. 0 when it isn't a resolvable copy, is already
+  // current, or is ahead of a pinned older version.
+  function versionsBehind(workflow: Workflow): number {
+    const fork = workflow.forkedFrom
+    if (!fork) return 0
+    const canonical = fixture.value.workflows.find(
+      (w) => w.id === fork.workflowId
+    )
+    if (!canonical) return 0
+    const effective = effectiveVersion(canonical)
+    if (!effective) return 0
+    const copyIndex = (canonical.publishedVersions ?? []).findIndex(
+      (v) => v.at === fork.atVersion
+    )
+    if (copyIndex < 0) return 0
+    const behind = effective.n - (copyIndex + 1)
+    return behind > 0 ? behind : 0
+  }
+
+  // Re-sync a checked-out copy to its canonical's effective current version
+  // (pinned-else-latest): replaces the copy's content (its version pointer +
+  // modified date here) in place. Returns true on success.
+  function updateToLatest(workflowId: string): boolean {
+    const copy = fixture.value.workflows.find((w) => w.id === workflowId)
+    const fork = copy?.forkedFrom
+    const canonical = fork
+      ? fixture.value.workflows.find((w) => w.id === fork.workflowId)
+      : undefined
+    if (!copy || !fork || !canonical) return false
+    const effective = effectiveVersion(canonical)
+    if (!effective) return false
+    const today = new Date().toISOString().slice(0, 10)
+    fixture.value.workflows = fixture.value.workflows.map((w) =>
+      w.id === workflowId
+        ? {
+            ...w,
+            updatedAt: today,
+            forkedFrom: { workflowId: fork.workflowId, atVersion: effective.at }
+          }
+        : w
+    )
+    return true
+  }
+
+  // Admin curation of a canonical's published-version history. `n` is the
+  // 1-based version number (chronological array index + 1).
+  // Pin marks the "stable / latest-good" version, clearing any other pin;
+  // pinning the already-pinned version unpins it.
+  function pinVersion(workflowId: string, n: number) {
+    fixture.value.workflows = fixture.value.workflows.map((w) => {
+      if (w.id !== workflowId || !w.publishedVersions) return w
+      return {
+        ...w,
+        publishedVersions: w.publishedVersions.map((v, i) => ({
+          ...v,
+          pinned: i === n - 1 ? !v.pinned : false
+        }))
+      }
+    })
+  }
+
+  // Soft-delete: flag the version so display drops it, but keep it in the
+  // array so the remaining version numbers don't renumber.
+  function deleteVersion(workflowId: string, n: number) {
+    fixture.value.workflows = fixture.value.workflows.map((w) => {
+      if (w.id !== workflowId || !w.publishedVersions) return w
+      return {
+        ...w,
+        publishedVersions: w.publishedVersions.map((v, i) =>
+          i === n - 1 ? { ...v, deleted: true } : v
+        )
+      }
+    })
+  }
+
+  // --- Folders (My Workflows + projects) ------------------------------
+  //
+  // A folder organizes workflows within a container: My Workflows (the
+  // Drafts project) or a shared project. `containerId` is that project's id.
+
+  function createFolder(containerId: string, name: string): string {
+    const id = `folder-${Date.now()}`
+    fixture.value.folders = [
+      ...(fixture.value.folders ?? []),
+      { id, projectId: containerId, name: name.trim() }
+    ]
+    return id
+  }
+
+  function renameFolder(folderId: string, name: string) {
+    fixture.value.folders = (fixture.value.folders ?? []).map((f) =>
+      f.id === folderId ? { ...f, name: name.trim() } : f
+    )
+  }
+
+  // Deleting a folder is non-destructive to its workflows — they fall back to
+  // the container root (folderId cleared).
+  function deleteFolder(folderId: string) {
+    fixture.value.folders = (fixture.value.folders ?? []).filter(
+      (f) => f.id !== folderId
+    )
+    fixture.value.workflows = fixture.value.workflows.map((w) =>
+      w.folderId === folderId ? { ...w, folderId: undefined } : w
+    )
+  }
+
+  function moveWorkflowToFolder(workflowId: string, folderId: string | null) {
+    fixture.value.workflows = fixture.value.workflows.map((w) =>
+      w.id === workflowId ? { ...w, folderId: folderId ?? undefined } : w
+    )
   }
 
   return {
@@ -600,16 +807,27 @@ export const usePrototypePersonaStore = defineStore('prototype-persona', () => {
     addProjectMember,
     changeProjectMemberRole,
     removeProjectMember,
+    renameProject,
+    deleteProject,
+    leaveProject,
     renameWorkflow,
     deleteWorkflow,
     setWorkflowStorage,
     getEffectiveWorkflowStorage,
     cycleWorkflowThumbnail,
-    workflowThumbnailSeed,
+    resolveWorkflowThumbnail,
     publishAsNewWorkflow,
     createProject,
     createDraftInProject,
     copyToMyWorkflows,
-    publishOverWorkflow
+    publishOverWorkflow,
+    pinVersion,
+    deleteVersion,
+    versionsBehind,
+    updateToLatest,
+    createFolder,
+    renameFolder,
+    deleteFolder,
+    moveWorkflowToFolder
   }
 })

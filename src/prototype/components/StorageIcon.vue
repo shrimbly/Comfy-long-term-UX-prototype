@@ -16,7 +16,6 @@
     role="img"
     :aria-label="label"
   >
-    <title v-if="label">{{ label }}</title>
     <template v-if="storage === 'local'">
       <line x1="22" x2="2" y1="12" y2="12" />
       <path

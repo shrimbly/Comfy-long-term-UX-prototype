@@ -70,8 +70,28 @@
     },
     "projectAccess": {
       "everyone": "Everyone",
-      "limited": "Some people",
       "private": "Just me"
+    },
+    "projectMenu": {
+      "open": "Open",
+      "mediaAssets": "Media assets",
+      "share": "Share",
+      "copyLink": "Copy link",
+      "viewUsage": "View usage",
+      "rename": "Rename",
+      "renamePrompt": "Rename project",
+      "delete": "Delete project",
+      "deleteConfirm": "Delete “{name}”? Its published workflows are removed. Drafts you copied from it stay in My Workflows.",
+      "leave": "Leave project",
+      "leaveConfirm": "Leave “{name}”? You'll lose access unless you're re-invited.",
+      "leaveAction": "Leave",
+      "toast": {
+        "linkCopied": "Project link copied",
+        "deleted": "Project deleted",
+        "deletedDetail": "“{name}” was deleted.",
+        "left": "Left project",
+        "leftDetail": "You left “{name}”."
+      }
     },
     "templateCategory": {
       "image": "Image",
@@ -150,9 +170,21 @@
       "storageCloud": "Saved to cloud",
       "team": "Team workflow",
       "version": "v{n}",
+      "moreActions": "More actions",
       "versionHistory": "Version history",
-      "copyBadge": "Copy",
-      "copyAction": "Save a copy",
+      "stableTag": "Stable version",
+      "pinAction": "Pin as stable",
+      "unpinAction": "Unpin stable",
+      "deleteVersionAction": "Delete version",
+      "deleteVersionConfirm": "Delete v{n} from the history? This can't be undone.",
+      "pinnedSummary": "Pinned",
+      "pinnedDetail": "v{n} is now the stable version.",
+      "unpinnedSummary": "Unpinned",
+      "unpinnedDetail": "v{n} is no longer marked stable.",
+      "versionDeletedSummary": "Version deleted",
+      "versionDeletedDetail": "v{n} removed from the history.",
+      "behindTooltip": "{count} version behind the current | {count} versions behind the current",
+      "copyAction": "Check out",
       "publishAction": "Publish",
       "openAction": "Open",
       "openCopyHeading": "Open a copy",
@@ -160,7 +192,7 @@
       "openedDetail": "“{name}” would open in the editor.",
       "openVersionSummary": "Opening version",
       "openVersionDetail": "“{name}” v{n} would open in the editor.",
-      "copiedSummary": "Saved a copy",
+      "copiedSummary": "Checked out",
       "copiedDetail": "“{name}” is now in My drafts below.",
       "meta": "{date} · {user}",
       "forkOnOpenSummary": "Branch in this project",
@@ -245,8 +277,9 @@
       "title": "Publish as '{workflow}' v{n}",
       "body": "This will publish to the '{project}' project. The current version stays in history.",
       "cancel": "Cancel",
-      "publishNew": "Publish new",
-      "confirm": "Publish v{n}"
+      "publishNew": "Publish as new workflow",
+      "confirm": "Publish v{n}",
+      "commentPlaceholder": "Add a comment (optional)"
     },
     "promoteToProject": {
       "title": "Publish to a project",
@@ -260,6 +293,8 @@
       "publishAsHeading": "Publish as",
       "saveAs": "Save as:",
       "newWorkflowPlaceholder": "New workflow name",
+      "nameConflict": "A workflow named “{name}” already exists in this project.",
+      "commentPlaceholder": "Add a comment (optional)",
       "replaceHeading": "Or replace an existing workflow",
       "overwriteHint": "Replace this workflow",
       "lockedHint": "Locked to {install} — switch to it to publish here.",
@@ -271,6 +306,37 @@
       "toastDetail": "“{workflow}” is now the canonical in {project}.",
       "overwriteToastSummary": "Published over existing workflow",
       "overwriteToastDetail": "“{workflow}” in {project} was updated."
+    },
+    "folders": {
+      "newFolder": "New folder",
+      "newFolderTitle": "New folder",
+      "namePlaceholder": "Folder name",
+      "create": "Create",
+      "count": "{count} workflow | {count} workflows",
+      "empty": "This folder is empty.",
+      "rename": "Rename",
+      "renameTitle": "Rename folder",
+      "delete": "Delete",
+      "deleteTitle": "Delete folder",
+      "deleteConfirm": "Delete the folder “{name}”? Its workflows aren't deleted — they move back out of the folder.",
+      "moveToFolder": "Move to folder…",
+      "moveTitle": "Move to folder",
+      "moveConfirm": "Move",
+      "movedSummary": "Moved",
+      "movedDetail": "“{name}” was moved.",
+      "movedToDetail": "“{name}” moved to {folder}.",
+      "movedCountToDetail": "{count} workflow moved to {folder}. | {count} workflows moved to {folder}."
+    },
+    "selection": {
+      "toggle": "Select workflow",
+      "moveToFolder": "Move {count} to folder…",
+      "delete": "Delete {count} workflow | Delete {count} workflows",
+      "deselect": "Deselect all",
+      "deleteTitle": "Delete workflows",
+      "deleteConfirm": "Delete {count} workflow? This can't be undone. | Delete {count} workflows? This can't be undone.",
+      "movedDetail": "{count} workflow moved. | {count} workflows moved.",
+      "deletedSummary": "Deleted",
+      "deletedDetail": "{count} workflow deleted. | {count} workflows deleted."
     },
     "commandPalette": {
       "inputPlaceholder": "Search commands, projects, settings…",
@@ -353,7 +419,11 @@
       "viewOutputs": "View outputs",
       "openContainingProject": "Open containing project",
       "delete": "Delete",
-      "renamePrompt": "New name for this workflow:",
+      "getLatest": "Get latest version",
+      "getLatestTitle": "Get latest version?",
+      "getLatestConfirm": "This replaces “{name}” and any content in it with the current published version.",
+      "renameTitle": "Rename workflow",
+      "deleteTitle": "Delete workflow",
       "deleteConfirm": "Delete \"{name}\"? This cannot be undone.",
       "toastStubSummary": "Prototype stub",
       "toast": {
@@ -362,8 +432,10 @@
         "branchedSummary": "Branched",
         "branchedDetail": "A branch of \"{name}\" was created in the project.",
         "thumbnailSummary": "Thumbnail updated",
-        "savedCopySummary": "Saved to My Workflows",
-        "savedCopyDetail": "A personal copy of \"{name}\" is in My Workflows.",
+        "gotLatestSummary": "Updated to latest",
+        "gotLatestDetail": "“{name}” now matches the current published version.",
+        "savedCopySummary": "Checked out",
+        "savedCopyDetail": "\"{name}\" is checked out to My Workflows.",
         "deletedSummary": "Deleted",
         "deletedDetail": "\"{name}\" has been deleted.",
         "savedToCloudSummary": "Saved to cloud",
@@ -509,6 +581,7 @@
         "filterAll": "All",
         "filterCloud": "Cloud",
         "filterLocal": "Local",
+        "searchPlaceholder": "Search Recents…",
         "filterEmpty": "No workflows match the current filter.",
         "sort": {
           "lastModified": "Last modified",
@@ -531,8 +604,9 @@
           "create": "Create project"
         },
         "noAccess": "No access",
-        "filterAll": "All",
         "empty": "No projects in this view.",
+        "searchPlaceholder": "Search projects…",
+        "searchEmpty": "No projects match your search.",
         "workflowCount": "{count} workflow | {count} workflows",
         "sortLabel": "Sort projects",
         "sort": {
@@ -553,7 +627,7 @@
         "workflowCount": "{count} workflows",
         "publishedInfo": {
           "shared": "Shared with everyone in this project.",
-          "copy": "Save a copy to edit and run the workflow.",
+          "copy": "Check out to edit and run the workflow.",
           "publish": "Publish your copy to release a new version."
         },
         "draftsHeading": "My drafts",
@@ -613,14 +687,14 @@
             "placeholder": "e.g. comfyui_controlnet_aux"
           },
           "usage": {
-            "heading": "Usage this month",
-            "description": "Read-only attribution of credits used by this project. Billing is managed at the workspace level.",
-            "projectLabel": "This project",
-            "workspaceLabel": "Workspace total",
+            "heading": "This project's usage this month",
             "creditsValue": "{value} credits",
-            "shareLabel": "{pct}% of workspace spend",
-            "periodLabel": "Current month",
-            "note": "The workspace is the single billing entity. Per-project caps are not supported."
+            "delta": "{pct}% vs last month",
+            "recentHeading": "Recent months",
+            "export": "Export usage history",
+            "exportedSummary": "Usage history exported",
+            "exportedDetail": "Downloaded {count} months for {project}.",
+            "note": "Billing is managed at the workspace level."
           }
         },
         "sharing": {

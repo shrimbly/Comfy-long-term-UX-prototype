@@ -119,6 +119,21 @@
             />
           </label>
 
+          <p v-if="nameConflict" class="text-danger text-xs">
+            {{
+              t('prototype.promoteToProject.nameConflict', {
+                name: newWorkflowName.trim()
+              })
+            }}
+          </p>
+
+          <textarea
+            v-model="comment"
+            rows="2"
+            :placeholder="t('prototype.promoteToProject.commentPlaceholder')"
+            class="w-full resize-none rounded-md border border-border-default bg-base-background px-2.5 py-1.5 text-sm text-base-foreground outline-none placeholder:text-muted-foreground"
+          />
+
           <div
             v-if="targetCandidates.length"
             class="flex min-h-0 flex-col gap-1"
@@ -246,6 +261,7 @@ const emit = defineEmits<{
       isNewProject: boolean
       targetWorkflowId: string | null
       newName: string | null
+      comment: string | null
     }
   ]
 }>()
@@ -300,6 +316,7 @@ const newProjectInput = ref<HTMLInputElement | null>(null)
 const targetWorkflowId = ref<string>('')
 const newWorkflowName = ref<string>('')
 const newWorkflowInput = ref<HTMLInputElement | null>(null)
+const comment = ref<string>('')
 
 const isNewProject = computed(() => selectedId.value === NEW_PROJECT)
 const isReplacing = computed(() => !!targetWorkflowId.value)
@@ -341,8 +358,21 @@ const canContinue = computed(() =>
   isNewProject.value ? !!newProjectName.value.trim() : !!selectedId.value
 )
 
+// Publishing as a new workflow can't reuse an existing canonical's name in
+// the target project — nudge the user to pick another before they publish.
+const nameConflict = computed(() => {
+  if (isReplacing.value || isNewProject.value) return false
+  const name = newWorkflowName.value.trim().toLowerCase()
+  if (!name) return false
+  return targetCandidates.value.some(
+    (w) => w.name.trim().toLowerCase() === name
+  )
+})
+
 const canConfirm = computed(() =>
-  isReplacing.value ? true : !!newWorkflowName.value.trim()
+  isReplacing.value
+    ? true
+    : !!newWorkflowName.value.trim() && !nameConflict.value
 )
 
 async function goToStep2() {
@@ -373,7 +403,8 @@ function onConfirm() {
     projectId,
     isNewProject: isNew,
     targetWorkflowId: isReplacing.value ? targetWorkflowId.value : null,
-    newName: isReplacing.value ? null : newWorkflowName.value.trim()
+    newName: isReplacing.value ? null : newWorkflowName.value.trim(),
+    comment: comment.value.trim() || null
   })
 }
 </script>

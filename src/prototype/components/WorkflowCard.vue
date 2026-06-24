@@ -11,7 +11,11 @@
 <template>
   <div
     class="group relative text-base-foreground select-none"
-    @contextmenu.prevent.stop="onContextMenu"
+    :draggable="draggable"
+    :data-wf-id="workflow.id"
+    @contextmenu.prevent.stop="onRootContextMenu"
+    @dragstart="onDragStart"
+    @dragend="endDrag"
   >
     <button
       v-if="layout === 'grid'"
@@ -39,32 +43,36 @@
           <span class="min-w-0 flex-1 truncate text-xs/tight font-medium">{{
             workflow.name
           }}</span>
-          <i
-            v-if="isPublishedInProject"
-            class="mb-1 icon-[lucide--users-round] size-4 shrink-0 text-muted-foreground"
-            :title="teamTitle"
-          />
-          <StorageIcon
-            v-else-if="workflow.storage"
-            :storage="workflow.storage"
-            :label="storageTitle"
-            class="size-4 shrink-0 text-muted-foreground"
-          />
+          <Tooltip v-if="isPublishedInProject" :text="teamTitle">
+            <i
+              class="mb-1 icon-[lucide--users-round] size-4 shrink-0 text-muted-foreground"
+            />
+          </Tooltip>
+          <Tooltip v-else-if="workflow.storage" :text="storageTitle">
+            <span class="inline-flex shrink-0">
+              <StorageIcon
+                :storage="workflow.storage"
+                :label="storageTitle"
+                class="size-4 text-muted-foreground"
+              />
+            </span>
+          </Tooltip>
         </span>
         <span class="flex items-center gap-1.5 text-xs text-muted-foreground">
           <span class="min-w-0 flex-1 truncate">{{ workflow.updatedAt }}</span>
           <WorkflowVersionBadge
             v-if="isPublishedInProject"
             :name="workflow.name"
+            :workflow-id="workflow.id"
             :versions="workflow.publishedVersions ?? []"
+            :can-manage="canManageVersions"
           />
-          <span
-            v-else-if="copyVersion"
-            :class="versionTagClass"
-            :title="provenanceTitle"
-          >
-            {{ t('prototype.workflowCard.version', { n: copyVersion }) }}
-          </span>
+          <Tooltip v-else-if="copyVersion" :text="versionTagTooltip">
+            <span :class="versionTagClass">
+              {{ t('prototype.workflowCard.version', { n: copyVersion }) }}
+              <i v-if="isBehind" class="icon-[lucide--circle-alert] size-3" />
+            </span>
+          </Tooltip>
           <DraftProvenanceBadge v-else-if="draftMeta" :meta="draftMeta" />
         </span>
       </span>
@@ -94,34 +102,82 @@
       <span class="flex min-w-0 flex-1 items-center gap-1.5">
         <span class="truncate text-sm">{{ workflow.name }}</span>
       </span>
-      <i
-        v-if="isPublishedInProject"
-        class="mb-1 icon-[lucide--users-round] size-4 shrink-0 text-muted-foreground"
-        :title="teamTitle"
-      />
-      <StorageIcon
-        v-else-if="workflow.storage"
-        :storage="workflow.storage"
-        :label="storageTitle"
-        class="size-4 shrink-0 text-muted-foreground"
-      />
+      <Tooltip v-if="isPublishedInProject" :text="teamTitle">
+        <i
+          class="mb-1 icon-[lucide--users-round] size-4 shrink-0 text-muted-foreground"
+        />
+      </Tooltip>
+      <Tooltip v-else-if="workflow.storage" :text="storageTitle">
+        <StorageIcon
+          :storage="workflow.storage"
+          :label="storageTitle"
+          class="size-4 shrink-0 text-muted-foreground"
+        />
+      </Tooltip>
       <span class="shrink-0 text-xs text-muted-foreground">{{
         workflow.updatedAt
       }}</span>
       <WorkflowVersionBadge
         v-if="isPublishedInProject"
         :name="workflow.name"
+        :workflow-id="workflow.id"
         :versions="workflow.publishedVersions ?? []"
+        :can-manage="canManageVersions"
       />
-      <span
-        v-else-if="copyVersion"
-        :class="versionTagClass"
-        :title="provenanceTitle"
-      >
-        {{ t('prototype.workflowCard.version', { n: copyVersion }) }}
-      </span>
+      <Tooltip v-else-if="copyVersion" :text="versionTagTooltip">
+        <span :class="versionTagClass">
+          {{ t('prototype.workflowCard.version', { n: copyVersion }) }}
+          <i v-if="isBehind" class="icon-[lucide--circle-alert] size-3" />
+        </span>
+      </Tooltip>
       <DraftProvenanceBadge v-else-if="draftMeta" :meta="draftMeta" />
     </button>
+
+    <div
+      v-if="selectable && layout === 'grid'"
+      :class="
+        cn(
+          'absolute top-2 left-2 z-10 transition-opacity',
+          selected || selectionActive
+            ? 'opacity-100'
+            : 'opacity-0 group-hover:opacity-100'
+        )
+      "
+    >
+      <button
+        type="button"
+        :class="
+          cn(
+            'grid size-5 cursor-pointer place-items-center rounded-sm border transition-colors',
+            selected
+              ? 'border-primary-background bg-primary-background text-button-surface-contrast'
+              : 'border-border-default bg-base-background/70 text-transparent hover:border-base-foreground'
+          )
+        "
+        :aria-label="t('prototype.selection.toggle')"
+        :aria-pressed="selected"
+        @click.stop="onCheckbox"
+        @mousedown.stop
+        @dragstart.prevent.stop
+      >
+        <i class="icon-[lucide--check] size-3.5" />
+      </button>
+    </div>
+
+    <div
+      v-if="layout === 'grid'"
+      class="pointer-events-none absolute inset-x-0 top-0 flex aspect-3/2 items-start justify-end p-2 opacity-0 transition-opacity duration-150 group-focus-within:opacity-100 group-hover:opacity-100"
+    >
+      <Button
+        variant="secondary"
+        size="unset"
+        class="pointer-events-auto grid size-7 place-items-center rounded-md"
+        :aria-label="t('prototype.workflowCard.moreActions')"
+        @click.stop="openMenu"
+      >
+        <i class="icon-[lucide--ellipsis-vertical] size-4" />
+      </Button>
+    </div>
 
     <div
       v-if="actions && layout === 'grid'"
@@ -188,12 +244,13 @@ import CopyOpenButton from './CopyOpenButton.vue'
 import CustomThumbnail from './CustomThumbnail.vue'
 import DraftProvenanceBadge from './DraftProvenanceBadge.vue'
 import StorageIcon from './StorageIcon.vue'
+import Tooltip from './Tooltip.vue'
 import WorkflowContextMenu from './WorkflowContextMenu.vue'
 import WorkflowVersionBadge from './WorkflowVersionBadge.vue'
 import { useViewerWorkflowRole } from '../composables/useViewerWorkflowRole'
+import { useWorkflowDrag } from '../composables/useWorkflowDrag'
 import { usePrototypePersonaStore } from '../stores/personaStore'
 import { usePrototypeUiStore } from '../stores/uiStore'
-import { workflowThumbnail } from '../utils/thumbnail'
 import type { DraftMeta, Workflow } from '../types'
 
 const {
@@ -203,6 +260,9 @@ const {
   selected = false,
   draftMeta,
   actions,
+  draggable = false,
+  selectable = false,
+  selectionActive = false,
   copies = []
 } = defineProps<{
   workflow: Workflow
@@ -211,6 +271,14 @@ const {
   selected?: boolean
   draftMeta?: DraftMeta
   actions?: 'published' | 'draft'
+  // Enable HTML5 drag so the card can be dropped onto a folder (foldered
+  // grids only — My Workflows + a project's Published section).
+  draggable?: boolean
+  // Multi-select affordances: show the checkbox and let modifier-clicks /
+  // checkbox toggle selection instead of opening.
+  selectable?: boolean
+  // True when 2+ cards are selected — routes right-click to the bulk menu.
+  selectionActive?: boolean
   // The viewer's existing copies of this canonical (published cards only) —
   // drives the "Open" CTA + its multi-copy selector.
   copies?: Workflow[]
@@ -221,13 +289,35 @@ const emit = defineEmits<{
   copy: [workflowId: string]
   publish: [workflowId: string]
   'open-project': [projectId: string]
+  select: [event: MouseEvent]
+  'context-menu': [event: MouseEvent]
+  dragstart: [event: DragEvent]
 }>()
 
 // With hover actions the card body is inert — only the explicit buttons act.
-// Without them, clicking the card opens the workflow (Recents / Home).
-function onCardClick() {
+// Without them, clicking the card opens the workflow (Recents / Home). A
+// shift / cmd / ctrl click selects instead of opening.
+function onCardClick(event: MouseEvent) {
+  if (selectable && (event.shiftKey || event.metaKey || event.ctrlKey)) {
+    emit('select', event)
+    return
+  }
   if (actions) return
   emit('open', workflow.id)
+}
+
+function onCheckbox(event: MouseEvent) {
+  emit('select', event)
+}
+
+// Right-click routes to the bulk menu when a multi-selection is active,
+// otherwise the card's own role-gated menu.
+function onRootContextMenu(event: MouseEvent) {
+  if (selectable && selectionActive) {
+    emit('context-menu', event)
+    return
+  }
+  openMenu(event)
 }
 
 const { t } = useI18n()
@@ -235,7 +325,7 @@ const personaStore = usePrototypePersonaStore()
 const { customThumbnails } = storeToRefs(usePrototypeUiStore())
 
 const thumbnail = computed(() =>
-  workflowThumbnail(workflow, personaStore.workflowThumbnailSeed(workflow.id))
+  personaStore.resolveWorkflowThumbnail(workflow)
 )
 
 const storageTitle = computed(() =>
@@ -255,6 +345,21 @@ const isPublishedInProject = computed(() => {
     (p) => p.id === workflow.projectId
   )
   return !!project && !project.isDrafts
+})
+
+// May the viewer curate this canonical's published-version history (pin a
+// stable version, delete one)? Project owners, and workspace admins on a
+// workspace-wide project — mirrors the project context menu's canManage.
+const canManageVersions = computed(() => {
+  const project = personaStore.fixture.projects.find(
+    (p) => p.id === workflow.projectId
+  )
+  if (!project) return false
+  if (project.ownerUserId === personaStore.fixture.currentUser.id) return true
+  return (
+    project.tier === 'workspace-wide' &&
+    personaStore.currentWorkspace?.currentUserRole === 'admin'
+  )
 })
 
 // The version this copy was taken from — derived from its fork point rather
@@ -279,8 +384,19 @@ const copyVersion = computed(() => {
   return Math.max(versions.length, 1)
 })
 
-const versionTagClass =
-  'inline-flex shrink-0 items-center rounded-md bg-border-subtle px-1.5 py-0.5 text-xs font-medium text-base-foreground'
+const behindCount = computed(() => personaStore.versionsBehind(workflow))
+const isBehind = computed(() => behindCount.value > 0)
+
+// A copy's version tag is a neutral chip; when the copy trails the canonical's
+// current version it turns soft amber with an alert glyph.
+const versionTagClass = computed(() =>
+  cn(
+    'inline-flex shrink-0 items-center gap-0.5 rounded-md px-1.5 py-0.5 text-xs font-medium',
+    isBehind.value
+      ? 'bg-amber-500/15 text-amber-500'
+      : 'bg-border-subtle text-base-foreground'
+  )
+)
 
 // The version badge carries the copy's provenance (formerly the link icon's
 // tooltip): which project + workflow it tracks.
@@ -293,6 +409,16 @@ const provenanceTitle = computed(() =>
     : undefined
 )
 
+// When the copy is behind, the tag's tooltip leads with how far behind it is.
+const versionTagTooltip = computed(() => {
+  const behind = isBehind.value
+    ? t('prototype.workflowCard.behindTooltip', { count: behindCount.value })
+    : undefined
+  const base = provenanceTitle.value
+  if (behind && base) return `${base} · ${behind}`
+  return behind ?? base
+})
+
 const teamTitle = computed(() => t('prototype.workflowCard.team'))
 
 const workflowRef = computed(() => workflow)
@@ -301,7 +427,14 @@ const viewerRole = useViewerWorkflowRole(workflowRef)
 type MenuHandle = { show: (event: MouseEvent) => void }
 const menuRef = ref<MenuHandle | null>(null)
 
-function onContextMenu(event: MouseEvent) {
+// Opened by both right-click on the card and the hover kebab button.
+function openMenu(event: MouseEvent) {
   menuRef.value?.show(event)
+}
+
+// The wrapper grid owns the selection, so it decides which ids to drag.
+const { endDrag } = useWorkflowDrag()
+function onDragStart(event: DragEvent) {
+  emit('dragstart', event)
 }
 </script>

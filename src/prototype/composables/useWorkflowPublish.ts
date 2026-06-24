@@ -19,6 +19,7 @@ interface PublishPayload {
   isNewProject: boolean
   targetWorkflowId: string | null
   newName: string | null
+  comment: string | null
 }
 
 export function useWorkflowPublish() {
@@ -93,13 +94,14 @@ export function useWorkflowPublish() {
 
   // Confirmed: overwrite the source canonical in place (appends a published
   // version) and leave the draft where it is — the project link persists.
-  function confirmPublishDraft() {
+  function confirmPublishDraft(comment?: string) {
     const workflowId = publishConfirmDraftId.value
     publishConfirmDraftId.value = null
     if (!workflowId) return
     const source = resolveSourceCanonical(workflowId)
     if (!source) return
-    if (!personaStore.publishOverWorkflow(workflowId, source.id)) return
+    if (!personaStore.publishOverWorkflow(workflowId, source.id, comment))
+      return
     const project = personaStore.fixture.projects.find(
       (p) => p.id === source.projectId
     )
@@ -131,7 +133,8 @@ export function useWorkflowPublish() {
       )
       const ok = personaStore.publishOverWorkflow(
         sourceId,
-        payload.targetWorkflowId
+        payload.targetWorkflowId,
+        payload.comment ?? undefined
       )
       if (!ok) return
       toast.add({
@@ -149,7 +152,8 @@ export function useWorkflowPublish() {
       const ok = personaStore.publishAsNewWorkflow(
         sourceId,
         payload.projectId,
-        payload.newName ?? undefined
+        payload.newName ?? undefined,
+        payload.comment ?? undefined
       )
       if (!ok) return
       toast.add({

@@ -37,6 +37,10 @@ export const usePrototypeUiStore = defineStore('prototype-ui', () => {
   // share settings opened on arrival. ProjectDetailView consumes it once.
   const shareIntentProjectId = ref<string | null>(null)
 
+  // One-shot intent: open a specific tab (e.g. Usage) when the project page
+  // mounts — set by the projects-list context menu. Consumed once on arrival.
+  const projectTabIntent = ref<{ id: string; tab: string } | null>(null)
+
   // Prototype toggle (Help button): swap every workflow thumbnail for a
   // branded custom thumbnail so we can compare custom vs. generated.
   const customThumbnails = ref(false)
@@ -53,6 +57,17 @@ export const usePrototypeUiStore = defineStore('prototype-ui', () => {
     if (shareIntentProjectId.value !== id) return false
     shareIntentProjectId.value = null
     return true
+  }
+
+  function requestProjectTab(id: string, tab: string) {
+    projectTabIntent.value = { id, tab }
+  }
+
+  function consumeProjectTab(id: string): string | null {
+    if (projectTabIntent.value?.id !== id) return null
+    const tab = projectTabIntent.value.tab
+    projectTabIntent.value = null
+    return tab
   }
 
   function go(view: ActiveView) {
@@ -127,6 +142,8 @@ export const usePrototypeUiStore = defineStore('prototype-ui', () => {
     searchQuery,
     requestShareSettings,
     consumeShareIntent,
+    requestProjectTab,
+    consumeProjectTab,
     go,
     goHome,
     selectProject,

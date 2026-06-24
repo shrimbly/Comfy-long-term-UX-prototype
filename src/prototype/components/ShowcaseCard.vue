@@ -1,8 +1,10 @@
 <!--
   Large media tile for the Home featured gallery and the Templates gallery.
-  Gradient placeholder thumbnail + title + optional subtitle. Mirrors the
-  raw-button card pattern of WorkflowCard / ProjectCard. Thumbnail aspect
-  defaults to video (16:9); callers pass '3/2' for denser grids.
+  Real image thumbnail when `image` is given, else a gradient placeholder, plus
+  title + optional subtitle. Mirrors the raw-button card pattern of
+  WorkflowCard / ProjectCard. Thumbnail aspect defaults to video (16:9);
+  callers pass '3/2' for denser grids. `imagePosition` sets object-position so a
+  square source crops well into the landscape tile.
 -->
 <template>
   <button
@@ -17,8 +19,18 @@
           aspect === '3/2' ? 'aspect-3/2' : 'aspect-video'
         )
       "
-      :style="{ background: thumbnail }"
-    />
+      :style="image ? undefined : { background: thumbnail }"
+    >
+      <img
+        v-if="image"
+        :src="image"
+        :alt="title"
+        loading="lazy"
+        draggable="false"
+        class="size-full object-cover transition-transform duration-300 group-hover:scale-105"
+        :style="{ objectPosition: imagePosition }"
+      />
+    </span>
     <span class="flex flex-col gap-0.5 px-0.5">
       <span class="truncate text-sm font-medium">{{ title }}</span>
       <span v-if="subtitle" class="truncate text-xs text-muted-foreground">{{
@@ -38,11 +50,15 @@ const {
   title,
   seed,
   subtitle,
+  image,
+  imagePosition,
   aspect = 'video'
 } = defineProps<{
   title: string
   seed: string
   subtitle?: string
+  image?: string
+  imagePosition?: string
   aspect?: 'video' | '3/2'
 }>()
 

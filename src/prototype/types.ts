@@ -68,6 +68,13 @@ export interface Workspace {
   dataTrainingOptOut?: boolean
 }
 
+// One month of credit spend ("YYYY-MM" → credits). Drives the project Usage
+// tab: current figure, month-over-month delta, recent-months list, export.
+export interface MonthlyUsage {
+  month: string
+  credits: number
+}
+
 export interface Project {
   id: string
   workspaceId: string
@@ -86,6 +93,10 @@ export interface Project {
   // in the workspace — workspace remains the single billing entity per
   // ../IA_Plan/wiki/entities/workspace.md.
   creditsThisMonth?: number
+  // Recent monthly spend (most recent last, includes the current month whose
+  // value mirrors creditsThisMonth). Prototype extension beyond the wiki's
+  // single-month scalar — see design-decisions.md 2026-06-24.
+  monthlyUsage?: MonthlyUsage[]
 }
 
 // Storage medium for an asset. Per
@@ -128,11 +139,35 @@ export interface Workflow {
   // ../IA_Plan/wiki/decisions/published-workflow-model.md §"Published-
   // version history". Kept as the MVP safety net for ungated overwrite.
   publishedVersions?: PublishedVersion[]
+  // The folder this workflow sits in *within its container* (My Workflows or
+  // a project). undefined = the container root. See `Folder`.
+  folderId?: string
+}
+
+// A user-created folder for organizing workflows inside a container — either
+// My Workflows (folder.projectId === the Drafts project) or a shared project
+// (folder.projectId === that project). User-facing folders are single-level;
+// `parentFolderId` is reserved for future nesting.
+export interface Folder {
+  id: string
+  projectId: string
+  name: string
+  parentFolderId?: string
 }
 
 export interface PublishedVersion {
   byUserId: string
   at: string
+  // Optional note the publisher added describing the change. Surfaced as a
+  // hoverable comment glyph in the version-history popover.
+  comment?: string
+  // Admin curation of the timeline (design-decisions.md 2026-06-24):
+  //   pinned  — marked the "stable / latest-good" version (at most one).
+  //   deleted — soft-removed from the history. Kept in the array so version
+  //             numbers (chronological index + 1) stay stable across deletes —
+  //             the history can read 1, 2, 4, 5. Filtered out of display.
+  pinned?: boolean
+  deleted?: boolean
 }
 
 // Provenance for a workflow connected to a project, surfaced as a link badge.
@@ -331,6 +366,8 @@ export interface PersonaFixture {
   currentWorkspaceId: string
   projects: Project[]
   workflows: Workflow[]
+  // User-created folders organizing workflows within My Workflows / projects.
+  folders?: Folder[]
   libraryAssets: LibraryAsset[]
   usage: UsageState | null
   members: WorkspaceMember[]

@@ -6,16 +6,15 @@
 -->
 <template>
   <span class="inline-flex items-center">
-    <i
-      v-if="meta.state === 'linked'"
-      class="icon-[lucide--link] size-3.5 text-muted-foreground"
-      :title="linkTitle"
-    />
-    <i
+    <Tooltip v-if="meta.state === 'linked'" :text="linkTitle">
+      <i class="icon-[lucide--link] size-3.5 text-muted-foreground" />
+    </Tooltip>
+    <Tooltip
       v-else
-      class="text-danger icon-[lucide--unlink] size-3.5"
-      :title="t('prototype.views.project.draftProvenance.sourceRemoved')"
-    />
+      :text="t('prototype.views.project.draftProvenance.sourceRemoved')"
+    >
+      <i class="text-danger icon-[lucide--unlink] size-3.5" />
+    </Tooltip>
   </span>
 </template>
 
@@ -23,6 +22,7 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 
+import Tooltip from './Tooltip.vue'
 import type { DraftMeta } from '../types'
 
 const { meta } = defineProps<{ meta: DraftMeta }>()

@@ -65,6 +65,45 @@
     @close="closePublish"
     @publish="onPublished"
   />
+
+  <ConfirmDialog
+    v-if="activeDialog === 'getLatest'"
+    :title="t('prototype.workflowMenu.getLatestTitle')"
+    :message="
+      t('prototype.workflowMenu.getLatestConfirm', { name: workflow.name })
+    "
+    :confirm-label="t('prototype.workflowMenu.getLatest')"
+    @confirm="confirmGetLatest"
+    @cancel="activeDialog = null"
+  />
+
+  <PromptDialog
+    v-if="activeDialog === 'rename'"
+    :title="t('prototype.workflowMenu.renameTitle')"
+    :initial-value="workflow.name"
+    :confirm-label="t('g.rename')"
+    @confirm="confirmRename"
+    @cancel="activeDialog = null"
+  />
+
+  <ConfirmDialog
+    v-if="activeDialog === 'delete'"
+    :title="t('prototype.workflowMenu.deleteTitle')"
+    :message="
+      t('prototype.workflowMenu.deleteConfirm', { name: workflow.name })
+    "
+    :confirm-label="t('g.delete')"
+    danger
+    @confirm="confirmDelete"
+    @cancel="activeDialog = null"
+  />
+
+  <MoveToFolderDialog
+    v-if="activeDialog === 'move'"
+    :workflow-ids="[workflow.id]"
+    @moved="onMoved"
+    @cancel="activeDialog = null"
+  />
 </template>
 
 <script setup lang="ts">
@@ -78,7 +117,10 @@ import { useI18n } from 'vue-i18n'
 
 import Button from '@/components/ui/button/Button.vue'
 
+import ConfirmDialog from './ConfirmDialog.vue'
+import MoveToFolderDialog from './MoveToFolderDialog.vue'
 import PromoteToProjectDialog from './PromoteToProjectDialog.vue'
+import PromptDialog from './PromptDialog.vue'
 import { useWorkflowPublish } from '../composables/useWorkflowPublish'
 import { usePrototypePersonaStore } from '../stores/personaStore'
 import type { ViewerWorkflowRole } from '../composables/useViewerWorkflowRole'
@@ -121,6 +163,9 @@ let closeActiveMenu: (() => void) | null = null
 const isOwner = computed(() => viewerRole === 'owner')
 const isRunner = computed(() => viewerRole === 'runner')
 
+// A checked-out copy that trails the canonical's effective current version.
+const isBehind = computed(() => personaStore.versionsBehind(workflow) > 0)
+
 const sourceProject = computed(() =>
   fixture.value.projects.find((p) => p.id === workflow.projectId)
 )
@@ -129,6 +174,25 @@ const sourceProject = computed(() =>
 // no branching (that's for shared canonicals) and no "Save to My
 // Workflows" (it's already there). Per published-workflow-model.md.
 const isInDrafts = computed(() => !!sourceProject.value?.isDrafts)
+
+// Foldering applies to workflows that live in a foldered container: a
+// project canonical, or a *personal* workflow in My Workflows (project-draft
+// copies live in a project's "My drafts", which isn't foldered).
+const isFolderable = computed(() => {
+  const p = sourceProject.value
+  if (!p) return false
+  if (!p.isDrafts) return !workflow.forkedFrom
+  const prov = workflow.provenanceProjectId
+  const inRealProject =
+    !!prov && fixture.value.projects.some((x) => x.id === prov && !x.isDrafts)
+  return !inRealProject
+})
+
+// Only offer "Move to folder" when the container has folders to move into
+// (folders are created from the container's "New folder" button).
+const hasFolders = computed(() =>
+  (fixture.value.folders ?? []).some((f) => f.projectId === workflow.projectId)
+)
 
 const canPublishDirectLink = computed(() => {
   const role = personaStore.currentWorkspace?.currentUserRole
@@ -175,13 +239,43 @@ function onOpen() {
   emit('open', workflow.id)
 }
 
+type ActiveDialog = 'rename' | 'delete' | 'getLatest' | 'move'
+const activeDialog = ref<ActiveDialog | null>(null)
+
+function onMoved() {
+  activeDialog.value = null
+  toast.add({
+    severity: 'success',
+    summary: t('prototype.folders.movedSummary'),
+    detail: t('prototype.folders.movedDetail', { name: workflow.name }),
+    life: 2200
+  })
+}
+
+function onGetLatest() {
+  activeDialog.value = 'getLatest'
+}
+
+function confirmGetLatest() {
+  activeDialog.value = null
+  if (!personaStore.updateToLatest(workflow.id)) return
+  toast.add({
+    severity: 'success',
+    summary: t('prototype.workflowMenu.toast.gotLatestSummary'),
+    detail: t('prototype.workflowMenu.toast.gotLatestDetail', {
+      name: workflow.name
+    }),
+    life: 2800
+  })
+}
+
 function onRename() {
-  const next = window.prompt(
-    t('prototype.workflowMenu.renamePrompt'),
-    workflow.name
-  )
-  if (next === null) return
-  personaStore.renameWorkflow(workflow.id, next)
+  activeDialog.value = 'rename'
+}
+
+function confirmRename(name: string) {
+  activeDialog.value = null
+  personaStore.renameWorkflow(workflow.id, name)
 }
 
 function onSaveCopy() {
@@ -224,10 +318,11 @@ function onSetThumbnail() {
 }
 
 function onDelete() {
-  const ok = window.confirm(
-    t('prototype.workflowMenu.deleteConfirm', { name: workflow.name })
-  )
-  if (!ok) return
+  activeDialog.value = 'delete'
+}
+
+function confirmDelete() {
+  activeDialog.value = null
   personaStore.deleteWorkflow(workflow.id)
   toast.add({
     severity: 'success',
@@ -257,6 +352,26 @@ const items = computed<MenuItem[]>(() => {
     icon: 'icon-[lucide--square-arrow-out-up-right]',
     command: onOpen
   })
+
+  // Re-sync a behind copy to the canonical's current (pinned-else-latest)
+  // version — replaces the copy's content.
+  if (isBehind.value) {
+    out.push({
+      label: t('prototype.workflowMenu.getLatest'),
+      icon: 'icon-[lucide--refresh-cw]',
+      command: onGetLatest
+    })
+  }
+
+  // Organize into a folder (project canonical or personal My Workflows).
+  if (isFolderable.value && hasFolders.value) {
+    out.push({ separator: true })
+    out.push({
+      label: t('prototype.folders.moveToFolder'),
+      icon: 'icon-[lucide--folder-input]',
+      command: () => (activeDialog.value = 'move')
+    })
+  }
 
   // Owner ops — rename / fork in place / move / storage.
   if (isOwner.value) {
