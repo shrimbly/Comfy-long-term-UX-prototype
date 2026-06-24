@@ -98,7 +98,7 @@
     </div>
     <div
       v-else-if="sortedProjects.length"
-      class="grid grid-cols-[repeat(auto-fill,minmax(14rem,18rem))] gap-4"
+      class="grid max-w-5xl grid-cols-[repeat(auto-fill,minmax(14rem,18rem))] gap-4"
     >
       <ProjectCard
         v-for="p in sortedProjects"

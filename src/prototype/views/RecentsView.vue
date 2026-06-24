@@ -2,11 +2,12 @@
   Implements:
     decision: ../IA_Plan/wiki/decisions/save-destination-workflow-level.md
 
-    Recents view — the user's recently-opened workflows. Search by name on
-    the left; chip filter by storage (All / Cloud / Local) and sort dropdown
-    on the right. Replaces the old All/Mine owner filter, which is
-    meaningless in the copy-on-access MVP model where every workflow is the
-    user's. Grid renders WorkflowCard tiles.
+    Recents view — the user's recently-opened drafts and My Workflows items.
+    Published canonicals (which live in shared projects) are excluded; only
+    Drafts-project work is shown. Search by name on the left; chip filter by
+    storage (All / Cloud / Local) and sort dropdown on the right. Replaces the
+    old All/Mine owner filter, which is meaningless in the copy-on-access MVP
+    model where every workflow is the user's. Grid renders WorkflowCard tiles.
 -->
 <template>
   <div class="flex flex-col gap-6">
@@ -14,7 +15,7 @@
       <PageTitle>{{ t('prototype.views.recents.title') }}</PageTitle>
     </header>
 
-    <div v-if="recentWorkflows.length" class="flex flex-col gap-4">
+    <div v-if="myRecentWorkflows.length" class="flex flex-col gap-4">
       <div class="flex flex-wrap items-center justify-between gap-2">
         <label
           class="flex h-8 max-w-xs min-w-48 flex-1 items-center gap-2 rounded-lg bg-secondary-background px-2.5 text-base-foreground"
@@ -70,17 +71,40 @@
               </button>
             </div>
           </div>
+
+          <div
+            class="flex items-center gap-0.5 rounded-lg bg-secondary-background p-0.5"
+          >
+            <Button
+              :variant="viewMode === 'grid' ? 'inverted' : 'muted-textonly'"
+              size="unset"
+              class="size-7 rounded-md"
+              :aria-label="t('prototype.views.recents.view.grid')"
+              :aria-pressed="viewMode === 'grid'"
+              @click="viewMode = 'grid'"
+            >
+              <i class="icon-[lucide--layout-grid] size-4" />
+            </Button>
+            <Button
+              :variant="viewMode === 'list' ? 'inverted' : 'muted-textonly'"
+              size="unset"
+              class="size-7 rounded-md"
+              :aria-label="t('prototype.views.recents.view.list')"
+              :aria-pressed="viewMode === 'list'"
+              @click="viewMode = 'list'"
+            >
+              <i class="icon-[lucide--list] size-4" />
+            </Button>
+          </div>
         </div>
       </div>
 
-      <div
-        v-if="sortedWorkflows.length"
-        class="grid grid-cols-[repeat(auto-fill,minmax(14rem,1fr))] gap-6"
-      >
+      <div v-if="sortedWorkflows.length" :class="layoutClass">
         <WorkflowCard
           v-for="wf in sortedWorkflows"
           :key="wf.id"
           :workflow="wf"
+          :layout="viewMode"
         />
       </div>
       <p
@@ -104,6 +128,8 @@ import { storeToRefs } from 'pinia'
 import { computed, ref, useTemplateRef } from 'vue'
 import { useI18n } from 'vue-i18n'
 
+import Button from '@/components/ui/button/Button.vue'
+
 import FilterPill from '../components/FilterPill.vue'
 import PageTitle from '../components/PageTitle.vue'
 import WorkflowCard from '../components/WorkflowCard.vue'
@@ -112,14 +138,31 @@ import { usePrototypePersonaStore } from '../stores/personaStore'
 
 type FilterValue = 'all' | 'cloud' | 'local'
 type SortValue = 'last-modified' | 'oldest' | 'az' | 'za'
+type ViewMode = 'grid' | 'list'
 
 const { t } = useI18n()
 const personaStore = usePrototypePersonaStore()
-const { recentWorkflows } = storeToRefs(personaStore)
+const { recentWorkflows, draftsProject } = storeToRefs(personaStore)
+
+// Recents surfaces only the viewer's own work — drafts and My Workflows, both
+// of which live in the Drafts project. Published canonicals (which live in
+// shared projects) are deliberately excluded.
+const myRecentWorkflows = computed(() =>
+  recentWorkflows.value.filter((w) => w.projectId === draftsProject.value?.id)
+)
 
 const searchQuery = ref('')
 const filter = ref<FilterValue>('all')
 const sort = ref<SortValue>('last-modified')
+const viewMode = ref<ViewMode>('grid')
+
+// Grid fills the content area (auto-fill gallery); the single-column list is
+// capped so rows don't stretch uncomfortably wide on large screens.
+const layoutClass = computed(() =>
+  viewMode.value === 'grid'
+    ? 'grid grid-cols-[repeat(auto-fill,minmax(14rem,1fr))] gap-6'
+    : 'flex max-w-5xl flex-col gap-0.5'
+)
 
 const sortMenuRef = useTemplateRef<HTMLElement>('sortMenuRef')
 const isSortOpen = ref(false)
@@ -158,7 +201,7 @@ const currentSortLabel = computed(
 
 const filteredWorkflows = computed(() => {
   const q = searchQuery.value.trim().toLowerCase()
-  return recentWorkflows.value.filter((w) => {
+  return myRecentWorkflows.value.filter((w) => {
     if (q && !w.name.toLowerCase().includes(q)) return false
     if (filter.value !== 'all' && w.storage !== filter.value) return false
     return true
