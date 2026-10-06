@@ -22,7 +22,7 @@ const i18n = createI18n({
           date: 'Date',
           tag: 'Tag',
           type: 'Type',
-          searchPlaceholder: 'Search or type @ to filter',
+          searchPlaceholder: "Search or type {'@'} to filter",
           enterValue: 'Type {field} value...',
           noMatches: 'No matches',
           group: {

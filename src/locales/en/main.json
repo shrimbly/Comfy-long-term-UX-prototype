@@ -1783,8 +1783,7 @@
     "Secrets": "Secrets",
     "Node Library": "Node Library",
     "PointCloud": "Point Cloud",
-    "SkillPacks": "Skill Packs",
-    "Filename Variables": "Filename Variables"
+    "SkillPacks": "Skill Packs"
   },
   "serverConfigItems": {
     "listen": {
@@ -4339,22 +4338,6 @@
     "folderNavigation": {
       "error": "Navigation Error"
     },
-    "moveTo": {
-      "dialogTitle": "Move to folder",
-      "dialogTitleBulk": "Move {count} items to folder",
-      "pathLabel": "Destination path",
-      "pathPlaceholder": "e.g. subfolder/new-folder",
-      "moveButton": "Move",
-      "stubToast": "Move to \"{path}\" — not yet implemented"
-    },
-    "dragPreview": {
-      "itemsLabel": "{count} items",
-      "dropHint": "Drop to add node | Drop to create nodes",
-      "dragHint": "Drag to node graph"
-    },
-    "dragMove": {
-      "mockToast": "Moved {count} item(s) to {folder} (mock — not persisted)"
-    },
     "details": {
       "togglePanel": "Toggle details panel",
       "showDetails": "Show details",
@@ -6677,7 +6660,7 @@
           "title": "Invite to {workspace}",
           "subtitle": "We'll send an email invite. They can accept on any device.",
           "emailLabel": "Email address",
-          "emailPlaceholder": "name@team.com",
+          "emailPlaceholder": "name{'@'}team.com",
           "roleLabel": "Workspace role",
           "submit": "Send invite",
           "cancel": "Cancel",
@@ -6795,7 +6778,10 @@
             "paid": "Paid",
             "open": "Open",
             "past-due": "Past due"
-          }
+          },
+          "viewMoreDetailsPlans": "View more details about plans & pricing",
+          "membersLabel": "Up to {count} members",
+          "learnMore": "Learn more"
         },
         "creditLimits": {
           "heading": "Member credit limits",
@@ -7023,9 +7009,6 @@
         "title": "No assets found",
         "message": "Try adjusting your filters or generating new assets."
       }
-    },
-    "tab": {
-      "title": "Media Assets"
     }
   },
   "assets": {
@@ -7096,37 +7079,5 @@
         "3D": "3D"
       }
     }
-  },
-  "templateVariables": {
-    "projectDesc": "Project name",
-    "workflowTitleDesc": "Current workflow filename",
-    "groupTitleDesc": "Parent group title",
-    "nodeTitleDesc": "Node title",
-    "widthDesc": "Output image width (resolved at save)",
-    "heightDesc": "Output image height (resolved at save)",
-    "batchNumDesc": "Batch index (resolved per image)",
-    "dateFormatDesc": "Date formatted as {format}",
-    "nodeWidgetDesc": "Current value: {value}",
-    "nodeWidgetDescEmpty": "Current widget value",
-    "noMatches": "No matches",
-    "group": {
-      "variable": "Variables",
-      "token": "Runtime tokens",
-      "date": "Date formats",
-      "node": "From nodes"
-    }
-  },
-  "filenameVariables": {
-    "title": "Filename Variables",
-    "description": "Variables available in filename prefix fields. Use @variableName in the filename prefix widget.",
-    "builtIn": "Built-in",
-    "custom": "Custom",
-    "addVariable": "Add variable",
-    "namePlaceholder": "Variable name",
-    "valuePlaceholder": "Value",
-    "nameConflict": "Name conflicts with a built-in variable",
-    "nameInvalid": "Name must contain only letters, numbers, and underscores",
-    "nameDuplicate": "Duplicate variable name",
-    "nameEmpty": "Name is required"
   }
 }

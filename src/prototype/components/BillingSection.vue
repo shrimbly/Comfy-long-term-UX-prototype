@@ -94,7 +94,7 @@
             </div>
             <div class="flex items-center gap-1">
               <i
-                class="icon-[comfy--credits] size-4 shrink-0 text-warning-background"
+                class="size-4 shrink-0 text-warning-background icon-[comfy--credits]"
               />
               <div class="flex items-baseline gap-2">
                 <span class="text-2xl font-bold text-base-foreground">
@@ -138,7 +138,7 @@
               </span>
               <div class="flex items-center gap-1">
                 <i
-                  class="icon-[comfy--credits] size-4 shrink-0 text-warning-background"
+                  class="size-4 shrink-0 text-warning-background icon-[comfy--credits]"
                 />
                 <span class="text-sm font-bold text-base-foreground">
                   {{
@@ -164,7 +164,7 @@
               </div>
               <div class="flex items-center gap-1">
                 <i
-                  class="icon-[comfy--credits] size-4 shrink-0 text-warning-background"
+                  class="size-4 shrink-0 text-warning-background icon-[comfy--credits]"
                 />
                 <span class="text-sm font-bold text-base-foreground">
                   {{ fmt(additionalCredits) }}
@@ -211,7 +211,9 @@
       class="flex w-fit cursor-pointer appearance-none items-center gap-2 border-0 bg-transparent p-0 text-muted-foreground transition-colors hover:text-base-foreground"
       @click="onManageStub('plan')"
     >
-      <span class="text-sm">{{ t('subscription.viewMoreDetailsPlans') }}</span>
+      <span class="text-sm">{{
+        t('prototype.views.settings.billing.viewMoreDetailsPlans')
+      }}</span>
       <i class="icon-[lucide--external-link] size-4" />
     </button>
 
@@ -300,7 +302,10 @@ const additionalCredits = computed(() => 0)
 const benefits = computed(() => {
   if (billing.subscription.plan === 'free') {
     return [
-      { key: 'members', label: t('subscription.membersLabel', { count: 1 }) },
+      {
+        key: 'members',
+        label: t('prototype.views.settings.billing.membersLabel', { count: 1 })
+      },
       { key: 'credits', label: '100 credits / month' },
       { key: 'support', label: 'Community support' }
     ]
@@ -316,7 +321,7 @@ const benefits = computed(() => {
   return [
     {
       key: 'members',
-      label: t('subscription.membersLabel', {
+      label: t('prototype.views.settings.billing.membersLabel', {
         count: billing.subscription.seatsIncluded
       })
     },
@@ -330,7 +335,7 @@ const helpLinks = computed(() => [
   {
     key: 'learn',
     icon: 'icon-[lucide--circle-help]',
-    label: t('subscription.learnMore')
+    label: t('prototype.views.settings.billing.learnMore')
   },
   {
     key: 'partner',
