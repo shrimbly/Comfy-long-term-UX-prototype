@@ -4,19 +4,17 @@
     (templates-gallery sidebar nav item).
 -->
 <template>
-  <div
-    role="button"
-    tabindex="0"
+  <button
+    type="button"
+    :aria-current="active ? 'page' : undefined"
     :class="
       cn(
-        'flex h-9 cursor-pointer items-center gap-2 rounded-xl px-3 text-sm text-base-foreground transition-colors select-none',
+        'flex h-9 w-full cursor-pointer items-center gap-2 rounded-xl px-3 text-left text-sm text-base-foreground transition-colors outline-none select-none focus-visible:ring-1 focus-visible:ring-border-default',
         active ? 'bg-secondary-background' : 'hover:bg-secondary-background',
         muted && 'text-muted-foreground'
       )
     "
     @click="emit('click')"
-    @keydown.enter.prevent="emit('click')"
-    @keydown.space.prevent="emit('click')"
   >
     <i v-if="icon" :class="cn(icon, 'size-4 shrink-0')" />
     <span class="min-w-0 flex-1 truncate">{{ label }}</span>
@@ -26,7 +24,7 @@
     >
       {{ count }}
     </span>
-  </div>
+  </button>
 </template>
 
 <script setup lang="ts">

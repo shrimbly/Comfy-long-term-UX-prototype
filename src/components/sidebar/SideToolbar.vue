@@ -64,6 +64,7 @@
         />
         <SidebarShortcutsToggleButton v-if="!hideWorkspaceToggles" :is-small />
         <SidebarSettingsButton :is-small />
+        <EditorWorkspaceMenu />
       </div>
     </div>
     <HelpCenterPopups :is-small />
@@ -86,6 +87,8 @@ import {
   watch
 } from 'vue'
 import { useI18n } from 'vue-i18n'
+
+import EditorWorkspaceMenu from '@/prototype/components/sidebar/EditorWorkspaceMenu.vue'
 
 import HelpCenterPopups from '@/components/helpcenter/HelpCenterPopups.vue'
 import ComfyMenuButton from '@/components/sidebar/ComfyMenuButton.vue'

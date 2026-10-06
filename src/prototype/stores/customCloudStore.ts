@@ -25,7 +25,7 @@ import {
 } from '../fixtures/customCloud'
 import { onMockRunStateChange } from '../mockBackend'
 import type { MockRunState } from '../mockBackend'
-import type { Deployment, PersonaFixture } from '../types'
+import type { Deployment, PersonaFixture, Project } from '../types'
 import {
   buildProgress,
   missingFrom,
@@ -34,7 +34,7 @@ import {
   simulatedSeconds
 } from '../utils/deployment'
 import { usePrototypePersonaStore } from './personaStore'
-import { usePrototypeTabsStore } from './tabsStore'
+import { HOME_TAB_ID, usePrototypeTabsStore } from './tabsStore'
 import { usePrototypeUiStore } from './uiStore'
 
 type DialogStep = 'choose' | 'review' | 'agent'
@@ -91,7 +91,7 @@ export const usePrototypeCustomCloudStore = defineStore(
       ...personaStore.visibleProjects
     ])
 
-    const currentProject = computed(
+    const currentProject = computed<Project | undefined>(
       () =>
         switchableProjects.value.find(
           (p) => p.id === selectedProjectId.value
@@ -189,6 +189,32 @@ export const usePrototypeCustomCloudStore = defineStore(
       runState.value = 'idle'
       reloadingToId.value = projectId
       reload.start(fromId, projectId, afterSwitch)
+    }
+
+    function switchWorkspace(workspaceId: string) {
+      if (
+        workspaceId === personaStore.fixture.currentWorkspaceId ||
+        !personaStore.fixture.workspaces.some(
+          (workspace) => workspace.id === workspaceId
+        )
+      )
+        return
+      const fromId =
+        currentProject.value?.id ?? personaStore.fixture.currentWorkspaceId
+      const nextProject = personaStore.fixture.projects.find(
+        (project) => project.workspaceId === workspaceId && project.isDrafts
+      )
+      reload.stop()
+      tabsStore.swapProject(fromId, nextProject?.id ?? workspaceId)
+      tabsStore.select(HOME_TAB_ID)
+      selectedProjectId.value = nextProject?.id ?? null
+      reloadingToId.value = null
+      dialogStep.value = null
+      switcherOpen.value = false
+      runRequested.value = false
+      runState.value = 'idle'
+      personaStore.setCurrentWorkspace(workspaceId)
+      uiStore.goHome()
     }
 
     function openWorkflow(projectId: string, label: string) {
@@ -327,6 +353,7 @@ export const usePrototypeCustomCloudStore = defineStore(
       runRequested,
       editorMounted,
       switchProject,
+      switchWorkspace,
       openWorkflow,
       openRunTargetDialog,
       dropIncompatibleWorkflow,

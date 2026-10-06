@@ -457,16 +457,10 @@
     },
     "comfy/use-global-pinia": {
       "count": 1
-    },
-    "typescript/no-unnecessary-condition": {
-      "count": 5
     }
   },
   "src/prototype/stores/customCloudStore.ts": {
     "comfy/no-es2023-array-copy-method": {
-      "count": 2
-    },
-    "typescript/no-unnecessary-condition": {
       "count": 2
     }
   },

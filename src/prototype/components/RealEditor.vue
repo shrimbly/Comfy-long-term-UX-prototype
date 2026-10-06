@@ -69,6 +69,7 @@ import { MATTE_PASS_GRAPH } from '../fixtures/mattePassGraph'
 import { setMockDeployment } from '../mockBackend'
 import { objectInfo, PACK_NODE_TYPES } from '../mockBackend/nodeDefs'
 import { usePrototypeCustomCloudStore } from '../stores/customCloudStore'
+import { usePrototypePolicyStore } from '../stores/policyStore'
 import { usePrototypeTabsStore } from '../stores/tabsStore'
 
 const RUN_BUTTON = '[data-testid="queue-button"]'
@@ -78,6 +79,7 @@ const QUIET_LOAD = { deferWarnings: true, silentAssetErrors: true }
 const { t } = useI18n()
 const customCloud = usePrototypeCustomCloudStore()
 const tabsStore = usePrototypeTabsStore()
+const policies = usePrototypePolicyStore()
 const workflowStore = useWorkflowStore()
 const executionErrorStore = useExecutionErrorStore()
 
@@ -100,8 +102,11 @@ const runnable = computed(() => {
   const deployment = customCloud.currentDeployment
   const usable = deployment.status !== 'building'
   return {
-    nodePacks: usable ? deployment.nodePacks : [],
-    models: usable ? deployment.models : [],
+    nodePacks: usable ? deployment.nodePacks.filter(policies.isAllowed) : [],
+    models: usable ? deployment.models.filter(policies.isAllowed) : [],
+    allowedModelFiles: customCloud.isEnabled
+      ? policies.allowedModelFiles
+      : undefined,
     coldStart: deployment.kind === 'custom'
   }
 })
@@ -174,8 +179,8 @@ let registeredKey: string | null = null
 async function syncEditor() {
   await ready
   await enqueue(async () => {
-    if (!activeTab.value) return
     setMockDeployment(runnable.value)
+    if (!activeTab.value) return
     const changed = nodeDefsKey.value !== registeredKey
     if (changed) {
       await registerDeploymentNodes()

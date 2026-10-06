@@ -8,6 +8,15 @@ import { ref, watch } from 'vue'
 import { usePrototypePersonaStore } from './personaStore'
 import type { AssetStorage } from '../types'
 
+export type SettingsPage =
+  | 'account'
+  | 'security'
+  | 'general'
+  | 'members'
+  | 'usage'
+  | 'billing'
+  | 'policies'
+
 type StorageFilter = 'all' | AssetStorage
 
 type ActiveView =
@@ -91,6 +100,13 @@ export const usePrototypeUiStore = defineStore('prototype-ui', () => {
     activeView.value = view
   }
 
+  const settingsPage = ref<SettingsPage>('general')
+
+  function openSettings(page: SettingsPage = 'general') {
+    settingsPage.value = page
+    activeView.value = { kind: 'settings' }
+  }
+
   function goHome() {
     activeView.value = { kind: 'home' }
   }
@@ -152,6 +168,8 @@ export const usePrototypeUiStore = defineStore('prototype-ui', () => {
 
   return {
     activeView,
+    settingsPage,
+    openSettings,
     projectFilter,
     tagFilter,
     folderFilter,

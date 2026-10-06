@@ -15,7 +15,7 @@ export type PersonaId =
   | 'workspace-member'
 
 export type WorkspaceTier = 'personal' | 'team'
-export type WorkspacePlan = 'free' | 'professional' | 'enterprise'
+type WorkspacePlan = 'free' | 'professional' | 'enterprise'
 export type WorkspaceRole = 'admin' | 'member'
 
 // Project visibility tiers, post-rename. Working stance (see prototype-log

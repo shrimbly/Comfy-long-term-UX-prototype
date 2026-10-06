@@ -13,6 +13,7 @@
 // Installed from src/main.ts for prototype deploy builds only.
 
 import { objectInfo } from './nodeDefs'
+import { policyErrors } from './policyValidation'
 import type { DeploymentContents } from './nodeDefs'
 
 type Json = Record<string, unknown> | unknown[]
@@ -84,7 +85,22 @@ function listUserdata(dir: string, fullInfo: boolean) {
 
 // Accepts the prompt without running it. A custom deployment sleeps when
 // idle, so the first thing a run does there is start a worker.
-function queuePrompt() {
+function queuePrompt(body: string | undefined) {
+  const nodeErrors = policyErrors(body, deployment)
+  if (Object.keys(nodeErrors).length)
+    return json(
+      {
+        error: {
+          type: 'prompt_outputs_failed_validation',
+          message: 'Workspace policy blocks this workflow.',
+          details:
+            'Allow the required models and custom nodes in workspace settings.',
+          extra_info: {}
+        },
+        node_errors: nodeErrors
+      },
+      400
+    )
   promptCount += 1
   if (deployment.coldStart) {
     setRunState('starting')
@@ -172,7 +188,7 @@ async function handle(
       pagination: { offset: 0, limit: 0, total: 0, has_more: false }
     })
   }
-  if (route === '/prompt' && method === 'POST') return queuePrompt()
+  if (route === '/prompt' && method === 'POST') return queuePrompt(body)
   if (route === '/prompt') return json({ exec_info: { queue_remaining: 0 } })
   if (route === '/queue') return json({ queue_running: [], queue_pending: [] })
   if (route.startsWith('/history')) return json({})

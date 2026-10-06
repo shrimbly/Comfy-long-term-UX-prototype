@@ -15,8 +15,6 @@
     - Driven by the prototype tabsStore. Its workflow tabs show the real
       editor embedded in the dashboard (RealEditor). The real workflow tabs
       appear only on the standalone editor route (`/`).
-    - User avatar sits on the far right (mirroring CurrentUserButton's
-      slot in the integrated tab bar).
 -->
 <template>
   <nav
@@ -125,38 +123,11 @@
     </div>
     <TopbarBadges />
     <TopbarSubscribeButton />
-    <div class="flex shrink-0 items-center gap-1 px-2">
-      <button
-        type="button"
-        class="grid size-7 cursor-pointer appearance-none place-items-center rounded-sm border-0 bg-transparent text-muted-foreground transition-colors hover:bg-secondary-background hover:text-base-foreground focus:outline-none"
-        :title="t('prototype.tabs.feedback')"
-        :aria-label="t('prototype.tabs.feedback')"
-      >
-        <span class="icon-[lucide--message-square-text] size-4" />
-      </button>
-      <button
-        type="button"
-        class="inline-flex h-7 cursor-pointer appearance-none items-center gap-1 rounded-full border-0 bg-transparent p-0.5 pr-1 text-base-foreground transition-colors hover:bg-secondary-background focus:outline-none"
-        :title="userName"
-        :aria-label="userName"
-      >
-        <span
-          class="grid size-6 place-items-center rounded-full text-xs font-semibold text-button-surface-contrast"
-          :style="{ backgroundColor: userColor }"
-        >
-          {{ userInitial }}
-        </span>
-        <span
-          class="icon-[lucide--chevron-down] size-3.5 text-muted-foreground"
-        />
-      </button>
-    </div>
   </nav>
 </template>
 
 <script setup lang="ts">
 import { cn } from '@comfyorg/tailwind-utils'
-import { storeToRefs } from 'pinia'
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
@@ -168,7 +139,6 @@ import Button from '@/components/ui/button/Button.vue'
 import ProjectSwitcher from './ProjectSwitcher.vue'
 import { usePrototypeCustomCloudStore } from '../stores/customCloudStore'
 import { usePrototypeNavigationStore } from '../stores/navigationStore'
-import { usePrototypePersonaStore } from '../stores/personaStore'
 import { HOME_TAB_ID, usePrototypeTabsStore } from '../stores/tabsStore'
 import { usePrototypeUiStore } from '../stores/uiStore'
 
@@ -179,7 +149,6 @@ const navigationStore = usePrototypeNavigationStore()
 const tabsStore = usePrototypeTabsStore()
 const customCloud = usePrototypeCustomCloudStore()
 const uiStore = usePrototypeUiStore()
-const { fixture } = storeToRefs(usePrototypePersonaStore())
 const isEditorRoute = computed(() => route.name === 'GraphView')
 const isHomeActive = computed(
   () => !isEditorRoute.value && tabsStore.activeTabId === HOME_TAB_ID
@@ -191,17 +160,6 @@ const showSwitcher = computed(
 function isTabActive(id: string) {
   return !isEditorRoute.value && tabsStore.activeTabId === id
 }
-
-const userName = computed(
-  () => fixture.value.currentUser.name || t('prototype.topbar.userFallback')
-)
-const userInitial = computed(() => userName.value.charAt(0).toUpperCase())
-const userColor = computed(
-  () =>
-    fixture.value.members.find(
-      (member) => member.id === fixture.value.currentUser.id
-    )?.avatarColor ?? 'var(--primary-background)'
-)
 
 async function onSelectHome(event: MouseEvent) {
   if (
