@@ -19,7 +19,7 @@
 -->
 <template>
   <div class="relative isolate flex min-h-0 flex-1">
-    <GraphView />
+    <GraphView embedded :active="!!activeTab" />
     <div
       v-if="customCloud.runState === 'starting' && coldStartAnchor"
       role="status"

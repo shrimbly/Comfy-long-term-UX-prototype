@@ -24,7 +24,6 @@ import Menu from 'primevue/menu'
 import { computed, ref } from 'vue'
 
 import Button from '@/components/ui/button/Button.vue'
-import { useWorkflowService } from '@/platform/workflow/core/services/workflowService'
 import type { ComfyWorkflow } from '@/platform/workflow/management/stores/workflowStore'
 
 const props = defineProps<{
@@ -33,7 +32,7 @@ const props = defineProps<{
 }>()
 
 const menu = ref<InstanceType<typeof Menu> | null>(null)
-const workflowService = useWorkflowService()
+const emit = defineEmits<{ select: [workflow: ComfyWorkflow] }>()
 
 const menuItems = computed(() =>
   props.workflows.map((workflow: ComfyWorkflow) => ({
@@ -41,7 +40,7 @@ const menuItems = computed(() =>
     icon:
       props.activeWorkflow?.key === workflow.key ? 'pi pi-check' : undefined,
     command: () => {
-      void workflowService.openWorkflow(workflow)
+      emit('select', workflow)
     }
   }))
 )

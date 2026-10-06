@@ -19,13 +19,11 @@
 -->
 <template>
   <div
-    class="relative flex h-screen w-full flex-col"
+    class="relative flex size-full flex-col"
     @dragover.capture="onFileDragOver"
     @dragleave="onFileDragLeave"
     @drop.capture="onFileDrop"
   >
-    <PrototypeTabs />
-
     <div class="relative flex min-h-0 flex-1">
       <div v-if="isMediaAssetsTabActive" class="relative flex min-h-0 flex-1">
         <LocalMediaView v-if="isLocalMode" />
@@ -113,7 +111,6 @@ import PersonaSwitcher from '../components/PersonaSwitcher.vue'
 import ProjectReloadOverlay from '../components/ProjectReloadOverlay.vue'
 import RealEditor from '../components/RealEditor.vue'
 import PrototypeSidebar from '../components/PrototypeSidebar.vue'
-import PrototypeTabs from '../components/PrototypeTabs.vue'
 import RunTargetDialog from '../components/RunTargetDialog.vue'
 import WorkflowDragGhost from '../components/WorkflowDragGhost.vue'
 import { usePrototypeCustomCloudStore } from '../stores/customCloudStore'

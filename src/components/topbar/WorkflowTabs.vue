@@ -25,7 +25,7 @@
     >
       <SelectButton
         class="workflow-tabs bg-transparent"
-        :class="props.class"
+        :class="customClass"
         :model-value="selectedTab"
         :options="options"
         option-label="label"
@@ -67,6 +67,7 @@
       v-if="showOverflowArrows"
       :workflows="workflowStore.openWorkflows"
       :active-workflow="workflowStore.activeWorkflow"
+      @select="onTabChange(workflowToOption($event))"
     />
     <Button
       v-tooltip="{
@@ -82,7 +83,7 @@
       <i class="pi pi-plus" />
     </Button>
     <div
-      v-if="isIntegratedTabBar"
+      v-if="isIntegratedTabBar && showActions"
       data-testid="integrated-tab-bar-actions"
       class="ml-auto flex shrink-0 items-center gap-2 px-2"
     >
@@ -153,8 +154,16 @@ const MEDIA_ASSETS_OPTION: MediaAssetsOption = {
   value: MEDIA_ASSETS_TAB_VALUE
 }
 
-const props = defineProps<{
+const {
+  class: customClass,
+  inactive = false,
+  showActions = true,
+  beforeOpen
+} = defineProps<{
   class?: string
+  inactive?: boolean
+  showActions?: boolean
+  beforeOpen?: () => Promise<boolean>
 }>()
 
 const settingStore = useSettingStore()
@@ -204,6 +213,7 @@ const workflowOptionsAfter = (index: number): WorkflowOption[] =>
   options.value.slice(index + 1).filter(isWorkflowOption)
 
 const selectedTab = computed<TabOption | null>(() => {
+  if (inactive) return null
   if (workspaceStore.mediaAssetsTabActive) return MEDIA_ASSETS_OPTION
   return workflowStore.activeWorkflow
     ? workflowToOption(workflowStore.activeWorkflow as ComfyWorkflow)
@@ -221,10 +231,12 @@ const onTabChange = async (option: TabOption) => {
   }
 
   if (option.kind === 'media-assets') {
+    if (beforeOpen && !(await beforeOpen())) return
     workspaceStore.mediaAssetsTabActive = true
     return
   }
 
+  if (beforeOpen && !(await beforeOpen())) return
   workspaceStore.mediaAssetsTabActive = false
   await workflowService.openWorkflow(option.workflow)
 }
@@ -247,6 +259,7 @@ const onCloseWorkflow = async (option: WorkflowOption) => {
 }
 
 const onNewBlankWorkflow = async () => {
+  if (beforeOpen && !(await beforeOpen())) return
   workspaceStore.mediaAssetsTabActive = false
   await commandStore.execute('Comfy.NewBlankWorkflow')
 }

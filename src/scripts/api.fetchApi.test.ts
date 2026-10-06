@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { api } from '@/scripts/api'
+import { api, ComfyApi } from '@/scripts/api'
 
 // Mock global fetch
 vi.stubGlobal('fetch', vi.fn())
@@ -155,6 +155,26 @@ describe('api.fetchApi', () => {
   })
 
   describe('URL construction', () => {
+    it.each(['/prototype', '/prototype/dashboard'])(
+      'sends requests to the backend root when loaded at %s',
+      async (path) => {
+        const originalPath = location.href
+        const mockFetch = vi
+          .mocked(global.fetch)
+          .mockResolvedValue(new Response())
+        try {
+          history.replaceState(null, '', path)
+          await new ComfyApi().fetchApi('/settings')
+          expect(mockFetch).toHaveBeenCalledWith(
+            '/api/settings',
+            expect.any(Object)
+          )
+        } finally {
+          history.replaceState(null, '', originalPath)
+        }
+      }
+    )
+
     it('should use apiURL for route construction', async () => {
       const mockFetch = vi
         .mocked(global.fetch)

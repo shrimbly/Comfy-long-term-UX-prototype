@@ -137,6 +137,7 @@ import { cn } from '@comfyorg/tailwind-utils'
 import { PopoverRoot, PopoverTrigger } from 'reka-ui'
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useRouter } from 'vue-router'
 
 import Button from '@/components/ui/button/Button.vue'
 import PopoverContent from '@/components/ui/popover/PopoverContent.vue'
@@ -155,6 +156,7 @@ const { project } = defineProps<{
 }>()
 
 const { t } = useI18n()
+const router = useRouter()
 const customCloud = usePrototypeCustomCloudStore()
 const tabsStore = usePrototypeTabsStore()
 const uiStore = usePrototypeUiStore()
@@ -167,14 +169,16 @@ const minutesLeft = computed(() => {
   return Math.max(1, Math.ceil(progress.remainingSeconds / 60))
 })
 
-function onPick(projectId: string) {
+async function onPick(projectId: string) {
   customCloud.switcherOpen = false
+  await router.push({ name: 'PrototypeDashboard' })
   customCloud.switchProject(projectId)
 }
 
-function onAllProjects() {
+async function onAllProjects() {
   customCloud.switcherOpen = false
   tabsStore.select(HOME_TAB_ID)
   uiStore.go({ kind: 'projects' })
+  await router.push({ name: 'PrototypeDashboard' })
 }
 </script>
