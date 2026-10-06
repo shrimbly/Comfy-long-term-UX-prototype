@@ -66,6 +66,7 @@ import { useExecutionErrorStore } from '@/stores/executionErrorStore'
 import GraphView from '@/views/GraphView.vue'
 
 import { useProjectWorkflowsSidebarTab } from '../composables/useProjectWorkflowsSidebarTab'
+import { demoWorkflowGraph } from '../fixtures/demoWorkflowGraphs'
 import { MATTE_PASS_GRAPH } from '../fixtures/mattePassGraph'
 import { setMockDeployment } from '../mockBackend'
 import { objectInfo, PACK_NODE_TYPES } from '../mockBackend/nodeDefs'
@@ -135,8 +136,16 @@ async function registerDeploymentNodes() {
   }
 }
 
-function freshGraph(key: string | undefined): ComfyWorkflowJSON {
-  const graph = key === 'matte_pass' ? MATTE_PASS_GRAPH : defaultGraph
+type WorkflowTab = NonNullable<typeof activeTab.value>
+
+// matte_pass, a saved workflow's own graph, or the default for a new one.
+function freshGraph(tab: WorkflowTab): ComfyWorkflowJSON {
+  const graph =
+    tab.workflowKey === 'matte_pass'
+      ? MATTE_PASS_GRAPH
+      : tab.workflowId
+        ? demoWorkflowGraph({ id: tab.workflowId, name: tab.label })
+        : defaultGraph
   return { ...structuredClone(graph), id: crypto.randomUUID() }
 }
 
@@ -158,13 +167,7 @@ async function showActiveTab(reload: boolean) {
       { ...QUIET_LOAD, checkForRerouteMigration: false }
     )
   } else if (!existing) {
-    await app.loadGraphData(
-      freshGraph(tab.workflowKey),
-      true,
-      true,
-      tab.label,
-      QUIET_LOAD
-    )
+    await app.loadGraphData(freshGraph(tab), true, true, tab.label, QUIET_LOAD)
     const path = workflowStore.activeWorkflow?.path
     if (path) tabsStore.setWorkflowPath(tab.id, path)
   }

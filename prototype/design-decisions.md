@@ -1493,3 +1493,11 @@ Inside `/prototype`, the editor's left-sidebar **Workflows** tab is a prototype 
   - Refresh is also dropped, because there is no backend sync.
 
 Wiki is silent on the editor's workflow browser. Promote? **maybe**: an addition to `decisions/project-switcher-in-tab-bar.md` ("the editor's Workflows panel is scoped to the current project; other projects one step away").
+
+---
+
+## [2026-10-07] Saved workflows open as distinct graphs
+
+Every saved workflow opened in the real editor showed the same default graph, so switching tabs didn't read as switching workflows. `fixtures/demoWorkflowGraphs.ts` now gives each saved workflow one of three text-to-image setups — SDXL with a refine pass, Z-Image Turbo, HiDream + detail LoRA — picked from its id so it always opens the same way, framed by a group titled with the workflow's name, with the name in the prompt and Save Image filename prefix. Only core nodes and base models the in-browser backend serves, so nothing loads red. New blank workflows keep the default graph; matte_pass is unchanged.
+
+Promote? **no** — demo content; no IA change. The wiki has no stance on what a workflow's graph contains.
