@@ -10,7 +10,7 @@
     - Media-Assets tab active → real MediaAssetsView takes over the area
       below PrototypeTabs (it owns its own sidebar).
     - A workflow tab → the real ComfyUI editor (RealEditor). It stays
-      mounted, hidden while another tab is active, so it boots once.
+      mounted, invisible while another tab is active, so it boots once.
     - Home tab → prototype dashboard with PrototypeSidebar / LibrarySidebar
       based on uiStore.activeView.
   Custom Comfy Cloud layers on top: a project whose deployment is building
@@ -50,7 +50,17 @@
           <SettingsView v-else-if="activeView.kind === 'settings'" />
         </main>
       </div>
-      <RealEditor v-show="isEditorTabActive" />
+      <!-- Hidden but still laid out: display:none would let the editor's
+           nodes re-measure at zero width and keep those sizes. -->
+      <RealEditor
+        :class="
+          cn(
+            !isEditorTabActive &&
+              'pointer-events-none invisible absolute inset-0'
+          )
+        "
+        :aria-hidden="!isEditorTabActive"
+      />
 
       <BuildLockModal
         v-if="customCloud.isLocked && customCloud.progress && currentProject"
@@ -89,6 +99,7 @@
 </template>
 
 <script setup lang="ts">
+import { cn } from '@comfyorg/tailwind-utils'
 import { storeToRefs } from 'pinia'
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'

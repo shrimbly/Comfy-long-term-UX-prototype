@@ -37,7 +37,7 @@ describe('customCloudStore', () => {
     vi.useRealTimers()
   })
 
-  it('switches project after the reload, lands on Home and remembers each project’s tabs', async () => {
+  it('switches project after the reload, opens that project and remembers each project’s tabs', async () => {
     const { store, tabs, ui } = await setup()
     openWorkflowIn(store, 'proj-marketing')
     expect(store.currentProject?.id).toBe('proj-marketing')
@@ -49,7 +49,10 @@ describe('customCloudStore', () => {
     expect(store.currentProject?.id).toBe('proj-marketing')
     vi.advanceTimersByTime(RELOAD_MS)
     expect(store.reloadingToId).toBeNull()
-    expect(ui.activeView.kind).toBe('home')
+    expect(ui.activeView).toEqual({
+      kind: 'project',
+      projectId: 'proj-cocacola'
+    })
     expect(tabs.openTabs).toEqual([])
 
     store.switchProject('proj-marketing')

@@ -1013,7 +1013,7 @@
         "label": "Switch project",
         "projects": "Projects",
         "allProjects": "All projects",
-        "minutes": "{minutes} min"
+        "building": "Building · {minutes} min"
       },
       "reload": {
         "opening": "Opening {project}"

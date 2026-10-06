@@ -10,7 +10,9 @@
     - The project switcher sits right after Home, before the workflow tabs
       (Custom Comfy Cloud:
       ../IA_Plan/wiki/decisions/project-switcher-in-tab-bar.md). The tabs to
-      its right are that project's tabs.
+      its right are that project's tabs. Home is workspace-wide, so the
+      switcher hides while Home is active — except during a build, whose
+      lock screen offers it as the way out.
     - Driven by the prototype tabsStore (mock data) rather than the real
       workflow store.
     - User avatar sits on the far right (mirroring CurrentUserButton's
@@ -25,8 +27,9 @@
         type="button"
         :class="
           cn(
-            'group relative grid aspect-square h-full shrink-0 cursor-pointer appearance-none place-items-center border-0 border-x border-(--border-color) bg-transparent text-base-foreground transition-opacity focus:outline-none',
-            isHomeActive ? 'opacity-100' : 'opacity-75 hover:opacity-100'
+            'group relative grid aspect-square h-full shrink-0 cursor-pointer appearance-none place-items-center border-0 border-(--border-color) bg-transparent text-base-foreground transition-opacity focus:outline-none',
+            isHomeActive ? 'opacity-100' : 'opacity-75 hover:opacity-100',
+            !showSwitcher && 'border-r'
           )
         "
         :aria-label="t('prototype.tabs.home')"
@@ -39,7 +42,7 @@
         />
       </button>
       <ProjectSwitcher
-        v-if="customCloud.isEnabled && customCloud.currentProject"
+        v-if="showSwitcher && customCloud.currentProject"
         :project="customCloud.currentProject"
       />
 
@@ -162,6 +165,12 @@ const { openTabs, activeTabId } = storeToRefs(tabsStore)
 const { fixture } = storeToRefs(personaStore)
 
 const isHomeActive = computed(() => activeTabId.value === HOME_TAB_ID)
+const showSwitcher = computed(
+  () =>
+    customCloud.isEnabled &&
+    !!customCloud.currentProject &&
+    (!isHomeActive.value || customCloud.isLocked)
+)
 
 const userName = computed(
   () => fixture.value.currentUser.name || t('prototype.topbar.userFallback')

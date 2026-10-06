@@ -1357,3 +1357,24 @@ Willie asked for the real node graph, "with all the happy path UI we already dis
 - **Known:** Escape doesn't close the tab-bar switcher menu while the editor is mounted; clicking outside does.
 
 Promote? **no** — prototype infrastructure, no IA change.
+
+---
+
+## [2026-10-07] Flow 07: project pill in the tab bar, hidden on Home
+
+Willie picked direction F from the design canvas "Tab bar: Home and project switcher" (https://claude.ai/artifact/67jL5HegqgJSsSsoiVvqQv).
+
+- **Decision: the project switcher is a neutral pill.** It has a grey fill and border and holds the deployment's status dot:
+  - blue with a halo and "Building · N min" while the deployment builds
+  - green when ready, and on Comfy Cloud, which is always up
+  - grey when asleep
+
+  The personal project shows a person icon instead of a dot. The name is cut at `15ch` (about 15 characters) and shown in full on hover. The menu keeps the colour tiles.
+
+- **The pill hides while the Home tab is active.** Home is workspace-wide, and Willie asked for the homepage not to show the project chip. The one exception is a building project, where the pill stays visible so the lock screen's "Switch to another project" can open it.
+- **Consequence: a project switch lands on that project's page** (My Workflows for the personal project) rather than the Home view. Without this, switching to a project with no open tabs left you on Home with no pill, so there was no sign of which project you were in. The pill comes back when you open a workflow.
+- **Fix:** while another tab is active, the real editor is now invisible but still laid out, not `display: none`. With `display: none`, Nodes 2.0 re-measured the nodes at zero width and saved the shrunken sizes, so a workflow came back narrower after a round trip through Home.
+
+Open question: should Home show some neutral sign of the current project? Today a presenter on Home can't switch projects without opening a workflow.
+
+Promote? **maybe**: a small amendment to `decisions/project-switcher-in-tab-bar.md`, saying the switcher hides on Home.

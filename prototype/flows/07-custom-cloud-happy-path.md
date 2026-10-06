@@ -47,7 +47,7 @@ Wiki: `../IA_Plan/wiki/concepts/custom-comfy-cloud.md`. Source: the 6 Oct "Custo
    - Optional: switch the persona to Workspace Member and open the same page. "Change deployment" is gone.
 4. **Open a workflow, drop in an incompatible one.**
    - Open **Marketing 2026** and click **+ Workflow**.
-   - The app reloads into Marketing 2026: a short "Opening Marketing 2026" screen, then the editor. The switcher next to the Home tab now reads Marketing 2026.
+   - The app reloads into Marketing 2026: a short "Opening Marketing 2026" screen, then the editor. The project pill after the Home tab now reads Marketing 2026. The pill only shows outside Home; Home is workspace-wide.
    - Drag any file onto the editor. It opens as `matte_pass` in a new tab.
    - The graph is the real editor. Four nodes have a red ring and an **Error** footer: Load Diffusion Model and Load LoRA (their models are missing), and RMBG and AcmeMatteRefine (their packs are missing). There is no error toast and no Errors panel.
 5. **"Choose where it runs".** The dialog opens on its own.
@@ -66,19 +66,20 @@ Wiki: `../IA_Plan/wiki/concepts/custom-comfy-cloud.md`. Source: the 6 Oct "Custo
    - The app reloads into the new project, Matte R&D. A full-screen modal covers its editor, and the node graph is not usable.
    - Build progress runs: resolve, upload, install, bake. Deploy follows: start a worker, load models. Each stage shows a time.
    - The copy says about 19 minutes and "we'll email you". The demo plays it in about 18 seconds.
-   - The switcher next to the Home tab shows a spinner and the minutes left.
+   - The project pill shows a blue dot and "Building · 12 min".
    - Optional: click **Switch to another project**. The project menu opens and the tab strip stays live. Press Esc to stay.
 7. **Ready: the red nodes are gone.**
-   - The modal closes, the nodes are no longer red, and the status dot turns green.
+   - The modal closes, the nodes are no longer red, and the pill's dot turns green.
    - A toast says "Matte R&D is ready" and offers **Run matte_pass**.
 8. **Cold start.**
    - Click **Run matte_pass** in the toast, or the editor's **Run** button.
    - A small note under Run says "Starting a worker. The first run takes a little longer: usually under 20 seconds." The editor also shows its own "Job queued" toast. Nothing actually runs.
    - There is no warm/cold indicator anywhere else.
 9. **Switch projects from the tab bar.**
-   - Click the project switcher, just right of the Home tab. Each project shows where it runs.
-   - Pick **Coca-Cola Ad**. A short reload screen shows, then Coca-Cola Ad with its own tabs (none yet).
-   - Switch back to **Matte R&D**. Its `matte_pass` tab is still there.
+   - Click the project pill, just right of the Home tab. Each project shows where it runs.
+   - Pick **Coca-Cola Ad**. A short reload screen shows. Coca-Cola Ad has no tabs yet, so you land on its project page, and the pill is hidden because Home is active.
+   - Click **+ Workflow**. The editor opens and the pill is back.
+   - Switch back to **Matte R&D** from the pill. Its `matte_pass` tab is still there.
 
 Then click **Reset demo** and run it again.
 

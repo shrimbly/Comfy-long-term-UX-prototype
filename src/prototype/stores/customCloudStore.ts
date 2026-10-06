@@ -150,13 +150,18 @@ export const usePrototypeCustomCloudStore = defineStore(
       )
     })
 
-    // A full reload lands on Home with that project's tabs.
+    // A full reload restores that project's tabs. Behind them the dashboard
+    // opens on the project itself, since the tab-bar switcher hides on Home.
     const reload = useTimeoutFn(
       (fromId: string, toId: string, afterSwitch?: () => void) => {
         tabsStore.swapProject(fromId, toId)
         selectedProjectId.value = toId
         reloadingToId.value = null
-        uiStore.goHome()
+        uiStore.go(
+          currentProject.value?.isDrafts
+            ? { kind: 'drafts' }
+            : { kind: 'project', projectId: toId }
+        )
         afterSwitch?.()
       },
       RELOAD_MS,
