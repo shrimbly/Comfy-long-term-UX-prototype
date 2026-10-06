@@ -7041,7 +7041,8 @@
         "viewOnPlatform": "View on Platform",
         "platformToastDetail": "The build log and releases live there.",
         "keepWorking": "Keep working",
-        "chip": "Building {deployment} · {minutes} min"
+        "chip": "Building {deployment} · {minutes} min",
+        "rebuildBody": "Every project on it runs the new release when it's done."
       },
       "ready": {
         "title": "{project} is ready",
