@@ -4,14 +4,17 @@
     concept: ../IA_Plan/wiki/concepts/three-level-permissions.md — project level
     log:     ../prototype/design-decisions.md (2026-05-13 Sharing panel)
     log:     ../prototype/design-decisions.md (2026-05-15 Project Settings tab)
+    concept: ../IA_Plan/wiki/concepts/custom-comfy-cloud.md — Settings shows
+             the deployment; opening a workflow switches the tab strip to
+             this project
 
   Single-project view. Workflows live in the body; the Sharing panel
   lives in a modal accessed from the header (avatar summary + Share
   button), mirroring Google Drive's Share affordance.
 
-  Body tabs: Workflows (always visible) and Usage (Owner/Admin-only). The
-  Usage tab is gated by `canViewUsage` so a Collaborator sees the
-  Workflows view directly and the tab strip collapses.
+  Body tabs: Workflows (always visible), Usage (Owner/Admin-only) and
+  Settings (the project's deployment). The Usage tab is gated by
+  `canViewUsage` so a Collaborator sees the Workflows view directly.
 -->
 <template>
   <div class="flex flex-col gap-6">
@@ -79,11 +82,26 @@
                 : 'bg-secondary-background hover:bg-secondary-background-hover'
             )
           "
-          @click="toggleUsage"
+          @click="toggleTab('usage')"
         >
           <span class="icon-[lucide--chart-column] size-4" />
           {{ t('prototype.views.project.tabs.usage') }}
         </button>
+        <Button
+          variant="secondary"
+          size="unset"
+          :aria-pressed="activeTab === 'settings'"
+          :class="
+            cn(
+              'h-9 gap-1.5 rounded-lg px-3 text-sm font-normal text-base-foreground',
+              activeTab === 'settings' && 'bg-secondary-background-hover'
+            )
+          "
+          @click="toggleTab('settings')"
+        >
+          <span class="icon-[lucide--settings] size-4" />
+          {{ t('prototype.customCloud.settings.button') }}
+        </Button>
         <button
           type="button"
           class="inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-lg bg-secondary-background px-3 text-sm transition-colors hover:bg-secondary-background-hover"
@@ -292,6 +310,11 @@
           :usage="project?.monthlyUsage ?? []"
           :project-name="project?.name ?? ''"
         />
+
+        <ProjectDeploymentSection
+          v-else-if="activeTab === 'settings'"
+          :project="project"
+        />
       </div>
     </template>
 
@@ -299,11 +322,6 @@
       v-if="isSharingOpen && project && project.tier !== 'private'"
       :project="project"
       @close="isSharingOpen = false"
-    />
-
-    <WorkflowEditorNoticeDialog
-      v-if="showEditorNotice"
-      @close="showEditorNotice = false"
     />
 
     <PromoteToProjectDialog
@@ -347,6 +365,7 @@ import Button from '@/components/ui/button/Button.vue'
 
 import FolderCard from '../components/FolderCard.vue'
 import InfoTooltip from '../components/InfoTooltip.vue'
+import ProjectDeploymentSection from '../components/ProjectDeploymentSection.vue'
 import ProjectSharingDialog from '../components/ProjectSharingDialog.vue'
 import ProjectUsageSection from '../components/ProjectUsageSection.vue'
 import PromoteToProjectDialog from '../components/PromoteToProjectDialog.vue'
@@ -355,18 +374,18 @@ import PrototypeBreadcrumb from '../components/PrototypeBreadcrumb.vue'
 import PublishConfirmDialog from '../components/PublishConfirmDialog.vue'
 import SelectableWorkflowGrid from '../components/SelectableWorkflowGrid.vue'
 import WorkflowCard from '../components/WorkflowCard.vue'
-import WorkflowEditorNoticeDialog from '../components/WorkflowEditorNoticeDialog.vue'
 import { useFolderBrowser } from '../composables/useFolderBrowser'
 import { useProjectAccess } from '../composables/useProjectAccess'
 import { useWorkflowDrag } from '../composables/useWorkflowDrag'
 import { useWorkflowPublish } from '../composables/useWorkflowPublish'
+import { usePrototypeCustomCloudStore } from '../stores/customCloudStore'
 import { usePrototypePersonaStore } from '../stores/personaStore'
 import { usePrototypeTabsStore } from '../stores/tabsStore'
 import { usePrototypeUiStore } from '../stores/uiStore'
 import type { Workflow } from '../types'
 import { deriveDraftMeta } from '../utils/draftMeta'
 
-type ProjectTabId = 'workflows' | 'usage'
+type ProjectTabId = 'workflows' | 'usage' | 'settings'
 
 const { projectId } = defineProps<{
   projectId: string
@@ -377,6 +396,7 @@ const toast = useToast()
 const personaStore = usePrototypePersonaStore()
 const uiStore = usePrototypeUiStore()
 const tabsStore = usePrototypeTabsStore()
+const customCloud = usePrototypeCustomCloudStore()
 const { fixture, currentWorkspace, draftsProject } = storeToRefs(personaStore)
 const {
   publishSourceId,
@@ -390,7 +410,6 @@ const {
 } = useWorkflowPublish()
 
 const isSharingOpen = ref(false)
-const showEditorNotice = ref(false)
 const activeTab = ref<ProjectTabId>('workflows')
 
 onMounted(() => {
@@ -421,26 +440,19 @@ function onCopyWorkflow(workflowId: string) {
 
 // "+ Workflow" — create a fresh draft in the viewer's My Workflows tied to
 // this project (it lands in the "My drafts" section below), then open it in a
-// new editor tab. No editor in the prototype, so a placeholder notice stands
-// in for the editor while the tab strip shows the opened tab.
+// new editor tab. The tab belongs to this project, so the tab strip switches
+// (reloads) into it first if another project is current.
 function onNewWorkflow() {
   const newId = personaStore.createDraftInProject(projectId)
   if (!newId) return
   activeTab.value = 'workflows'
   const wf = fixture.value.workflows.find((w) => w.id === newId)
-  tabsStore.openWorkflow(wf?.name ?? 'Untitled workflow')
-  showEditorNotice.value = true
+  customCloud.openWorkflow(projectId, wf?.name ?? 'Untitled workflow')
 }
 
-// Draft primary action. No editor in the prototype — opening a draft toasts.
 function onOpenDraft(workflowId: string) {
   const wf = fixture.value.workflows.find((w) => w.id === workflowId)
-  toast.add({
-    severity: 'info',
-    summary: t('prototype.workflowCard.openedSummary'),
-    detail: t('prototype.workflowCard.openedDetail', { name: wf?.name ?? '' }),
-    life: 2200
-  })
+  if (wf) customCloud.openWorkflow(projectId, wf.name)
 }
 
 const project = computed(() =>
@@ -461,10 +473,10 @@ const canViewUsage = computed(() => {
   )
 })
 
-// The header "Usage" button toggles the body between the workflows content
-// and the Owner/Admin-only usage view (no tab strip).
-function toggleUsage() {
-  activeTab.value = activeTab.value === 'usage' ? 'workflows' : 'usage'
+// The header "Usage" and "Settings" buttons toggle the body between the
+// workflows content and that view (no tab strip).
+function toggleTab(tab: ProjectTabId) {
+  activeTab.value = activeTab.value === tab ? 'workflows' : tab
 }
 
 // If the viewer loses usage access while viewing it, fall back to workflows.

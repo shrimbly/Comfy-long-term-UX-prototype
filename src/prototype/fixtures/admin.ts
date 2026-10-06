@@ -9,6 +9,9 @@
 //              — Member grant for publish-direct-link
 //   open-q:    ../IA_Plan/wiki/open-questions.md#single-admin-or-many
 //              — proto stance: multiple Admins allowed
+//   concept:   ../IA_Plan/wiki/concepts/custom-comfy-cloud.md — project
+//              deployments (Coca-Cola Ad runs matte_pass; Personal R&D lacks
+//              one pack; the rest run on Comfy Cloud)
 
 import type { PersonaFixture, RoleGrants } from '../types'
 
@@ -63,6 +66,7 @@ export const adminFixture: PersonaFixture = {
       id: 'proj-marketing',
       workspaceId: comfyOrg.id,
       name: 'Marketing 2026',
+      color: '#7c5cff',
       tier: 'workspace-wide',
       ownerUserId: user.id,
       isDrafts: false,
@@ -81,6 +85,7 @@ export const adminFixture: PersonaFixture = {
       id: 'proj-brand',
       workspaceId: comfyOrg.id,
       name: 'Brand Library',
+      color: '#e0803a',
       tier: 'workspace-wide',
       ownerUserId: user.id,
       isDrafts: false,
@@ -99,6 +104,7 @@ export const adminFixture: PersonaFixture = {
       id: 'proj-launch',
       workspaceId: comfyOrg.id,
       name: 'Q3 Launch Site',
+      color: '#3b82f6',
       tier: 'workspace-wide',
       // Member-owned + workspace-wide: validates auto-Owner-on-tier rule
       // (Admin auto-owns regardless of who created it).
@@ -119,6 +125,7 @@ export const adminFixture: PersonaFixture = {
       id: 'proj-client-x',
       workspaceId: comfyOrg.id,
       name: 'Client X',
+      color: '#d9488f',
       tier: 'restricted',
       ownerUserId: user.id,
       isDrafts: false,
@@ -143,6 +150,7 @@ export const adminFixture: PersonaFixture = {
       id: 'proj-indie-short',
       workspaceId: comfyOrg.id,
       name: 'Indie Short Film',
+      color: '#c9a227',
       tier: 'restricted',
       ownerUserId: user.id,
       isDrafts: false,
@@ -156,6 +164,9 @@ export const adminFixture: PersonaFixture = {
       id: 'proj-cocacola',
       workspaceId: comfyOrg.id,
       name: 'Coca-Cola Ad',
+      color: '#e04e48',
+      // Already runs matte_pass — the one compatible target in the demo.
+      deploymentId: 'dep-acme-studio',
       tier: 'restricted',
       ownerUserId: user.id,
       isDrafts: false,
@@ -182,6 +193,7 @@ export const adminFixture: PersonaFixture = {
       id: 'proj-the-matrix',
       workspaceId: comfyOrg.id,
       name: 'The Matrix',
+      color: '#22a35a',
       tier: 'restricted',
       ownerUserId: user.id,
       isDrafts: false,
@@ -209,6 +221,8 @@ export const adminFixture: PersonaFixture = {
       id: 'proj-personal-rnd',
       workspaceId: comfyOrg.id,
       name: 'Personal R&D',
+      color: '#64748b',
+      deploymentId: 'dep-matte-tests',
       tier: 'restricted',
       ownerUserId: user.id,
       isDrafts: false,
@@ -1202,6 +1216,32 @@ export const adminFixture: PersonaFixture = {
       period: 'monthly',
       used: 1640,
       resetsAt: '2026-06-01'
+    }
+  ],
+  // Custom Comfy Cloud deployments (Platform builds). Projects without a
+  // deploymentId run on Comfy Cloud.
+  deployments: [
+    {
+      id: 'dep-acme-studio',
+      name: 'Acme Studio pipeline',
+      kind: 'custom',
+      release: 'v3',
+      status: 'ready',
+      gpu: 'RTX 5090',
+      warmMinutes: 2,
+      nodePacks: ['comfyui-rmbg', 'acme-matte-tools', 'comfyui-impact-pack'],
+      models: ['flux1-dev-fp8', 'acme_hero_lora_v5', 'sdxl-base-1.0']
+    },
+    {
+      id: 'dep-matte-tests',
+      name: 'Matte tests',
+      kind: 'custom',
+      release: 'v7',
+      status: 'asleep',
+      gpu: 'RTX 4090',
+      warmMinutes: 2,
+      nodePacks: ['comfyui-rmbg'],
+      models: ['flux1-dev-fp8', 'acme_hero_lora_v5']
     }
   ]
 }

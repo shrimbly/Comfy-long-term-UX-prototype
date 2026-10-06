@@ -1,11 +1,14 @@
 <!--
   Implements:
     concept: ../IA_Plan/wiki/concepts/personas-and-flows.md — dashboard landing
+    concept: ../IA_Plan/wiki/concepts/custom-comfy-cloud.md — Home shows the
+             projects and where each runs
     log:     ../prototype/design-decisions.md (2026-06-17 visual style + Home)
 
   Dashboard landing. Time-based greeting + a search across the viewer's own
   workflows + media assets and the projects they can access (no global search
-  in MVP). Below: a Recents
+  in MVP). Below: the projects the viewer can open, each saying where it
+  runs; a Recents
   strip (top 5, with a "Show all" link to the full Recents view) and a
   featured gallery tabbed across What's new / Templates / Tutorials. Tutorials
   surfaces the getting-started curriculum and leads (first tab, selected) for
@@ -187,6 +190,33 @@
     </section>
 
     <template v-else>
+      <section v-if="visibleProjects.length" class="flex flex-col gap-3">
+        <header class="flex items-center justify-between gap-3">
+          <h2 class="text-sm font-semibold">
+            {{ t('prototype.views.home.projects') }}
+          </h2>
+          <Button
+            variant="link"
+            size="sm"
+            class="gap-1"
+            @click="uiStore.go({ kind: 'projects' })"
+          >
+            {{ t('prototype.views.home.showAll') }}
+            <i class="icon-[lucide--chevron-right] size-4" />
+          </Button>
+        </header>
+        <div class="grid grid-cols-[repeat(auto-fill,minmax(19rem,1fr))] gap-3">
+          <ProjectCard
+            v-for="p in visibleProjects"
+            :key="p.id"
+            layout="list"
+            :project="p"
+            :workflows="workflowsByProject[p.id] ?? []"
+            @open="onOpenProject"
+          />
+        </div>
+      </section>
+
       <section v-if="recentWorkflows.length" class="flex flex-col gap-3">
         <header class="flex items-center justify-between gap-3">
           <h2 class="text-sm font-semibold">
