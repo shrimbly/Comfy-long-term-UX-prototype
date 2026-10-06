@@ -11,6 +11,15 @@ if [ -n "${CI-}" ]; then
 fi
 
 pnpm knip 1>&2
+
+# The Fallow audit is scoped to origin/main. A fork without that branch
+# (the workspace-UX prototype tracks upstream separately) has no base to
+# audit against, so it stops after knip.
+if ! git ls-remote --exit-code --heads origin main >/dev/null; then
+  echo "pre-push: origin has no main branch; skipping the Fallow audit" 1>&2
+  exit 0
+fi
+
 git fetch --quiet --no-tags origin main
 base="$(git merge-base HEAD FETCH_HEAD)"
 diff_file="$(mktemp)"
