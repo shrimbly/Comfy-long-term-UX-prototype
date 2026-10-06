@@ -1516,3 +1516,12 @@ Willie explored the "choose where it runs" dialog on a design canvas, <https://c
 Why: the dialog is the centrepiece of the 8 Oct customer demo. It should read as a choice with an obvious next action, and leave what Platform owns to Platform.
 
 Wiki: `decisions/missing-nodes-choose-where-it-runs.md` (step 1 order, review, agent secondary, "Customise on Platform"), and `decisions/project-runs-on-shared-deployment.md` (a new project on an existing deployment; updating a deployment updates every project on it). Open question `dropped-workflow-other-deployment`: working answer, update the project's own deployment on Platform or make a new one. Promote? **yes**: update the decision page for the three states, the deployment picker (not a project picker), and Platform's summary and deploy steps.
+
+---
+
+## [2026-10-07] Flow 07: the runs-on picker like the project switcher; no graph while it builds
+
+- **Decision: the "Create a new project that runs on" menu is built like the project switcher (Willie picked "B" of three on the canvas, <https://claude.ai/artifact/PQby9iCSzrR7WMvbsqnY11>).** It has a search field and one list with no section headers. The deployments that run the workflow come first, marked "Ready". The ones that can't are greyed out, with the reason on the right ("Missing 1 node pack", "Missing 2 packs, 2 models"). **+ Create a new deployment · About 20 min** is the row below the list. "A new deployment with everything it needs" read as clunky. The project chooser uses the same "Missing …" wording.
+- **Decision: while a project's deployment builds, its graph is not shown.** The graph needs the deployment to load at all, so the lock screen shows a grey, inactive canvas behind the build progress. Before, it showed a dimmed but visible graph.
+
+Wiki: `decisions/build-locks-project-until-ready.md` says the node graph is disabled. This goes further: nothing of the graph shows until the deployment is ready. Promote? **yes**, as a refinement of that decision.
