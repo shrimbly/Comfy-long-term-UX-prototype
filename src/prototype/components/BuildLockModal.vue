@@ -10,12 +10,14 @@
     open-q:   ../IA_Plan/wiki/open-questions.md#build-wait-acceptable
 
   Covers everything below the tab strip while the current project's
-  deployment builds: build then deploy progress with stage times. The tab
-  strip stays live, so the project switcher is the way out.
+  deployment builds: build then deploy progress with stage times. The graph
+  needs the deployment to load at all, so behind the progress there is only
+  a grey, inactive canvas. The tab strip stays live, so the project switcher
+  is the way out.
 -->
 <template>
   <div
-    class="absolute inset-0 z-40 flex items-start justify-center overflow-y-auto bg-black/55 p-4 sm:p-8"
+    class="absolute inset-0 z-40 flex items-start justify-center overflow-y-auto bg-secondary-background p-4 sm:p-8"
     role="dialog"
     aria-modal="true"
     :aria-labelledby="titleId"

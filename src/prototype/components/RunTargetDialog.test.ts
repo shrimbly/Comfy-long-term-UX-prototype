@@ -47,7 +47,10 @@ describe('RunTargetDialog', () => {
     )
 
     await user.click(screen.getByRole('combobox'))
-    await user.click(screen.getByRole('option', { name: /A new deployment/ }))
+    expect(screen.getByText('Missing 1 node pack')).toBeInTheDocument()
+    await user.click(
+      screen.getByRole('option', { name: /Create a new deployment/ })
+    )
     await user.click(screen.getByRole('button', { name: 'Create deployment' }))
 
     expect(store.dialogStep).toBe('build')

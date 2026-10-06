@@ -86,7 +86,7 @@
             }}
           </span>
           <span class="max-w-33 truncate text-xs">
-            {{ lacksLabel(target.missing) }}
+            {{ missingLabel(target.missing) }}
           </span>
         </div>
       </div>
@@ -103,7 +103,7 @@ import { useI18n } from 'vue-i18n'
 import Button from '@/components/ui/button/Button.vue'
 import PopoverContent from '@/components/ui/popover/PopoverContent.vue'
 
-import { useLacksLabel } from '../composables/useLacksLabel'
+import { useMissingLabel } from '../composables/useMissingLabel'
 import { useTextT } from '../composables/useTextT'
 import type { Deployment, Project } from '../types'
 
@@ -127,7 +127,7 @@ const emit = defineEmits<{
 
 const { t } = useI18n()
 const tText = useTextT()
-const lacksLabel = useLacksLabel()
+const missingLabel = useMissingLabel()
 const open = ref(false)
 
 const running = computed(() => targets.filter((target) => target.runs))
