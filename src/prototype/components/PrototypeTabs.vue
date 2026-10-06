@@ -24,27 +24,51 @@
         class="absolute inset-x-0 bottom-0 h-px bg-primary-background"
       />
     </Button>
+    <ProjectSwitcher
+      v-if="customCloud.isEnabled && customCloud.currentProject"
+      :project="customCloud.currentProject"
+    />
     <div
-      v-if="mediaTab"
-      class="flex shrink-0 items-center border-r border-interface-stroke"
+      v-if="tabsStore.openTabs.length"
+      class="flex max-w-1/2 min-w-0 overflow-x-auto"
     >
-      <Button
-        variant="muted-textonly"
-        class="h-full rounded-none"
-        :aria-pressed="isMediaActive"
-        @click="onSelectMedia"
+      <div
+        v-for="tab in tabsStore.openTabs"
+        :key="tab.id"
+        :class="
+          cn(
+            'relative flex shrink-0 items-center border-r border-interface-stroke',
+            isTabActive(tab.id) ? 'opacity-100' : 'opacity-75 hover:opacity-100'
+          )
+        "
       >
-        <i class="icon-[comfy--image-ai-edit] size-4" aria-hidden="true" />
-        {{ mediaTab.label }}
-      </Button>
-      <Button
-        variant="muted-textonly"
-        size="icon-sm"
-        :aria-label="t('prototype.tabs.closeTab')"
-        @click="tabsStore.close(MEDIA_ASSETS_TAB_ID)"
-      >
-        <i class="icon-[lucide--x] size-3.5" aria-hidden="true" />
-      </Button>
+        <Button
+          variant="muted-textonly"
+          class="h-full rounded-none"
+          :aria-pressed="isTabActive(tab.id)"
+          @click="onSelectTab(tab.id)"
+          @click.middle="tabsStore.close(tab.id)"
+        >
+          <i
+            v-if="tab.kind === 'media-assets'"
+            class="icon-[comfy--image-ai-edit] size-4"
+            aria-hidden="true"
+          />
+          <span class="max-w-40 truncate">{{ tab.label }}</span>
+        </Button>
+        <Button
+          variant="muted-textonly"
+          size="icon-sm"
+          :aria-label="t('prototype.tabs.closeTab')"
+          @click="tabsStore.close(tab.id)"
+        >
+          <i class="icon-[lucide--x] size-3.5" aria-hidden="true" />
+        </Button>
+        <span
+          v-if="isTabActive(tab.id)"
+          class="absolute inset-x-0 bottom-0 h-px bg-primary-background"
+        />
+      </div>
     </div>
     <WorkflowTabs
       :inactive="!isEditorRoute"
@@ -95,13 +119,11 @@ import WorkflowTabs from '@/components/topbar/WorkflowTabs.vue'
 import TopbarBadges from '@/components/topbar/TopbarBadges.vue'
 import TopbarSubscribeButton from '@/components/topbar/TopbarSubscribeButton.vue'
 import Button from '@/components/ui/button/Button.vue'
+import ProjectSwitcher from './ProjectSwitcher.vue'
+import { usePrototypeCustomCloudStore } from '../stores/customCloudStore'
 import { usePrototypeNavigationStore } from '../stores/navigationStore'
 import { usePrototypePersonaStore } from '../stores/personaStore'
-import {
-  HOME_TAB_ID,
-  MEDIA_ASSETS_TAB_ID,
-  usePrototypeTabsStore
-} from '../stores/tabsStore'
+import { HOME_TAB_ID, usePrototypeTabsStore } from '../stores/tabsStore'
 import { usePrototypeUiStore } from '../stores/uiStore'
 
 const { t } = useI18n()
@@ -109,18 +131,18 @@ const route = useRoute()
 const router = useRouter()
 const navigationStore = usePrototypeNavigationStore()
 const tabsStore = usePrototypeTabsStore()
+const customCloud = usePrototypeCustomCloudStore()
 const uiStore = usePrototypeUiStore()
 const { fixture } = storeToRefs(usePrototypePersonaStore())
 const isEditorRoute = computed(() => route.name === 'GraphView')
-const isMediaActive = computed(
-  () => !isEditorRoute.value && tabsStore.activeTabId === MEDIA_ASSETS_TAB_ID
-)
 const isHomeActive = computed(
-  () => !isEditorRoute.value && !isMediaActive.value
+  () => !isEditorRoute.value && tabsStore.activeTabId === HOME_TAB_ID
 )
-const mediaTab = computed(() =>
-  tabsStore.openTabs.find((tab) => tab.id === MEDIA_ASSETS_TAB_ID)
-)
+
+function isTabActive(id: string) {
+  return !isEditorRoute.value && tabsStore.activeTabId === id
+}
+
 const userName = computed(
   () => fixture.value.currentUser.name || t('prototype.topbar.userFallback')
 )
@@ -147,8 +169,8 @@ async function onSelectHome(event: MouseEvent) {
   await router.push({ name: 'PrototypeDashboard' })
 }
 
-async function onSelectMedia() {
-  tabsStore.select(MEDIA_ASSETS_TAB_ID)
+async function onSelectTab(id: string) {
+  tabsStore.select(id)
   await router.push({ name: 'PrototypeDashboard' })
 }
 </script>

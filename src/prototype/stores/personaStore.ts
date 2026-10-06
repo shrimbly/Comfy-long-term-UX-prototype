@@ -472,11 +472,13 @@ export const usePrototypePersonaStore = defineStore('prototype-persona', () => {
   // Create a new shared project in the current workspace, owned by the
   // current user. `tier` defaults to restricted (the bare PromoteToProject
   // caller); the New-project dialog passes the user's chosen tier and, when
-  // restricted, the collaborators to seed. Returns the new id.
+  // restricted, the collaborators to seed. The Custom Comfy Cloud build flow
+  // passes the new project's deployment + colour. Returns the new id.
   function createProject(
     name: string,
     tier: ProjectTier = 'restricted',
-    collaboratorIds: string[] = []
+    collaboratorIds: string[] = [],
+    runsOn: Pick<Project, 'deploymentId' | 'color'> = {}
   ): string {
     const id = `proj-${Date.now()}`
     const ownerId = fixture.value.currentUser.id
@@ -495,7 +497,8 @@ export const usePrototypePersonaStore = defineStore('prototype-persona', () => {
           ...collaboratorIds
             .filter((uid) => uid !== ownerId)
             .map((uid) => ({ userId: uid, role: 'collaborator' as const }))
-        ]
+        ],
+        ...runsOn
       }
     ]
     return id

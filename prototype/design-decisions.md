@@ -1234,3 +1234,88 @@ From the Aaron Dabelow user interview (Fireflies `01KW3DKQH2VRRECNWRR1F54F4K`, "
 The **checkout terminology** concern Aaron raised (reads as file-locking; suggested "snapshot"/"craft") is logged but **not** actioned here — that's a naming decision to settle separately. This change only makes the existing checkout action reachable/consistent.
 
 Promote? **no** — surfaces existing operations via new affordances; no IA change. Checkout-naming question remains open for the wiki.
+
+---
+
+## [2026-10-06] Custom Comfy Cloud happy path (Flow 07) — build decisions
+
+Built for the 8 Oct customer demo from the 6 Oct "Custom cloud sync". Flow: `prototype/flows/07-custom-cloud-happy-path.md`. Wiki: `concepts/custom-comfy-cloud.md` and the six decisions it links.
+
+**Editor surface: a capture with live overlays, not the real GraphView.**
+
+- Decision: workflow tabs render `DemoEditorView`. It shows a real editor capture (1280×863, ComfyUI's own tab bar cropped off), scaled to fit. Live overlays are drawn in capture pixels: `matte_pass` node patches, red rings and Error tabs, the Run button, the run counter and the cold-start note.
+- Reason: the deployed prototype has no backend. The real `GraphView` fails in `userStore.initialize` (`getUserConfig` gets HTML back) and renders blank, in dev and on Vercel.
+- Side effect: workflow tabs now open an editor instead of staying on the dashboard. `WorkflowEditorNoticeDialog` ("editor is out of scope") is retired, and a project draft's Open now opens an editor tab instead of a toast.
+- Promote? **no**.
+
+**Project ↔ deployment fixture shape.**
+
+- Decision:
+  - `Project.deploymentId?` and `Project.color?` are new.
+  - A new `PersonaFixture.deployments[]` holds `{ id, name, kind: 'comfy-cloud' | 'custom', release?, status: 'ready' | 'asleep' | 'building', gpu?, warmMinutes?, nodePacks[], models[] }`.
+  - Comfy Cloud is implicit: no `deploymentId` means `COMFY_CLOUD`.
+  - "Runs it" means the deployment has every pack and model the workflow needs and is not building.
+- Wiki link: `entities/project.md` § Deployment (updated in the same change), `decisions/project-runs-on-shared-deployment.md`.
+- Promote? **done**.
+
+**Tabs belong to the current project; switching is a reload.**
+
+- Decision:
+  - The tab strip belongs to one project. The switcher sits at its far left, and the personal project, My Workflows, is where every session starts.
+  - Switching shows a 900 ms "Opening {project}" screen. It then restores that project's tabs, lands the dashboard on Home and clears any run in flight, as a real reload would.
+  - Opening a workflow from another project's page switches into that project first.
+  - A persona change is another account: it starts on its personal project with no tabs.
+- Wiki link: `decisions/project-switcher-in-tab-bar.md`. Open question: `open-questions.md#project-switch-reload` (working: reload).
+- Promote? **done**.
+
+**"Choose where it runs" selector.**
+
+- Decision:
+  - The selector preselects the first project that already runs `matte_pass`. The presenter then picks "A new project, on a new build", matching "but we make a new one anyway".
+  - Projects that lack nodes are listed with what they lack, in amber, but **can't be picked**. Picking one means updating or branching its build, which is out of scope.
+  - "Switch and reload" moves the workflow into a project that runs it.
+  - "Not now" keeps the red nodes, and Run reopens the dialog.
+  - The canvas's Upload button on the Models row is dropped. The build's first stage uploads the local-only model.
+- Open question dependency: `open-questions.md#dropped-workflow-other-deployment`.
+- Promote? **maybe**, once that question settles.
+
+**Build lock scope.**
+
+- Decision:
+  - While the current project's deployment builds, the lock covers everything under the tab strip, including Home, not just the editor. The tab strip stays live.
+  - "Switch to another project" opens the tab-bar switcher.
+  - There is no Cancel build: failed and cancelled builds are out of scope.
+  - The demo plays about 19 simulated minutes in 18 s.
+  - When ready, the deployment turns `ready`, the red nodes clear and a toast offers "Run matte_pass".
+- Wiki link: `decisions/build-locks-project-until-ready.md`. Open questions: `#build-lockout-acceptable`, `#build-wait-acceptable`.
+- Promote? **done**.
+
+**Cold start and the `asleep` status.** _Willie to check._
+
+- Decision:
+  - `asleep` appears only as a deployment status in lists, menus and settings. It comes from the canvas sample data ("Matte tests v7, asleep").
+  - The editor has no warm/cold indicator.
+  - Every Run on a custom deployment shows the small "Starting a worker … usually under 20 seconds" note for 4 s. The prototype can't tell a first run from a warm one.
+  - Runs don't change a deployment's status.
+- Reason: Willie at 42:23 asked for "some very minimal things saying cold start will take a bit longer". At 42:03–42:36 he also liked a green/grey dot on the project, which is what the status dot (green ready, grey asleep) shows. The brief says no warm/cold indicator, but its sample data uses "asleep", so the dot stays out of the editor.
+- Promote? **maybe**.
+
+**Home and project page.**
+
+- Decision:
+  - Home gains a **Projects** section above Recents, in three columns. Its list cards show where each project runs in place of the workflow count. Grid cards keep the count and add the deployment line.
+  - The project page gains a **Settings** toggle, beside Usage, that shows the read-mostly Deployment section. "Change deployment" shows for workspace admins only.
+- Promote? **no**.
+
+**Presenter affordances.**
+
+- Decision:
+  - Any file dropped on the app (outside Media Assets, cloud personas) opens as `matte_pass`. So does **Demo: drop incompatible workflow** beside the persona toggle.
+  - **Reset demo** reloads the page. Every store is in memory, so a reload is the only reset that also undoes drafts and renames made during the demo.
+- Promote? **no**.
+
+**Names with `&` in i18n strings.**
+
+- Decision: `useTextT` calls `t(…, { escapeParameter: false })` for strings that carry project or deployment names. They render only into text nodes or the clipboard.
+- Reason: the app-wide `escapeParameter: true` showed "Matte R&amp;D".
+- Promote? **no**.

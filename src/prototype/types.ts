@@ -97,6 +97,32 @@ export interface Project {
   // value mirrors creditsThisMonth). Prototype extension beyond the wiki's
   // single-month scalar — see design-decisions.md 2026-06-24.
   monthlyUsage?: MonthlyUsage[]
+  // Custom Comfy Cloud: the deployment this project runs on. Absent = Comfy
+  // Cloud, the shared default. See `Deployment`.
+  deploymentId?: string
+  // Colour tile shown in the tab-bar project switcher and project menus.
+  color?: string
+}
+
+// Custom Comfy Cloud (Project Homestead): a project runs on a Developer
+// Platform deployment. One deployment can back several projects, so updating
+// it updates every project on it. Comfy Cloud is the shared default.
+export type DeploymentKind = 'comfy-cloud' | 'custom'
+export type DeploymentStatus = 'ready' | 'asleep' | 'building'
+
+export interface Deployment {
+  id: string
+  name: string
+  kind: DeploymentKind
+  // Build release on Platform, e.g. 'v3'. Custom deployments only.
+  release?: string
+  status: DeploymentStatus
+  gpu?: string
+  // Minutes the worker stays warm after a run.
+  warmMinutes?: number
+  // What the build contains — drives "runs it" vs "what it lacks".
+  nodePacks: string[]
+  models: string[]
 }
 
 // Storage medium for an asset. Per
@@ -375,6 +401,8 @@ export interface PersonaFixture {
   roleGrants: RoleGrants
   billing: WorkspaceBilling | null
   memberCreditLimits: MemberCreditLimit[]
+  // Custom deployments projects can run on. Comfy Cloud is implicit.
+  deployments?: Deployment[]
 }
 
 export interface PersonaDef {

@@ -3,6 +3,8 @@
     entity: ../IA_Plan/wiki/entities/project.md
     log:    ../prototype/design-decisions.md (2026-06-17 — projects read as
             folders, distinct from workflow file cards)
+    concept: ../IA_Plan/wiki/concepts/custom-comfy-cloud.md — each card
+             says where the project runs
 
   A project reads as a folder (tab + contents preview of its workflows),
   deliberately distinct from the single-image WorkflowCard. Grid + list.
@@ -59,6 +61,11 @@
             {{ t('prototype.views.projects.noAccess') }}
           </span>
         </span>
+        <DeploymentLabel
+          :deployment
+          with-dot
+          class="text-xs text-muted-foreground"
+        />
       </span>
     </button>
 
@@ -83,15 +90,14 @@
       </span>
       <span class="flex min-w-0 flex-1 flex-col">
         <span class="truncate text-sm/tight">{{ project.name }}</span>
-        <span
-          :class="
-            cn(
-              'truncate text-xs text-muted-foreground',
-              !project.currentUserHasAccess && 'italic'
-            )
-          "
-        >
-          {{ metaText }}
+        <DeploymentLabel
+          v-if="project.currentUserHasAccess"
+          :deployment
+          with-dot
+          class="text-xs text-muted-foreground"
+        />
+        <span v-else class="truncate text-xs text-muted-foreground italic">
+          {{ t('prototype.views.projects.noAccess') }}
         </span>
       </span>
       <ProjectAccessBadge :project="project" />
@@ -110,9 +116,11 @@ import { cn } from '@comfyorg/tailwind-utils'
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
+import { usePrototypeCustomCloudStore } from '../stores/customCloudStore'
 import { workflowThumbnail } from '../utils/thumbnail'
 import type { Project, Workflow } from '../types'
 
+import DeploymentLabel from './DeploymentLabel.vue'
 import ProjectAccessBadge from './ProjectAccessBadge.vue'
 import ProjectContextMenu from './ProjectContextMenu.vue'
 
@@ -139,12 +147,8 @@ const tiles = computed(() => {
   return Array.from({ length: 4 }, (_, i) => items[i] ?? null)
 })
 
-// List chip second line: workflow count (access is shown by the badge).
-const metaText = computed(() =>
-  project.currentUserHasAccess
-    ? t('prototype.views.projects.workflowCount', { count: workflows.length })
-    : t('prototype.views.projects.noAccess')
-)
+const customCloud = usePrototypeCustomCloudStore()
+const deployment = computed(() => customCloud.deploymentOf(project.id))
 
 type MenuHandle = { show: (event: MouseEvent) => void }
 const menuRef = ref<MenuHandle | null>(null)
