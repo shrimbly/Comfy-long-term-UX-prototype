@@ -21778,7 +21778,7 @@
       },
       "filename_prefix": {
         "name": "filename_prefix",
-        "tooltip": "Filename for saved images. Type @ to insert dates, dimensions, or values from other nodes."
+        "tooltip": "The prefix for the file to save. This may include formatting information such as %date:yyyy-MM-dd% or %Empty Latent Image.width% to include values from nodes."
       }
     },
     "outputs": {
@@ -21964,7 +21964,7 @@
       },
       "filename_prefix": {
         "name": "filename_prefix",
-        "tooltip": "Filename for saved images. Type @ to insert dates, dimensions, or values from other nodes."
+        "tooltip": "The prefix for the file to save. This may include formatting information such as %date:yyyy-MM-dd% or %Empty Latent Image.width% to include values from nodes."
       }
     },
     "outputs": {
@@ -22029,7 +22029,7 @@
       },
       "filename_prefix": {
         "name": "filename_prefix",
-        "tooltip": "Filename for saved images. Type @ to insert dates, dimensions, or values from other nodes."
+        "tooltip": "The prefix for the file to save. This may include formatting information such as %date:yyyy-MM-dd% or %Empty Latent Image.width% to include values from nodes."
       },
       "format": {
         "name": "format",
