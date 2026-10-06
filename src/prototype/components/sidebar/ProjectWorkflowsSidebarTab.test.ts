@@ -185,10 +185,10 @@ describe('ProjectWorkflowsSidebarTab', () => {
     await user.click(others.getByText('Project templates'))
 
     await user.click(others.getByText('MTX_SEN_0300_light'))
-    expect(customCloud.currentProject.id).toBe('proj-cocacola')
+    expect(customCloud.currentProject?.id).toBe('proj-cocacola')
     vi.advanceTimersByTime(RELOAD_MS)
 
-    expect(customCloud.currentProject.id).toBe('proj-the-matrix')
+    expect(customCloud.currentProject?.id).toBe('proj-the-matrix')
     expect(tabs.openTabs.find((t) => t.id === tabs.activeTabId)?.label).toBe(
       'MTX_SEN_0300_light'
     )

@@ -44,6 +44,7 @@ function nodeDef(
 export interface DeploymentContents {
   nodePacks: string[]
   models: string[]
+  allowedModelFiles?: string[]
 }
 
 // Model names as the workflows reference them, keyed by the model id a
@@ -329,5 +330,25 @@ export function objectInfo(
     ...coreNodeDefs(contents),
     ...contents.nodePacks.flatMap((pack) => PACK_NODE_DEFS[pack] ?? [])
   ]
+  if (contents.allowedModelFiles) {
+    for (const def of defs) {
+      for (const input of Object.values(def.input?.required ?? {})) {
+        const options = input[0]
+        if (
+          Array.isArray(options) &&
+          options.some(
+            (value) =>
+              typeof value === 'string' && value.endsWith('.safetensors')
+          )
+        ) {
+          input[0] = options.filter(
+            (value) =>
+              typeof value === 'string' &&
+              contents.allowedModelFiles?.includes(value)
+          )
+        }
+      }
+    }
+  }
   return Object.fromEntries(defs.map((def) => [def.name, def]))
 }

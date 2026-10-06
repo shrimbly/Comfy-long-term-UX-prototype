@@ -1,383 +1,251 @@
-<!--
-  Implements:
-    entity:  ../IA_Plan/wiki/entities/workspace.md
-             — Billing config; "billing does not auto-transfer with
-               ownership transfer" (Lifecycle).
-    concept: ../IA_Plan/wiki/concepts/three-level-permissions.md
-             §"Workspace level" — Manage billing & subscription, view
-             credit balance. Admin-only, not delegable.
-
-  Layout follows the older Plan & Credits design
-    (Figma: Team Plan — Workspaces, node 2993:14790).
-  A bordered section frames the plan header + actions, a raised credits
-  card with a monthly-usage bar, and the plan perks; a help footer with
-  support links and invoice history sits below.
--->
 <template>
-  <div class="flex flex-col gap-6">
-    <section
-      class="flex w-full max-w-4xl flex-col gap-9 rounded-2xl border border-border-subtle p-6"
-    >
-      <header class="flex items-start gap-4">
-        <div class="flex flex-1 flex-col gap-2">
-          <div class="flex items-center gap-2">
-            <span class="text-base font-bold text-base-foreground">
-              {{ tierName }}
-            </span>
-            <span
-              v-if="billing.subscription.status === 'past-due'"
-              class="inline-flex h-5 items-center rounded-full bg-warning-background/15 px-2 text-[10px] font-medium tracking-wide text-warning-background uppercase"
-            >
-              {{ t('prototype.views.settings.billing.status.past-due') }}
-            </span>
-          </div>
-          <div class="flex items-baseline gap-1 font-semibold">
-            <span class="text-2xl text-base-foreground"
-              >${{ monthlyTotal }}</span
-            >
-            <span class="text-base font-normal text-muted-foreground">
-              {{ t('subscription.usdPerMonth') }}
-            </span>
-          </div>
-          <div class="text-sm text-muted-foreground">
-            {{
-              billing.subscription.cancelsAt
-                ? t('subscription.expiresDate', {
-                    date: formattedDate(billing.subscription.cancelsAt)
-                  })
-                : t('subscription.renewsDate', {
-                    date: formattedDate(billing.subscription.renewsAt)
-                  })
-            }}
-          </div>
-        </div>
-
-        <div class="flex items-start justify-end gap-2">
-          <Button
-            variant="secondary"
-            size="lg"
-            @click="onManageStub('payment')"
-          >
-            {{ t('prototype.views.settings.billing.manageBilling') }}
-          </Button>
-          <Button variant="secondary" size="lg" @click="onManageStub('plan')">
-            {{ planActionLabel }}
-          </Button>
-          <Button
-            variant="secondary"
-            size="icon-lg"
-            :aria-label="t('prototype.views.settings.billing.moreActions')"
-            @click="onManageStub('more')"
-          >
-            <i class="icon-[lucide--ellipsis] size-4" />
-          </Button>
-        </div>
-      </header>
-
-      <div class="flex flex-col gap-6 lg:flex-row lg:items-start">
-        <div
-          class="flex w-full flex-col gap-6 rounded-2xl border border-border-subtle bg-secondary-background px-6 py-5 lg:w-md"
-        >
-          <div class="flex flex-col gap-1">
-            <div class="flex items-center justify-between">
-              <span class="text-sm text-muted-foreground">
-                {{ t('subscription.totalCredits') }}
-              </span>
-              <button
-                type="button"
-                class="flex cursor-pointer appearance-none items-center border-0 bg-transparent p-0 text-muted-foreground transition-colors hover:text-base-foreground"
-                :aria-label="t('subscription.refreshCredits')"
-                @click="onManageStub('refresh')"
-              >
-                <i class="icon-[lucide--refresh-ccw] size-4" />
-              </button>
-            </div>
-            <div class="flex items-center gap-1">
-              <i
-                class="size-4 shrink-0 text-warning-background icon-[comfy--credits]"
-              />
-              <div class="flex items-baseline gap-2">
-                <span class="text-2xl font-bold text-base-foreground">
-                  {{ fmt(creditsRemaining) }}
-                </span>
-                <span class="text-sm text-muted-foreground">
-                  {{ t('prototype.views.settings.billing.creditsRemaining') }}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <div class="flex flex-col gap-2">
-            <div class="flex items-center justify-between text-sm">
-              <span class="text-base-foreground">
-                {{ t('subscription.monthly') }}
-              </span>
-              <span class="text-muted-foreground">
-                {{
-                  t('prototype.views.settings.billing.refills', {
-                    date: shortDate(billing.creditBalance.resetsAt)
-                  })
-                }}
-              </span>
-            </div>
-            <div
-              class="h-2 w-full overflow-hidden rounded-full bg-secondary-background-hover"
-            >
-              <div
-                class="h-full rounded-full bg-warning-background"
-                :style="{ width: `${usedPercent}%` }"
-              />
-            </div>
-            <div class="flex items-center justify-between">
-              <span class="text-sm text-muted-foreground">
-                {{
-                  t('prototype.views.settings.billing.creditsUsed', {
-                    count: fmt(creditsUsed)
-                  })
-                }}
-              </span>
-              <div class="flex items-center gap-1">
-                <i
-                  class="size-4 shrink-0 text-warning-background icon-[comfy--credits]"
-                />
-                <span class="text-sm font-bold text-base-foreground">
-                  {{
-                    t('prototype.views.settings.billing.creditsLeftOf', {
-                      remaining: fmt(creditsRemaining),
-                      total: fmt(monthlyAllowance)
-                    })
-                  }}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <hr class="m-0 w-full border-0 border-t border-border-subtle" />
-
-          <div class="flex flex-col gap-2">
-            <div class="flex items-center justify-between">
-              <div class="flex items-center gap-1">
-                <span class="text-sm text-base-foreground">
-                  {{ t('prototype.views.settings.billing.additionalCredits') }}
-                </span>
-                <i class="icon-[lucide--info] size-4 text-muted-foreground" />
-              </div>
-              <div class="flex items-center gap-1">
-                <i
-                  class="size-4 shrink-0 text-warning-background icon-[comfy--credits]"
-                />
-                <span class="text-sm font-bold text-base-foreground">
-                  {{ fmt(additionalCredits) }}
-                </span>
-              </div>
-            </div>
-            <span class="text-sm text-muted-foreground">
-              {{ t('prototype.views.settings.billing.additionalCreditsHint') }}
-            </span>
-          </div>
-
-          <Button
-            variant="secondary"
-            size="lg"
-            class="w-full"
-            @click="onManageStub('credits')"
-          >
-            {{ t('subscription.addCredits') }}
-          </Button>
-        </div>
-
-        <div class="flex flex-1 flex-col gap-4">
-          <p class="m-0 text-sm text-muted-foreground">
-            {{ t('subscription.yourPlanIncludes') }}
+  <div class="mx-auto flex w-full max-w-4xl flex-col gap-10 text-sm">
+    <section>
+      <h3 class="mb-1 font-semibold">
+        {{ t('prototype.settings.billing.balance') }}
+      </h3>
+      <p class="mb-4 text-muted-foreground">
+        {{ t('prototype.settings.billing.balanceHint') }}
+      </p>
+      <div
+        class="flex items-center justify-between rounded-lg border border-border-subtle bg-secondary-background/30 p-5"
+      >
+        <div>
+          <p class="m-0 text-muted-foreground">
+            {{ t('prototype.settings.billing.available') }}
           </p>
-          <div
-            v-for="benefit in benefits"
-            :key="benefit.key"
-            class="flex items-center gap-2"
-          >
-            <i
-              class="icon-[lucide--check] size-4 shrink-0 text-base-foreground"
+          <p class="mt-2 mb-0 text-2xl font-semibold tabular-nums">
+            {{ billing.creditBalance.remaining.toLocaleString() }}
+          </p>
+        </div>
+        <Button variant="secondary" @click="preview">{{
+          t('prototype.settings.billing.buy')
+        }}</Button>
+      </div>
+      <div
+        class="mt-3 divide-y divide-border-subtle rounded-lg border border-border-subtle bg-secondary-background/30"
+      >
+        <div class="grid divide-border-subtle sm:grid-cols-2 sm:divide-x">
+          <div class="p-5">
+            <p class="mb-2 text-muted-foreground">
+              {{ t('prototype.settings.billing.planCredits') }}
+            </p>
+            <p class="tabular-nums">
+              {{ billing.creditBalance.remaining.toLocaleString() }}
+              <span class="text-muted-foreground"
+                >/
+                {{
+                  billing.creditBalance.monthlyAllowance.toLocaleString()
+                }}</span
+              >
+            </p>
+            <div
+              class="mt-5 flex justify-between gap-4 text-xs text-muted-foreground"
+            >
+              <span>{{
+                t('prototype.settings.billing.refills', {
+                  date: date(billing.creditBalance.resetsAt)
+                })
+              }}</span
+              ><span>{{
+                t('prototype.settings.billing.used', { percent: usedPercent })
+              }}</span>
+            </div>
+            <progress
+              :value="usedPercent"
+              max="100"
+              :aria-label="t('prototype.settings.billing.creditUse')"
+              class="mt-2 h-1 w-full accent-base-foreground"
             />
-            <span class="text-sm text-base-foreground">{{
-              benefit.label
+          </div>
+          <div class="p-5">
+            <p class="mb-2 text-muted-foreground">
+              {{ t('prototype.settings.billing.extraCredits') }}
+            </p>
+            <p class="tabular-nums">{{ (0).toLocaleString() }}</p>
+          </div>
+        </div>
+        <div class="flex items-center justify-between gap-4 p-5">
+          <div>
+            <p class="m-0">
+              {{ t('prototype.settings.billing.autoReload') }}
+              <span class="ml-2 text-muted-foreground">{{
+                t('prototype.settings.billing.off')
+              }}</span>
+            </p>
+            <p class="mt-2 mb-0 text-muted-foreground">
+              {{ t('prototype.settings.billing.reloadHint') }}
+            </p>
+          </div>
+          <Button variant="secondary" @click="preview">{{
+            t('prototype.settings.billing.setUp')
+          }}</Button>
+        </div>
+      </div>
+    </section>
+    <section>
+      <h3 class="mb-1 font-semibold">
+        {{ t('prototype.settings.billing.plan') }}
+      </h3>
+      <p class="mb-4 text-muted-foreground">
+        {{ t('prototype.settings.billing.planHint') }}
+      </p>
+      <div
+        class="flex items-center justify-between gap-4 rounded-lg border border-border-subtle bg-secondary-background/30 p-5"
+      >
+        <div>
+          <p class="m-0">
+            {{ t(`prototype.sidebar.plan.${billing.subscription.plan}`) }}
+          </p>
+          <p class="mt-2 mb-0 text-muted-foreground">
+            {{
+              t('prototype.settings.billing.renews', {
+                date: date(billing.subscription.renewsAt)
+              })
+            }}<span v-if="tier === 'team'">
+              ·
+              {{
+                t('prototype.settings.billing.seats', billableMemberCount)
+              }}</span
+            >
+          </p>
+        </div>
+        <Button variant="secondary" @click="preview">{{
+          t('prototype.settings.billing.manage')
+        }}</Button>
+      </div>
+    </section>
+    <section>
+      <h3 class="mb-1 font-semibold">
+        {{ t('prototype.settings.billing.payment') }}
+      </h3>
+      <p class="mb-4 text-muted-foreground">
+        {{ t('prototype.settings.billing.paymentHint') }}
+      </p>
+      <div
+        class="flex items-center justify-between gap-4 rounded-lg border border-border-subtle bg-secondary-background/30 p-5"
+      >
+        <div>
+          <p class="m-0">
+            {{
+              billing.paymentMethod.brand ??
+              t('prototype.settings.billing.invoice')
+            }}
+            <span v-if="billing.paymentMethod.last4">
+              ···· {{ billing.paymentMethod.last4 }}</span
+            >
+          </p>
+          <p
+            v-if="billing.paymentMethod.expiresMonth"
+            class="mt-2 mb-0 text-muted-foreground"
+          >
+            {{
+              textT('prototype.settings.billing.expires', {
+                date: `${billing.paymentMethod.expiresMonth}/${billing.paymentMethod.expiresYear}`
+              })
+            }}
+          </p>
+        </div>
+        <Button variant="secondary" @click="preview">{{
+          t('prototype.settings.billing.manage')
+        }}</Button>
+      </div>
+    </section>
+    <section>
+      <h3 class="mb-1 font-semibold">
+        {{ t('prototype.settings.billing.invoices') }}
+      </h3>
+      <p class="mb-4 text-muted-foreground">
+        {{ t('prototype.settings.billing.invoiceHint') }}
+      </p>
+      <div
+        class="rounded-lg border border-border-subtle bg-secondary-background/30"
+      >
+        <div class="flex items-center justify-between p-5">
+          <span>{{ t('prototype.settings.billing.history') }}</span
+          ><Button
+            variant="secondary"
+            :aria-expanded="showInvoices"
+            @click="showInvoices = !showInvoices"
+            >{{
+              t(
+                showInvoices
+                  ? 'prototype.settings.billing.hide'
+                  : 'prototype.settings.billing.view'
+              )
+            }}</Button
+          >
+        </div>
+        <div
+          v-if="showInvoices"
+          class="divide-y divide-border-subtle border-t border-border-subtle"
+        >
+          <div
+            v-for="invoice in billing.invoices"
+            :key="invoice.id"
+            class="flex justify-between gap-4 p-4"
+          >
+            <span>{{ date(invoice.issuedAt) }}</span
+            ><span>{{ currency.format(invoice.amountUsd) }}</span
+            ><span>{{
+              t(
+                `prototype.views.settings.billing.invoiceStatus.${invoice.status}`
+              )
             }}</span>
           </div>
         </div>
       </div>
     </section>
-
-    <button
-      type="button"
-      class="flex w-fit cursor-pointer appearance-none items-center gap-2 border-0 bg-transparent p-0 text-muted-foreground transition-colors hover:text-base-foreground"
-      @click="onManageStub('plan')"
-    >
-      <span class="text-sm">{{
-        t('prototype.views.settings.billing.viewMoreDetailsPlans')
-      }}</span>
-      <i class="icon-[lucide--external-link] size-4" />
-    </button>
-
-    <hr class="m-0 w-full border-0 border-t border-border-subtle" />
-
-    <div
-      class="flex flex-wrap items-center gap-4 text-xs text-muted-foreground"
-    >
-      <button
-        v-for="link in helpLinks"
-        :key="link.key"
-        type="button"
-        class="flex cursor-pointer appearance-none items-center gap-1 border-0 bg-transparent p-0 text-muted-foreground transition-colors hover:text-base-foreground"
-        @click="onManageStub('help')"
-      >
-        <i :class="cn('size-4', link.icon)" />
-        <span>{{ link.label }}</span>
-      </button>
-      <button
-        type="button"
-        class="flex cursor-pointer appearance-none items-center gap-1 border-0 bg-transparent p-0 text-muted-foreground transition-colors hover:text-base-foreground"
-        @click="onManageStub('invoices')"
-      >
-        <span>{{ t('subscription.invoiceHistory') }}</span>
-        <i class="icon-[lucide--external-link] size-4" />
-      </button>
-    </div>
   </div>
 </template>
-
 <script setup lang="ts">
-import { cn } from '@comfyorg/tailwind-utils'
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-
 import Button from '@/components/ui/button/Button.vue'
-
-import type { WorkspaceBilling, WorkspacePlan, WorkspaceTier } from '../types'
-
+import { useTextT } from '../composables/useTextT'
+import { useToastStore } from '@/platform/updates/common/toastStore'
+import type { WorkspaceBilling, WorkspaceTier } from '../types'
 const { billing, tier, billableMemberCount } = defineProps<{
   billing: WorkspaceBilling
   tier: WorkspaceTier
   billableMemberCount: number
 }>()
-
 const { t } = useI18n()
-
-const tierPriceByPlan: Record<WorkspacePlan, number> = {
-  free: 0,
-  professional: 20,
-  enterprise: 50
-}
-
-const tierNameByPlan: Record<WorkspacePlan, string> = {
-  free: 'Free',
-  professional: 'Professional',
-  enterprise: 'Enterprise'
-}
-
-const tierName = computed(() => tierNameByPlan[billing.subscription.plan])
-const monthlyTotal = computed(
-  () => tierPriceByPlan[billing.subscription.plan] * billableMemberCount
-)
-
-const planActionLabel = computed(() =>
-  tier === 'team'
-    ? t('prototype.views.settings.billing.changePlan')
-    : t('prototype.views.settings.billing.upgradePlan')
-)
-
-const creditsRemaining = computed(() => billing.creditBalance.remaining)
-const monthlyAllowance = computed(() => billing.creditBalance.monthlyAllowance)
-const creditsUsed = computed(() =>
-  Math.max(0, monthlyAllowance.value - creditsRemaining.value)
-)
+const textT = useTextT()
+const toast = useToastStore()
+const showInvoices = ref(false)
+const currency = new Intl.NumberFormat('en-US', {
+  style: 'currency',
+  currency: 'USD'
+})
 const usedPercent = computed(() =>
-  monthlyAllowance.value > 0
-    ? Math.min(
-        100,
-        Math.round((creditsUsed.value / monthlyAllowance.value) * 100)
+  billing.creditBalance.monthlyAllowance
+    ? Math.max(
+        0,
+        Math.min(
+          100,
+          Math.round(
+            (1 -
+              billing.creditBalance.remaining /
+                billing.creditBalance.monthlyAllowance) *
+              100
+          )
+        )
       )
     : 0
 )
-const additionalCredits = computed(() => 0)
-
-const benefits = computed(() => {
-  if (billing.subscription.plan === 'free') {
-    return [
-      {
-        key: 'members',
-        label: t('prototype.views.settings.billing.membersLabel', { count: 1 })
-      },
-      { key: 'credits', label: '100 credits / month' },
-      { key: 'support', label: 'Community support' }
-    ]
-  }
-  if (billing.subscription.plan === 'enterprise') {
-    return [
-      { key: 'members', label: 'Unlimited members' },
-      { key: 'credits', label: 'Custom credit allowance' },
-      { key: 'sso', label: 'SSO & SCIM' },
-      { key: 'support', label: 'Dedicated account manager' }
-    ]
-  }
-  return [
-    {
-      key: 'members',
-      label: t('prototype.views.settings.billing.membersLabel', {
-        count: billing.subscription.seatsIncluded
-      })
-    },
-    { key: 'credits', label: '10,000 credits / month per member' },
-    { key: 'partner', label: t('subscription.partnerNodesDescription') },
-    { key: 'support', label: 'Priority support' }
-  ]
-})
-
-const helpLinks = computed(() => [
-  {
-    key: 'learn',
-    icon: 'icon-[lucide--circle-help]',
-    label: t('prototype.views.settings.billing.learnMore')
-  },
-  {
-    key: 'partner',
-    icon: 'icon-[lucide--circle-help]',
-    label: t('prototype.views.settings.billing.partnerNodesPricing')
-  },
-  {
-    key: 'support',
-    icon: 'icon-[lucide--message-circle]',
-    label: t('subscription.messageSupport')
-  }
-])
-
-function fmt(value: number): string {
-  return value.toLocaleString()
-}
-
-function formattedDate(value: string): string {
+function date(value: string) {
   return new Date(value).toLocaleDateString('en-US', {
-    month: 'short',
+    month: 'long',
     day: 'numeric',
     year: 'numeric'
   })
 }
-
-function shortDate(value: string): string {
-  return new Date(value).toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric'
+function preview() {
+  toast.add({
+    severity: 'info',
+    summary: t('prototype.settings.billing.preview'),
+    life: 3500
   })
-}
-
-function onManageStub(
-  _kind:
-    | 'plan'
-    | 'payment'
-    | 'credits'
-    | 'invoices'
-    | 'more'
-    | 'refresh'
-    | 'help'
-) {
-  // Prototype stub — real flow would open a modal / Stripe portal.
 }
 </script>

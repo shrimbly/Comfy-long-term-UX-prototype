@@ -69,7 +69,7 @@ describe('customCloudStore', () => {
     openWorkflowIn(store, 'proj-marketing')
     store.switchProject('proj-brand')
     expect(store.reloadingToId).toBeNull()
-    expect(store.currentProject.id).toBe('proj-brand')
+    expect(store.currentProject?.id).toBe('proj-brand')
     expect(tabs.openTabs.map((t) => t.kind)).toEqual(['workflow'])
   })
 
@@ -83,7 +83,7 @@ describe('customCloudStore', () => {
 
   it('ranks the current project first in Recent, then the ones switched away from', async () => {
     const { store } = await setup()
-    const startId = store.currentProject.id
+    const startId = store.currentProject?.id
     openWorkflowIn(store, 'proj-marketing')
     openWorkflowIn(store, 'proj-cocacola')
     expect(store.recentProjectIds).toEqual([
@@ -173,5 +173,20 @@ describe('customCloudStore', () => {
 
     expect(store.runRequested).toBe(true)
     expect(store.dialogStep).toBeNull()
+  })
+  it('keeps project tabs when switching workspaces and cancels a pending project reload', async () => {
+    const { store, personas, tabs, ui } = await setup()
+    tabs.openWorkflow('Keep my workflow')
+    const workspaceId = personas.fixture.currentWorkspaceId
+    store.switchProject('proj-marketing')
+    store.switchWorkspace('ws-personal')
+    vi.advanceTimersByTime(RELOAD_MS)
+    expect(personas.fixture.currentWorkspaceId).toBe('ws-personal')
+    expect(store.reloadingToId).toBeNull()
+    expect(tabs.openTabs).toEqual([])
+    expect(ui.activeView.kind).toBe('home')
+    store.switchWorkspace(workspaceId)
+    expect(tabs.openTabs.map((tab) => tab.label)).toEqual(['Keep my workflow'])
+    expect(tabs.activeTabId).toBe('home')
   })
 })

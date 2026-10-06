@@ -33,7 +33,12 @@
         <PrototypeSidebar />
 
         <main
-          class="flex-1 overflow-auto bg-base-background p-6 text-base-foreground"
+          :class="
+            cn(
+              'min-w-0 flex-1 overflow-auto bg-base-background text-base-foreground',
+              activeView.kind !== 'settings' && 'p-6'
+            )
+          "
         >
           <HomeView v-if="activeView.kind === 'home'" />
           <DraftsView v-else-if="activeView.kind === 'drafts'" />
@@ -83,6 +88,7 @@
 </template>
 
 <script setup lang="ts">
+import { cn } from '@comfyorg/tailwind-utils'
 import { storeToRefs } from 'pinia'
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'

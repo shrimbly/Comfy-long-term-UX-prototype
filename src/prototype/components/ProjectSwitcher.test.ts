@@ -35,7 +35,7 @@ async function setup() {
   })
   const customCloud = usePrototypeCustomCloudStore()
   render(ProjectSwitcher, {
-    props: { project: customCloud.currentProject },
+    props: { project: customCloud.currentProject! },
     global: { plugins: [getActivePinia()!, router, i18n] }
   })
   const user = userEvent.setup()
@@ -73,15 +73,15 @@ describe('ProjectSwitcher menu', () => {
     )
     expect(customCloud.switcherOpen).toBe(false)
     expect(router.currentRoute.value.name).toBe('PrototypeDashboard')
-    expect(customCloud.currentProject.id).toBe(picked?.id)
+    expect(customCloud.currentProject?.id).toBe(picked?.id)
   })
 
   it('closes on Escape without switching', async () => {
     const { customCloud, user } = await setup()
-    const startId = customCloud.currentProject.id
+    const startId = customCloud.currentProject?.id
     await user.keyboard('ma{Escape}')
     expect(customCloud.switcherOpen).toBe(false)
     expect(screen.queryByRole('listbox')).toBeNull()
-    expect(customCloud.currentProject.id).toBe(startId)
+    expect(customCloud.currentProject?.id).toBe(startId)
   })
 })
