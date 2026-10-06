@@ -42,6 +42,10 @@
           <HomeView v-if="activeView.kind === 'home'" />
           <DraftsView v-else-if="activeView.kind === 'drafts'" />
           <ProjectsView v-else-if="activeView.kind === 'projects'" />
+          <EnvironmentsView
+            v-else-if="activeView.kind === 'environments'"
+            :key="fixture.currentWorkspaceId"
+          />
           <ProjectDetailView
             v-else-if="activeView.kind === 'project'"
             :key="activeView.projectId"
@@ -105,6 +109,7 @@ import DraftsView from '../views/DraftsView.vue'
 import HomeView from '../views/HomeView.vue'
 import ProjectDetailView from '../views/ProjectDetailView.vue'
 import ProjectsView from '../views/ProjectsView.vue'
+import EnvironmentsView from '../views/EnvironmentsView.vue'
 import RecentsView from '../views/RecentsView.vue'
 import SettingsView from '../views/SettingsView.vue'
 import TemplatesView from '../views/TemplatesView.vue'

@@ -111,6 +111,7 @@ type DeploymentKind = 'comfy-cloud' | 'custom'
 export type DeploymentStatus = 'ready' | 'asleep' | 'building'
 
 export interface Deployment {
+  workspaceId?: string
   id: string
   name: string
   kind: DeploymentKind

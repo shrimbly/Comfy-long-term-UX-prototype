@@ -32,3 +32,15 @@ Usage shows sample spend by member and project for September and October 2026.
 Both views use the same records. CSV exports include the selected view and month.
 Catalog metadata and usage are sample data. Billing, account creation, and logout
 are not connected to live services.
+
+## Environments preview
+
+Home lists custom deployments under Create → Environments. Each card shows
+its status, GPU, build version, contents, and accessible project count. The page
+uses the same deployment records as project settings and the editor.
+
+Admins can create a deployment from an existing build or the Comfy Cloud base,
+and edit its name and keep-warm time. Members can view deployment details.
+New deployments start asleep and have no assigned projects. These actions only
+update the current workspace's fixture data and reset on reload; no cloud
+resources are created.
