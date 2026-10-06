@@ -1357,3 +1357,29 @@ Willie asked for the real node graph, "with all the happy path UI we already dis
 - **Known:** Escape doesn't close the tab-bar switcher menu while the editor is mounted; clicking outside does.
 
 Promote? **no** — prototype infrastructure, no IA change.
+
+---
+
+## [2026-10-07] Merge upstream ComfyUI_frontend main (2026-10-06)
+
+The fork last synced with upstream on 2026-05-07. Willie wants the current upstream chrome around the node graph for the 8 Oct Custom Comfy Cloud demo. Branch `merge-upstream-main`, merge commit `6dd757292c`.
+
+- **Decision:** upstream wins everywhere outside `src/prototype/` and `prototype/`. The fork keeps only its hooks into upstream code: the router base and `prototypeRoutes`, `installMockBackend` in `main.ts`, `build:prototype`, the `/prototype` gating in `App.vue` and `GraphView.vue`, the PP Formula font, and the `prototype` i18n subtree.
+- **Editor chrome is upstream's:** the left toolbar, the Graph mode switch with a panel toggle, Run with the queue count, the right-panel toggle, the minimap and upstream's Media Assets sidebar.
+- **Flow 07 change: missing nodes are amber, not red.** Upstream now marks missing nodes and models as warnings: an amber ring and an "Issues" footer (upstream #19151). Run shows a warning icon while they exist. Severity is hardcoded, so red would need a revert of upstream code. The demo script's "four nodes go red" wording needs an update. Everything else in Flow 07 is unchanged.
+- **Fork features removed, because upstream replaced the code that wired them in:**
+  - the Media Assets tab in the editor's workflow tab bar, and dragging assets onto the canvas
+  - the save-node asset tags widget and filename template variables (`@variable` autocomplete, the Filename Variables settings panel)
+  - "Move to" for media assets, and the lightbox's compare mode
+- **Dashboard Media tab (`MediaAssetsView`, Flow 01; `LocalMediaView`, Flow 06):** the browser check shows the masonry grid, the sidebar and the context menu working. Search with `@` filters, tags and favorites keep the fork's code; they were not clicked through. The tab now reads only the prototype provider. It uses upstream's `MediaAssetCard`, so:
+  - cards are square crops, not natural aspect, and each card's filename line is partly covered by the next row
+  - Flow 06 loses the card overlays: the dimmed "Relink" state on a missing reference and the hover source-path badge. The context menu keeps Relink, Remove from Comfy and Promote to cloud.
+  - the Explore-feed creator chip is gone
+  - restoring the fork's card is possible but needs its drag-preview code reworked; not done.
+- **Lint and i18n changes the upgrade forced:**
+  - New oxlint rules flag existing fork code. Those violations are baselined in `oxlint-suppressions.json`, upstream's own mechanism. The 29 `no-primevue-imports` entries are the largest group.
+  - Color classes that never existed (`text-danger`, `text-success`, `text-warning`, `text-neutral`) now map to design-system tokens, so danger menu items and the delete hover turn red. Before, these classes rendered no color.
+  - vue-i18n 11 needs `{'@'}` for a literal `@`.
+  - The `gradient` Button variant is now `subscribe`: the local persona's Upgrade button is solid gold, not purple.
+- Wiki link: none; prototype infrastructure.
+- Promote? **no**.
