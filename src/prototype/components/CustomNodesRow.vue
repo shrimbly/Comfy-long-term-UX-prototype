@@ -114,9 +114,13 @@
             aria-hidden="true"
           />
           {{
-            t(`prototype.customNodes.status.${row.state}`, {
-              release: store.rebuild?.release
-            })
+            row.state === 'adding'
+              ? t('prototype.customNodes.status.adding', {
+                  release: store.rebuild?.release
+                })
+              : t('prototype.customNodes.status.changing', {
+                  release: store.rebuild?.release
+                })
           }}
         </span>
         <span v-if="minutesLeft != null" class="text-xs text-muted-foreground">
