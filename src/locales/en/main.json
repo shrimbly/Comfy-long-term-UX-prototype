@@ -6949,8 +6949,8 @@
           "nonePinned": "None pinned",
           "withAgent": "Build with your agent",
           "next": "Next: deployment",
-          "customiseTitle": "Customise the build on Platform?",
-          "customiseBody": "{setting} is set on the Developer Platform. Open the build there with these settings filled in. The deployment shows up here once it builds.",
+          "customiseTitle": "Change {setting} on Platform?",
+          "customiseBody": "The build opens there with these settings filled in.",
           "openPlatform": "Open Platform",
           "customiseToastDetail": "Customising a build isn't in this prototype."
         },

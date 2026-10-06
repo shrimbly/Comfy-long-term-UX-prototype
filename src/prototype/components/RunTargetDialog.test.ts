@@ -119,8 +119,12 @@ describe('RunTargetDialog', () => {
     await user.click(await screen.findByRole('button', { name: /Runtime/ }))
 
     expect(
-      screen.getByText('Customise the build on Platform?')
+      screen.getByRole('alertdialog', { name: 'Change Runtime on Platform?' })
     ).toBeInTheDocument()
+
+    await user.keyboard('{Escape}')
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument()
+    expect(store.dialogStep).toBe('build')
   })
 
   it('deploys on the GPU picked, showing its cost at full load', async () => {

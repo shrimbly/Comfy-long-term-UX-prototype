@@ -65,14 +65,14 @@
         <RunTargetDeploy v-else :title-id="titleId" @close="close" />
       </div>
     </div>
-    <ConfirmDialog
+    <PlatformConfirm
       v-if="customising"
-      :title="t('prototype.customCloud.dialog.build.customiseTitle')"
-      :message="
-        t('prototype.customCloud.dialog.build.customiseBody', {
+      :title="
+        t('prototype.customCloud.dialog.build.customiseTitle', {
           setting: customising
         })
       "
+      :message="t('prototype.customCloud.dialog.build.customiseBody')"
       :confirm-label="t('prototype.customCloud.dialog.build.openPlatform')"
       @confirm="openPlatform"
       @cancel="customising = null"
@@ -90,7 +90,7 @@ import { useToastStore } from '@/platform/updates/common/toastStore'
 
 import { usePrototypeCustomCloudStore } from '../stores/customCloudStore'
 
-import ConfirmDialog from './ConfirmDialog.vue'
+import PlatformConfirm from './PlatformConfirm.vue'
 import RunTargetAgent from './RunTargetAgent.vue'
 import RunTargetBuildSummary from './RunTargetBuildSummary.vue'
 import RunTargetChoose from './RunTargetChoose.vue'
