@@ -48,17 +48,7 @@
           <SettingsView v-else-if="activeView.kind === 'settings'" />
         </main>
       </div>
-      <!-- Hidden but still laid out: display:none would let the editor's
-           nodes re-measure at zero width and keep those sizes. -->
-      <RealEditor
-        :class="
-          cn(
-            !isEditorTabActive &&
-              'pointer-events-none invisible absolute inset-0'
-          )
-        "
-        :aria-hidden="!isEditorTabActive"
-      />
+      <RealEditor />
 
       <BuildLockModal
         v-if="customCloud.isLocked && customCloud.progress && currentProject"
@@ -97,7 +87,6 @@
 </template>
 
 <script setup lang="ts">
-import { cn } from '@comfyorg/tailwind-utils'
 import { storeToRefs } from 'pinia'
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
