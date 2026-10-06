@@ -1446,3 +1446,27 @@ Wiki is silent on what opening a recent does across projects. Promote? **maybe**
 
 - **Decision: switching between projects on the same deployment is instant.** That includes every switch between two Comfy Cloud projects. The reload only exists because a deployment can load different frontend extensions. Moving to a project on a different deployment still shows the loading screen. Examples: Comfy Cloud to Coca-Cola Ad's Acme Studio, custom to custom, or into a new build.
 - The rule is "same deployment", not "both on Comfy Cloud". So two projects sharing one custom deployment (`decisions/project-runs-on-shared-deployment.md`) also switch instantly. The demo data has no such pair yet.
+
+---
+
+## [2026-10-07] Project switcher menu: search, recent first
+
+Willie picked direction H from the design canvas "Project switcher menu: search and cleanup" (https://claude.ai/artifact/PUXMPpzcUU8dJjRVmhmr9j), with two changes: the tick takes the place of the row's glyph instead of its own column, and the search field's corners nest inside the menu's.
+
+- **Decision: the menu opens on a search field.** You can type at once. The search matches any part of a project's name and ignores case. The arrow keys move, Enter switches and Esc closes. When nothing matches, the menu says "No projects match “…”" and keeps **All projects** below.
+- **Decision: recent projects first, then the rest A–Z.** Recent holds up to three projects, in this order:
+  1. the current project;
+  2. the projects you switched away from this session, newest first;
+  3. the projects of your latest workflow edits. A draft counts for its provenance project.
+
+  While you search, the two sections become one list, recent first.
+
+- **Decision: one-line rows with no colour tile.** Each row leads with the pill's glyph: a person for My Workflows, a cloud for Comfy Cloud, or the deployment's status dot (blue with a halo while building, green when ready, grey when asleep). The current project shows a tick there instead. A custom deployment's row names the deployment on the right, or shows "Building · N min" while it builds. A Comfy Cloud row shows nothing more, because the cloud says it.
+- **Decision: no current-project header.** The pill and the tick already show which project you are in.
+- The menu follows upstream's menus and search field: `bg-base-background`, `searchInputVariants` at size md, and one highlight colour for hover and the keyboard. The corners nest: the menu is 12px, and the search field and rows are 8px at a 4px inset.
+- When the menu opens, the current project's row is highlighted as well as ticked, because reka's listbox highlights the selected option. So ↓ then Enter takes you back to your last project.
+- **Escape over the editor:** the reported bug did not reproduce on this base (`16432a5`). Escape closed both the old and the new menu in 11 headless Chromium cases, including the build lock screen and a canvas-focused open. The menu now also closes on Escape from its own keydown, as upstream's `NodeSearchTypeFilterPopover` does, so an editor listener on the document or window cannot swallow the key.
+- Built with reka-ui `Listbox` and `ListboxFilter` inside the existing `PopoverContent`. Upstream's `SearchInput` wraps its own `Combobox`, so it cannot drive the list's arrow keys.
+- The pill is unchanged.
+
+Wiki: `decisions/project-switcher-in-tab-bar.md` says "The menu lists projects with where each runs"; this keeps that. The wiki says nothing about search or what "recent" means. Promote? **maybe**: add "search, recent first" to that decision.

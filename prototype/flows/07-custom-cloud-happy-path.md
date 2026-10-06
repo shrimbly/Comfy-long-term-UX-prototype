@@ -67,7 +67,7 @@ Wiki: `../IA_Plan/wiki/concepts/custom-comfy-cloud.md`. Source: the 6 Oct "Custo
    - Build progress runs: resolve, upload, install, bake. Deploy follows: start a worker, load models. Each stage shows a time.
    - The copy says about 19 minutes and "we'll email you". The demo plays it in about 18 seconds.
    - The project pill shows a blue dot and "Building · 12 min".
-   - Optional: click **Switch to another project**. The project menu opens and the tab strip stays live. Press Esc to stay.
+   - Optional: click **Switch to another project**. The project menu opens with its search field ready to type in, and the tab strip stays live. Press Esc to stay.
 7. **Ready: the red nodes are gone.**
    - The modal closes, the nodes are no longer red, and the pill's dot turns green.
    - A toast says "Matte R&D is ready" and offers **Run matte_pass**.
@@ -76,9 +76,9 @@ Wiki: `../IA_Plan/wiki/concepts/custom-comfy-cloud.md`. Source: the 6 Oct "Custo
    - A small note under Run says "Starting a worker. The first run takes a little longer: usually under 20 seconds." The editor also shows its own "Job queued" toast. Nothing actually runs.
    - There is no warm/cold indicator anywhere else.
 9. **Switch projects from the tab bar.**
-   - Click the project pill, just right of the Home tab. Each project shows where it runs.
-   - Pick **Coca-Cola Ad**. It runs on its own deployment, so the app reloads: a loading screen like ComfyUI's own (the Comfy logo filling with a wave, "Opening Coca-Cola Ad"), then the editor with your four Coca-Cola Ad drafts as tabs, newest first.
-   - Switch back to **Matte R&D** from the pill. Its `matte_pass` tab is still there.
+   - Click the project pill, just right of the Home tab. The menu lists your recent projects first, then the rest A–Z. A cloud marks Comfy Cloud; a custom deployment shows its status dot and name.
+   - Type "coca" and press Enter, or click **Coca-Cola Ad**. It runs on its own deployment, so the app reloads: a loading screen like ComfyUI's own (the Comfy logo filling with a wave, "Opening Coca-Cola Ad"), then the editor with your four Coca-Cola Ad drafts as tabs, newest first.
+   - Switch back to **Matte R&D** from the pill: it is now under Recent. Its `matte_pass` tab is still there.
 
 Then click **Reset demo** and run it again.
 
@@ -92,7 +92,7 @@ Then click **Reset demo** and run it again.
 
 - Projects page → project cards (`views/ProjectsView.vue`, `components/ProjectCard.vue`)
 - Project page → Settings → Deployment (`views/ProjectDetailView.vue`, `components/ProjectDeploymentSection.vue`)
-- Tab strip → project switcher (`components/PrototypeTabs.vue`, `components/ProjectSwitcher.vue`)
+- Tab strip → project switcher (`components/PrototypeTabs.vue`, `components/ProjectSwitcher.vue`, `components/ProjectSwitcherMenu.vue`)
 - The real editor (`components/RealEditor.vue` around `src/views/GraphView.vue`, served by `mockBackend/`), run-target dialog (`components/RunTargetDialog.vue`, `RunTargetSelect.vue`), build lock (`components/BuildLockModal.vue`), ready toast, reload screen
 - State: `stores/customCloudStore.ts`, tabs per project in `stores/tabsStore.ts`, data in `fixtures/customCloud.ts` + `fixtures/admin.ts`
 
