@@ -1319,3 +1319,15 @@ Built for the 8 Oct customer demo from the 6 Oct "Custom cloud sync". Flow: `pro
 - Decision: `useTextT` calls `t(…, { escapeParameter: false })` for strings that carry project or deployment names. They render only into text nodes or the clipboard.
 - Reason: the app-wide `escapeParameter: true` showed "Matte R&amp;D".
 - Promote? **no**.
+
+---
+
+## [2026-10-06] Flow 07 follow-up: Home tab first; no projects list on Home
+
+Willie's review of the deployed preview:
+
+- **The Home tab comes first** in the tab strip, and the project switcher sits right after it, before the project's workflow tabs. This replaces "far left of the tab strip" from the earlier entry.
+- **Home no longer lists projects.** The Projects section added earlier the same day is removed. "Where each project runs" now shows on the Projects page (sidebar → Projects), whose cards carry the deployment line.
+
+Wiki link: `decisions/project-switcher-in-tab-bar.md` still says "far left of the tab bar", and `concepts/custom-comfy-cloud.md` step 1 still says "Home shows projects". Both need a small update in the wiki.
+Promote? **yes**, as an amendment to those pages.

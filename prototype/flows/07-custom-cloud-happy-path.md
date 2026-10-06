@@ -32,8 +32,8 @@ Wiki: `../IA_Plan/wiki/concepts/custom-comfy-cloud.md`. Source: the 6 Oct "Custo
 
 ## Click path
 
-1. **Home shows projects and where each runs.**
-   - Land on Home. The **Projects** section lists each project with its deployment: "● Acme Studio pipeline · v3 · ready", "● Matte tests · v7 · asleep", or "Comfy Cloud".
+1. **Projects, and where each runs.**
+   - From Home, click **Projects** in the sidebar. Each project card shows its deployment: "● Acme Studio pipeline · v3 · ready", "● Matte tests · v7 · asleep", or "Comfy Cloud".
    - Say: everything you create in a project is contained in that project.
 2. **Different people in different projects.**
    - Click **Coca-Cola Ad**. The Share button shows Willie and Alex.
@@ -47,7 +47,7 @@ Wiki: `../IA_Plan/wiki/concepts/custom-comfy-cloud.md`. Source: the 6 Oct "Custo
    - Optional: switch the persona to Workspace Member and open the same page. "Change deployment" is gone.
 4. **Open a workflow, drop in an incompatible one.**
    - Open **Marketing 2026** and click **+ Workflow**.
-   - The app reloads into Marketing 2026: a short "Opening Marketing 2026" screen, then the editor. The switcher at the top left now reads Marketing 2026.
+   - The app reloads into Marketing 2026: a short "Opening Marketing 2026" screen, then the editor. The switcher next to the Home tab now reads Marketing 2026.
    - Drag any file onto the editor. It opens as `matte_pass` in a new tab.
    - Load Diffusion Model and AcmeMatteRefine show red, with an Error tab. There is no error toast and no Issues panel.
 5. **"Choose where it runs".** The dialog opens on its own.
@@ -66,7 +66,7 @@ Wiki: `../IA_Plan/wiki/concepts/custom-comfy-cloud.md`. Source: the 6 Oct "Custo
    - The app reloads into the new project, Matte R&D. A full-screen modal covers its editor, and the node graph is not usable.
    - Build progress runs: resolve, upload, install, bake. Deploy follows: start a worker, load models. Each stage shows a time.
    - The copy says about 19 minutes and "we'll email you". The demo plays it in about 18 seconds.
-   - The switcher at the top left shows a spinner and the minutes left.
+   - The switcher next to the Home tab shows a spinner and the minutes left.
    - Optional: click **Switch to another project**. The project menu opens and the tab strip stays live. Press Esc to stay.
 7. **Ready: the red nodes are gone.**
    - The modal closes, the nodes are no longer red, and the status dot turns green.
@@ -76,7 +76,7 @@ Wiki: `../IA_Plan/wiki/concepts/custom-comfy-cloud.md`. Source: the 6 Oct "Custo
    - A small note under Run says "Starting a worker. The first run takes a little longer: usually under 20 seconds." The run counter shows "1 active".
    - There is no warm/cold indicator anywhere else.
 9. **Switch projects from the tab bar.**
-   - Click the project switcher at the far left of the tab strip. Each project shows where it runs.
+   - Click the project switcher, just right of the Home tab. Each project shows where it runs.
    - Pick **Coca-Cola Ad**. A short reload screen shows, then Coca-Cola Ad with its own tabs (none yet).
    - Switch back to **Matte R&D**. Its `matte_pass` tab is still there.
 
@@ -90,7 +90,7 @@ Then click **Reset demo** and run it again.
 
 ## Surfaces touched
 
-- Home → Projects section (`views/HomeView.vue`, `components/ProjectCard.vue`)
+- Projects page → project cards (`views/ProjectsView.vue`, `components/ProjectCard.vue`)
 - Project page → Settings → Deployment (`views/ProjectDetailView.vue`, `components/ProjectDeploymentSection.vue`)
 - Tab strip → project switcher (`components/PrototypeTabs.vue`, `components/ProjectSwitcher.vue`)
 - Demo editor (`views/DemoEditorView.vue`), run-target dialog (`components/RunTargetDialog.vue`, `RunTargetSelect.vue`), build lock (`components/BuildLockModal.vue`), ready toast, reload screen

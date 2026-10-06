@@ -513,8 +513,7 @@
         },
         "recentsEmpty": {
           "heading": "Your recent workflows will show up here"
-        },
-        "projects": "Projects"
+        }
       },
       "templates": {
         "title": "Templates",

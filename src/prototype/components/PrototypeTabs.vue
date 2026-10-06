@@ -5,11 +5,12 @@
     hover-revealed close button, and trailing "+" button.
 
   Differences vs upstream:
-    - The project switcher sits at the far left, before every tab (Custom
-      Comfy Cloud: ../IA_Plan/wiki/decisions/project-switcher-in-tab-bar.md).
-      The tabs to its right are that project's tabs.
     - Home tab (lucide--house) is rendered first and is the default active
       tab. It can't be closed.
+    - The project switcher sits right after Home, before the workflow tabs
+      (Custom Comfy Cloud:
+      ../IA_Plan/wiki/decisions/project-switcher-in-tab-bar.md). The tabs to
+      its right are that project's tabs.
     - Driven by the prototype tabsStore (mock data) rather than the real
       workflow store.
     - User avatar sits on the far right (mirroring CurrentUserButton's
@@ -20,10 +21,6 @@
     class="flex h-(--workflow-tabs-height) w-full items-stretch border-b border-interface-stroke bg-base-background text-base-foreground"
   >
     <div class="flex min-w-0 flex-1 items-stretch">
-      <ProjectSwitcher
-        v-if="customCloud.isEnabled && customCloud.currentProject"
-        :project="customCloud.currentProject"
-      />
       <button
         type="button"
         :class="
@@ -41,6 +38,10 @@
           class="absolute inset-x-0 -bottom-px h-px bg-primary-background"
         />
       </button>
+      <ProjectSwitcher
+        v-if="customCloud.isEnabled && customCloud.currentProject"
+        :project="customCloud.currentProject"
+      />
 
       <div
         v-for="tab in openTabs"
