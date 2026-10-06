@@ -13,7 +13,6 @@ import AppBuilder from '@/components/builder/AppBuilder.vue'
 import AppModeToolbar from '@/components/appMode/AppModeToolbar.vue'
 import ExtensionSlot from '@/components/common/ExtensionSlot.vue'
 import SideToolbar from '@/components/sidebar/SideToolbar.vue'
-import WorkflowTabs from '@/components/topbar/WorkflowTabs.vue'
 import SplitterGroup from '@/components/ui/splitter/SplitterGroup.vue'
 import SplitterPanel from '@/components/ui/splitter/SplitterPanel.vue'
 import SplitterResizeHandle from '@/components/ui/splitter/SplitterResizeHandle.vue'
@@ -139,11 +138,6 @@ function dragDrop(e: DragEvent) {
 <template>
   <MobileDisplay v-if="mobileDisplay" />
   <div v-else class="absolute flex size-full flex-col" @dragover.prevent>
-    <div
-      class="workflow-tabs-container pointer-events-auto h-(--workflow-tabs-height) w-full border-b border-interface-stroke/50 shadow-interface"
-    >
-      <WorkflowTabs />
-    </div>
     <div class="flex min-h-0 flex-1 flex-row bg-secondary-background">
       <div
         ref="workspace"

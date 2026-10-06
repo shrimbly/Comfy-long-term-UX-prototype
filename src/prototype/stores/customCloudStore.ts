@@ -150,14 +150,28 @@ export const usePrototypeCustomCloudStore = defineStore(
       )
     })
 
-    // A full reload lands on Home with that project's tabs.
+    // The viewer's drafts for a project, newest first.
+    function draftNames(projectId: string) {
+      const draftsId = personaStore.draftsProject?.id
+      return personaStore.fixture.workflows
+        .filter(
+          (w) => w.projectId === draftsId && w.provenanceProjectId === projectId
+        )
+        .toSorted((a, b) => b.updatedAt.localeCompare(a.updatedAt))
+        .map((w) => w.name)
+    }
+
+    // A full reload lands in the editor: the project's remembered tabs, or
+    // its drafts the first time, or a blank workflow if it has none.
     const reload = useTimeoutFn(
       (fromId: string, toId: string, afterSwitch?: () => void) => {
         tabsStore.swapProject(fromId, toId)
+        if (!tabsStore.openTabs.length) tabsStore.openAll(draftNames(toId))
         selectedProjectId.value = toId
         reloadingToId.value = null
         uiStore.goHome()
         afterSwitch?.()
+        tabsStore.focusWorkflow()
       },
       RELOAD_MS,
       { immediate: false }

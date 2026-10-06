@@ -18,8 +18,18 @@
     - a run on a custom deployment shows the cold-start note under Run.
 -->
 <template>
-  <div class="relative isolate flex min-h-0 flex-1">
-    <GraphView />
+  <!-- Hidden but still laid out, out of the flow: display:none would let
+       the editor's nodes re-measure at zero width and keep those sizes. -->
+  <div
+    :class="
+      cn(
+        'relative isolate flex min-h-0 flex-1',
+        !activeTab && 'pointer-events-none invisible absolute inset-0'
+      )
+    "
+    :aria-hidden="!activeTab"
+  >
+    <GraphView embedded :active="!!activeTab" />
     <div
       v-if="customCloud.runState === 'starting' && coldStartAnchor"
       role="status"
@@ -40,6 +50,7 @@
 </template>
 
 <script setup lang="ts">
+import { cn } from '@comfyorg/tailwind-utils'
 import { until, useEventListener } from '@vueuse/core'
 import { computed, onMounted, ref, toRaw, watch } from 'vue'
 import { useI18n } from 'vue-i18n'

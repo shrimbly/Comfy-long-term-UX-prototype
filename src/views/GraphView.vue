@@ -21,7 +21,7 @@
     <PrototypeProjectChip v-if="isDevPrototype" />
   </div>
 
-  <GlobalToast />
+  <GlobalToast v-if="embedded || route?.name === 'GraphView'" />
   <InviteAcceptedToast />
   <RerouteMigrationToast />
   <ModelImportProgressDialog />
@@ -38,6 +38,8 @@
 <script setup lang="ts">
 import { useEventListener, useIntervalFn } from '@vueuse/core'
 import { storeToRefs } from 'pinia'
+import { useRoute } from 'vue-router'
+import type { RouteLocationNormalizedLoaded } from 'vue-router'
 
 import {
   computed,
@@ -110,9 +112,23 @@ import LinearView from '@/views/LinearView.vue'
 import ManagerProgressToast from '@/workbench/extensions/manager/components/ManagerProgressToast.vue'
 
 import PrototypeProjectChip from '@/prototype/components/PrototypeProjectChip.vue'
+import { usePrototypeNavigationStore } from '@/prototype/stores/navigationStore'
 
+// `embedded`: mounted inside the prototype dashboard (RealEditor) rather
+// than as the `/` route; `active`: the embedded editor is the visible tab.
+const { embedded = false, active = false } = defineProps<{
+  embedded?: boolean
+  active?: boolean
+}>()
+
+// GraphView also mounts without a router, so the route can be missing.
+const route: RouteLocationNormalizedLoaded | undefined = useRoute()
+const navigationStore = usePrototypeNavigationStore()
 // Inside /prototype the tab-bar project switcher replaces the canvas chip.
-const isDevPrototype = !window.location.pathname.startsWith('/prototype')
+const isDevPrototype = computed(() => !route?.path.startsWith('/prototype'))
+const takesShortcuts = computed(() =>
+  embedded ? active : route?.name === 'GraphView'
+)
 
 setupAutoQueueHandler()
 useProgressFavicon()
@@ -282,10 +298,14 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
+  navigationStore.editorReady = false
   executionStore.unbindExecutionEvents()
 })
 
-useEventListener(window, 'keydown', useKeybindingService().keybindHandler)
+const { keybindHandler } = useKeybindingService()
+useEventListener(window, 'keydown', (event) => {
+  if (takesShortcuts.value) void keybindHandler(event)
+})
 
 const { wrapWithErrorHandling, wrapWithErrorHandlingAsync } = useErrorHandling()
 
@@ -301,6 +321,7 @@ void nextTick(() => {
 
 const onGraphReady = () => {
   graphReady.value = true
+  navigationStore.editorReady = true
   runWhenGlobalIdle(() => {
     // Track user login when app is ready in graph view (cloud only)
     if (isCloud && authStore.isAuthenticated && !hasTrackedLogin) {

@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { DEMO_BUILD_MS } from '../fixtures/customCloud'
 import { NEW_BUILD_TARGET, RELOAD_MS } from './customCloudStore'
+import { HOME_TAB_ID } from './tabsStore'
 
 // The persona fixtures are module state the store mutates, so each test
 // loads fresh copies.
@@ -37,24 +38,38 @@ describe('customCloudStore', () => {
     vi.useRealTimers()
   })
 
-  it('switches project after the reload, lands on Home and remembers each project’s tabs', async () => {
-    const { store, tabs, ui } = await setup()
+  it('switches project after the reload into its drafts, and remembers each project’s tabs', async () => {
+    const { store, tabs } = await setup()
     openWorkflowIn(store, 'proj-marketing')
     expect(store.currentProject?.id).toBe('proj-marketing')
     expect(tabs.openTabs.map((t) => t.label)).toEqual(['Untitled workflow'])
 
-    ui.go({ kind: 'project', projectId: 'proj-marketing' })
+    tabs.select(HOME_TAB_ID)
     store.switchProject('proj-cocacola')
     expect(store.reloadingToId).toBe('proj-cocacola')
     expect(store.currentProject?.id).toBe('proj-marketing')
     vi.advanceTimersByTime(RELOAD_MS)
     expect(store.reloadingToId).toBeNull()
-    expect(ui.activeView.kind).toBe('home')
-    expect(tabs.openTabs).toEqual([])
+    expect(tabs.openTabs.map((t) => t.label)).toEqual([
+      'Coke can hero — bokeh test',
+      'Product hero',
+      'Coke can — top-down angle',
+      'Coke can — retired variant'
+    ])
+    expect(tabs.activeTabId).toBe(tabs.openTabs[0].id)
 
     store.switchProject('proj-marketing')
     vi.advanceTimersByTime(RELOAD_MS)
     expect(tabs.openTabs.map((t) => t.label)).toEqual(['Untitled workflow'])
+    expect(tabs.activeTabId).toBe(tabs.openTabs[0].id)
+  })
+
+  it('opens a blank workflow in a project with no drafts', async () => {
+    const { store, tabs } = await setup()
+    store.switchProject('proj-brand')
+    vi.advanceTimersByTime(RELOAD_MS)
+    expect(tabs.openTabs.map((t) => t.kind)).toEqual(['workflow'])
+    expect(tabs.activeTabId).toBe(tabs.openTabs[0].id)
   })
 
   it('opens the run-target dialog for matte_pass on Comfy Cloud, preselecting the project that runs it', async () => {

@@ -66,6 +66,7 @@ export function collapseOutsideSelectionOnPrimaryPointerDown(
  * @returns true if copy paste events will be handled by target
  */
 export function shouldIgnoreCopyPaste(target: EventTarget | null): boolean {
+  if (useCanvasStore().canvas?.canvas.closest('[inert]')) return true
   const isTextInput =
     target instanceof HTMLTextAreaElement ||
     (target instanceof HTMLElement && target.isContentEditable) ||

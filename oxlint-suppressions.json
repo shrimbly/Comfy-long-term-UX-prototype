@@ -403,6 +403,11 @@
       "count": 1
     }
   },
+  "src/prototype/components/PrototypeTabs.test.ts": {
+    "comfy/use-global-pinia": {
+      "count": 1
+    }
+  },
   "src/prototype/components/RunTargetDialog.vue": {
     "comfy/no-primevue-imports": {
       "count": 1
@@ -459,7 +464,7 @@
   },
   "src/prototype/stores/customCloudStore.ts": {
     "comfy/no-es2023-array-copy-method": {
-      "count": 1
+      "count": 2
     },
     "typescript/no-unnecessary-condition": {
       "count": 2
@@ -467,6 +472,16 @@
   },
   "src/prototype/stores/mediaReferenceStore.test.ts": {
     "comfy/use-global-pinia": {
+      "count": 1
+    }
+  },
+  "src/prototype/stores/navigationStore.test.ts": {
+    "comfy/use-global-pinia": {
+      "count": 2
+    }
+  },
+  "src/prototype/stores/navigationStore.ts": {
+    "typescript/no-unnecessary-condition": {
       "count": 1
     }
   },
@@ -585,6 +600,11 @@
   },
   "src/renderer/three/RendererView.ts": {
     "comfy/no-new-error-throw": {
+      "count": 1
+    }
+  },
+  "src/scripts/api.fetchApi.test.ts": {
+    "vitest/consistent-each-for": {
       "count": 1
     }
   },

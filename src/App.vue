@@ -21,6 +21,8 @@ import {
   watch,
   watchPostEffect
 } from 'vue'
+import { useRoute } from 'vue-router'
+import type { RouteLocationNormalizedLoaded } from 'vue-router'
 
 import GlobalDialog from '@/components/dialog/GlobalDialog.vue'
 import { MODAL_Z_BASE, MODAL_Z_KEY } from '@/components/dialog/vRekaZIndex'
@@ -36,14 +38,15 @@ import { useWorkspaceStore } from '@/stores/workspaceStore'
 import { electronAPI } from '@/utils/envUtil'
 import { useConflictDetection } from '@/workbench/extensions/manager/composables/useConflictDetection'
 
-// Read the path, not the route: the route is not resolved yet during setup,
-// and App also mounts without a router.
-const isPrototypeRoute = window.location.pathname.startsWith('/prototype')
+// App also mounts without a router, so the route can be missing.
+const route: RouteLocationNormalizedLoaded | undefined = useRoute()
+const isPrototypePathOnLoad = window.location.pathname.startsWith('/prototype')
+const isPrototypeRoute = computed(
+  () => route?.path.startsWith('/prototype') ?? false
+)
 
 const workspaceStore = useWorkspaceStore()
-if (!isPrototypeRoute) {
-  app.extensionManager = useWorkspaceStore()
-}
+app.extensionManager = useWorkspaceStore()
 
 const conflictDetection = useConflictDetection()
 const isLoading = computed<boolean>(() => workspaceStore.spinner)
@@ -81,9 +84,8 @@ const showContextMenu = (event: MouseEvent) => {
 onMounted(() => {
   window['__COMFYUI_FRONTEND_VERSION__'] = config.app_version
 
-  if (isPrototypeRoute) {
+  if (isPrototypePathOnLoad) {
     document.getElementById('splash-loader')?.remove()
-    return
   }
 
   if (isDesktop) {

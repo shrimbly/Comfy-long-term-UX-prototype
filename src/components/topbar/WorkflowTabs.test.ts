@@ -6,6 +6,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { PropType } from 'vue'
 import { computed, defineComponent, h, nextTick } from 'vue'
 import { createI18n } from 'vue-i18n'
+import type { ComponentProps } from 'vue-component-type-helpers'
 
 import { useWorkflowService } from '@/platform/workflow/core/services/workflowService'
 import enMessages from '@/locales/en/main.json' with { type: 'json' }
@@ -15,6 +16,7 @@ import type { AgentConsentTrigger } from '@/platform/telemetry/types'
 import type { LoadedComfyWorkflow } from '@/platform/workflow/management/stores/workflowStore'
 import { useWorkflowStore } from '@/platform/workflow/management/stores/workflowStore'
 import { api } from '@/scripts/api'
+import { useCommandStore } from '@/stores/commandStore'
 import { useExtensionStore } from '@/stores/extensionStore'
 import { useAgentPanelStore } from '@/workbench/extensions/agent/stores/agent/agentPanelStore'
 
@@ -147,7 +149,10 @@ vi.mock(import('./LoginButton.vue'), () => ({
   })
 }))
 
-function renderComponent(errorHandler?: (error: unknown) => void) {
+function renderComponent(
+  errorHandler?: (error: unknown) => void,
+  props: ComponentProps<typeof WorkflowTabs> = {}
+) {
   const user = userEvent.setup()
   const i18n = createI18n({
     legacy: false,
@@ -156,6 +161,7 @@ function renderComponent(errorHandler?: (error: unknown) => void) {
   })
 
   const result = render(WorkflowTabs, {
+    props,
     global: {
       config: { errorHandler },
       plugins: [i18n],
@@ -675,5 +681,40 @@ describe('WorkflowTabs scrolling', () => {
 
     expect(scrollIntoView).not.toHaveBeenCalled()
     unmount()
+  })
+})
+
+describe('WorkflowTabs beforeOpen', () => {
+  it('waits for navigation before creating a workflow', async () => {
+    const execute = vi
+      .spyOn(useCommandStore(), 'execute')
+      .mockResolvedValue(undefined)
+    const beforeOpen = vi.fn(async () => {
+      expect(execute).not.toHaveBeenCalled()
+      return true
+    })
+    const { user } = renderComponent(undefined, { beforeOpen })
+
+    await user.click(
+      screen.getByRole('button', { name: /new blank workflow/i })
+    )
+
+    expect(beforeOpen).toHaveBeenCalledOnce()
+    expect(execute).toHaveBeenCalledWith('Comfy.NewBlankWorkflow')
+  })
+
+  it('does not create a workflow when navigation is canceled', async () => {
+    const execute = vi
+      .spyOn(useCommandStore(), 'execute')
+      .mockResolvedValue(undefined)
+    const { user } = renderComponent(undefined, {
+      beforeOpen: async () => false
+    })
+
+    await user.click(
+      screen.getByRole('button', { name: /new blank workflow/i })
+    )
+
+    expect(execute).not.toHaveBeenCalled()
   })
 })

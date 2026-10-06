@@ -129,7 +129,8 @@ describe('LinearView', () => {
     renderView()
 
     expect(screen.queryByTestId('mobile-display')).not.toBeInTheDocument()
-    expect(screen.getByTestId('workflow-tabs')).toBeInTheDocument()
+    // The prototype's shared tab bar above the layout holds the workflow tabs.
+    expect(screen.queryByTestId('workflow-tabs')).not.toBeInTheDocument()
     expect(screen.getByTestId('linear-header-progress-bar')).toBeInTheDocument()
     expect(screen.getByTestId('linear-preview')).toBeInTheDocument()
   })
@@ -211,16 +212,12 @@ describe('LinearView', () => {
     )
   })
 
-  it('docks the agent panel beside the workspace column, below the full-width tab bar', () => {
+  it('docks the agent panel beside the workspace column', () => {
     renderView()
 
-    // The tab bar spans above both, so neither it nor the panel sits inside
-    // the workspace column any more.
     const column = within(screen.getByTestId('linear-workspace-column'))
-    expect(column.queryByTestId('workflow-tabs')).toBeNull()
     expect(column.queryByTestId('docked-agent-panel')).toBeNull()
 
-    expect(screen.getByTestId('workflow-tabs')).toBeInTheDocument()
     expect(screen.getByTestId('docked-agent-panel')).toBeInTheDocument()
   })
 })

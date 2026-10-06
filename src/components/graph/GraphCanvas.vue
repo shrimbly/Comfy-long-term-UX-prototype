@@ -3,15 +3,6 @@
   <!-- If load immediately, the top-level splitter stateKey won't be correctly
   synced with the stateStorage (localStorage). -->
   <LiteGraphCanvasSplitterOverlay v-if="comfyAppReady">
-    <template v-if="showUI" #workflow-tabs>
-      <div
-        v-if="workflowTabsPosition === 'Topbar'"
-        data-testid="topbar-workflow-tabs"
-        class="workflow-tabs-container pointer-events-auto relative flex h-(--workflow-tabs-height) w-full items-center border-b border-interface-stroke/50 bg-comfy-menu-bg shadow-interface"
-      >
-        <WorkflowTabs />
-      </div>
-    </template>
     <template #side-toolbar>
       <SideToolbar v-if="showUI && !isBuilderMode && !linearMode" />
     </template>
@@ -159,7 +150,6 @@ import NodePropertiesPanel from '@/components/rightSidePanel/RightSidePanel.vue'
 import { useAgentDockMount } from '@/workbench/extensions/agent/composables/useAgentDockMount'
 import NodeSearchboxPopover from '@/components/searchbox/NodeSearchBoxPopover.vue'
 import SideToolbar from '@/components/sidebar/SideToolbar.vue'
-import WorkflowTabs from '@/components/topbar/WorkflowTabs.vue'
 import { useGroupContextMenu } from '@/composables/graph/useGroupContextMenu'
 import { installErrorClearingHooks } from '@/composables/graph/useErrorClearingHooks'
 import type { NodeState } from '@/types/nodeState'
@@ -253,9 +243,6 @@ const { isReady: isSettingsReady, error: settingsError } =
 
 const betaMenuEnabled = computed(
   () => settingStore.get('Comfy.UseNewMenu') !== 'Disabled'
-)
-const workflowTabsPosition = computed(() =>
-  settingStore.get('Comfy.Workflow.WorkflowTabsPosition')
 )
 const canvasMenuEnabled = computed(() =>
   settingStore.get('Comfy.Graph.CanvasMenu')

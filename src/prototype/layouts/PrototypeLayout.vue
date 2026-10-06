@@ -2,10 +2,8 @@
   Implements:
     prototype scaffolding — wraps every /prototype/* route.
 
-  Standalone layout so the prototype runs without the upstream
-  WorkspaceAuthGate. Toggles the `dark-theme` body class on mount/unmount
-  to flip the design-system tokens into their dark variants (matching how
-  the upstream GraphView opts into the dark palette).
+  The dashboard runs outside WorkspaceAuthGate. It uses the same dark
+  palette as the editor, which stays mounted when navigating Home.
 
   The <style> block below is a deliberate exception to the "no <style>"
   rule — the design-system stylesheet omits tailwindcss/preflight, so bare
@@ -55,7 +53,7 @@
 
 <script setup lang="ts">
 import Toast from 'primevue/toast'
-import { onBeforeUnmount, onMounted } from 'vue'
+import { onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import { uploadProgress } from '../composables/useSimulatedSaveToCloud'
@@ -69,9 +67,6 @@ const DARK_THEME_CLASS = 'dark-theme'
 
 onMounted(() => {
   document.body.classList.add(DARK_THEME_CLASS)
-})
-onBeforeUnmount(() => {
-  document.body.classList.remove(DARK_THEME_CLASS)
 })
 </script>
 

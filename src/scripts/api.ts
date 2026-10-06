@@ -536,9 +536,12 @@ export class ComfyApi extends EventTarget {
     super()
     this.user = ''
     this.api_host = location.host
-    this.api_base = isCloud
-      ? ''
-      : location.pathname.split('/').slice(0, -1).join('/')
+    this.api_base =
+      isCloud ||
+      import.meta.env.VITE_PROTOTYPE_DEPLOY ||
+      location.pathname.startsWith('/prototype')
+        ? ''
+        : location.pathname.split('/').slice(0, -1).join('/')
     this.initialClientId = sessionStorage.getItem('clientId')
   }
 

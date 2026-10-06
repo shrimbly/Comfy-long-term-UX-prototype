@@ -5885,6 +5885,8 @@
       "userFallback": "User?"
     },
     "tabs": {
+      "navigation": "Home and workflows",
+      "editorUnavailable": "Could not open the editor. Check your ComfyUI connection and try again.",
       "home": "Home",
       "newTab": "New blank workflow",
       "closeTab": "Close tab",
@@ -6845,7 +6847,7 @@
         "label": "Switch project",
         "projects": "Projects",
         "allProjects": "All projects",
-        "minutes": "{minutes} min"
+        "building": "Building · {minutes} min"
       },
       "reload": {
         "opening": "Opening {project}"

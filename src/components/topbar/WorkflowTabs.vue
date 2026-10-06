@@ -32,7 +32,7 @@
           @update:model-value="openWorkflowByPath"
         >
           <TabsList
-            :class="cn('workflow-tabs h-full flex-nowrap gap-1', props.class)"
+            :class="cn('workflow-tabs h-full flex-nowrap gap-1', customClass)"
           >
             <WorkflowTab
               v-for="(option, index) in options"
@@ -69,6 +69,7 @@
       v-if="showOverflowArrows"
       :workflows="workflowStore.openWorkflows"
       :active-workflow="workflowStore.activeWorkflow"
+      @select="openWorkflowByPath($event.path)"
     />
     <Button
       v-tooltip="{
@@ -79,12 +80,12 @@
       variant="muted-textonly"
       size="icon"
       :aria-label="$t('sideToolbar.newBlankWorkflow')"
-      @click="() => commandStore.execute('Comfy.NewBlankWorkflow')"
+      @click="onNewBlankWorkflow"
     >
       <i class="pi pi-plus" />
     </Button>
     <div
-      v-if="isIntegratedTabBar"
+      v-if="showActions && isIntegratedTabBar"
       data-testid="integrated-tab-bar-actions"
       :data-agent-gate-settled="agentPanelStore.gateSettled || undefined"
       :data-agent-flags-settled="agentPanelStore.flagsSettled || undefined"
@@ -122,7 +123,10 @@
         />
       </template>
     </div>
-    <div v-else class="ml-auto flex h-full shrink-0 items-center">
+    <div
+      v-else-if="showActions"
+      class="ml-auto flex h-full shrink-0 items-center"
+    >
       <TopbarBadges />
       <TopbarSubscribeButton />
     </div>
@@ -173,8 +177,16 @@ interface WorkflowOption {
   workflow: ComfyWorkflow
 }
 
-const props = defineProps<{
+// `beforeOpen` runs before a tab opens and can cancel it; the prototype tab
+// bar uses it to bring the editor route up first.
+const {
+  class: customClass,
+  showActions = true,
+  beforeOpen
+} = defineProps<{
   class?: string
+  showActions?: boolean
+  beforeOpen?: () => Promise<boolean>
 }>()
 
 const settingStore = useSettingStore()
@@ -243,7 +255,13 @@ const options = computed<WorkflowOption[]>(() =>
 async function openWorkflowByPath(path: string | number) {
   const option = options.value.find(({ value }) => value === path)
   if (!option) return
+  if (beforeOpen && !(await beforeOpen())) return
   await workflowService.openWorkflow(option.workflow)
+}
+
+async function onNewBlankWorkflow() {
+  if (beforeOpen && !(await beforeOpen())) return
+  await commandStore.execute('Comfy.NewBlankWorkflow')
 }
 
 const closeWorkflows = async (options: WorkflowOption[]) => {

@@ -10,7 +10,7 @@
     - Media-Assets tab active → real MediaAssetsView takes over the area
       below PrototypeTabs (it owns its own sidebar).
     - A workflow tab → the real ComfyUI editor (RealEditor). It stays
-      mounted, hidden while another tab is active, so it boots once.
+      mounted, invisible while another tab is active, so it boots once.
     - Home tab → prototype dashboard with PrototypeSidebar / LibrarySidebar
       based on uiStore.activeView.
   Custom Comfy Cloud layers on top: a project whose deployment is building
@@ -19,13 +19,11 @@
 -->
 <template>
   <div
-    class="relative flex h-screen w-full flex-col"
+    class="relative flex size-full flex-col"
     @dragover.capture="onFileDragOver"
     @dragleave="onFileDragLeave"
     @drop.capture="onFileDrop"
   >
-    <PrototypeTabs />
-
     <div class="relative flex min-h-0 flex-1">
       <div v-if="isMediaAssetsTabActive" class="relative flex min-h-0 flex-1">
         <LocalMediaView v-if="isLocalMode" />
@@ -50,7 +48,7 @@
           <SettingsView v-else-if="activeView.kind === 'settings'" />
         </main>
       </div>
-      <RealEditor v-show="isEditorTabActive" />
+      <RealEditor />
 
       <BuildLockModal
         v-if="customCloud.isLocked && customCloud.progress && currentProject"
@@ -102,7 +100,6 @@ import PersonaSwitcher from '../components/PersonaSwitcher.vue'
 import ProjectReloadOverlay from '../components/ProjectReloadOverlay.vue'
 import RealEditor from '../components/RealEditor.vue'
 import PrototypeSidebar from '../components/PrototypeSidebar.vue'
-import PrototypeTabs from '../components/PrototypeTabs.vue'
 import RunTargetDialog from '../components/RunTargetDialog.vue'
 import WorkflowDragGhost from '../components/WorkflowDragGhost.vue'
 import { usePrototypeCustomCloudStore } from '../stores/customCloudStore'

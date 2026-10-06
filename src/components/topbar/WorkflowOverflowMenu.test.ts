@@ -12,13 +12,6 @@ import { useAgentPanelStore } from '@/workbench/extensions/agent/stores/agent/ag
 
 import WorkflowOverflowMenu from './WorkflowOverflowMenu.vue'
 
-const openWorkflow = vi.hoisted(() => vi.fn())
-
-vi.mock<unknown>(
-  import('@/platform/workflow/core/services/workflowService'),
-  () => ({ useWorkflowService: () => ({ openWorkflow }) })
-)
-
 it('marks the agent target separately from the active overflow workflow', async () => {
   const active = markRaw(
     new ComfyWorkflow({ path: 'workflows/active.json', modified: 0, size: 0 })
@@ -33,8 +26,9 @@ it('marks the agent target separately from the active overflow workflow', async 
   panel.enabled = true
   panel.setWorkflowTarget(target)
 
+  const onSelect = vi.fn()
   render(WorkflowOverflowMenu, {
-    props: { workflows: [active, target], activeWorkflow: active },
+    props: { workflows: [active, target], activeWorkflow: active, onSelect },
     global: {
       plugins: [
         createI18n({
@@ -64,5 +58,5 @@ it('marks the agent target separately from the active overflow workflow', async 
   ).toBeNull()
 
   await user.click(targetItem)
-  expect(openWorkflow).toHaveBeenCalledWith(target)
+  expect(onSelect).toHaveBeenCalledWith(target)
 })

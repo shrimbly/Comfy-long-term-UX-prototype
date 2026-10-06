@@ -27,7 +27,6 @@ import { computed } from 'vue'
 
 import Button from '@/components/ui/button/Button.vue'
 import Menu from '@/components/ui/menu/Menu.vue'
-import { useWorkflowService } from '@/platform/workflow/core/services/workflowService'
 import type { ComfyWorkflow } from '@/platform/workflow/management/stores/workflowStore'
 
 import WorkflowAgentTargetIndicator from './WorkflowAgentTargetIndicator.vue'
@@ -37,7 +36,7 @@ const props = defineProps<{
   activeWorkflow: ComfyWorkflow | null
 }>()
 
-const workflowService = useWorkflowService()
+const emit = defineEmits<{ select: [workflow: ComfyWorkflow] }>()
 
 const menuItems = computed(() =>
   props.workflows.map((workflow: ComfyWorkflow) => ({
@@ -46,7 +45,7 @@ const menuItems = computed(() =>
     icon:
       props.activeWorkflow?.key === workflow.key ? 'pi pi-check' : undefined,
     command: () => {
-      void workflowService.openWorkflow(workflow)
+      emit('select', workflow)
     }
   }))
 )

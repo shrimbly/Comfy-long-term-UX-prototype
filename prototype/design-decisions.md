@@ -1360,6 +1360,45 @@ Promote? **no** — prototype infrastructure, no IA change.
 
 ---
 
+## [2026-10-07] Flow 07: project pill in the tab bar, hidden on Home
+
+Willie picked direction F from the design canvas "Tab bar: Home and project switcher" (https://claude.ai/artifact/67jL5HegqgJSsSsoiVvqQv).
+
+- **Decision: the project switcher is a neutral pill.** It has a grey fill and border and holds the deployment's status dot:
+  - blue with a halo and "Building · N min" while the deployment builds
+  - green when ready, and on Comfy Cloud, which is always up
+  - grey when asleep
+
+  The personal project shows a person icon instead of a dot. The name is cut at `15ch` (about 15 characters) and shown in full on hover. The menu keeps the colour tiles.
+
+- **The pill hides while the Home tab is active.** Home is workspace-wide, and Willie asked for the homepage not to show the project chip. The one exception is a building project, where the pill stays visible so the lock screen's "Switch to another project" can open it.
+- **Consequence: a project switch lands on that project's page** (My Workflows for the personal project) rather than the Home view. Without this, switching to a project with no open tabs left you on Home with no pill, so there was no sign of which project you were in. The pill comes back when you open a workflow.
+- **Fix:** while another tab is active, the real editor is now invisible but still laid out, not `display: none`. With `display: none`, Nodes 2.0 re-measured the nodes at zero width and saved the shrunken sizes, so a workflow came back narrower after a round trip through Home.
+
+Open question: should Home show some neutral sign of the current project? Today a presenter on Home can't switch projects without opening a workflow.
+
+Promote? **maybe**: a small amendment to `decisions/project-switcher-in-tab-bar.md`, saying the switcher hides on Home.
+
+---
+
+## [2026-10-07] Flow 07: the pill is back on Home; a project switch opens its drafts
+
+This replaces two points in the entry above, "project pill in the tab bar, hidden on Home", after Willie reviewed it.
+
+- **Decision: the project pill shows on Home too.** The pill is how you see and change the project from anywhere, so hiding it on Home cost more than it gained.
+- **Decision: a project switch reloads into the editor.** The tabs are, in order of preference:
+  1. the tabs you left open in that project;
+  2. the first time, your drafts for the project (the workflows in My Workflows whose provenance is that project), newest first;
+  3. a blank workflow, if you have no drafts there.
+
+  A project switch no longer lands on the project page.
+
+- Drafts open as saved workflows. In the prototype, each one shows the default graph, except matte_pass.
+
+Promote? **yes**. Add it to `decisions/project-switcher-in-tab-bar.md` as "switching project restores its tabs, else opens your drafts for it". Relates to `decisions/drafts-as-default-private-project.md`.
+
+---
+
 ## [2026-10-07] Merge upstream ComfyUI_frontend main (2026-10-06)
 
 The fork last synced with upstream on 2026-05-07. Willie wants the current upstream chrome around the node graph for the 8 Oct Custom Comfy Cloud demo. Branch `merge-upstream-main`, merge commit `6dd757292c`.
