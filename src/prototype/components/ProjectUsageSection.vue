@@ -7,51 +7,36 @@
     log:    ../prototype/design-decisions.md (2026-10-07) — credit
             attribution per member on the project page
 
-  This month's credits for the project, split by member: a donut for the
-  share, and a table with runs, credits and each member's progress against
-  their limit in this project. Export is a client-side CSV.
+  Credits the project spent in a range, split by member: a range switcher,
+  the total, and a table with runs, credits and each member's progress
+  against their monthly limit in this project. Export is a client-side CSV.
 -->
 <template>
-  <div class="flex max-w-4xl flex-col gap-6">
-    <div class="flex items-end justify-between gap-4">
-      <div class="flex flex-col gap-1">
-        <h2 class="m-0 text-base font-medium">
-          {{ t('prototype.projectPage.usage.heading') }}
-        </h2>
-        <p class="m-0 flex items-center gap-2 text-sm text-muted-foreground">
-          <span>{{
-            t('prototype.projectPage.usage.thisMonth', {
-              credits: total.toLocaleString()
-            })
-          }}</span>
-          <span
-            v-if="deltaPct !== null && deltaPct !== 0"
-            :class="
-              cn(
-                'inline-flex items-center gap-1 text-xs',
-                deltaPct > 0
-                  ? 'text-warning-background'
-                  : 'text-success-background'
-              )
-            "
-          >
-            <i
-              :class="
-                cn(
-                  'size-3.5',
-                  deltaPct > 0
-                    ? 'icon-[lucide--trending-up]'
-                    : 'icon-[lucide--trending-down]'
-                )
-              "
-            />
-            {{
-              t('prototype.views.project.settings.usage.delta', {
-                pct: Math.abs(deltaPct)
-              })
-            }}
-          </span>
-        </p>
+  <div class="flex flex-col gap-6">
+    <div class="flex flex-wrap items-center justify-between gap-4">
+      <div
+        role="radiogroup"
+        :aria-label="t('prototype.projectPage.usage.rangeLabel')"
+        class="flex items-center gap-0.5 rounded-lg border border-border-subtle p-0.5"
+      >
+        <button
+          v-for="option in USAGE_RANGES"
+          :key="option"
+          type="button"
+          role="radio"
+          :aria-checked="range === option"
+          :class="
+            cn(
+              'h-8 cursor-pointer rounded-md px-3 text-sm transition-colors',
+              range === option
+                ? 'bg-secondary-background-hover text-base-foreground'
+                : 'text-muted-foreground hover:text-base-foreground'
+            )
+          "
+          @click="range = option"
+        >
+          {{ t(`prototype.projectPage.usage.range.${option}`) }}
+        </button>
       </div>
       <Button
         variant="secondary"
@@ -64,169 +49,134 @@
       </Button>
     </div>
 
-    <div class="flex items-start gap-8">
-      <svg
-        viewBox="0 0 42 42"
-        class="size-36 shrink-0 -rotate-90"
-        role="img"
-        :aria-label="t('prototype.projectPage.usage.chart')"
-      >
-        <circle
-          cx="21"
-          cy="21"
-          r="15.915"
-          fill="none"
-          class="stroke-secondary-background-hover"
-          stroke-width="5"
-        />
-        <circle
-          v-for="segment in segments"
-          :key="segment.id"
-          cx="21"
-          cy="21"
-          r="15.915"
-          fill="none"
-          :stroke="segment.color"
-          stroke-width="5"
-          :stroke-dasharray="`${segment.percent} ${100 - segment.percent}`"
-          :stroke-dashoffset="-segment.offset"
-        />
-      </svg>
-
-      <div
-        class="min-w-0 flex-1 overflow-hidden rounded-lg border border-border-subtle"
-      >
-        <Table
-          class="[&_td]:border-b [&_td]:border-border-subtle/50 [&_td]:px-4 [&_th]:px-4"
-        >
-          <TableHeader>
-            <TableRow class="bg-secondary-background/50">
-              <TableHead class="w-2/5">
-                {{ t('prototype.projectPage.usage.member') }}
-              </TableHead>
-              <TableHead class="text-right">
-                {{ t('prototype.projectPage.usage.runs') }}
-              </TableHead>
-              <TableHead class="text-right">
-                {{ t('prototype.projectPage.usage.credits') }}
-              </TableHead>
-              <TableHead class="w-60 text-right">
-                {{ t('prototype.projectPage.usage.limit') }}
-              </TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            <TableRow
-              v-for="row in rows"
-              :key="row.id"
-              class="h-14 hover:bg-secondary-background/20"
-            >
-              <TableCell>
-                <span class="flex items-center gap-2.5">
-                  <span
-                    class="size-2 shrink-0 rounded-full"
-                    :style="{ backgroundColor: row.color }"
-                  />
-                  <span class="flex min-w-0 flex-col">
-                    <span class="truncate">{{ row.name }}</span>
-                    <span
-                      v-if="row.detail"
-                      class="truncate text-xs text-muted-foreground"
-                    >
-                      {{ row.detail }}
-                    </span>
-                  </span>
-                </span>
-              </TableCell>
-              <TableCell class="text-right text-muted-foreground tabular-nums">
-                {{ row.runs.toLocaleString() }}
-              </TableCell>
-              <TableCell class="text-right tabular-nums">
-                {{ row.credits.toLocaleString() }}
-              </TableCell>
-              <TableCell class="text-right whitespace-nowrap">
-                <span
-                  v-if="row.limit"
-                  class="inline-flex items-center justify-end gap-3"
-                >
-                  <span class="text-xs text-muted-foreground tabular-nums">
-                    {{
-                      t('prototype.projectPage.usage.ofLimit', {
-                        used: row.credits.toLocaleString(),
-                        limit: row.limit.toLocaleString()
-                      })
-                    }}
-                  </span>
-                  <span
-                    class="h-1.5 w-24 overflow-hidden rounded-full bg-secondary-background-hover"
-                  >
-                    <span
-                      :class="
-                        cn(
-                          'block h-full rounded-full',
-                          row.credits >= row.limit
-                            ? 'bg-destructive-background'
-                            : row.credits >= row.limit * 0.8
-                              ? 'bg-warning-background'
-                              : 'bg-base-foreground'
-                        )
-                      "
-                      :style="{
-                        width: `${Math.min(100, (row.credits / row.limit) * 100)}%`
-                      }"
-                    />
-                  </span>
-                </span>
-                <span v-else class="text-xs text-muted-foreground">
-                  {{ t('prototype.projectPage.usage.noLimit') }}
-                </span>
-              </TableCell>
-            </TableRow>
-            <TableRow v-if="!total">
-              <TableCell
-                :colspan="4"
-                class="py-8 text-center text-muted-foreground"
-              >
-                {{ t('prototype.projectPage.usage.empty') }}
-              </TableCell>
-            </TableRow>
-          </TableBody>
-        </Table>
-      </div>
+    <div v-if="range === 'custom'" class="flex items-center gap-2 text-sm">
+      <input
+        v-model="customFrom"
+        type="date"
+        :max="customTo"
+        :aria-label="t('prototype.projectPage.usage.from')"
+        :class="dateInputClass"
+      />
+      <span class="text-muted-foreground">
+        {{ t('prototype.projectPage.usage.to') }}
+      </span>
+      <input
+        v-model="customTo"
+        type="date"
+        :min="customFrom"
+        :aria-label="t('prototype.projectPage.usage.to')"
+        :class="dateInputClass"
+      />
     </div>
 
-    <div v-if="recentMonths.length" class="flex flex-col gap-2">
-      <p class="m-0 text-xs text-muted-foreground">
-        {{ t('prototype.views.project.settings.usage.recentHeading') }}
-      </p>
-      <div class="grid max-w-md grid-cols-3 gap-2">
-        <div
-          v-for="m in recentMonths"
-          :key="m.month"
-          class="flex flex-col gap-0.5 rounded-lg bg-secondary-background-hover px-3 py-2"
-        >
-          <span
-            class="text-[10px] tracking-wide text-muted-foreground uppercase"
+    <div class="flex flex-col gap-1">
+      <span class="text-4xl font-semibold tracking-tight tabular-nums">
+        {{ total.toLocaleString() }}
+      </span>
+      <span class="text-sm text-muted-foreground">
+        {{ t('prototype.projectPage.usage.creditsSpent') }}
+      </span>
+    </div>
+
+    <div class="overflow-hidden rounded-lg border border-border-subtle">
+      <Table
+        class="[&_td]:border-b [&_td]:border-border-subtle/50 [&_td]:px-4 [&_th]:px-4"
+      >
+        <TableHeader>
+          <TableRow class="bg-secondary-background/50">
+            <TableHead class="w-1/2">
+              {{ t('prototype.projectPage.usage.member') }}
+            </TableHead>
+            <TableHead class="text-right">
+              {{ t('prototype.projectPage.usage.runs') }}
+            </TableHead>
+            <TableHead class="text-right">
+              {{ t('prototype.projectPage.usage.credits') }}
+            </TableHead>
+            <TableHead v-if="showsLimit" class="w-72 text-right">
+              {{ t('prototype.projectPage.usage.limit') }}
+            </TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          <TableRow
+            v-for="row in rows"
+            :key="row.id"
+            class="h-14 hover:bg-secondary-background/20"
           >
-            {{ formatMonth(m.month) }}
-          </span>
-          <span class="text-sm font-semibold tabular-nums">
-            {{ m.credits.toLocaleString() }}
-          </span>
-        </div>
-      </div>
+            <TableCell>
+              <span class="flex min-w-0 flex-col">
+                <span class="truncate">{{ row.name }}</span>
+                <span
+                  v-if="row.detail"
+                  class="truncate text-xs text-muted-foreground"
+                >
+                  {{ row.detail }}
+                </span>
+              </span>
+            </TableCell>
+            <TableCell class="text-right text-muted-foreground tabular-nums">
+              {{ row.runs.toLocaleString() }}
+            </TableCell>
+            <TableCell class="text-right tabular-nums">
+              {{ row.credits.toLocaleString() }}
+            </TableCell>
+            <TableCell v-if="showsLimit" class="text-right whitespace-nowrap">
+              <span
+                v-if="row.limit"
+                class="inline-flex items-center justify-end gap-3"
+              >
+                <span class="text-xs text-muted-foreground tabular-nums">
+                  {{
+                    t('prototype.projectPage.usage.ofLimit', {
+                      used: row.credits.toLocaleString(),
+                      limit: row.limit.toLocaleString()
+                    })
+                  }}
+                </span>
+                <span
+                  class="h-1.5 w-24 overflow-hidden rounded-full bg-secondary-background-hover"
+                >
+                  <span
+                    :class="
+                      cn(
+                        'block h-full rounded-full',
+                        row.credits >= row.limit
+                          ? 'bg-destructive-background'
+                          : row.credits >= row.limit * 0.8
+                            ? 'bg-warning-background'
+                            : 'bg-base-foreground'
+                      )
+                    "
+                    :style="{
+                      width: `${Math.min(100, (row.credits / row.limit) * 100)}%`
+                    }"
+                  />
+                </span>
+              </span>
+              <span v-else class="text-xs text-muted-foreground">
+                {{ t('prototype.projectPage.usage.noLimit') }}
+              </span>
+            </TableCell>
+          </TableRow>
+          <TableRow v-if="!total">
+            <TableCell
+              :colspan="showsLimit ? 4 : 3"
+              class="py-8 text-center text-muted-foreground"
+            >
+              {{ t('prototype.projectPage.usage.empty') }}
+            </TableCell>
+          </TableRow>
+        </TableBody>
+      </Table>
     </div>
-
-    <p class="m-0 text-xs text-muted-foreground">
-      {{ t('prototype.views.project.settings.usage.note') }}
-    </p>
   </div>
 </template>
 
 <script setup lang="ts">
 import { cn } from '@comfyorg/tailwind-utils'
 import { storeToRefs } from 'pinia'
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import Button from '@/components/ui/button/Button.vue'
@@ -240,6 +190,12 @@ import { useToastStore } from '@/platform/updates/common/toastStore'
 
 import { usePrototypePersonaStore } from '../stores/personaStore'
 import type { Project } from '../types'
+import {
+  USAGE_RANGES,
+  daysBetween,
+  usageRangeFactor
+} from '../utils/usageRange'
+import type { UsageRange } from '../utils/usageRange'
 import { sampleUsage, usageCsv } from '../utils/workspaceUsage'
 
 const { project } = defineProps<{
@@ -247,34 +203,44 @@ const { project } = defineProps<{
 }>()
 
 const CURRENT_MONTH = '2026-10'
-const UNATTRIBUTED_COLOR = '#6b6b6b'
+
+const dateInputClass =
+  'h-8 rounded-md border border-border-subtle bg-base-background px-2 text-sm text-base-foreground outline-none focus:border-base-foreground'
 
 const { t } = useI18n()
 const toast = useToastStore()
 const { fixture } = storeToRefs(usePrototypePersonaStore())
 
-const records = computed(() =>
+const range = ref<UsageRange>('thisMonth')
+const customFrom = ref('2026-09-22')
+const customTo = ref('2026-10-06')
+
+const monthRecords = computed(() =>
   sampleUsage(fixture.value, project.workspaceId).filter(
     (r) => r.projectId === project.id && r.month === CURRENT_MONTH
   )
 )
 
-const total = computed(() =>
-  records.value.reduce((sum, r) => sum + r.credits, 0)
+const monthTotal = computed(() =>
+  monthRecords.value.reduce((sum, r) => sum + r.credits, 0)
 )
 
-// Month-over-month change against the prior month; null when there isn't a
-// prior month (or it was zero) to compare against.
-const deltaPct = computed(() => {
-  const previous = project.monthlyUsage?.at(-2)?.credits
-  if (!previous) return null
-  return Math.round(((total.value - previous) / previous) * 100)
-})
+const factor = computed(() =>
+  usageRangeFactor(
+    range.value,
+    monthTotal.value,
+    project.monthlyUsage ?? [],
+    daysBetween(customFrom.value, customTo.value)
+  )
+)
 
-const recentMonths = computed(() => project.monthlyUsage?.slice(-3) ?? [])
+// Limits are monthly, so the bar only makes sense against a month.
+const showsLimit = computed(
+  () => range.value === 'thisMonth' || range.value === 'month30'
+)
 
 const rows = computed(() =>
-  records.value
+  monthRecords.value
     .map((record) => {
       const member = fixture.value.members.find((m) => m.id === record.memberId)
       const projectMember = project.members?.find(
@@ -287,9 +253,8 @@ const rows = computed(() =>
         id: record.memberId ?? 'unattributed',
         name: member?.name ?? t('prototype.settings.usage.unattributed'),
         detail: member?.email ?? '',
-        color: member?.avatarColor ?? UNATTRIBUTED_COLOR,
-        runs: record.runs,
-        credits: record.credits,
+        runs: Math.round(record.runs * factor.value),
+        credits: Math.round(record.credits * factor.value),
         limit: projectMember?.creditLimit ?? workspaceLimit ?? null
       }
     })
@@ -297,27 +262,9 @@ const rows = computed(() =>
     .sort((a, b) => b.credits - a.credits)
 )
 
-// Donut arcs: each member's share as a dash on a circle with a
-// circumference of 100 units, offset by the shares before it.
-const segments = computed(() => {
-  let offset = 0
-  return rows.value
-    .filter((row) => row.credits > 0)
-    .map((row) => {
-      const percent = total.value ? (row.credits / total.value) * 100 : 0
-      const segment = { id: row.id, color: row.color, percent, offset }
-      offset += percent
-      return segment
-    })
-})
-
-function formatMonth(month: string): string {
-  const [year, m] = month.split('-').map(Number)
-  return new Date(year, m - 1, 1).toLocaleDateString(undefined, {
-    month: 'short',
-    year: 'numeric'
-  })
-}
+const total = computed(() =>
+  rows.value.reduce((sum, row) => sum + row.credits, 0)
+)
 
 function slugify(value: string): string {
   return value
@@ -340,7 +287,7 @@ function exportCsv() {
   )
   const link = document.createElement('a')
   link.href = url
-  link.download = `${slugify(project.name) || 'project'}-usage-${CURRENT_MONTH}.csv`
+  link.download = `${slugify(project.name) || 'project'}-usage-${range.value}.csv`
   link.click()
   URL.revokeObjectURL(url)
   toast.add({

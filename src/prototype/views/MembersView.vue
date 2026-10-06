@@ -17,7 +17,7 @@
     Permissions  — per-role baseline delegation matrix (Admin only)
 -->
 <template>
-  <div class="flex flex-col gap-6">
+  <div class="mx-auto flex w-full max-w-6xl flex-col gap-6">
     <header class="flex items-start justify-between">
       <div v-if="!embedded">
         <PageTitle>{{ t('prototype.views.members.title') }}</PageTitle>

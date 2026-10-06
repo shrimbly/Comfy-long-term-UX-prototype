@@ -17,7 +17,7 @@
   `canViewUsage` so a Collaborator sees the Workflows view directly.
 -->
 <template>
-  <div class="flex flex-col gap-6">
+  <div class="mx-auto flex w-full max-w-6xl flex-col gap-6">
     <PrototypeBreadcrumb
       :items="breadcrumbItems"
       :drop-folder-ids="breadcrumbDropTargets"

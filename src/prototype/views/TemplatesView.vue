@@ -11,7 +11,7 @@
   the production library's left-rail category tree becomes the chip row here.
 -->
 <template>
-  <div class="flex flex-col gap-6">
+  <div class="mx-auto flex w-full max-w-6xl flex-col gap-6">
     <header>
       <PageTitle>{{ t('prototype.views.templates.title') }}</PageTitle>
     </header>

@@ -6542,11 +6542,8 @@
             "placeholder": "e.g. comfyui_controlnet_aux"
           },
           "usage": {
-            "delta": "{pct}% vs last month",
-            "recentHeading": "Recent months",
             "exportedSummary": "Usage history exported",
-            "exportedDetail": "Downloaded {count} months for {project}.",
-            "note": "Billing is managed at the workspace level."
+            "exportedDetail": "Downloaded {count} rows for {project}."
           }
         },
         "sharing": {
@@ -7186,16 +7183,26 @@
         "close": "Close"
       },
       "usage": {
-        "heading": "Spend by member",
-        "thisMonth": "This month · {credits} credits",
-        "chart": "Credits by member",
         "member": "Member",
         "runs": "Runs",
         "credits": "Credits",
         "limit": "Limit",
         "ofLimit": "{used} of {limit}",
         "noLimit": "No limit",
-        "empty": "No credit use this month."
+        "empty": "No credit use in this range.",
+        "rangeLabel": "Time range",
+        "range": {
+          "day": "24h",
+          "week": "7d",
+          "month30": "30d",
+          "thisMonth": "This month",
+          "quarter": "3 months",
+          "year": "12 months",
+          "custom": "Custom range"
+        },
+        "from": "From",
+        "to": "to",
+        "creditsSpent": "credits spent"
       }
     }
   },

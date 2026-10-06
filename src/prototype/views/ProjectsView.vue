@@ -11,7 +11,7 @@
   personaStore) — confidentiality contract.
 -->
 <template>
-  <div class="flex flex-col gap-6">
+  <div class="mx-auto flex w-full max-w-6xl flex-col gap-6">
     <header class="flex items-center justify-between">
       <PageTitle>{{ t('prototype.views.projects.title') }}</PageTitle>
       <button
@@ -98,7 +98,7 @@
     </div>
     <div
       v-else-if="sortedProjects.length"
-      class="grid max-w-5xl grid-cols-[repeat(auto-fill,minmax(14rem,18rem))] gap-4"
+      class="grid grid-cols-[repeat(auto-fill,minmax(14rem,18rem))] gap-4"
     >
       <ProjectCard
         v-for="p in sortedProjects"
