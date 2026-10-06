@@ -1496,6 +1496,88 @@ Wiki is silent on the editor's workflow browser. Promote? **maybe**: an addition
 
 ---
 
+## [2026-10-07] Saved workflows open as distinct graphs
+
+Every saved workflow opened in the real editor showed the same default graph, so switching tabs didn't read as switching workflows. `fixtures/demoWorkflowGraphs.ts` now gives each saved workflow one of three text-to-image setups — SDXL with a refine pass, Z-Image Turbo, HiDream + detail LoRA — picked from its id so it always opens the same way, framed by a group titled with the workflow's name, with the name in the prompt and Save Image filename prefix. Only core nodes and base models the in-browser backend serves, so nothing loads red. New blank workflows keep the default graph; matte_pass is unchanged.
+
+Promote? **no** — demo content; no IA change. The wiki has no stance on what a workflow's graph contains.
+---
+
+## [2026-10-07] Flow 07: the incompatible-workflow dialog, redesigned on a canvas
+
+Willie explored the "choose where it runs" dialog on a design canvas, <https://claude.ai/artifact/PQby9iCSzrR7WMvbsqnY11>. It shows today's screens and the full new flow with its branches. Of four directions (one sheet, a side panel, a canvas banner, a table of who runs it), only the one-sheet modal was worth keeping. Willie then refined today's dialog one step at a time instead. Built in `components/RunTargetDialog.vue` and its step components.
+
+- **Decision: step 1 states the problem, then offers where to run it.**
+  - The title is "This workflow can't run on {deployment}", with no workflow name and no eyebrow.
+  - A compact table follows: "n missing node packs" and "n missing models", with the names.
+  - The pitch paragraph and the "Switching reloads the page" note are gone.
+- **Decision: step 1 has three states.**
+  - **A deployment already runs it.** The main action is "Create project", on that deployment, with no build. The "Create a new project that runs on" picker also offers "A new deployment" (the button then reads "Create deployment"). Deployments that lack something are listed but can't be picked. "Open in another project" is a quiet footer button with a project chooser styled like the project switcher. In the demo, Acme Studio pipeline runs `matte_pass`.
+  - **Nothing runs it, from a Comfy Cloud project.** The main action is "Create deployment", under "Create a new deployment for this workflow" and the three sell ticks. "Update an existing deployment ↗" is the quiet option, done on Platform.
+  - **Nothing runs it, from a project on its own deployment.** The main action is "Update on Platform ↗" (for example Matte tests v7 → v8, which adds the missing pack). The note says every project on that deployment gets the release. "Create a new deployment instead" is the quiet option.
+- **Decision: step 2 is Platform's build summary card.** It has "Suggested settings": Name, ComfyUI, Runtime, Open-source models, Partner models, Custom nodes, Python packages. The name edits in place. Every other row asks "Customise the build on Platform?" first, because the detail lives on Platform. The footer is Back, Build with your agent, and Next: deployment.
+- **Decision: step 3 is Platform's deploy dialog, copied from live Platform.** Live Platform is newer than the platform repo's code. It has the GPU list with prices (RTX PRO 6000 $4.54, H100 SXM $6.23, H200 SXM $7.71, B200 $11.23), always-warm and max workers, Location, ComfyUI startup flags, the estimated cost (idle and full load, storage at $0.20/GB/mo) and the estimated time. The picked GPU becomes the new deployment's GPU. The old $0.89 RTX 5090 figure is gone.
+- **Decision: a presenter control, "Demo: nothing runs it".** It drops `matte_pass` as if no deployment ran it, to show the two other step-1 states.
+- **Changed but not redesigned:** the lock modal's eyebrow no longer says "Step 3 of 3"; it says "Building". The lock and ready screens are the next to refine.
+
+Why: the dialog is the centrepiece of the 8 Oct customer demo. It should read as a choice with an obvious next action, and leave what Platform owns to Platform.
+
+Wiki: `decisions/missing-nodes-choose-where-it-runs.md` (step 1 order, review, agent secondary, "Customise on Platform"), and `decisions/project-runs-on-shared-deployment.md` (a new project on an existing deployment; updating a deployment updates every project on it). Open question `dropped-workflow-other-deployment`: working answer, update the project's own deployment on Platform or make a new one. Promote? **yes**: update the decision page for the three states, the deployment picker (not a project picker), and Platform's summary and deploy steps.
+
+---
+
+## [2026-10-07] Flow 07: the runs-on picker like the project switcher; no graph while it builds
+
+- **Decision: the "Create a new project that runs on" menu is built like the project switcher (Willie picked "B" of three on the canvas, <https://claude.ai/artifact/PQby9iCSzrR7WMvbsqnY11>).** It has a search field and one list with no section headers. The deployments that run the workflow come first, marked "Ready". The ones that can't are greyed out, with the reason on the right ("Missing 1 node pack", "Missing 2 packs, 2 models"). **+ Create a new deployment · About 20 min** is the row below the list. "A new deployment with everything it needs" read as clunky. The project chooser uses the same "Missing …" wording.
+- **Decision: while a project's deployment builds, its graph is not shown.** The graph needs the deployment to load at all, so behind the build progress the lock screen shows the editor's sidebar and an empty canvas grid, both dimmed and inactive. Before, it showed a dimmed but visible graph; a flat grey screen in between hid the sidebar too.
+
+Wiki: `decisions/build-locks-project-until-ready.md` says the node graph is disabled. This goes further: nothing of the graph shows until the deployment is ready. Promote? **yes**, as a refinement of that decision.
+
+---
+
+## [2026-10-07] Flow 07: a new project is named and shared before it's made
+
+- **Decision: every path in the dialog that makes a project now passes a "New project" step.** It has Name, General access (Workspace or Restricted) and, when restricted, People with access. These are the dashboard's New project fields, now one shared component (`ProjectAccessFields.vue`). A chip says where the project will run: "● Runs on Acme Studio pipeline" or "+ Runs on a new deployment".
+  - **On a deployment that already runs it:** step 1's **Create project** opens this step, and its **Create project** makes the project and reloads into it.
+  - **On a new deployment:** step 1's **Create deployment** opens this step, and **Next: build** goes on to the build summary. The summary's Name row is now the deployment's name. It starts as the project's name.
+- Before, the dialog made projects as restricted with nobody else in them, under a fixed name.
+
+Canvas: <https://claude.ai/artifact/PQby9iCSzrR7WMvbsqnY11>, row "New step: name the project and choose who can access it". Wiki: `decisions/project-runs-on-shared-deployment.md` ("you name it and choose a backend for it"), and `concepts/three-level-permissions.md` for the access tiers. Promote? **maybe**: add "named and shared at creation, from any entry point" to the project entity page.
+
+---
+
+## [2026-10-07] Flow 07: the project opens only once its deployment is done
+
+- **Decision: a new deployment builds in the background, and its project is named and opened only once the deployment is done.**
+  - **Create deployment** turns the dialog into the build's progress. You stay in the project you were in.
+  - **Keep working** closes the dialog. A "● Building Matte R&D · 18 min" chip in the tab strip opens it again.
+  - When the deployment is done, the dialog comes back on the New project step: name and access. **Create project** opens the project, with the "ready" toast.
+- **The build no longer locks a project.** No project exists until the deployment runs, so the full-screen lock is gone.
+- The New project step now always names a project on a deployment that runs the workflow. On the new-deployment path it comes after the build, not before the build summary.
+- Before, **Create deployment** made the project at once and reloaded into it, locked behind the build.
+
+Supersedes "the build locks the project" in the entries above. Wiki: `decisions/build-locks-project-until-ready.md` says you shouldn't use the project until it's ready. This keeps that rule by not making the project until then. Promote? **yes**: update that decision page to say the project is created once the build is done.
+
+---
+
+## [2026-10-07] "My Workflows" is now "Personal"
+
+- **Decision: the personal project is called "Personal" everywhere in the prototype**: the project switcher, the sidebar, page titles, menus ("Save to Personal", "Fork to Personal") and toasts.
+- Reason: projects hold more than workflows (assets, outputs, models), so "My Workflows" undersold what the personal project holds and read as a workflow list.
+- Code names (`drafts`, `isDrafts`, `saveToMyWorkflows`) are unchanged. One upstream ComfyUI string (`mediaAsset.actions.promoteToCloudFallbackDestination`) still says "My Workflows", because it sits outside the prototype.
+
+Wiki: `decisions/drafts-as-default-private-project.md` names the per-user project "Drafts". Promote? **yes**: settle the user-facing name as "Personal" there.
+
+---
+
+## [2026-10-07] Demo controls fold into one "Demo" pill
+
+The presenter bar (persona `<select>` + "Demo: drop incompatible workflow" + "Demo: nothing runs it" + "Reset demo") sat bottom-right as a wide strip, covering the editor's fit / zoom / minimap / links toolbar. It's now a single small **Demo · {persona}** pill bottom-left, just past the sidebar, opening a menu: personas as a checked list, then the two drop actions, then Reset demo. `PersonaSwitcher.vue` folded into `DemoControls.vue`. Still shown only on the dev server and the deployed prototype.
+
+Promote? **no** — presenter tooling; no IA change.
+
+---
+
 ## [2026-10-07] Project page: three header variants, environment on the page, settings → Projects
 
 Scope is the dashboard only. Flows where a dropped workflow does not fit the project stay as they are.
@@ -1612,10 +1694,9 @@ Promote? **maybe**: the "media as a dashboard view" shape, once Willie has seen 
 ## [2026-10-07] Project cards show members; Edit deployment opens the deployment dialog
 
 - **Project cards** show the member count instead of the workflow count, and Comfy Cloud gets a cloud icon in place of the status dot, matching the tab-bar pill.
-- **Edit deployment opens a dialog rebuilt from Willie's editor "Create a deployment"**: the deployment as its source row, then Name, ComfyUI version, Runtime, Open-source models (all allowed, with the pre-installed ones listed), Partner models, Custom nodes (listed) and Python packages. Footer: Back, Build with your agent, Save and rebuild.
-- **Save and rebuild bumps the release and starts the demo build.** The deployment shows "building · N min" wherever it appears, and a project on it locks until ready. A rebuild does not open a project or offer a run when it finishes, unlike a new build.
-- Willie's dialog lives in his editor branch, which is not in this repo, so the wiring here is the prototype's own build machinery.
-- `Deployment.comfyVersion` and `Deployment.runtime` are new and optional.
+- **Edit deployment opens the editor's build steps** (Willie's "Create a deployment", merged from `mvp-scope-cut`): the build summary with the deployment's own name, version, runtime, models and packs under "Current settings", then Platform's deploy dialog with its GPU preselected, then the build's progress. Back closes instead of returning to the workflow choice.
+- **Save and rebuild bumps the release and runs the same background build.** The deployment shows "building · N min" wherever it appears and the tab strip's Building chip reopens the progress. When done it turns ready and the dialog closes; unlike a new deployment it does not ask to name a project.
+- `Deployment.comfyVersion` and `Deployment.runtime` are new and optional; the summary falls back to the build defaults.
 
 Wiki link: `concepts/custom-comfy-cloud.md`, `decisions/build-locks-project-until-ready.md`.
 

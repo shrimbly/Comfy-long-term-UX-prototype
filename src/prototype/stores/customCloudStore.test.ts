@@ -1,7 +1,7 @@
 import { createPinia, setActivePinia } from 'pinia'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { DEMO_BUILD_MS } from '../fixtures/customCloud'
+import { DEMO_BUILD_MS, PLATFORM_GPUS } from '../fixtures/customCloud'
 import { NEW_BUILD_TARGET, RELOAD_MS } from './customCloudStore'
 import { HOME_TAB_ID } from './tabsStore'
 
@@ -93,18 +93,60 @@ describe('customCloudStore', () => {
     ])
   })
 
-  it('opens the run-target dialog for matte_pass on Comfy Cloud, preselecting the project that runs it', async () => {
+  it('opens the run-target dialog for matte_pass on Comfy Cloud, preselecting the deployment that runs it', async () => {
     const { store } = await setup()
     openWorkflowIn(store, 'proj-marketing')
     store.dropIncompatibleWorkflow()
 
     expect(store.showsMissingNodes).toBe(true)
     expect(store.dialogStep).toBe('choose')
-    expect(store.runTarget).toBe('proj-cocacola')
-    expect(store.runTargets[0]).toMatchObject({
+    expect(store.chooseMode).toBe('existing')
+    expect(store.deploymentTarget).toBe('dep-acme-studio')
+    expect(store.deploymentTargets[0]).toMatchObject({
+      deployment: { id: 'dep-acme-studio' },
+      runs: true
+    })
+    expect(store.projectTargets[0]).toMatchObject({
       project: { id: 'proj-cocacola' },
       runs: true
     })
+  })
+
+  it.for([
+    { from: 'proj-marketing', mode: 'new' },
+    { from: 'proj-personal-rnd', mode: 'update' }
+  ])(
+    'offers $mode when nothing runs matte_pass, from $from',
+    async ({ from, mode }) => {
+      const { store } = await setup()
+      openWorkflowIn(store, from)
+      store.dropIncompatibleWorkflow({ nothingRuns: true })
+
+      expect(store.chooseMode).toBe(mode)
+      expect(store.deploymentTarget).toBe(NEW_BUILD_TARGET)
+      expect(store.projectTargets.some((target) => target.runs)).toBe(false)
+    }
+  )
+
+  it('creates a project on the deployment that runs matte_pass, with no build', async () => {
+    const { store } = await setup()
+    openWorkflowIn(store, 'proj-marketing')
+    store.dropIncompatibleWorkflow()
+    store.newProjectName = 'Matte finals'
+    store.newProjectTier = 'restricted'
+    store.newProjectCollaborators = ['user-alex']
+    store.createProjectOn(store.deploymentTarget)
+    vi.advanceTimersByTime(RELOAD_MS)
+
+    expect(store.currentProject).toMatchObject({
+      name: 'Matte finals',
+      tier: 'restricted'
+    })
+    expect(store.currentProject?.members?.map((m) => m.userId)).toContain(
+      'user-alex'
+    )
+    expect(store.currentDeployment.id).toBe('dep-acme-studio')
+    expect(store.showsMissingNodes).toBe(false)
   })
 
   it('runs matte_pass without a dialog where the deployment already has it', async () => {
@@ -116,22 +158,20 @@ describe('customCloudStore', () => {
     expect(store.dialogStep).toBeNull()
   })
 
-  it('builds a new project, locks it until the fast build finishes, then clears the missing nodes', async () => {
-    const { store, personas } = await setup()
+  it('builds a deployment in the background, then names its project and opens it with the missing nodes gone', async () => {
+    const { store } = await setup()
     openWorkflowIn(store, 'proj-marketing')
     store.dropIncompatibleWorkflow()
-    store.runTarget = NEW_BUILD_TARGET
-    store.newProjectName = 'Matte R&D'
-    store.buildAndDeploy()
-    vi.advanceTimersByTime(RELOAD_MS)
+    store.deploymentTarget = NEW_BUILD_TARGET
+    store.newDeploymentName = 'Matte R&D'
+    store.buildAndDeploy(PLATFORM_GPUS[0])
 
-    const project = store.currentProject
-    expect(project?.name).toBe('Matte R&D')
-    expect(personas.visibleProjects.some((p) => p.id === project?.id)).toBe(
-      true
-    )
-    expect(store.isLocked).toBe(true)
-    expect(store.showsMissingNodes).toBe(true)
+    expect(store.dialogStep).toBe('building')
+    expect(store.currentProject?.id).toBe('proj-marketing')
+    expect(store.buildingDeployment).toMatchObject({
+      name: 'Matte R&D',
+      gpu: 'RTX PRO 6000'
+    })
     expect(store.progress?.stages.map((s) => s.state)).toEqual([
       'active',
       'pending',
@@ -141,15 +181,19 @@ describe('customCloudStore', () => {
       'pending'
     ])
 
-    vi.advanceTimersByTime(DEMO_BUILD_MS / 2)
-    expect(store.isLocked).toBe(true)
-    expect(store.progress?.done).toBe(false)
+    store.dialogStep = null
+    vi.advanceTimersByTime(DEMO_BUILD_MS + 400)
+    expect(store.buildingDeployment).toBeUndefined()
+    expect(store.dialogStep).toBe('project')
+    expect(store.newProjectName).toBe('Matte R&D')
+    expect(store.currentProject?.id).toBe('proj-marketing')
 
-    vi.advanceTimersByTime(DEMO_BUILD_MS / 2 + 400)
-    expect(store.isLocked).toBe(false)
+    store.createProjectOn(store.deploymentTarget)
+    vi.advanceTimersByTime(RELOAD_MS)
+    expect(store.currentProject?.name).toBe('Matte R&D')
     expect(store.currentDeployment.status).toBe('ready')
     expect(store.showsMissingNodes).toBe(false)
-    expect(store.readyProjectId).toBe(project?.id)
+    expect(store.readyProjectId).toBe(store.currentProject?.id)
   })
 
   it('opens the dialog instead of running while nodes are missing', async () => {

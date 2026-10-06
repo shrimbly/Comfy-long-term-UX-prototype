@@ -141,8 +141,6 @@ export interface Deployment {
   runtime?: string
 }
 
-export type DeploymentBuildSettings = Pick<Deployment, 'name' | 'comfyVersion'>
-
 // Storage medium for an asset. Per
 //   decision: ../IA_Plan/wiki/decisions/save-destination-workflow-level.md
 //   decision: ../IA_Plan/wiki/decisions/promoting-local-outputs-to-cloud.md

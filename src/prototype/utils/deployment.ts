@@ -37,6 +37,12 @@ export function runsWorkflow(
   return !missing.nodePacks.length && !missing.models.length
 }
 
+// The release an update to a build cuts: v7 → v8.
+export function nextRelease(release: string | undefined): string {
+  const current = Number(release?.replace(/^v/, ''))
+  return Number.isFinite(current) ? `v${current + 1}` : 'v1'
+}
+
 type StageState = 'done' | 'active' | 'pending'
 
 interface StageProgress extends BuildStage {
@@ -102,10 +108,4 @@ export function buildProgress(simSeconds: number): BuildProgress {
     remainingSeconds: Math.max(0, TOTAL_SECONDS - simSeconds),
     done: simSeconds >= TOTAL_SECONDS
   }
-}
-
-// 'v3' → 'v4'. Anything else starts a new line of releases.
-export function nextRelease(release: string | undefined): string {
-  const match = /^v(\d+)$/.exec(release ?? '')
-  return match ? `v${Number(match[1]) + 1}` : 'v1'
 }

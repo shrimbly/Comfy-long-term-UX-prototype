@@ -5831,7 +5831,7 @@
   "prototype": {
     "sidebar": {
       "home": "Home",
-      "drafts": "My Workflows",
+      "drafts": "Personal",
       "explore": "Explore",
       "recents": "Recents",
       "projects": "Projects",
@@ -5919,7 +5919,7 @@
       "rename": "Rename",
       "renamePrompt": "Rename project",
       "delete": "Delete project",
-      "deleteConfirm": "Delete “{name}”? Its published workflows are removed. Drafts you copied from it stay in My Workflows.",
+      "deleteConfirm": "Delete “{name}”? Its published workflows are removed. Drafts you copied from it stay in Personal.",
       "leave": "Leave project",
       "leaveConfirm": "Leave “{name}”? You'll lose access unless you're re-invited.",
       "leaveAction": "Leave",
@@ -5941,7 +5941,7 @@
     },
     "components": {
       "newWorkflowTile": {
-        "subtitle": "Saves to My Workflows"
+        "subtitle": "Saves to Personal"
       }
     },
     "mediaAssets": {
@@ -6103,12 +6103,12 @@
       "target": "“{workflow}” · {project}",
       "confirmBody": "This replaces the team's version with your copy. Teammates will fork from yours.",
       "permissionTitle": "Only owners can publish",
-      "permissionBody": "Keep working in My Workflows, or ask a project owner to publish for you.",
-      "permissionBodyOwner": "Keep working in My Workflows, or ask {owner} to publish for you.",
+      "permissionBody": "Keep working in Personal, or ask a project owner to publish for you.",
+      "permissionBodyOwner": "Keep working in Personal, or ask {owner} to publish for you.",
       "installTitle": "Switch to the team install",
       "installBody": "Publishing needs {required}. You're on {current}.",
       "noInstall": "no local install",
-      "cancel": "Keep in My Workflows",
+      "cancel": "Keep in Personal",
       "askOwner": "Submit",
       "publish": "Publish"
     },
@@ -6212,7 +6212,7 @@
           "hint": "Find a workflow across projects"
         },
         "openDrafts": {
-          "label": "Open My Workflows"
+          "label": "Open Personal"
         },
         "openRecents": {
           "label": "Open Recents"
@@ -6244,10 +6244,10 @@
       "open": "Open",
       "rename": "Rename…",
       "duplicate": "Duplicate",
-      "fork": "Fork to My Workflows",
+      "fork": "Fork to Personal",
       "branch": "Branch",
       "checkOut": "Check out",
-      "saveToMyWorkflows": "Save to My Workflows",
+      "saveToMyWorkflows": "Save to Personal",
       "promoteToProject": "Publish to project…",
       "uploadToCloud": "Upload to cloud",
       "setThumbnail": "Set thumbnail",
@@ -6268,14 +6268,14 @@
       "toastStubSummary": "Prototype stub",
       "toast": {
         "forkedSummary": "Forked",
-        "forkedDetail": "A copy of \"{name}\" was added to My Workflows.",
+        "forkedDetail": "A copy of \"{name}\" was added to Personal.",
         "branchedSummary": "Branched",
         "branchedDetail": "A branch of \"{name}\" was created in the project.",
         "thumbnailSummary": "Thumbnail updated",
         "gotLatestSummary": "Updated to latest",
         "gotLatestDetail": "“{name}” now matches the current published version.",
         "savedCopySummary": "Checked out",
-        "savedCopyDetail": "\"{name}\" is checked out to My Workflows.",
+        "savedCopyDetail": "\"{name}\" is checked out to Personal.",
         "deletedSummary": "Deleted",
         "deletedDetail": "\"{name}\" has been deleted.",
         "savedToCloudSummary": "Saved to cloud",
@@ -6308,7 +6308,7 @@
     },
     "editor": {
       "projectChip": {
-        "myWorkflows": "My Workflows",
+        "myWorkflows": "Personal",
         "inProject": "In project",
         "notInProject": "Not in a project",
         "moveToProject": "Move to another project…",
@@ -6318,11 +6318,11 @@
         "saveCloud": "Cloud",
         "saveLocalHint": "Outputs are written to the Comfy output directory on disk.",
         "saveCloudProjectHint": "Outputs will be tracked under {project} in your workspace.",
-        "saveCloudMyWorkflowsHint": "Outputs will land in your cloud My Workflows.",
+        "saveCloudMyWorkflowsHint": "Outputs will land in Personal on Comfy Cloud.",
         "cloudSignInHint": "Sign in to save outputs to the cloud.",
         "demoLabel": "Demo state",
         "demoInProject": "In project",
-        "demoMyWorkflows": "My Workflows"
+        "demoMyWorkflows": "Personal"
       }
     },
     "editorWorkflows": {
@@ -6352,7 +6352,7 @@
         "resultsFolders": "Folders",
         "resultsPublished": "Published",
         "resultsDrafts": "Drafts",
-        "resultsMyWorkflows": "My Workflows",
+        "resultsMyWorkflows": "Personal",
         "resultsAssets": "Media assets",
         "resultsTemplates": "Templates",
         "recents": "Recents",
@@ -6404,13 +6404,13 @@
         }
       },
       "drafts": {
-        "title": "My Workflows",
+        "title": "Personal",
         "subtitle": "Your private space for new work",
         "recentHeading": "Recent",
         "empty": "Nothing here yet. Tap \"New Workflow\" to start.",
         "emptyHeading": "Your workflows will show up here",
         "templatesHeading": "Starter templates",
-        "searchPlaceholder": "Search My Workflows…",
+        "searchPlaceholder": "Search Personal…",
         "filterEmpty": "No workflows match your search.",
         "filterAria": "Filter workflows by storage",
         "sortAria": "Sort workflows",
@@ -6881,63 +6881,116 @@
       },
       "dialog": {
         "close": "Close",
-        "eyebrow": {
-          "choose": "Step 1 of 3 · Where it runs",
-          "review": "Step 2 of 3 · Review the build",
-          "agent": "Step 2 of 3 · Build with your agent"
-        },
-        "title": "Run {workflow} on your own deployment",
-        "intro": "{deployment} is missing some of its nodes and models. A deployment of your own has all of them, so the workflow runs as it does for you locally.",
-        "benefits": {
-          "pinned": "Every node and model this workflow needs, pinned to your versions",
-          "ownProject": "Runs here in Comfy Cloud as its own project",
-          "builtForYou": "Built and deployed for you, right here, in about 20 minutes"
-        },
-        "openIn": "Open it in",
-        "runsWorkflow": "Runs {workflow}",
-        "groupRuns": "Runs {workflow}",
-        "groupMissing": "Missing some of its nodes",
-        "runsIt": "Runs it",
-        "thisProject": "{name} · this project",
-        "packsMissing": "{count} pack missing | {count} packs missing",
-        "modelsMissing": "{count} model missing | {count} models missing",
-        "newBuild": "A new project, on a new build",
-        "newBuildDetail": "Built and deployed here in about 20 minutes.",
-        "newBuildMenuDetail": "Built and deployed here in about 20 minutes",
-        "missingFrom": "Missing from {deployment}",
-        "customNodes": "Custom nodes",
-        "packs": "{count} pack | {count} packs",
-        "models": "Models",
         "notNow": "Not now",
-        "reviewBuild": "Review the build",
-        "switchAndReload": "Switch and reload",
-        "switchHint": "Switching reloads the page. Your open tabs come back.",
-        "reviewTitle": "Build {project} for {workflow}",
-        "reviewIntro": "One build with everything {workflow} needs. It builds in about 15 minutes, deploys in about 4, and runs in a new project of its own.",
-        "nameLabel": "Name the new project",
-        "summary": {
-          "project": "Project",
-          "projectDetail": "Its workflows and outputs live here. {workflow} moves into it.",
-          "projectValue": "New · {name}",
-          "nodesDetail": "Comfy Cloud's packs, plus {packs}",
-          "nodesValue": "{count} added | {count} added",
-          "modelsDetail": "{remote} comes from Hugging Face. {local} is only on your machine.",
-          "modelsValue": "{count} to upload | {count} to upload",
-          "gpu": "GPU",
-          "gpuDetail": "Sized for {model}. It stays warm {minutes} minutes after a run.",
-          "cost": "Cost",
-          "costDetail": "Nothing while it sleeps. Model storage is ${storage} a month.",
-          "costValue": "${hourly} an hour running"
+        "back": "Back",
+        "missingPacks": "{count} missing node pack | {count} missing node packs",
+        "missingModels": "{count} missing model | {count} missing models",
+        "cantRunOn": "This workflow can't run on {deployment}",
+        "runsOnLabel": "Create a new project that runs on",
+        "readyNow": "Ready now",
+        "ready": "Ready",
+        "searchDeployments": "Search deployments",
+        "noDeploymentMatch": "No deployments match “{query}”",
+        "missingSummary": "Missing {items}",
+        "nodePacksCount": "{count} node pack | {count} node packs",
+        "packsCount": "{count} pack | {count} packs",
+        "modelsCount": "{count} model | {count} models",
+        "newDeployment": "Create a new deployment",
+        "newDeploymentTime": "About 20 min",
+        "openInProject": "Open in another project",
+        "projectsRun": "Runs this workflow",
+        "projectsMissing": "Missing nodes or models",
+        "thisProject": "{name} · this project",
+        "createProject": "Create project",
+        "createDeployment": "Create deployment",
+        "project": {
+          "title": "New project",
+          "runsOn": "Runs on {deployment}"
         },
-        "customise": "Customise on Platform",
-        "customiseToastDetail": "Pick versions, GPUs and environment variables there. The build shows up here.",
-        "withAgent": "Build with your agent",
-        "buildAndDeploy": "Build and deploy",
+        "newLabel": "Create a new deployment for this workflow",
+        "benefits": {
+          "pinned": "Every node and model it needs, pinned to your versions",
+          "ownProject": "Its own project in Comfy Cloud",
+          "builtForYou": "Built and deployed for you in about 20 minutes"
+        },
+        "updateExisting": "Update an existing deployment",
+        "updateLabel": "Update this project's deployment to run it",
+        "updateRelease": "{from} → {to} · adds {items}",
+        "updateNote": "Every project on {deployment} gets the new release.",
+        "createInstead": "Create a new deployment instead",
+        "updateOnPlatform": "Update on Platform",
+        "platformToastDetail": "Updating a deployment isn't in this prototype.",
+        "build": {
+          "title": "Create a deployment",
+          "settings": "Suggested settings",
+          "name": "Name",
+          "comfyui": "ComfyUI",
+          "latestStable": "Latest stable",
+          "runtime": "Runtime",
+          "openSourceModels": "Open-source models",
+          "partnerModels": "Partner models",
+          "allAllowed": "All allowed",
+          "preInstalled": "{count} model pre-installed | {count} models pre-installed",
+          "customNodes": "Custom nodes",
+          "packs": "{count} pack | {count} packs",
+          "pythonPackages": "Python packages",
+          "nonePinned": "None pinned",
+          "withAgent": "Build with your agent",
+          "next": "Next: deployment",
+          "customiseTitle": "Change {setting} on Platform?",
+          "customiseBody": "The build opens there with these settings filled in.",
+          "openPlatform": "Open Platform",
+          "customiseToastDetail": "Customising a build isn't in this prototype.",
+          "editTitle": "Edit deployment",
+          "currentSettings": "Current settings"
+        },
         "agentTitle": "Hand the build to your coding agent",
-        "agentIntro": "Copy this into Claude Code, Codex or another agent on the machine where {workflow} runs. It finds what Comfy Cloud lacks, uploads what only exists there, and builds it. The build shows up here as it runs.",
+        "agentIntro": "Paste this into your agent on the machine where {workflow} runs.",
         "backToSummary": "Back to the summary",
         "copyPrompt": "Copy prompt",
-        "copied": "Copied"
+        "copied": "Copied",
+        "deploy": {
+          "title": "Deploy: {name} release 1",
+          "gpu": "GPU",
+          "vram": "VRAM",
+          "pricePerHour": "Price/hr",
+          "vramValue": "{gb} GB",
+          "needGpu": "Need a different GPU?",
+          "warmWorkers": "Always-warm workers",
+          "warmHint": "These workers always run, so a request does not wait for a cold start. You pay for each one while it runs. With 0, no worker stays warm.",
+          "maxWorkers": "Max workers",
+          "maxHint": "The deployment adds workers as traffic increases, up to this limit. It scales back down to the always-warm count when the traffic falls.",
+          "decrease": "Fewer",
+          "increase": "More",
+          "location": "Location",
+          "anywhere": "Anywhere",
+          "unitedStates": "United States",
+          "startupFlags": "ComfyUI startup flags",
+          "startupFlagsHint": "Flags ComfyUI starts with on every worker.",
+          "startupFlagsHelp": "Optional. For example --highvram keeps models on the GPU between runs.",
+          "startupFlagsPlaceholder": "--highvram --reserve-vram 2",
+          "estimatedCost": "Estimated cost",
+          "gpuTime": "GPU time",
+          "chooseGpu": "Choose a GPU to see its rate.",
+          "perWorker": "{price}/hr per worker",
+          "whenIdle": "When idle",
+          "atFullLoad": "At full load",
+          "perHourUnit": "/hr",
+          "modelStorage": "Model storage",
+          "storageDetail": "{gb} GB × {rate}/GB/mo",
+          "perMonth": "per month",
+          "costNote": "Storage bills from the moment you deploy. GPU time bills only while a worker is up, and costs nothing while idle.",
+          "currency": "Cost shown in USD, billed in Credits",
+          "estimatedTime": "Estimated time",
+          "untilReady": "Until ready",
+          "toDownload": "{gb} GB of models to download",
+          "minutes": "{min}–{max} min",
+          "timeNote": "Counted until the deployment is ready. A first request can still wait for a worker to start.",
+          "cancel": "Cancel",
+          "create": "Create deployment",
+          "saveRebuild": "Save and rebuild",
+          "editTitle": "Deploy: {name} {release}"
+        }
       },
       "agentPrompt": {
         "goal": "Build a Comfy Cloud deployment that runs the workflow {workflow}.",
@@ -6946,13 +6999,12 @@
         "models": "- models: {models} ({local} is only on this machine)",
         "skill": "Read the skill first: {command}",
         "build": "Then create the build from the workflow:",
-        "ready": "When it is ready, it opens in Comfy Cloud in the project {project}."
+        "ready": "When it is ready, Comfy Cloud asks me to name a project on it."
       },
       "lock": {
-        "eyebrow": "Step 3 of 3 · Building",
-        "title": "Building {project}",
+        "title": "Building {deployment}",
         "minutesLeft": "Less than a minute left. | About 1 minute left. | About {count} minutes left.",
-        "body": "{project} opens when it's ready, and we'll email you. Work in another project in the meantime.",
+        "body": "We'll ask you to name the project when it's done.",
         "phase": {
           "build": "Build",
           "deploy": "Deploy"
@@ -6978,8 +7030,8 @@
             "done": "Baked the image"
           },
           "worker": {
-            "active": "Starting a worker on an {gpu}",
-            "done": "Started a worker on an {gpu}"
+            "active": "Starting a {gpu} worker",
+            "done": "Started a {gpu} worker"
           },
           "models": {
             "active": "Loading models from storage",
@@ -6988,16 +7040,18 @@
         },
         "viewOnPlatform": "View on Platform",
         "platformToastDetail": "The build log and releases live there.",
-        "switchProject": "Switch to another project"
+        "keepWorking": "Keep working",
+        "chip": "Building {deployment} · {minutes} min"
       },
       "ready": {
         "title": "{project} is ready",
         "body": "{workflow} has every node and model it needs. It runs in {project} now.",
-        "run": "Run {workflow}",
         "dismiss": "Dismiss"
       },
       "demo": {
-        "drop": "Demo: drop incompatible workflow",
+        "menu": "Demo",
+        "drop": "Drop incompatible workflow",
+        "dropNothingRuns": "Drop it where nothing runs it",
         "reset": "Reset demo"
       }
     },
@@ -7279,28 +7333,6 @@
         "asleep": "Sleeping",
         "building": "Building"
       }
-    },
-    "deploymentDialog": {
-      "title": "Edit deployment",
-      "settings": "Settings",
-      "name": "Name",
-      "comfy": "ComfyUI",
-      "latestStable": "Latest stable",
-      "runtime": "Runtime",
-      "ossModels": "Open-source models",
-      "allAllowed": "All allowed",
-      "preinstalled": "No models pre-installed | 1 model pre-installed | {count} models pre-installed",
-      "partnerModels": "Partner models",
-      "customNodes": "Custom nodes",
-      "packs": "No packs | 1 pack | {count} packs",
-      "pythonPackages": "Python packages",
-      "nonePinned": "None pinned",
-      "back": "Back",
-      "save": "Save and rebuild",
-      "rebuilding": "Rebuilding {name}",
-      "rebuildingDetail": "About 19 minutes. Projects on it wait until it is ready.",
-      "agentIntro": "Copy this into Claude Code, Codex or another agent. The build shows up here as it runs.",
-      "agentGoal": "Update the Comfy Cloud deployment \"{name}\" to ComfyUI {version}. Keep its custom nodes and models."
     }
   },
   "mediaAssets": {

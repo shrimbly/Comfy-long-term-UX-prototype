@@ -43,7 +43,7 @@ const implicitWorkspace = {
 const myWorkflows = {
   id: 'proj-drafts',
   workspaceId: implicitWorkspace.id,
-  name: 'My Workflows',
+  name: 'Personal',
   tier: 'private' as const,
   ownerUserId: user.id,
   isDrafts: true,

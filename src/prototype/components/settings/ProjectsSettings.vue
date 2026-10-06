@@ -60,11 +60,13 @@
           >
             <td class="py-2.5 pl-3">
               <span class="flex items-center gap-2.5">
-                <ProjectTile
-                  :project="row.project"
-                  :deployment="row.deployment"
-                  size="sm"
-                />
+                <span
+                  class="grid size-4 shrink-0 place-items-center rounded-sm text-[9px] font-semibold text-button-surface-contrast"
+                  :style="{ backgroundColor: row.project.color ?? '#7c7c7c' }"
+                  aria-hidden="true"
+                >
+                  {{ row.project.name.charAt(0).toUpperCase() }}
+                </span>
                 <span class="truncate">{{ row.project.name }}</span>
               </span>
             </td>
@@ -94,11 +96,13 @@
             {{ t('prototype.settings.projects.eyebrow') }}
           </span>
           <span class="flex items-center gap-2">
-            <ProjectTile
-              :project="selected"
-              :deployment="customCloud.deploymentOf(selected.id)"
-              size="sm"
-            />
+            <span
+              class="grid size-4 shrink-0 place-items-center rounded-sm text-[9px] font-semibold text-button-surface-contrast"
+              :style="{ backgroundColor: selected.color ?? '#7c7c7c' }"
+              aria-hidden="true"
+            >
+              {{ selected.name.charAt(0).toUpperCase() }}
+            </span>
             <span class="truncate text-base font-medium">
               {{ selected.name }}
             </span>
@@ -130,7 +134,6 @@ import { usePrototypeCustomCloudStore } from '../../stores/customCloudStore'
 import { usePrototypePersonaStore } from '../../stores/personaStore'
 import { usePrototypeUiStore } from '../../stores/uiStore'
 import { projectAccessLevel } from '../../utils/projectAccess'
-import ProjectTile from '../ProjectTile.vue'
 import ProjectEnvironmentChip from '../project/ProjectEnvironmentChip.vue'
 import ProjectSettingsPanel from '../project/ProjectSettingsPanel.vue'
 

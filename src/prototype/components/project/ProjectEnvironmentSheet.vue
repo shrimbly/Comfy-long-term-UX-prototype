@@ -37,7 +37,7 @@
               v-if="environments.canManage && deployment.kind === 'custom'"
               variant="secondary"
               size="sm"
-              @click="isEditing = true"
+              @click="onEdit"
             >
               {{ t('prototype.projectPage.environmentSheet.edit') }}
             </Button>
@@ -174,11 +174,6 @@
       </aside>
     </div>
   </Teleport>
-  <DeploymentSettingsDialog
-    v-if="isEditing"
-    :deployment
-    @close="isEditing = false"
-  />
 </template>
 
 <script setup lang="ts">
@@ -193,13 +188,13 @@ import TabsList from '@/components/ui/tabs/TabsList.vue'
 import TabsTrigger from '@/components/ui/tabs/TabsTrigger.vue'
 
 import { policyCatalog } from '../../fixtures/policyCatalog'
+import { usePrototypeCustomCloudStore } from '../../stores/customCloudStore'
 import { usePrototypeEnvironmentStore } from '../../stores/environmentStore'
 import { usePrototypePersonaStore } from '../../stores/personaStore'
 import { usePrototypePolicyStore } from '../../stores/policyStore'
 import { usePrototypeUiStore } from '../../stores/uiStore'
 import type { Deployment } from '../../types'
 import DeploymentStatusDot from '../DeploymentStatusDot.vue'
-import DeploymentSettingsDialog from './DeploymentSettingsDialog.vue'
 import ProjectSettingsRow from './ProjectSettingsRow.vue'
 
 const { deployment } = defineProps<{
@@ -218,10 +213,10 @@ const ui = usePrototypeUiStore()
 const personaStore = usePrototypePersonaStore()
 const policies = usePrototypePolicyStore()
 const environments = usePrototypeEnvironmentStore()
+const customCloud = usePrototypeCustomCloudStore()
 const titleId = useId()
 
 const tab = ref('contents')
-const isEditing = ref(false)
 
 const subtitle = computed(() =>
   [deployment.release, deployment.gpu].filter(Boolean).join(' · ')
@@ -268,6 +263,12 @@ const usedBy = computed(() =>
 function openPolicies() {
   emit('close')
   ui.openSettings('policies')
+}
+
+// The build steps are the dialog the editor uses for a new deployment.
+function onEdit() {
+  emit('close')
+  customCloud.openEditDeployment(deployment.id)
 }
 
 function openEnvironments() {

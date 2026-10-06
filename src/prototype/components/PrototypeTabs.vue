@@ -47,6 +47,11 @@
       v-if="showSwitcher && customCloud.currentProject"
       :project="customCloud.currentProject"
     />
+    <BuildingChip
+      v-if="customCloud.buildingDeployment && customCloud.progress"
+      :deployment="customCloud.buildingDeployment"
+      :remaining-seconds="customCloud.progress.remainingSeconds"
+    />
     <div
       class="flex h-full min-w-0 flex-auto flex-row gap-1 overflow-hidden px-1"
     >
@@ -160,6 +165,7 @@ import Button from '@/components/ui/button/Button.vue'
 import Tabs from '@/components/ui/tabs/Tabs.vue'
 import TabsList from '@/components/ui/tabs/TabsList.vue'
 import TabsTrigger from '@/components/ui/tabs/TabsTrigger.vue'
+import BuildingChip from './BuildingChip.vue'
 import ProjectSwitcher from './ProjectSwitcher.vue'
 import { usePrototypeCustomCloudStore } from '../stores/customCloudStore'
 import { usePrototypeNavigationStore } from '../stores/navigationStore'

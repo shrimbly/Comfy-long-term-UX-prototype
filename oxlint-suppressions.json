@@ -373,11 +373,6 @@
       "count": 9
     }
   },
-  "src/prototype/components/BuildLockModal.vue": {
-    "comfy/no-primevue-imports": {
-      "count": 1
-    }
-  },
   "src/prototype/components/FolderCard.vue": {
     "comfy/no-primevue-imports": {
       "count": 3
@@ -395,11 +390,6 @@
   },
   "src/prototype/components/PrototypeTabs.test.ts": {
     "comfy/use-global-pinia": {
-      "count": 1
-    }
-  },
-  "src/prototype/components/RunTargetDialog.vue": {
-    "comfy/no-primevue-imports": {
       "count": 1
     }
   },
@@ -451,7 +441,7 @@
   },
   "src/prototype/stores/customCloudStore.ts": {
     "comfy/no-es2023-array-copy-method": {
-      "count": 2
+      "count": 1
     }
   },
   "src/prototype/stores/mediaReferenceStore.test.ts": {
