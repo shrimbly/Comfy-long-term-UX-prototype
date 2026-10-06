@@ -6955,7 +6955,7 @@
           "customiseToastDetail": "Customising a build isn't in this prototype."
         },
         "agentTitle": "Hand the build to your coding agent",
-        "agentIntro": "Copy this into Claude Code, Codex or another agent on the machine where {workflow} runs. It finds what Comfy Cloud lacks, uploads what only exists there, and builds it. The build shows up here as it runs.",
+        "agentIntro": "Paste this into your agent on the machine where {workflow} runs.",
         "backToSummary": "Back to the summary",
         "copyPrompt": "Copy prompt",
         "copied": "Copied",
