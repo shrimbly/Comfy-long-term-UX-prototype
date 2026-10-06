@@ -1496,6 +1496,13 @@ Wiki is silent on the editor's workflow browser. Promote? **maybe**: an addition
 
 ---
 
+## [2026-10-07] Saved workflows open as distinct graphs
+
+Every saved workflow opened in the real editor showed the same default graph, so switching tabs didn't read as switching workflows. `fixtures/demoWorkflowGraphs.ts` now gives each saved workflow one of three text-to-image setups — SDXL with a refine pass, Z-Image Turbo, HiDream + detail LoRA — picked from its id so it always opens the same way, framed by a group titled with the workflow's name, with the name in the prompt and Save Image filename prefix. Only core nodes and base models the in-browser backend serves, so nothing loads red. New blank workflows keep the default graph; matte_pass is unchanged.
+
+Promote? **no** — demo content; no IA change. The wiki has no stance on what a workflow's graph contains.
+---
+
 ## [2026-10-07] Flow 07: the incompatible-workflow dialog, redesigned on a canvas
 
 Willie explored the "choose where it runs" dialog on a design canvas, <https://claude.ai/artifact/PQby9iCSzrR7WMvbsqnY11>. It shows today's screens and the full new flow with its branches. Of four directions (one sheet, a side panel, a canvas banner, a table of who runs it), only the one-sheet modal was worth keeping. Willie then refined today's dialog one step at a time instead. Built in `components/RunTargetDialog.vue` and its step components.
@@ -1560,12 +1567,3 @@ Supersedes "the build locks the project" in the entries above. Wiki: `decisions/
 - Code names (`drafts`, `isDrafts`, `saveToMyWorkflows`) are unchanged. One upstream ComfyUI string (`mediaAsset.actions.promoteToCloudFallbackDestination`) still says "My Workflows", because it sits outside the prototype.
 
 Wiki: `decisions/drafts-as-default-private-project.md` names the per-user project "Drafts". Promote? **yes**: settle the user-facing name as "Personal" there.
-
----
-
-## [2026-10-07] Each saved workflow opens its own graph
-
-- **Decision: every saved fixture workflow opens a real graph of its own**, so switching tabs changes the graph. Before, every tab except `matte_pass` showed ComfyUI's default graph.
-- Each workflow gets one of five pipelines, picked from a hash of its id: Z-Image Turbo, HiDream with a detail LoRA (wide or portrait), SDXL batch of 4, or SD 1.5. The positive prompt comes from the workflow's name, and each graph has its own seed and save prefix. A new, unsaved workflow still opens the default graph.
-- Every node and model is one the in-browser backend serves on Comfy Cloud, so no saved workflow is flagged as missing anything. Only `matte_pass` is.
-- The wiki is silent on fixture graph content. This is a prototype-only working decision.

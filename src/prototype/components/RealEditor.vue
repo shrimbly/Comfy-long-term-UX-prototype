@@ -10,8 +10,7 @@
   The real ComfyUI editor (GraphView: litegraph canvas, sidebars, Run
   button, queue) under the prototype's tab strip. It stays mounted, so the
   app boots once. This bridge keeps it in step with the prototype:
-    - each prototype workflow tab shows its own real workflow: a saved
-      workflow its own graph, a new one the default graph;
+    - each prototype workflow tab shows its own real workflow;
     - the in-browser backend serves the current project's deployment, so
       matte_pass's nodes are red where the deployment lacks them and clean
       once it has them;
@@ -67,8 +66,8 @@ import { useExecutionErrorStore } from '@/stores/executionErrorStore'
 import GraphView from '@/views/GraphView.vue'
 
 import { useProjectWorkflowsSidebarTab } from '../composables/useProjectWorkflowsSidebarTab'
+import { demoWorkflowGraph } from '../fixtures/demoWorkflowGraphs'
 import { MATTE_PASS_GRAPH } from '../fixtures/mattePassGraph'
-import { savedWorkflowGraph } from '../fixtures/workflowGraphs'
 import { setMockDeployment } from '../mockBackend'
 import { objectInfo, PACK_NODE_TYPES } from '../mockBackend/nodeDefs'
 import { usePrototypeCustomCloudStore } from '../stores/customCloudStore'
@@ -137,12 +136,15 @@ async function registerDeploymentNodes() {
   }
 }
 
-function freshGraph(tab: NonNullable<typeof activeTab.value>) {
-  const graph: ComfyWorkflowJSON =
+type WorkflowTab = NonNullable<typeof activeTab.value>
+
+// matte_pass, a saved workflow's own graph, or the default for a new one.
+function freshGraph(tab: WorkflowTab): ComfyWorkflowJSON {
+  const graph =
     tab.workflowKey === 'matte_pass'
       ? MATTE_PASS_GRAPH
       : tab.workflowId
-        ? savedWorkflowGraph({ id: tab.workflowId, name: tab.label })
+        ? demoWorkflowGraph({ id: tab.workflowId, name: tab.label })
         : defaultGraph
   return { ...structuredClone(graph), id: crypto.randomUUID() }
 }
