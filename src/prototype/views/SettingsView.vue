@@ -90,6 +90,7 @@
       v-else-if="ui.settingsPage === 'general'"
       :key="currentWorkspace?.id"
     />
+    <ProjectsSettings v-else-if="ui.settingsPage === 'projects'" />
     <MembersView v-else-if="ui.settingsPage === 'members'" embedded />
     <WorkspaceUsage
       v-else-if="ui.settingsPage === 'usage'"
@@ -122,6 +123,7 @@ import { useI18n } from 'vue-i18n'
 import { usePrototypePersonaStore } from '../stores/personaStore'
 import { usePrototypeUiStore } from '../stores/uiStore'
 import BillingSection from '../components/BillingSection.vue'
+import ProjectsSettings from '../components/settings/ProjectsSettings.vue'
 import WorkspacePolicies from '../components/settings/WorkspacePolicies.vue'
 import WorkspaceUsage from '../components/settings/WorkspaceUsage.vue'
 import WorkspaceGeneralSettings from './WorkspaceGeneralSettings.vue'

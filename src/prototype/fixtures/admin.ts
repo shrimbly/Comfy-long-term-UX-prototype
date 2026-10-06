@@ -200,10 +200,12 @@ export const adminFixture: PersonaFixture = {
       currentUserHasAccess: true,
       members: [
         { userId: user.id, role: 'owner' },
-        { userId: 'user-jane', role: 'collaborator' },
-        { userId: 'user-marcus', role: 'collaborator' },
-        { userId: 'user-alex', role: 'collaborator' }
+        { userId: 'user-jane', role: 'collaborator', creditLimit: 3000 },
+        { userId: 'user-marcus', role: 'collaborator', creditLimit: 2000 },
+        { userId: 'user-alex', role: 'collaborator', creditLimit: 1000 }
       ],
+      monthlyCreditBudget: 12000,
+      defaultMemberCreditLimit: 2000,
       creditsThisMonth: 9800,
       monthlyUsage: [
         { month: '2026-01', credits: 3200 },
@@ -257,8 +259,7 @@ export const adminFixture: PersonaFixture = {
       name: 'Style studies'
     },
     { id: 'folder-mtx-bul', projectId: 'proj-the-matrix', name: 'BUL' },
-    { id: 'folder-mtx-lob', projectId: 'proj-the-matrix', name: 'LOB' },
-    { id: 'folder-mtx-run', projectId: 'proj-the-matrix', name: 'RUN' }
+    { id: 'folder-mtx-lob', projectId: 'proj-the-matrix', name: 'LOB' }
   ],
   workflows: [
     {
@@ -663,7 +664,6 @@ export const adminFixture: PersonaFixture = {
       id: 'wf-mtx-run-fx',
       projectId: 'proj-the-matrix',
       name: 'MTX_RUN_0050_fx',
-      folderId: 'folder-mtx-run',
       description:
         'Digital rain generator — procedural green-glyph cascade with depth-driven density and trailing falloff.',
       kind: 'workflow',
@@ -742,6 +742,15 @@ export const adminFixture: PersonaFixture = {
       name: 'MTX_RUN_0080_fx',
       updatedAt: '2026-06-22',
       storage: 'local',
+      provenanceProjectId: 'proj-the-matrix'
+    },
+    {
+      // Created in-project (no source) — a wire-removal pass on the subway shot.
+      id: 'wf-mw-mtx-sen-wire',
+      projectId: myWorkflows.id,
+      name: 'MTX_SEN_0320_wire',
+      updatedAt: '2026-06-21',
+      storage: 'cloud',
       provenanceProjectId: 'proj-the-matrix'
     },
 
@@ -1227,8 +1236,10 @@ export const adminFixture: PersonaFixture = {
       kind: 'custom',
       release: 'v3',
       status: 'ready',
-      gpu: 'RTX 5090',
+      gpu: 'RTX PRO 6000',
       warmMinutes: 2,
+      comfyVersion: 'v0.39.1',
+      runtime: 'CUDA 13.0 · Python 3.12 · Torch 2.12.1',
       nodePacks: ['comfyui-rmbg', 'acme-matte-tools', 'comfyui-impact-pack'],
       models: ['flux1-dev-fp8', 'acme_hero_lora_v5', 'sdxl-base-1.0']
     },
@@ -1238,8 +1249,10 @@ export const adminFixture: PersonaFixture = {
       kind: 'custom',
       release: 'v7',
       status: 'asleep',
-      gpu: 'RTX 4090',
+      gpu: 'H100 SXM',
       warmMinutes: 2,
+      comfyVersion: 'v0.38.4',
+      runtime: 'CUDA 12.8 · Python 3.11 · Torch 2.9.0',
       nodePacks: ['comfyui-rmbg'],
       models: ['flux1-dev-fp8', 'acme_hero_lora_v5']
     }

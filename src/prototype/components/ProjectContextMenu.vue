@@ -83,7 +83,6 @@ import ConfirmDialog from './ConfirmDialog.vue'
 import PromptDialog from './PromptDialog.vue'
 import { useActiveContextMenu } from '../composables/useActiveContextMenu'
 import { usePrototypePersonaStore } from '../stores/personaStore'
-import { usePrototypeTabsStore } from '../stores/tabsStore'
 import { usePrototypeUiStore } from '../stores/uiStore'
 import type { Project } from '../types'
 
@@ -97,7 +96,6 @@ const { t } = useI18n()
 const toast = useToast()
 const personaStore = usePrototypePersonaStore()
 const uiStore = usePrototypeUiStore()
-const tabsStore = usePrototypeTabsStore()
 
 type ContextMenuHandle = {
   show: (event: MouseEvent) => void
@@ -140,7 +138,7 @@ function onOpen() {
 
 function onMediaAssets() {
   uiStore.setProjectFilter(project.id)
-  tabsStore.openMediaAssets(t('prototype.sidebar.libraryMedia'))
+  uiStore.go({ kind: 'media' })
 }
 
 function onShare() {

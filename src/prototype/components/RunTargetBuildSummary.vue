@@ -13,7 +13,13 @@
 -->
 <template>
   <h2 :id="titleId" class="m-0 pr-8 text-2xl font-semibold">
-    {{ t('prototype.customCloud.dialog.build.title') }}
+    {{
+      t(
+        editing
+          ? 'prototype.customCloud.dialog.build.editTitle'
+          : 'prototype.customCloud.dialog.build.title'
+      )
+    }}
   </h2>
 
   <div
@@ -21,12 +27,21 @@
   >
     <span class="flex items-center gap-2 px-3 pb-3.5 text-sm">
       <i class="icon-[lucide--circle-check] size-4 text-success-background" />
-      {{ MATTE_PASS.name }}
+      {{ source.name }}
+      <span v-if="editing?.release" class="text-muted-foreground">
+        {{ editing.release }}
+      </span>
     </span>
     <span
       class="px-3 pt-2 pb-1.5 text-xs font-medium tracking-widest text-muted-foreground uppercase"
     >
-      {{ t('prototype.customCloud.dialog.build.settings') }}
+      {{
+        t(
+          editing
+            ? 'prototype.customCloud.dialog.build.currentSettings'
+            : 'prototype.customCloud.dialog.build.settings'
+        )
+      }}
     </span>
     <label
       class="flex h-11.5 items-center justify-between gap-3 border-t border-border-subtle px-3 text-sm"
@@ -65,12 +80,7 @@
   </div>
 
   <footer class="flex items-center gap-2.5">
-    <Button
-      variant="muted-textonly"
-      size="lg"
-      class="mr-auto"
-      @click="customCloud.dialogStep = 'choose'"
-    >
+    <Button variant="muted-textonly" size="lg" class="mr-auto" @click="onBack">
       {{ t('prototype.customCloud.dialog.back') }}
     </Button>
     <Button
@@ -111,22 +121,46 @@ const emit = defineEmits<{
 const { t } = useI18n()
 const customCloud = usePrototypeCustomCloudStore()
 
+const editing = computed(() => customCloud.editingDeployment)
+
+// The build's source: the deployment under edit, or the dropped workflow.
+const source = computed(() =>
+  editing.value
+    ? {
+        name: editing.value.name,
+        comfyVersion: editing.value.comfyVersion ?? BUILD_DEFAULTS.comfyVersion,
+        runtime: editing.value.runtime ?? BUILD_DEFAULTS.runtime,
+        models: editing.value.models,
+        nodePacks: editing.value.nodePacks
+      }
+    : {
+        name: MATTE_PASS.name,
+        comfyVersion: BUILD_DEFAULTS.comfyVersion,
+        runtime: BUILD_DEFAULTS.runtime,
+        models: MATTE_PASS.models,
+        nodePacks: MATTE_PASS.nodePacks
+      }
+)
+
 const rows = computed(() => [
   {
     label: t('prototype.customCloud.dialog.build.comfyui'),
-    value: BUILD_DEFAULTS.comfyVersion,
-    detail: t('prototype.customCloud.dialog.build.latestStable')
+    value: source.value.comfyVersion,
+    detail:
+      source.value.comfyVersion === BUILD_DEFAULTS.comfyVersion
+        ? t('prototype.customCloud.dialog.build.latestStable')
+        : undefined
   },
   {
     label: t('prototype.customCloud.dialog.build.runtime'),
-    value: BUILD_DEFAULTS.runtime
+    value: source.value.runtime
   },
   {
     label: t('prototype.customCloud.dialog.build.openSourceModels'),
     value: t('prototype.customCloud.dialog.build.allAllowed'),
     detail: t(
       'prototype.customCloud.dialog.build.preInstalled',
-      MATTE_PASS.models.length
+      source.value.models.length
     )
   },
   {
@@ -137,7 +171,7 @@ const rows = computed(() => [
     label: t('prototype.customCloud.dialog.build.customNodes'),
     value: t(
       'prototype.customCloud.dialog.build.packs',
-      MATTE_PASS.nodePacks.length
+      source.value.nodePacks.length
     )
   },
   {
@@ -145,4 +179,9 @@ const rows = computed(() => [
     value: t('prototype.customCloud.dialog.build.nonePinned')
   }
 ])
+
+// Editing starts here, so Back closes; a new build goes back to the choice.
+function onBack() {
+  customCloud.dialogStep = editing.value ? null : 'choose'
+}
 </script>

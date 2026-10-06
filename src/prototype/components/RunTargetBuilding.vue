@@ -22,7 +22,13 @@
     </h2>
     <p class="m-0 text-sm text-muted-foreground">
       {{ timeLeft }}
-      {{ t('prototype.customCloud.lock.body') }}
+      {{
+        t(
+          customCloud.editingDeployment
+            ? 'prototype.customCloud.lock.rebuildBody'
+            : 'prototype.customCloud.lock.body'
+        )
+      }}
     </p>
   </header>
 
@@ -105,6 +111,7 @@ import Button from '@/components/ui/button/Button.vue'
 import { useToastStore } from '@/platform/updates/common/toastStore'
 
 import { useTextT } from '../composables/useTextT'
+import { usePrototypeCustomCloudStore } from '../stores/customCloudStore'
 import { MATTE_PASS } from '../fixtures/customCloud'
 import type { BuildPhase, BuildStage } from '../fixtures/customCloud'
 import type { Deployment } from '../types'
@@ -122,6 +129,7 @@ const emit = defineEmits<{
 
 const { t } = useI18n()
 const tText = useTextT()
+const customCloud = usePrototypeCustomCloudStore()
 const toast = useToastStore()
 
 function minutes(seconds: number) {

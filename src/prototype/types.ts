@@ -38,6 +38,9 @@ export type ProjectRole = 'owner' | 'collaborator'
 interface ProjectMember {
   userId: string
   role: ProjectRole
+  // Credits this member may spend in this project per month. Absent = no
+  // project-level cap. See ../IA_Plan/wiki/open-questions.md#per-member-credit-limits
+  creditLimit?: number
 }
 
 // Library sidebar sub-sections. MVP collapses the Library to Media only
@@ -102,7 +105,15 @@ export interface Project {
   deploymentId?: string
   // Colour tile shown in the tab-bar project switcher and project menus.
   color?: string
+  // Credits the project may spend per month, and the cap each member gets
+  // unless ProjectMember.creditLimit says otherwise. Absent = no cap.
+  monthlyCreditBudget?: number
+  defaultMemberCreditLimit?: number
 }
+
+export type ProjectCreditSettings = Partial<
+  Pick<Project, 'monthlyCreditBudget' | 'defaultMemberCreditLimit'>
+>
 
 // Custom Comfy Cloud (Project Homestead): a project runs on a Developer
 // Platform deployment. One deployment can back several projects, so updating
@@ -124,6 +135,10 @@ export interface Deployment {
   // What the build contains — drives "runs it" vs "what it lacks".
   nodePacks: string[]
   models: string[]
+  // The build's ComfyUI version and runtime, e.g. 'v0.39.1' and
+  // 'CUDA 13.0 · Python 3.12 · Torch 2.12.1'. Custom deployments only.
+  comfyVersion?: string
+  runtime?: string
 }
 
 // Storage medium for an asset. Per

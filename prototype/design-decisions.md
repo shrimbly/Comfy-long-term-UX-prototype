@@ -1575,3 +1575,129 @@ Wiki: `decisions/drafts-as-default-private-project.md` names the per-user projec
 The presenter bar (persona `<select>` + "Demo: drop incompatible workflow" + "Demo: nothing runs it" + "Reset demo") sat bottom-right as a wide strip, covering the editor's fit / zoom / minimap / links toolbar. It's now a single small **Demo · {persona}** pill bottom-left, just past the sidebar, opening a menu: personas as a checked list, then the two drop actions, then Reset demo. `PersonaSwitcher.vue` folded into `DemoControls.vue`. Still shown only on the dev server and the deployed prototype.
 
 Promote? **no** — presenter tooling; no IA change.
+
+---
+
+## [2026-10-07] Project page: three header variants, environment on the page, settings → Projects
+
+Scope is the dashboard only. Flows where a dropped workflow does not fit the project stay as they are.
+
+**Three project-page headers, picked by a presenter switcher.** "Project page: Tabs / Quiet / Rail" sits beside the persona toggle and survives a reload.
+
+- **Tabs.** The environment chip sits next to the title. Workflows, Media, Usage and Settings are a tab strip under it. Media is another surface, so its tab opens Media assets instead of switching the body.
+- **Quiet.** No tabs. One meta line under the title: environment, people, workflow count. Media and Settings are icon buttons, and Settings opens a sheet on the right.
+- **Rail.** Title and "+ Workflow" only. A right-hand rail holds Runs on, Access with Share, Usage, Media assets and All settings.
+
+**The environment shows on the project page in every variant**, as a dot and a name. The status word shows only when it is not ready ("asleep", "building · 12 min"), so a healthy project reads as one name. Comfy Cloud shows too: the ask was to make the environment and its status explicit.
+
+**Project settings stay minimal and link out.** On the project page, settings are three rows: Runs on, Access, Usage. "All settings" opens the workspace settings page with that project selected. The old Deployment section (GPU, warm time, Manage on Platform, Change deployment) is gone from the project page.
+
+**Workspace settings gains a Projects page.** A list of every project the viewer can open, with where it runs, people and workflow count. Picking one opens a panel on the right with the same rows, "Change" for admins, and "Open project". Modeled on the Claude Console Workspaces page, where their workspaces map to our projects.
+
+Wiki link: `concepts/custom-comfy-cloud.md` step 3 ("in the settings you can see where it's deployed") now points at the project page rows and the settings Projects panel. `decisions/opinionated-roles-no-permission-matrix.md` still holds: only admins see Change.
+
+Open question: which header to keep. The switcher exists so Willie can compare them on the deployed preview.
+
+Promote? **maybe**, once a header is picked.
+
+---
+
+## [2026-10-07] Project page: Tabs chosen; credit attribution per member
+
+Pablo picked the Tabs header. The Quiet and Rail variants stay behind the switcher for now.
+
+- **Media assets is a button again, not a tab.** It opens its own top-bar tab, so a tab in the project strip misled: the strip now reads Workflows · Usage · Settings.
+- **The Usage tab attributes credits per member.** A donut for the share and a table with runs, credits and a limit bar per member. Rows come from the same sample records as workspace Usage, filtered to the project. API keys and other unattributed runs are their own row.
+- **Per-member limits are per project.** `ProjectMember.creditLimit` is new and optional. The bar reads "{used} of {limit}" and turns amber at 80% and red at 100%. A member without a project limit falls back to their workspace limit, and otherwise shows "No limit". The Matrix seeds Alex over his limit so the red state is visible.
+- Reason: enterprises ask for clear credit attribution first. The project page is where a lead looks for it, and a limit bar answers "who is about to run out" without a second screen.
+
+Wiki link: `entities/workspace.md` §Identity (workspace stays the billing entity; this is attribution only). Open question dependency: `open-questions.md#per-member-credit-limits`, which only proposes workspace-level limits. The per-project cap is a prototype extension to feed back.
+
+Promote? **maybe**, if per-project caps survive review.
+
+---
+
+## [2026-10-07] Project page: Tabs is final; Quiet and Rail removed
+
+- **Decision: the Tabs header is the project page.** The presenter switcher and the Quiet and Rail variants are deleted, with the side sheet, the rail rows and the switcher's store state. One header, no toggle.
+- Reason: Pablo picked Tabs after comparing the three on the dev server. Dead variants cost more to keep in sync than they tell.
+
+Promote? **no**: the earlier "Tabs chosen" entry already carries the decision.
+
+---
+
+## [2026-10-07] Project settings for a studio; Members tab; usage ranges on the workspace page
+
+- **Decision: project settings are six sections, full width.** General (name, colour), Environment (runs on, Change for admins), Access (general access, people with a link to Members), Credits (monthly budget, default limit per member), Policies (follows the workspace, link to workspace policies) and Delete. Owners and workspace admins edit; everyone else reads.
+- **Decision: a Members tab on the project page.** It is the sharing panel inline, after Settings. The Share button in the header keeps opening the same panel as a dialog.
+- **Decision: project credit caps.** `Project.monthlyCreditBudget` and `Project.defaultMemberCreditLimit` are new and optional. A member's limit resolves project member → project default → workspace limit. The Matrix seeds a budget of 12,000 and a default of 2,000.
+- **Decision: the workspace Usage page uses the same range picker as the project Usage tab**, and its table sits on the page without an outer box.
+- **Sidebar: Environments moves next to Media assets**, out of the Create group. An environment is something you pick, not something you make here.
+- Not built, logged as options: archive a project when a production wraps; output storage and retention; naming rules for versions; a default template for new workflows; notifications per project.
+
+Wiki link: `entities/project.md`, `concepts/three-level-permissions.md`. Open question dependency: `open-questions.md#per-member-credit-limits` (workspace-level only in the wiki; project caps are a prototype extension).
+
+Promote? **maybe**, with the per-member limit entry.
+
+---
+
+## [2026-10-07] Project settings as a bento grid; environment sheet
+
+- **Decision: the settings sections are cards in a two-column grid.** Same six sections, each with its title and hint at the top and its rows below.
+- **Decision: the environment row opens a sheet on the right.** Two tabs:
+  - **Contents:** the custom nodes and models the build pins. On Comfy Cloud there is nothing pinned, so it shows "All that the workspace allows" with the counts from the workspace policies. The intro says projects inherit the workspace policies and can only narrow them.
+  - **Status:** the status chip, build, GPU, keep-warm time and the projects on it. Custom environments link to the Environments page.
+- Reason: the environment is the setting a studio asks about most, and its contents are what decide whether a workflow runs. The sheet keeps that one click from settings without leaving the project.
+
+Wiki link: `concepts/custom-comfy-cloud.md`, `decisions/custom-nodes-as-configuration.md`. The wiki is silent on whether a project may narrow the workspace allowlists; the sheet states the inheritance rule as the working answer.
+
+Promote? **maybe**: the inherit-and-narrow rule, once reviewed.
+
+---
+
+## [2026-10-07] Project settings: one column, no dividers, a thumbnail; Change environment is real; Policies card dropped
+
+- **Layout:** the cards stack in one column with a lifted background. Rows inside a card have no dividers.
+- **General shows the project thumbnail**, the same four-tile preview as the project card, instead of the colour swatch.
+- **Change environment opens a picker.** Comfy Cloud and the workspace's custom environments as radio rows, each with its GPU and how many projects use it. "New deployment" opens the existing create dialog, and the new one is selected on return. Switch sets `project.deploymentId`. The same picker serves the settings Projects panel.
+- **The Policies card is gone.** The rule lives in the environment sheet, whose Contents tab links to Workspace policies.
+
+Wiki link: `decisions/project-runs-on-shared-deployment.md`. The wiki does not say who may move a project between deployments; the picker shows for owners and workspace admins, like the rest of the settings.
+
+Promote? **no**.
+
+---
+
+## [2026-10-07] Workflow cards open on double click
+
+- **Decision: a double click opens a workflow in the editor**, in its project: a draft's provenance project, else its own. A single click no longer opens anything, and a shift, cmd or ctrl click still selects. Published cards keep their buttons, since opening one means checking it out first.
+- Reason: Pablo asked for file-browser behaviour on Home. It also stops accidental editor loads while scanning cards.
+- Also this round: the environment sheet lists Comfy Cloud's allowed packs and models by name, its tabs show only a bottom stroke, and admins get an "Edit deployment" button that hands off to the Developer Platform.
+
+Promote? **no**.
+
+---
+
+## [2026-10-07] Media assets live in the dashboard, with filters in one row
+
+- **Decision: the sidebar's Media assets opens a dashboard view**, like Projects or Environments, instead of a workbench tab with its own sidebar. The project page's Media assets button and the project context menu land there with the project filter set.
+- **Decision: one row of filters.** Modality tabs with counts (All, Images, Videos, 3D, Audio), a Project dropdown and a Favorites toggle. Counts follow the other two filters, so a tab says what it would show.
+- **Decision: cards carry the file name and "project · size · age"** under a square preview. Video gets a play badge, audio and 3D an icon in place of a preview. A star on hover favorites the asset; favorites live in memory.
+- **Fixture:** media assets now point at the workspace's real projects, carry a modality and a size, and include a few videos, audio files and a 3D model. The old notice dialog is gone.
+
+Wiki link: `entities/media-file.md`, `entities/output.md`. The wiki is silent on favorites; working answer: per viewer, not shared.
+
+Promote? **maybe**: the "media as a dashboard view" shape, once Willie has seen it.
+
+---
+
+## [2026-10-07] Project cards show members; Edit deployment opens the deployment dialog
+
+- **Project cards** show the member count instead of the workflow count, and Comfy Cloud gets a cloud icon in place of the status dot, matching the tab-bar pill.
+- **Edit deployment opens the editor's build steps** (Willie's "Create a deployment", merged from `mvp-scope-cut`): the build summary with the deployment's own name, version, runtime, models and packs under "Current settings", then Platform's deploy dialog with its GPU preselected, then the build's progress. Back closes instead of returning to the workflow choice.
+- **Save and rebuild bumps the release and runs the same background build.** The deployment shows "building · N min" wherever it appears and the tab strip's Building chip reopens the progress. When done it turns ready and the dialog closes; unlike a new deployment it does not ask to name a project.
+- `Deployment.comfyVersion` and `Deployment.runtime` are new and optional; the summary falls back to the build defaults.
+
+Wiki link: `concepts/custom-comfy-cloud.md`, `decisions/build-locks-project-until-ready.md`.
+
+Promote? **maybe**, together with the environment sheet.

@@ -76,7 +76,7 @@ describe('ProjectWorkflowsSidebarTab', () => {
     ).toEqual([
       'BUL',
       'LOB',
-      'RUN',
+      'MTX_RUN_0050_fx',
       'MTX_SEN_0300_light',
       'MTX_LIB_greenKey',
       'MTX_CON_0010_dmp'

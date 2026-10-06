@@ -5950,11 +5950,6 @@
         "allProjects": "All projects"
       }
     },
-    "mediaAssetsNotice": {
-      "title": "Media Assets",
-      "body": "This will open Alex's Media Assets tab.",
-      "ok": "Got it"
-    },
     "workflowsEmpty": {
       "blankCanvas": "Blank canvas",
       "openTemplates": "Open templates"
@@ -5972,9 +5967,22 @@
       "tagsEmpty": "No tags on assets in this section yet."
     },
     "media": {
-      "add": "Add media",
-      "missingBanner": "{count} linked file is missing | {count} linked files are missing",
-      "devSimulateFolder": "Simulate folder moved (dev)"
+      "title": "Media assets",
+      "modality": {
+        "all": "All",
+        "image": "Images",
+        "video": "Videos",
+        "model3d": "3D",
+        "audio": "Audio"
+      },
+      "project": "Project",
+      "allProjects": "All projects",
+      "favorites": "Favorites",
+      "favorite": "Add to favorites",
+      "unfavorite": "Remove from favorites",
+      "noProject": "No project",
+      "count": "No assets | 1 asset | {count} assets",
+      "empty": "No assets match these filters."
     },
     "relinkDialog": {
       "title": "Relink file",
@@ -6472,7 +6480,8 @@
         "viewMode": {
           "grid": "Grid view",
           "list": "List view"
-        }
+        },
+        "memberCount": "{count} member | {count} members"
       },
       "project": {
         "notFound": "Project not found in current workspace.",
@@ -6542,14 +6551,8 @@
             "placeholder": "e.g. comfyui_controlnet_aux"
           },
           "usage": {
-            "heading": "This project's usage this month",
-            "creditsValue": "{value} credits",
-            "delta": "{pct}% vs last month",
-            "recentHeading": "Recent months",
-            "export": "Export usage history",
             "exportedSummary": "Usage history exported",
-            "exportedDetail": "Downloaded {count} months for {project}.",
-            "note": "Billing is managed at the workspace level."
+            "exportedDetail": "Downloaded {count} rows for {project}."
           }
         },
         "sharing": {
@@ -6868,21 +6871,8 @@
         "opening": "Opening {project}"
       },
       "settings": {
-        "button": "Settings",
-        "deployment": "Deployment",
-        "deploymentHint": "Where this project's workflows run. Everyone in the project runs on it.",
-        "runsOn": "Runs on",
-        "comfyCloudDetail": "The shared default. Projects without their own deployment run here.",
-        "sharedWith": "Only this project runs on it | Shared with 1 other project | Shared with {count} other projects",
-        "gpu": "GPU",
-        "gpuShared": "Picked for each run",
-        "warm": "Stays warm",
-        "warmValue": "{minutes} minutes after a run",
-        "manageOnPlatform": "Manage on Platform",
-        "change": "Change deployment",
         "platformToast": "Opens on the Developer Platform",
-        "platformToastDetail": "Releases, staging and production are managed there.",
-        "changeToastDetail": "Picking another deployment isn't in this prototype."
+        "platformToastDetail": "Releases, staging and production are managed there."
       },
       "editor": {
         "dropHint": "Drop to open the workflow",
@@ -6950,7 +6940,9 @@
           "customiseTitle": "Change {setting} on Platform?",
           "customiseBody": "The build opens there with these settings filled in.",
           "openPlatform": "Open Platform",
-          "customiseToastDetail": "Customising a build isn't in this prototype."
+          "customiseToastDetail": "Customising a build isn't in this prototype.",
+          "editTitle": "Edit deployment",
+          "currentSettings": "Current settings"
         },
         "agentTitle": "Hand the build to your coding agent",
         "agentIntro": "Paste this into your agent on the machine where {workflow} runs.",
@@ -6995,7 +6987,9 @@
           "minutes": "{min}–{max} min",
           "timeNote": "Counted until the deployment is ready. A first request can still wait for a worker to start.",
           "cancel": "Cancel",
-          "create": "Create deployment"
+          "create": "Create deployment",
+          "saveRebuild": "Save and rebuild",
+          "editTitle": "Deploy: {name} {release}"
         }
       },
       "agentPrompt": {
@@ -7047,7 +7041,8 @@
         "viewOnPlatform": "View on Platform",
         "platformToastDetail": "The build log and releases live there.",
         "keepWorking": "Keep working",
-        "chip": "Building {deployment} · {minutes} min"
+        "chip": "Building {deployment} · {minutes} min",
+        "rebuildBody": "Every project on it runs the new release when it's done."
       },
       "ready": {
         "title": "{project} is ready",
@@ -7108,6 +7103,10 @@
         "general": {
           "title": "Workspace settings",
           "description": "Manage the name and details of this workspace."
+        },
+        "projects": {
+          "title": "Projects",
+          "description": "Every project in this workspace, and where each one runs."
         },
         "members": {
           "title": "Members",
@@ -7206,6 +7205,102 @@
         "activeProjects": "Active projects",
         "empty": "No credit use in this period.",
         "unattributed": "API keys / unattributed"
+      },
+      "projects": {
+        "eyebrow": "Project",
+        "name": "Name",
+        "people": "People",
+        "workflows": "Workflows",
+        "close": "Close"
+      }
+    },
+    "projectPage": {
+      "tabs": {
+        "workflows": "Workflows",
+        "usage": "Usage",
+        "settings": "Settings",
+        "members": "Members"
+      },
+      "meta": {
+        "everyone": "Everyone"
+      },
+      "environment": {
+        "buildingLeft": "building · {minutes} min",
+        "withStatus": "{name} · {status}"
+      },
+      "settings": {
+        "runsOn": "Runs on",
+        "access": "Access",
+        "usage": "Usage",
+        "thisMonth": "{credits} credits this month",
+        "change": "Change",
+        "openProject": "Open project",
+        "general": "General",
+        "name": "Name",
+        "environment": "Environment",
+        "environmentHint": "Where every workflow in this project runs.",
+        "generalAccess": "General access",
+        "people": "People",
+        "manage": "Manage",
+        "credits": "Credits",
+        "creditsHint": "Caps for this project. Billing stays with the workspace.",
+        "budget": "Monthly budget",
+        "budgetHint": "Runs stop when the project reaches it.",
+        "memberLimit": "Limit per member",
+        "memberLimitHint": "The default for each member. Set a different limit in Members.",
+        "notSet": "Not set",
+        "workspacePolicies": "Workspace policies",
+        "danger": "Delete project",
+        "dangerHint": "Removes the project and its workflows. Drafts in My Workflows stay.",
+        "delete": "Delete project",
+        "deleteConfirm": "Delete {name}? This cannot be undone.",
+        "thumbnail": "Thumbnail"
+      },
+      "usage": {
+        "member": "Member",
+        "runs": "Runs",
+        "credits": "Credits",
+        "limit": "Limit",
+        "ofLimit": "{used} of {limit}",
+        "noLimit": "No limit",
+        "empty": "No credit use in this range.",
+        "rangeLabel": "Time range",
+        "range": {
+          "day": "24h",
+          "week": "7d",
+          "month30": "30d",
+          "thisMonth": "This month",
+          "quarter": "3 months",
+          "year": "12 months",
+          "custom": "Custom range"
+        },
+        "from": "From",
+        "to": "to",
+        "creditsSpent": "credits spent"
+      },
+      "environmentSheet": {
+        "open": "Open environment",
+        "contents": "Contents",
+        "status": "Status",
+        "inherit": "Projects inherit the workspace policies. A project can only narrow them.",
+        "customNodes": "Custom nodes",
+        "models": "Models",
+        "statusLabel": "Status",
+        "build": "Build",
+        "gpu": "GPU",
+        "gpuShared": "Picked for each run",
+        "keepWarm": "Keep warm",
+        "warmValue": "{minutes} min after a run",
+        "usedBy": "Used by",
+        "alwaysOn": "The shared default. Always on.",
+        "manage": "Manage environments",
+        "none": "None allowed",
+        "edit": "Edit deployment"
+      },
+      "environmentPicker": {
+        "title": "Change environment",
+        "hint": "Every workflow in this project will run there. Open workflows reload.",
+        "switch": "Switch"
       }
     },
     "environments": {

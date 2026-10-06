@@ -10,7 +10,7 @@
     model where every workflow is the user's. Grid renders WorkflowCard tiles.
 -->
 <template>
-  <div class="flex flex-col gap-6">
+  <div class="mx-auto flex w-full max-w-6xl flex-col gap-6">
     <header>
       <PageTitle>{{ t('prototype.views.recents.title') }}</PageTitle>
     </header>
@@ -161,7 +161,7 @@ const viewMode = ref<ViewMode>('grid')
 const layoutClass = computed(() =>
   viewMode.value === 'grid'
     ? 'grid grid-cols-[repeat(auto-fill,minmax(14rem,1fr))] gap-6'
-    : 'flex max-w-5xl flex-col gap-0.5'
+    : 'flex flex-col gap-0.5'
 )
 
 const sortMenuRef = useTemplateRef<HTMLElement>('sortMenuRef')

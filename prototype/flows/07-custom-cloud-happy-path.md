@@ -40,12 +40,11 @@ Wiki: `../IA_Plan/wiki/concepts/custom-comfy-cloud.md`. Source: the 6 Oct "Custo
    - Click **Coca-Cola Ad**. The Share button shows Willie and Alex.
    - Go back to Projects and open **Client X**. It shows Willie and Jane.
 3. **Project settings show the deployment.**
-   - In Coca-Cola Ad, click **Settings**. The Deployment section shows:
-     - Runs on: Acme Studio pipeline · v3 · ready
-     - GPU: RTX 5090
-     - Stays warm: 2 minutes after a run
-     - **Manage on Platform ↗**, and **Change deployment** (admins only)
-   - Optional: switch the persona to Workspace Member and open the same page. "Change deployment" is gone.
+   - In Coca-Cola Ad, the header shows where it runs: "● Acme Studio pipeline". Open **Settings** (a tab, an icon button, or the rail, depending on the "Project page" switcher). It shows:
+     - Runs on: Acme Studio pipeline · RTX 5090
+     - Access: 2 people
+     - **All settings** → the workspace settings Projects page, with this project's panel open on the right. Admins see **Change** there.
+   - Optional: switch the persona to Workspace Member and open the same panel. "Change" is gone.
 4. **Open a workflow, drop in an incompatible one.**
    - Open **Marketing 2026** and click **+ Workflow**.
    - The editor opens in Marketing 2026 straight away: like every Comfy Cloud project, it runs on the same deployment as the one you were in, so there is no reload. The project pill after the Home tab now reads Marketing 2026.
@@ -94,7 +93,7 @@ Then click **Reset demo** and run it again.
 ## Surfaces touched
 
 - Projects page → project cards (`views/ProjectsView.vue`, `components/ProjectCard.vue`)
-- Project page → Settings → Deployment (`views/ProjectDetailView.vue`, `components/ProjectDeploymentSection.vue`)
+- Project page → header variants and settings rows (`views/ProjectDetailView.vue`, `components/project/*.vue`); workspace settings → Projects (`components/settings/ProjectsSettings.vue`)
 - Tab strip → project switcher (`components/PrototypeTabs.vue`, `components/ProjectSwitcher.vue`, `components/ProjectSwitcherMenu.vue`)
 - The real editor (`components/RealEditor.vue` around `src/views/GraphView.vue`, served by `mockBackend/`), run-target dialog (`components/RunTargetDialog.vue` with `RunTargetChoose.vue`, `RunTargetDeploymentPicker.vue`, `RunTargetProjectChooser.vue`, `RunTargetBuildSummary.vue`, `RunTargetAgent.vue`, `RunTargetDeploy.vue`), build lock (`components/BuildLockModal.vue`), ready toast, reload screen
 - State: `stores/customCloudStore.ts`, tabs per project in `stores/tabsStore.ts`, data in `fixtures/customCloud.ts` + `fixtures/admin.ts`

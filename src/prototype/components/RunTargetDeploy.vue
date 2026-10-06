@@ -15,7 +15,7 @@
   <div class="grid grid-cols-[minmax(0,1fr)_26rem] max-md:grid-cols-1">
     <div class="flex flex-col p-6">
       <h2 :id="titleId" class="m-0 mb-5 text-base font-medium">
-        {{ tText('prototype.customCloud.dialog.deploy.title', { name }) }}
+        {{ title }}
       </h2>
 
       <div class="overflow-hidden rounded-xl bg-secondary-background/40">
@@ -298,7 +298,13 @@
           :disabled="!selectedGpu"
           @click="onCreate"
         >
-          {{ t('prototype.customCloud.dialog.deploy.create') }}
+          {{
+            t(
+              customCloud.editingDeployment
+                ? 'prototype.customCloud.dialog.deploy.saveRebuild'
+                : 'prototype.customCloud.dialog.deploy.create'
+            )
+          }}
         </Button>
       </footer>
     </div>
@@ -322,6 +328,7 @@ import {
   STORAGE_USD_PER_GB_MONTH
 } from '../fixtures/customCloud'
 import { usePrototypeCustomCloudStore } from '../stores/customCloudStore'
+import { nextRelease } from '../utils/deployment'
 
 import InfoTooltip from './InfoTooltip.vue'
 
@@ -338,13 +345,24 @@ const tText = useTextT()
 const toast = useToastStore()
 const customCloud = usePrototypeCustomCloudStore()
 
-const gpuLabel = ref<string | null>(null)
+const gpuLabel = ref<string | null>(customCloud.editingDeployment?.gpu ?? null)
 const warmWorkers = ref(0)
 const maxWorkers = ref(DEFAULT_MAX_WORKERS)
 const location = ref<'anywhere' | 'us'>('anywhere')
 const startupFlags = ref('')
 
 const name = computed(() => customCloud.newDeploymentName.trim())
+
+// Editing cuts the next release of the deployment; a new one is release 1.
+const title = computed(() => {
+  const editing = customCloud.editingDeployment
+  return editing
+    ? tText('prototype.customCloud.dialog.deploy.editTitle', {
+        name: name.value,
+        release: nextRelease(editing.release)
+      })
+    : tText('prototype.customCloud.dialog.deploy.title', { name: name.value })
+})
 const selectedGpu = computed(() =>
   PLATFORM_GPUS.find((gpu) => gpu.label === gpuLabel.value)
 )

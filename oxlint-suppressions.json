@@ -383,16 +383,6 @@
       "count": 3
     }
   },
-  "src/prototype/components/ProjectDeploymentSection.vue": {
-    "comfy/no-primevue-imports": {
-      "count": 1
-    }
-  },
-  "src/prototype/components/ProjectUsageSection.vue": {
-    "comfy/no-primevue-imports": {
-      "count": 1
-    }
-  },
   "src/prototype/components/PrototypeBreadcrumb.vue": {
     "comfy/no-primevue-imports": {
       "count": 1
@@ -464,19 +454,9 @@
       "count": 2
     }
   },
-  "src/prototype/stores/navigationStore.ts": {
-    "typescript/no-unnecessary-condition": {
-      "count": 1
-    }
-  },
   "src/prototype/stores/personaStore.ts": {
     "comfy/no-es2023-array-copy-method": {
       "count": 1
-    }
-  },
-  "src/prototype/stores/tabsStore.ts": {
-    "typescript/no-unnecessary-condition": {
-      "count": 7
     }
   },
   "src/prototype/views/MembersView.vue": {

@@ -38,6 +38,7 @@ import type {
 import {
   buildProgress,
   missingFrom,
+  nextRelease,
   resolveDeployment,
   runsWorkflow,
   simulatedSeconds
@@ -67,6 +68,9 @@ interface ActiveBuild {
   deploymentId: string
   startedAt: number
   fixture: PersonaFixture
+  // A rebuild of an existing deployment ends quietly; a new one goes on to
+  // name its project.
+  rebuild: boolean
 }
 
 export const usePrototypeCustomCloudStore = defineStore(
@@ -90,6 +94,8 @@ export const usePrototypeCustomCloudStore = defineStore(
     const newProjectTier = ref<ProjectTier>('workspace-wide')
     const newProjectCollaborators = ref<string[]>([])
     const newDeploymentName = ref(DEFAULT_BUILD_PROJECT_NAME)
+    // The deployment "Edit deployment" opened the build steps for.
+    const editingDeploymentId = ref<string | null>(null)
     const build = shallowRef<ActiveBuild | null>(null)
     // The deployment just built: its project, once named, opens with the
     // "ready" toast.
@@ -374,6 +380,20 @@ export const usePrototypeCustomCloudStore = defineStore(
       openInProject(projectId)
     }
 
+    const editingDeployment = computed(() =>
+      deployments.value.find((d) => d.id === editingDeploymentId.value)
+    )
+
+    // Edit deployment: Platform's build summary and deploy dialog for an
+    // existing deployment, which rebuilds it as the next release.
+    function openEditDeployment(deploymentId: string) {
+      const target = deployments.value.find((d) => d.id === deploymentId)
+      if (!target || build.value) return
+      editingDeploymentId.value = deploymentId
+      newDeploymentName.value = target.name
+      dialogStep.value = 'build'
+    }
+
     // The deployment being built, for the tab strip's "Building" chip.
     const buildingDeployment = computed(() =>
       build.value
@@ -384,6 +404,30 @@ export const usePrototypeCustomCloudStore = defineStore(
     function buildAndDeploy(gpu: PlatformGpu) {
       const fixture = personaStore.fixture
       const name = newDeploymentName.value.trim() || DEFAULT_BUILD_PROJECT_NAME
+      const editing = editingDeploymentId.value
+      if (editing) {
+        fixture.deployments = deployments.value.map((d) =>
+          d.id === editing
+            ? {
+                ...d,
+                name,
+                gpu: gpu.label,
+                release: nextRelease(d.release),
+                status: 'building' as const
+              }
+            : d
+        )
+        build.value = {
+          deploymentId: editing,
+          startedAt: Date.now(),
+          fixture,
+          rebuild: true
+        }
+        now.value = Date.now()
+        ticker.resume()
+        dialogStep.value = 'building'
+        return
+      }
       const deploymentId = `dep-build-${Date.now()}`
       fixture.deployments = [
         ...deployments.value,
@@ -400,7 +444,12 @@ export const usePrototypeCustomCloudStore = defineStore(
           models: [...MATTE_PASS.models]
         }
       ]
-      build.value = { deploymentId, startedAt: Date.now(), fixture }
+      build.value = {
+        deploymentId,
+        startedAt: Date.now(),
+        fixture,
+        rebuild: false
+      }
       now.value = Date.now()
       ticker.resume()
       dialogStep.value = 'building'
@@ -415,6 +464,11 @@ export const usePrototypeCustomCloudStore = defineStore(
           d.id === active.deploymentId ? { ...d, status: 'ready' as const } : d
       )
       build.value = null
+      if (active.rebuild) {
+        editingDeploymentId.value = null
+        if (dialogStep.value === 'building') dialogStep.value = null
+        return
+      }
       // The project opens only once its deployment runs: name it now.
       builtDeploymentId.value = active.deploymentId
       deploymentTarget.value = active.deploymentId
@@ -447,6 +501,7 @@ export const usePrototypeCustomCloudStore = defineStore(
         nothingRunsIt.value = false
         readyProjectId.value = null
         builtDeploymentId.value = null
+        editingDeploymentId.value = null
         tabsStore.reset()
       }
     )
@@ -467,6 +522,8 @@ export const usePrototypeCustomCloudStore = defineStore(
       newProjectTier,
       newProjectCollaborators,
       newDeploymentName,
+      editingDeployment,
+      openEditDeployment,
       deploymentTargets,
       projectTargets,
       chooseMode,

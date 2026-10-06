@@ -12,7 +12,7 @@
   grid/list view toggle.
 -->
 <template>
-  <div class="flex flex-col gap-6">
+  <div class="mx-auto flex w-full max-w-6xl flex-col gap-6">
     <PrototypeBreadcrumb
       v-if="currentFolder"
       :items="breadcrumbItems"
@@ -303,7 +303,7 @@ const emptyMessage = computed(() => {
 const layoutClass = computed(() =>
   viewMode.value === 'grid'
     ? 'grid grid-cols-[repeat(auto-fill,minmax(14rem,1fr))] gap-6'
-    : 'flex max-w-5xl flex-col gap-0.5'
+    : 'flex flex-col gap-0.5'
 )
 
 // Shown only inside a folder: My Workflows › <folder>. The root segment

@@ -2,135 +2,228 @@
   Implements:
     entity: ../IA_Plan/wiki/entities/workspace.md §"Identity" — workspace is
             the single billing entity; project usage is read-only attribution.
-    log:    ../prototype/design-decisions.md (2026-06-24) — usage tab: count,
-            month-over-month delta, recent months, mocked export.
+    open-q: ../IA_Plan/wiki/open-questions.md#per-member-credit-limits
+            — working: an optional per-member cap on each project
+    log:    ../prototype/design-decisions.md (2026-10-07) — credit
+            attribution per member on the project page
 
-  This-month credit spend attributed to the project, with the month-over-month
-  change, the last three months, and a (client-side mocked) full-history CSV
-  export. Billing itself lives at the workspace level.
+  Credits the project spent in a range, split by member: a range picker,
+  the total, and a table with runs, credits and each member's progress
+  against their monthly limit in this project. Export is a client-side CSV.
 -->
 <template>
-  <div class="flex max-w-md flex-col gap-3">
-    <SettingsPanel :title="t('prototype.views.project.settings.usage.heading')">
-      <div class="flex flex-col gap-5">
-        <div class="flex items-end gap-3">
-          <span class="text-3xl font-bold text-base-foreground">
-            {{ formatCredits(currentCredits) }}
-          </span>
-          <span
-            v-if="deltaPct !== null && deltaPct !== 0"
-            :class="
-              cn(
-                'mb-1 inline-flex items-center gap-1 text-xs font-medium',
-                deltaPct > 0
-                  ? 'text-warning-background'
-                  : 'text-success-background'
-              )
-            "
+  <div class="flex flex-col gap-6">
+    <div class="flex flex-wrap items-center justify-between gap-4">
+      <UsageRangePicker
+        v-model="range"
+        v-model:from="customFrom"
+        v-model:to="customTo"
+      />
+      <Button
+        variant="secondary"
+        size="md"
+        :disabled="!total"
+        @click="exportCsv"
+      >
+        <i class="icon-[lucide--download] size-4" />
+        {{ t('prototype.settings.usage.export') }}
+      </Button>
+    </div>
+
+    <div class="flex flex-col gap-1">
+      <span class="text-4xl font-semibold tracking-tight tabular-nums">
+        {{ total.toLocaleString() }}
+      </span>
+      <span class="text-sm text-muted-foreground">
+        {{ t('prototype.projectPage.usage.creditsSpent') }}
+      </span>
+    </div>
+
+    <div class="overflow-hidden rounded-lg border border-border-subtle">
+      <Table
+        class="[&_td]:border-b [&_td]:border-border-subtle/50 [&_td]:px-4 [&_th]:px-4"
+      >
+        <TableHeader>
+          <TableRow class="bg-secondary-background/50">
+            <TableHead class="w-1/2">
+              {{ t('prototype.projectPage.usage.member') }}
+            </TableHead>
+            <TableHead class="text-right">
+              {{ t('prototype.projectPage.usage.runs') }}
+            </TableHead>
+            <TableHead class="text-right">
+              {{ t('prototype.projectPage.usage.credits') }}
+            </TableHead>
+            <TableHead v-if="showsLimit" class="w-72 text-right">
+              {{ t('prototype.projectPage.usage.limit') }}
+            </TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          <TableRow
+            v-for="row in rows"
+            :key="row.id"
+            class="h-14 hover:bg-secondary-background/20"
           >
-            <i
-              :class="
-                cn(
-                  'size-3.5',
-                  deltaPct > 0
-                    ? 'icon-[lucide--trending-up]'
-                    : 'icon-[lucide--trending-down]'
-                )
-              "
-            />
-            {{
-              t('prototype.views.project.settings.usage.delta', {
-                pct: Math.abs(deltaPct)
-              })
-            }}
-          </span>
-        </div>
-
-        <div v-if="recentMonths.length" class="flex flex-col gap-2">
-          <p class="text-xs font-medium text-muted-foreground">
-            {{ t('prototype.views.project.settings.usage.recentHeading') }}
-          </p>
-          <div class="grid grid-cols-3 gap-2">
-            <div
-              v-for="m in recentMonths"
-              :key="m.month"
-              class="flex flex-col gap-0.5 rounded-lg bg-secondary-background-hover px-3 py-2"
-            >
+            <TableCell>
+              <span class="flex min-w-0 flex-col">
+                <span class="truncate">{{ row.name }}</span>
+                <span
+                  v-if="row.detail"
+                  class="truncate text-xs text-muted-foreground"
+                >
+                  {{ row.detail }}
+                </span>
+              </span>
+            </TableCell>
+            <TableCell class="text-right text-muted-foreground tabular-nums">
+              {{ row.runs.toLocaleString() }}
+            </TableCell>
+            <TableCell class="text-right tabular-nums">
+              {{ row.credits.toLocaleString() }}
+            </TableCell>
+            <TableCell v-if="showsLimit" class="text-right whitespace-nowrap">
               <span
-                class="text-[10px] tracking-wide text-muted-foreground uppercase"
+                v-if="row.limit"
+                class="inline-flex items-center justify-end gap-3"
               >
-                {{ formatMonth(m.month) }}
+                <span class="text-xs text-muted-foreground tabular-nums">
+                  {{
+                    t('prototype.projectPage.usage.ofLimit', {
+                      used: row.credits.toLocaleString(),
+                      limit: row.limit.toLocaleString()
+                    })
+                  }}
+                </span>
+                <span
+                  class="h-1.5 w-24 overflow-hidden rounded-full bg-secondary-background-hover"
+                >
+                  <span
+                    :class="
+                      cn(
+                        'block h-full rounded-full',
+                        row.credits >= row.limit
+                          ? 'bg-destructive-background'
+                          : row.credits >= row.limit * 0.8
+                            ? 'bg-warning-background'
+                            : 'bg-base-foreground'
+                      )
+                    "
+                    :style="{
+                      width: `${Math.min(100, (row.credits / row.limit) * 100)}%`
+                    }"
+                  />
+                </span>
               </span>
-              <span class="text-sm font-semibold text-base-foreground">
-                {{ m.credits.toLocaleString() }}
+              <span v-else class="text-xs text-muted-foreground">
+                {{ t('prototype.projectPage.usage.noLimit') }}
               </span>
-            </div>
-          </div>
-        </div>
-
-        <Button
-          v-if="usage.length"
-          variant="secondary"
-          size="sm"
-          class="self-start"
-          @click="exportHistory"
-        >
-          <i class="icon-[lucide--download] size-4" />
-          {{ t('prototype.views.project.settings.usage.export') }}
-        </Button>
-      </div>
-    </SettingsPanel>
-    <p class="m-0 text-xs text-muted-foreground">
-      {{ t('prototype.views.project.settings.usage.note') }}
-    </p>
+            </TableCell>
+          </TableRow>
+          <TableRow v-if="!total">
+            <TableCell
+              :colspan="showsLimit ? 4 : 3"
+              class="py-8 text-center text-muted-foreground"
+            >
+              {{ t('prototype.projectPage.usage.empty') }}
+            </TableCell>
+          </TableRow>
+        </TableBody>
+      </Table>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { cn } from '@comfyorg/tailwind-utils'
-import { useToast } from 'primevue/usetoast'
-import { computed } from 'vue'
+import { storeToRefs } from 'pinia'
+import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import Button from '@/components/ui/button/Button.vue'
+import Table from '@/components/ui/table/Table.vue'
+import TableBody from '@/components/ui/table/TableBody.vue'
+import TableCell from '@/components/ui/table/TableCell.vue'
+import TableHead from '@/components/ui/table/TableHead.vue'
+import TableHeader from '@/components/ui/table/TableHeader.vue'
+import TableRow from '@/components/ui/table/TableRow.vue'
+import { useToastStore } from '@/platform/updates/common/toastStore'
 
-import SettingsPanel from './settings/SettingsPanel.vue'
-import type { MonthlyUsage } from '../types'
+import { usePrototypePersonaStore } from '../stores/personaStore'
+import type { Project } from '../types'
+import { daysBetween, usageRangeFactor } from '../utils/usageRange'
+import type { UsageRange } from '../utils/usageRange'
+import { sampleUsage, usageCsv } from '../utils/workspaceUsage'
+import UsageRangePicker from './UsageRangePicker.vue'
 
-const { usage, projectName } = defineProps<{
-  usage: MonthlyUsage[]
-  projectName: string
+const { project } = defineProps<{
+  project: Project
 }>()
 
+const CURRENT_MONTH = '2026-10'
+
 const { t } = useI18n()
-const toast = useToast()
+const toast = useToastStore()
+const { fixture } = storeToRefs(usePrototypePersonaStore())
 
-const currentCredits = computed(() => usage.at(-1)?.credits ?? 0)
+const range = ref<UsageRange>('thisMonth')
+const customFrom = ref('2026-09-22')
+const customTo = ref('2026-10-06')
 
-// Month-over-month change against the prior month; null when there isn't a
-// prior month (or it was zero) to compare against.
-const deltaPct = computed(() => {
-  const current = usage.at(-1)?.credits
-  const previous = usage.at(-2)?.credits
-  if (current == null || !previous) return null
-  return Math.round(((current - previous) / previous) * 100)
-})
+const monthRecords = computed(() =>
+  sampleUsage(fixture.value, project.workspaceId).filter(
+    (r) => r.projectId === project.id && r.month === CURRENT_MONTH
+  )
+)
 
-const recentMonths = computed(() => usage.slice(-3))
+const monthTotal = computed(() =>
+  monthRecords.value.reduce((sum, r) => sum + r.credits, 0)
+)
 
-function formatCredits(value: number): string {
-  return t('prototype.views.project.settings.usage.creditsValue', {
-    value: value.toLocaleString()
-  })
-}
+const factor = computed(() =>
+  usageRangeFactor(
+    range.value,
+    monthTotal.value,
+    project.monthlyUsage ?? [],
+    daysBetween(customFrom.value, customTo.value)
+  )
+)
 
-function formatMonth(month: string): string {
-  const [year, m] = month.split('-').map(Number)
-  return new Date(year, m - 1, 1).toLocaleDateString(undefined, {
-    month: 'short',
-    year: 'numeric'
-  })
-}
+// Limits are monthly, so the bar only makes sense against a month.
+const showsLimit = computed(
+  () => range.value === 'thisMonth' || range.value === 'month30'
+)
+
+const rows = computed(() =>
+  monthRecords.value
+    .map((record) => {
+      const member = fixture.value.members.find((m) => m.id === record.memberId)
+      const projectMember = project.members?.find(
+        (m) => m.userId === record.memberId
+      )
+      const workspaceLimit = fixture.value.memberCreditLimits.find(
+        (l) => l.memberId === record.memberId
+      )?.limit
+      return {
+        id: record.memberId ?? 'unattributed',
+        name: member?.name ?? t('prototype.settings.usage.unattributed'),
+        detail: member?.email ?? '',
+        runs: Math.round(record.runs * factor.value),
+        credits: Math.round(record.credits * factor.value),
+        limit:
+          projectMember?.creditLimit ??
+          project.defaultMemberCreditLimit ??
+          workspaceLimit ??
+          null
+      }
+    })
+    .slice()
+    .sort((a, b) => b.credits - a.credits)
+)
+
+const total = computed(() =>
+  rows.value.reduce((sum, row) => sum + row.credits, 0)
+)
 
 function slugify(value: string): string {
   return value
@@ -139,29 +232,29 @@ function slugify(value: string): string {
     .replace(/^-|-$/g, '')
 }
 
-// Mocked export: build the full history as CSV and download it client-side —
-// no backend. Real usage data would stream from the billing service.
-function exportHistory() {
-  const rows = [
-    ['Month', 'Credits'],
-    ...usage.map((u) => [u.month, String(u.credits)])
+function exportCsv() {
+  const headers = [
+    t('prototype.projectPage.usage.member'),
+    t('prototype.settings.email'),
+    t('prototype.projectPage.usage.runs'),
+    t('prototype.projectPage.usage.credits'),
+    t('prototype.settings.usage.share')
   ]
-  const csv = rows.map((r) => r.join(',')).join('\n')
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' })
-  const url = URL.createObjectURL(blob)
+  const csv = usageCsv(headers, rows.value, total.value)
+  const url = URL.createObjectURL(
+    new Blob([csv], { type: 'text/csv;charset=utf-8' })
+  )
   const link = document.createElement('a')
   link.href = url
-  link.download = `${slugify(projectName) || 'project'}-usage-history.csv`
-  document.body.appendChild(link)
+  link.download = `${slugify(project.name) || 'project'}-usage-${range.value}.csv`
   link.click()
-  link.remove()
   URL.revokeObjectURL(url)
   toast.add({
     severity: 'success',
     summary: t('prototype.views.project.settings.usage.exportedSummary'),
     detail: t('prototype.views.project.settings.usage.exportedDetail', {
-      count: usage.length,
-      project: projectName
+      count: rows.value.length,
+      project: project.name
     }),
     life: 2800
   })

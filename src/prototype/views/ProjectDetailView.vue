@@ -17,115 +17,29 @@
   `canViewUsage` so a Collaborator sees the Workflows view directly.
 -->
 <template>
-  <div class="flex flex-col gap-6">
+  <div class="mx-auto flex w-full max-w-6xl flex-col gap-6">
     <PrototypeBreadcrumb
       :items="breadcrumbItems"
       :drop-folder-ids="breadcrumbDropTargets"
       @navigate="onBreadcrumb"
     />
 
-    <header class="flex items-end justify-between gap-4">
-      <PageTitle class="relative top-2">{{ project?.name }}</PageTitle>
-      <div v-if="project" class="flex items-center gap-2">
-        <button
-          v-if="project.tier !== 'private'"
-          type="button"
-          class="inline-flex h-9 cursor-pointer items-center gap-2 rounded-lg bg-secondary-background pr-3 pl-1.5 text-sm transition-colors hover:bg-secondary-background-hover"
-          @click="isSharingOpen = true"
-        >
-          <span
-            v-if="accessLevel !== 'private' && visibleAvatars.length"
-            class="flex items-center"
-          >
-            <span
-              v-for="(a, i) in visibleAvatars"
-              :key="a.userId"
-              :class="
-                cn(
-                  'grid size-6 place-items-center rounded-full border-2 border-secondary-background text-[10px] font-semibold text-button-surface-contrast',
-                  i > 0 && '-ml-2'
-                )
-              "
-              :style="{ backgroundColor: a.avatarColor }"
-              :title="a.name"
-            >
-              {{ a.initial }}
-            </span>
-            <span
-              v-if="hiddenAvatarCount > 0"
-              class="-ml-2 grid size-6 place-items-center rounded-full border-2 border-secondary-background bg-secondary-background-hover text-[10px] font-semibold text-muted-foreground"
-            >
-              {{
-                t('prototype.views.project.sharing.summaryMore', {
-                  count: hiddenAvatarCount
-                })
-              }}
-            </span>
-          </span>
-          <span class="text-muted-foreground">
-            {{ sharingSummary }}
-          </span>
-          <span class="mx-1 text-muted-foreground">·</span>
-          <span class="font-medium">
-            {{ t('prototype.views.project.sharing.shareButton') }}
-          </span>
-        </button>
-        <button
-          v-if="canViewUsage"
-          type="button"
-          :aria-pressed="activeTab === 'usage'"
-          :class="
-            cn(
-              'inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-lg px-3 text-sm transition-colors',
-              activeTab === 'usage'
-                ? 'bg-secondary-background-hover text-base-foreground'
-                : 'bg-secondary-background hover:bg-secondary-background-hover'
-            )
-          "
-          @click="toggleTab('usage')"
-        >
-          <span class="icon-[lucide--chart-column] size-4" />
-          {{ t('prototype.views.project.tabs.usage') }}
-        </button>
-        <Button
-          variant="secondary"
-          size="unset"
-          :aria-pressed="activeTab === 'settings'"
-          :class="
-            cn(
-              'h-9 gap-1.5 rounded-lg px-3 text-sm font-normal text-base-foreground',
-              activeTab === 'settings' && 'bg-secondary-background-hover'
-            )
-          "
-          @click="toggleTab('settings')"
-        >
-          <span class="icon-[lucide--settings] size-4" />
-          {{ t('prototype.customCloud.settings.button') }}
-        </Button>
-        <button
-          type="button"
-          class="inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-lg bg-secondary-background px-3 text-sm transition-colors hover:bg-secondary-background-hover"
-          @click="onViewMediaAssets"
-        >
-          <span class="icon-[lucide--image] size-4" />
-          {{ t('prototype.views.project.viewMediaAssets') }}
-        </button>
-        <button
-          type="button"
-          class="inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-lg bg-primary-background px-3 text-sm font-medium text-button-surface-contrast transition-colors hover:bg-primary-background-hover"
-          @click="onNewWorkflow"
-        >
-          {{ t('prototype.views.project.newWorkflow') }}
-        </button>
-      </div>
-    </header>
+    <ProjectPageHeader
+      v-if="project"
+      v-model:active-tab="activeTab"
+      :project
+      :can-view-usage="canViewUsage"
+      @share="isSharingOpen = true"
+      @media="onViewMediaAssets"
+      @new-workflow="onNewWorkflow"
+    />
 
     <p v-if="!project" class="text-sm text-muted-foreground">
       {{ t('prototype.views.project.notFound') }}
     </p>
 
     <template v-else>
-      <div class="flex flex-col gap-6 border-t border-interface-stroke pt-3">
+      <div class="flex flex-col gap-6">
         <template v-if="activeTab === 'workflows'">
           <section
             :class="
@@ -305,15 +219,18 @@
           </section>
         </template>
 
-        <ProjectUsageSection
-          v-else-if="activeTab === 'usage'"
-          :usage="project?.monthlyUsage ?? []"
-          :project-name="project?.name ?? ''"
+        <ProjectUsageSection v-else-if="activeTab === 'usage'" :project />
+
+        <ProjectSettingsTab
+          v-else-if="activeTab === 'settings'"
+          :project
+          @members="activeTab = 'members'"
         />
 
-        <ProjectDeploymentSection
-          v-else-if="activeTab === 'settings'"
-          :project="project"
+        <ProjectSharing
+          v-else-if="activeTab === 'members'"
+          :project
+          :show-header="false"
         />
       </div>
     </template>
@@ -359,13 +276,13 @@ import { storeToRefs } from 'pinia'
 import { computed, onMounted, ref, watchEffect } from 'vue'
 import { useI18n } from 'vue-i18n'
 
-import PageTitle from '../components/PageTitle.vue'
-
 import Button from '@/components/ui/button/Button.vue'
 
 import FolderCard from '../components/FolderCard.vue'
 import InfoTooltip from '../components/InfoTooltip.vue'
-import ProjectDeploymentSection from '../components/ProjectDeploymentSection.vue'
+import ProjectPageHeader from '../components/project/ProjectPageHeader.vue'
+import ProjectSettingsTab from '../components/project/ProjectSettingsTab.vue'
+import ProjectSharing from '../components/ProjectSharing.vue'
 import ProjectSharingDialog from '../components/ProjectSharingDialog.vue'
 import ProjectUsageSection from '../components/ProjectUsageSection.vue'
 import PromoteToProjectDialog from '../components/PromoteToProjectDialog.vue'
@@ -375,17 +292,14 @@ import PublishConfirmDialog from '../components/PublishConfirmDialog.vue'
 import SelectableWorkflowGrid from '../components/SelectableWorkflowGrid.vue'
 import WorkflowCard from '../components/WorkflowCard.vue'
 import { useFolderBrowser } from '../composables/useFolderBrowser'
-import { useProjectAccess } from '../composables/useProjectAccess'
 import { useWorkflowDrag } from '../composables/useWorkflowDrag'
 import { useWorkflowPublish } from '../composables/useWorkflowPublish'
 import { usePrototypeCustomCloudStore } from '../stores/customCloudStore'
 import { usePrototypePersonaStore } from '../stores/personaStore'
-import { usePrototypeTabsStore } from '../stores/tabsStore'
 import { usePrototypeUiStore } from '../stores/uiStore'
 import type { Workflow } from '../types'
+import type { ProjectPageTab } from '../components/project/ProjectPageHeader.vue'
 import { deriveDraftMeta } from '../utils/draftMeta'
-
-type ProjectTabId = 'workflows' | 'usage' | 'settings'
 
 const { projectId } = defineProps<{
   projectId: string
@@ -395,7 +309,6 @@ const { t } = useI18n()
 const toast = useToast()
 const personaStore = usePrototypePersonaStore()
 const uiStore = usePrototypeUiStore()
-const tabsStore = usePrototypeTabsStore()
 const customCloud = usePrototypeCustomCloudStore()
 const { fixture, currentWorkspace, draftsProject } = storeToRefs(personaStore)
 const {
@@ -410,7 +323,7 @@ const {
 } = useWorkflowPublish()
 
 const isSharingOpen = ref(false)
-const activeTab = ref<ProjectTabId>('workflows')
+const activeTab = ref<ProjectPageTab>('workflows')
 
 onMounted(() => {
   // A project just created via workflow promotion asks to open its share
@@ -472,12 +385,6 @@ const canViewUsage = computed(() => {
     currentWorkspace.value?.currentUserRole === 'admin'
   )
 })
-
-// The header "Usage" and "Settings" buttons toggle the body between the
-// workflows content and that view (no tab strip).
-function toggleTab(tab: ProjectTabId) {
-  activeTab.value = activeTab.value === tab ? 'workflows' : tab
-}
 
 // If the viewer loses usage access while viewing it, fall back to workflows.
 watchEffect(() => {
@@ -694,25 +601,6 @@ function onDraftsDrop(event: DragEvent) {
 
 function onViewMediaAssets() {
   uiStore.setProjectFilter(projectId)
-  tabsStore.openMediaAssets(t('prototype.sidebar.libraryMedia'))
+  uiStore.go({ kind: 'media' })
 }
-
-// People with access drive the Share button's avatar stack + summary.
-const { accessLevel, visibleAvatars, hiddenAvatarCount, peopleCount } =
-  useProjectAccess(project)
-
-const sharingSummary = computed(() => {
-  switch (accessLevel.value) {
-    case 'everyone':
-      return t('prototype.views.project.sharing.summaryAnyone', {
-        workspace: currentWorkspace.value?.name ?? ''
-      })
-    case 'private':
-      return t('prototype.views.project.sharing.summaryPrivate')
-    default:
-      return t('prototype.views.project.sharing.summaryRestricted', {
-        count: peopleCount.value
-      })
-  }
-})
 </script>

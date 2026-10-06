@@ -29,6 +29,7 @@
         )
       "
       @click="onCardClick"
+      @dblclick="onCardDoubleClick"
     >
       <span class="block aspect-3/2 w-full overflow-hidden">
         <CustomThumbnail v-if="customThumbnails" :title="workflow.name" />
@@ -90,6 +91,7 @@
         )
       "
       @click="onCardClick"
+      @dblclick="onCardDoubleClick"
     >
       <span class="block aspect-3/2 h-9 shrink-0 overflow-hidden rounded-md">
         <CustomThumbnail v-if="customThumbnails" :title="workflow.name" />
@@ -294,15 +296,17 @@ const emit = defineEmits<{
   dragstart: [event: DragEvent]
 }>()
 
-// With hover actions the card body is inert — only the explicit buttons act.
-// Without them, clicking the card opens the workflow (Recents / Home). A
-// shift / cmd / ctrl click selects instead of opening.
+// A shift / cmd / ctrl click selects. A double click opens the workflow in
+// the editor, like a file in a file browser. Published cards keep their
+// explicit buttons: opening one means checking it out first.
 function onCardClick(event: MouseEvent) {
   if (selectable && (event.shiftKey || event.metaKey || event.ctrlKey)) {
     emit('select', event)
-    return
   }
-  if (actions) return
+}
+
+function onCardDoubleClick() {
+  if (actions === 'published') return
   emit('open', workflow.id)
 }
 

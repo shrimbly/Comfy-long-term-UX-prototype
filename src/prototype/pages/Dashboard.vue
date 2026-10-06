@@ -42,6 +42,7 @@
           <HomeView v-if="activeView.kind === 'home'" />
           <DraftsView v-else-if="activeView.kind === 'drafts'" />
           <ProjectsView v-else-if="activeView.kind === 'projects'" />
+          <MediaView v-else-if="activeView.kind === 'media'" />
           <EnvironmentsView
             v-else-if="activeView.kind === 'environments'"
             :key="fixture.currentWorkspaceId"
@@ -102,6 +103,7 @@ import { MEDIA_ASSETS_TAB_ID, usePrototypeTabsStore } from '../stores/tabsStore'
 import { usePrototypeUiStore } from '../stores/uiStore'
 import DraftsView from '../views/DraftsView.vue'
 import HomeView from '../views/HomeView.vue'
+import MediaView from '../views/MediaView.vue'
 import ProjectDetailView from '../views/ProjectDetailView.vue'
 import ProjectsView from '../views/ProjectsView.vue'
 import EnvironmentsView from '../views/EnvironmentsView.vue'

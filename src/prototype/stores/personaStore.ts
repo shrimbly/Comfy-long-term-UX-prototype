@@ -15,6 +15,7 @@ import type {
   PersonaDef,
   PersonaId,
   Project,
+  ProjectCreditSettings,
   ProjectRole,
   ProjectTier,
   Workflow,
@@ -297,6 +298,23 @@ export const usePrototypePersonaStore = defineStore('prototype-persona', () => {
     if (!trimmed) return
     fixture.value.projects = fixture.value.projects.map((p) =>
       p.id === projectId ? { ...p, name: trimmed } : p
+    )
+  }
+
+  function setProjectDeployment(projectId: string, deploymentId?: string) {
+    fixture.value.projects = fixture.value.projects.map((p) => {
+      if (p.id !== projectId) return p
+      const { deploymentId: _previous, ...rest } = p
+      return deploymentId ? { ...rest, deploymentId } : rest
+    })
+  }
+
+  function updateProjectCredits(
+    projectId: string,
+    settings: ProjectCreditSettings
+  ) {
+    fixture.value.projects = fixture.value.projects.map((p) =>
+      p.id === projectId ? { ...p, ...settings } : p
     )
   }
 
@@ -811,6 +829,8 @@ export const usePrototypePersonaStore = defineStore('prototype-persona', () => {
     changeProjectMemberRole,
     removeProjectMember,
     renameProject,
+    updateProjectCredits,
+    setProjectDeployment,
     deleteProject,
     leaveProject,
     renameWorkflow,

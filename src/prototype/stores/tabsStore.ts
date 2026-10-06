@@ -43,7 +43,7 @@ const nextId = () => `tab-${++counter}`
 export const usePrototypeTabsStore = defineStore('prototype-tabs', () => {
   const openTabs = ref<OpenTab[]>([])
   const activeTabId = ref<string>(HOME_TAB_ID)
-  const tabsByProject = ref<Record<string, TabSet>>({})
+  const tabsByProject = ref<Partial<Record<string, TabSet>>>({})
 
   function select(id: string) {
     if (id === HOME_TAB_ID || openTabs.value.some((t) => t.id === id)) {
@@ -133,7 +133,7 @@ export const usePrototypeTabsStore = defineStore('prototype-tabs', () => {
     if (idx < 0) return
     openTabs.value.splice(idx, 1)
     if (activeTabId.value !== id) return
-    const next = openTabs.value[idx] ?? openTabs.value[idx - 1] ?? null
+    const next = openTabs.value.at(idx) ?? openTabs.value.at(idx - 1)
     activeTabId.value = next?.id ?? HOME_TAB_ID
   }
 

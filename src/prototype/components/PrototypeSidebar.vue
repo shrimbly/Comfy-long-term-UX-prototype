@@ -54,7 +54,15 @@
         <SidebarItem
           :label="t('prototype.sidebar.libraryMedia')"
           icon="icon-[lucide--image]"
-          @click="showMediaAssetsNotice = true"
+          :active="activeView.kind === 'media'"
+          @click="uiStore.go({ kind: 'media' })"
+        />
+        <SidebarItem
+          v-if="isCloudMode"
+          :label="t('prototype.environments.title')"
+          icon="icon-[ph--stack-bold]"
+          :active="activeView.kind === 'environments'"
+          @click="uiStore.go({ kind: 'environments' })"
         />
       </div>
 
@@ -79,31 +87,18 @@
             "
             @click="uiStore.go({ kind: 'projects' })"
           />
-          <SidebarItem
-            v-if="isCloudMode"
-            :label="t('prototype.environments.title')"
-            icon="icon-[ph--stack-bold]"
-            :active="activeView.kind === 'environments'"
-            @click="uiStore.go({ kind: 'environments' })"
-          />
         </SidebarGroup>
       </nav>
     </template>
     <WorkspaceFooter />
-
-    <MediaAssetsNoticeDialog
-      v-if="showMediaAssetsNotice"
-      @close="showMediaAssetsNotice = false"
-    />
   </aside>
 </template>
 
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 
-import MediaAssetsNoticeDialog from './MediaAssetsNoticeDialog.vue'
 import SidebarGroup from './sidebar/SidebarGroup.vue'
 import SidebarItem from './sidebar/SidebarItem.vue'
 import WorkspaceFooter from './sidebar/WorkspaceFooter.vue'
@@ -118,8 +113,6 @@ const uiStore = usePrototypeUiStore()
 const { fixture, currentWorkspace, draftsProject } = storeToRefs(personaStore)
 
 const { activeView } = storeToRefs(uiStore)
-
-const showMediaAssetsNotice = ref(false)
 
 const isLocalMode = computed(() => fixture.value.mode === 'local')
 const isCloudMode = computed(() => fixture.value.mode === 'cloud')
@@ -146,6 +139,7 @@ const settingsGroups = computed(() => [
           label: t('prototype.settings.workspaceGroup'),
           items: [
             { id: 'general' as SettingsPage, icon: 'icon-[lucide--settings]' },
+            { id: 'projects' as SettingsPage, icon: 'icon-[lucide--folder]' },
             {
               id: 'members' as SettingsPage,
               icon: 'icon-[lucide--users-round]'

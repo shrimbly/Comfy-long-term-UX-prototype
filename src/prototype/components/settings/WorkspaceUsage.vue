@@ -6,19 +6,11 @@
           t('prototype.settings.sampleUsage')
         }}</span
       >
-      <label
-        class="flex items-center gap-2 rounded-lg border border-border-default px-3 py-2 text-sm"
-        ><i
-          class="icon-[lucide--calendar-days] size-4 text-muted-foreground"
-        /><select
-          v-model="month"
-          :aria-label="t('prototype.settings.usage.period')"
-          class="bg-transparent outline-none"
-        >
-          <option value="2026-10">{{ monthName('2026-10') }}</option>
-          <option value="2026-09">{{ monthName('2026-09') }}</option>
-        </select></label
-      >
+      <UsageRangePicker
+        v-model="range"
+        v-model:from="customFrom"
+        v-model:to="customTo"
+      />
     </div>
     <div class="grid gap-4 sm:grid-cols-3">
       <div
@@ -49,17 +41,14 @@
           >{{ t('prototype.settings.usage.projects') }}</TabsTrigger
         ></TabsList
       >
-      <TabsContent
-        :value="group"
-        class="space-y-5 rounded-xl border border-border-subtle p-5"
-      >
+      <TabsContent :value="group" class="space-y-5">
         <div class="flex flex-wrap items-center justify-between gap-4">
           <div>
             <h3 class="m-0 text-base font-medium">
               {{ t(`prototype.settings.usage.${group}Heading`) }}
             </h3>
             <p class="mt-2 mb-0 text-sm text-muted-foreground">
-              {{ monthName(month) }} ·
+              {{ t(`prototype.projectPage.usage.range.${range}`) }} ·
               {{
                 t('prototype.settings.usage.total', {
                   count: total.toLocaleString()
@@ -148,26 +137,50 @@ import TableBody from '@/components/ui/table/TableBody.vue'
 import TableRow from '@/components/ui/table/TableRow.vue'
 import TableCell from '@/components/ui/table/TableCell.vue'
 import { usePrototypePersonaStore } from '../../stores/personaStore'
+import { daysBetween, usageRangeFactor } from '../../utils/usageRange'
+import type { UsageRange } from '../../utils/usageRange'
 import {
   sampleUsage,
   summarizeUsage,
   usageCsv
 } from '../../utils/workspaceUsage'
+import UsageRangePicker from '../UsageRangePicker.vue'
 const { t } = useI18n()
 const percent = new Intl.NumberFormat('en-US', {
   style: 'percent',
   maximumFractionDigits: 1
 })
 const personas = usePrototypePersonaStore()
-const month = ref('2026-10')
+const CURRENT_MONTH = '2026-10'
+const range = ref<UsageRange>('thisMonth')
+const customFrom = ref('2026-09-22')
+const customTo = ref('2026-10-06')
 const group = ref('members')
-const records = computed(() =>
-  sampleUsage(personas.fixture, personas.fixture.currentWorkspaceId).filter(
-    (record) => record.month === month.value
-  )
+const allRecords = computed(() =>
+  sampleUsage(personas.fixture, personas.fixture.currentWorkspaceId)
 )
-const total = computed(() =>
+const records = computed(() =>
+  allRecords.value.filter((record) => record.month === CURRENT_MONTH)
+)
+const monthTotal = computed(() =>
   records.value.reduce((sum, record) => sum + record.credits, 0)
+)
+const history = computed(() => {
+  const byMonth = new Map<string, number>()
+  for (const record of allRecords.value) {
+    byMonth.set(record.month, (byMonth.get(record.month) ?? 0) + record.credits)
+  }
+  return [...byMonth]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([month, credits]) => ({ month, credits }))
+})
+const factor = computed(() =>
+  usageRangeFactor(
+    range.value,
+    monthTotal.value,
+    history.value,
+    daysBetween(customFrom.value, customTo.value)
+  )
 )
 const rows = computed(() =>
   summarizeUsage(
@@ -176,13 +189,20 @@ const rows = computed(() =>
     personas.fixture,
     personas.fixture.currentWorkspaceId,
     t('prototype.settings.usage.unattributed')
-  )
+  ).map((row) => ({
+    ...row,
+    credits: Math.round(row.credits * factor.value),
+    runs: Math.round(row.runs * factor.value)
+  }))
+)
+const total = computed(() =>
+  rows.value.reduce((sum, row) => sum + row.credits, 0)
 )
 const metrics = computed(() => [
   { label: t('prototype.settings.usage.spent'), value: total.value },
   {
     label: t('prototype.settings.usage.runs'),
-    value: records.value.reduce((sum, record) => sum + record.runs, 0)
+    value: rows.value.reduce((sum, row) => sum + row.runs, 0)
   },
   {
     label: t('prototype.settings.usage.activeProjects'),
@@ -193,12 +213,6 @@ const metrics = computed(() => [
     ).size
   }
 ])
-function monthName(value: string) {
-  return new Date(`${value}-01T12:00:00`).toLocaleDateString('en-US', {
-    month: 'long',
-    year: 'numeric'
-  })
-}
 function exportCsv() {
   const headers = [
     t(`prototype.settings.usage.${group.value}`),
@@ -214,7 +228,7 @@ function exportCsv() {
   )
   const link = document.createElement('a')
   link.href = url
-  link.download = `${personas.fixture.currentWorkspaceId}-${group.value}-${month.value}.csv`
+  link.download = `${personas.fixture.currentWorkspaceId}-${group.value}-${range.value}.csv`
   link.click()
   URL.revokeObjectURL(url)
 }
