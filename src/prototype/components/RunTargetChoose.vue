@@ -185,11 +185,9 @@ const newDeploymentPicked = computed(
 )
 
 const title = computed(() =>
-  mode.value === 'new'
-    ? t('prototype.customCloud.dialog.cantRunAnywhere')
-    : tText('prototype.customCloud.dialog.cantRunOn', {
-        deployment: deployment.value.name
-      })
+  tText('prototype.customCloud.dialog.cantRunOn', {
+    deployment: deployment.value.name
+  })
 )
 
 const benefits = computed(() => [

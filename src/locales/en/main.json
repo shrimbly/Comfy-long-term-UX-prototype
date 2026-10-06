@@ -6896,7 +6896,6 @@
         "missingPacks": "{count} missing node pack | {count} missing node packs",
         "missingModels": "{count} missing model | {count} missing models",
         "cantRunOn": "This workflow can't run on {deployment}",
-        "cantRunAnywhere": "This workflow can't run on any deployment",
         "runsOnLabel": "Create a new project that runs on",
         "readyNow": "Ready now",
         "ready": "Ready",

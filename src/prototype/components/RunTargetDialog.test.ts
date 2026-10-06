@@ -90,7 +90,7 @@ describe('RunTargetDialog', () => {
   it.for([
     {
       projectId: 'proj-marketing',
-      heading: "This workflow can't run on any deployment",
+      heading: "This workflow can't run on Comfy Cloud",
       primary: 'Create deployment',
       quiet: 'Update an existing deployment'
     },
