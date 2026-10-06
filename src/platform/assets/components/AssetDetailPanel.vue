@@ -121,7 +121,7 @@
           <span
             :class="
               isReferenceMissing
-                ? 'detail-value text-warning inline-flex items-center gap-1.5'
+                ? 'detail-value inline-flex items-center gap-1.5 text-warning-background'
                 : 'detail-value inline-flex items-center gap-1.5'
             "
           >

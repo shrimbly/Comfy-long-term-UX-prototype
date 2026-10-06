@@ -83,7 +83,7 @@
           cn(
             'max-h-72 w-(--reka-combobox-trigger-width) overflow-y-auto',
             'rounded-lg border border-border-default bg-base-background p-1 shadow-lg',
-            'data-[side=top]:animate-slideDownAndFade data-[side=bottom]:animate-slideUpAndFade will-change-[opacity,transform]'
+            'will-change-[opacity,transform]'
           )
         "
         @wheel.capture.stop.prevent="handlePopoverWheel"

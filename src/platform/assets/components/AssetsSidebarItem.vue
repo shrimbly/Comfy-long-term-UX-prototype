@@ -14,7 +14,7 @@
     "
     @click="emit('click')"
   >
-    <i :class="cn(icon, 'text-neutral shrink-0 text-sm')" />
+    <i :class="cn(icon, 'shrink-0 text-sm')" />
     <span v-if="!compact" class="min-w-0 truncate">{{ label }}</span>
   </button>
 </template>

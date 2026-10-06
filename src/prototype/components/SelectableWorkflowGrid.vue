@@ -44,7 +44,10 @@
         <Button
           variant="secondary"
           :class="
-            cn('w-full justify-start gap-2', item.danger && 'text-danger')
+            cn(
+              'w-full justify-start gap-2',
+              item.danger && 'text-destructive-background'
+            )
           "
           v-bind="props.action"
         >

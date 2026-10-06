@@ -208,7 +208,7 @@
             <div class="overflow-hidden">
               <div class="flex items-center justify-between gap-4">
                 <div class="flex min-w-0 items-baseline gap-3">
-                  <h1 class="text-neutral truncate text-lg font-semibold">
+                  <h1 class="truncate text-lg font-semibold">
                     {{ $t('mediaAssets.modal.title') }}
                   </h1>
                   <span class="shrink-0 text-sm text-muted-foreground">
@@ -267,7 +267,7 @@
           <!-- Prototype: quiet missing-files notice (Flow 03, non-final). -->
           <p
             v-if="mediaRefs.missingCount > 0"
-            class="text-warning flex min-w-0 items-center gap-1.5 text-xs"
+            class="flex min-w-0 items-center gap-1.5 text-xs text-warning-background"
           >
             <i class="icon-[lucide--unlink] size-3.5 shrink-0" />
             <span class="truncate">

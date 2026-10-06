@@ -174,7 +174,7 @@
             <div class="overflow-hidden">
               <div class="flex items-center justify-between gap-4">
                 <div class="flex min-w-0 items-baseline gap-3">
-                  <h1 class="text-neutral truncate text-lg font-semibold">
+                  <h1 class="truncate text-lg font-semibold">
                     {{ pageTitle }}
                   </h1>
                   <span class="shrink-0 text-sm text-muted-foreground">

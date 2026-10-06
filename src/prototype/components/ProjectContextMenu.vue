@@ -26,7 +26,12 @@
     <template #item="{ item, props }">
       <Button
         variant="secondary"
-        :class="cn('w-full justify-start gap-2', item.danger && 'text-danger')"
+        :class="
+          cn(
+            'w-full justify-start gap-2',
+            item.danger && 'text-destructive-background'
+          )
+        "
         v-bind="props.action"
       >
         <i v-if="item.icon" :class="cn('size-4', item.icon)" />

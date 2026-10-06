@@ -47,7 +47,7 @@
               class="flex items-center gap-1.5 rounded-lg bg-secondary-background px-3 py-2 text-sm text-base-foreground"
             >
               <i
-                class="text-success icon-[lucide--hard-drive] size-3.5 shrink-0"
+                class="icon-[lucide--hard-drive] size-3.5 shrink-0 text-success-background"
               />
               <span class="truncate">{{ newPath }}</span>
             </span>

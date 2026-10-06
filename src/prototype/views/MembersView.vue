@@ -200,7 +200,7 @@
                   </button>
                   <button
                     type="button"
-                    class="text-danger-foreground h-8 cursor-pointer rounded-lg px-3 text-xs transition-colors hover:bg-secondary-background"
+                    class="h-8 cursor-pointer rounded-lg px-3 text-xs text-destructive-background transition-colors hover:bg-secondary-background"
                     @click="personaStore.revokeInvite(invite.id)"
                   >
                     {{ t('prototype.views.members.actions.revoke') }}

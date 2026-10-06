@@ -13,7 +13,7 @@
       v-else
       :text="t('prototype.views.project.draftProvenance.sourceRemoved')"
     >
-      <i class="text-danger icon-[lucide--unlink] size-3.5" />
+      <i class="icon-[lucide--unlink] size-3.5 text-destructive-background" />
     </Tooltip>
   </span>
 </template>

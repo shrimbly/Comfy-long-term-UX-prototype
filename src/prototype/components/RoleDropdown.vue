@@ -38,7 +38,7 @@
       <div class="my-0.5 h-px bg-border-default" />
       <button
         type="button"
-        class="text-danger-foreground w-full cursor-pointer appearance-none rounded-sm border-0 bg-transparent px-3 py-2 text-left transition-colors hover:bg-interface-menu-component-surface-hovered focus:bg-interface-menu-component-surface-hovered focus:outline-none"
+        class="w-full cursor-pointer appearance-none rounded-sm border-0 bg-transparent px-3 py-2 text-left text-destructive-background transition-colors hover:bg-interface-menu-component-surface-hovered focus:bg-interface-menu-component-surface-hovered focus:outline-none"
         @click="onRemove"
       >
         {{ t('prototype.views.project.sharing.removeFromProject') }}

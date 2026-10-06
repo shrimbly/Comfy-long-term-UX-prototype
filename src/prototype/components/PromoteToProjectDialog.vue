@@ -119,7 +119,7 @@
             />
           </label>
 
-          <p v-if="nameConflict" class="text-danger text-xs">
+          <p v-if="nameConflict" class="text-xs text-destructive-background">
             {{
               t('prototype.promoteToProject.nameConflict', {
                 name: newWorkflowName.trim()

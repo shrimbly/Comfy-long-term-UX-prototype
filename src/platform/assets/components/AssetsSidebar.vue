@@ -52,14 +52,14 @@
           :aria-label="t('sideToolbar.mediaAssets.tagsHeader')"
           @click="toggleTagsCollapsed"
         >
-          <i class="text-neutral icon-[lucide--tags] shrink-0 text-sm" />
+          <i class="icon-[lucide--tags] shrink-0 text-sm" />
           <span class="min-w-0 flex-1 truncate">
             {{ t('sideToolbar.mediaAssets.tagsHeader') }}
           </span>
           <i
             :class="
               cn(
-                'text-neutral shrink-0 text-sm transition-transform',
+                'shrink-0 text-sm transition-transform',
                 tagsCollapsed
                   ? 'icon-[lucide--chevron-right]'
                   : 'icon-[lucide--chevron-down]'

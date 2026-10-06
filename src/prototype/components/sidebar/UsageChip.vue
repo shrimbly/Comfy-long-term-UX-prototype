@@ -19,7 +19,7 @@
     class="flex items-center justify-between rounded-md bg-modal-card-background px-2 py-1.5 text-xs text-base-foreground"
   >
     <span class="flex items-center gap-1.5">
-      <i class="icon-[comfy--credits] size-3.5 text-warning-background" />
+      <i class="size-3.5 text-warning-background icon-[comfy--credits]" />
       <span>{{
         t('prototype.sidebar.creditsAvailable', { credits: formattedCredits })
       }}</span>

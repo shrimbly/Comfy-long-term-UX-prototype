@@ -130,7 +130,7 @@
                     <Button
                       variant="textonly"
                       size="unset"
-                      class="hover:text-danger grid size-5 place-items-center rounded-sm text-muted-foreground hover:bg-interface-menu-component-surface-selected"
+                      class="grid size-5 place-items-center rounded-sm text-muted-foreground hover:bg-interface-menu-component-surface-selected hover:text-destructive-background"
                       :aria-label="
                         t('prototype.workflowCard.deleteVersionAction')
                       "

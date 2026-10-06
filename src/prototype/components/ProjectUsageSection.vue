@@ -22,7 +22,9 @@
             :class="
               cn(
                 'mb-1 inline-flex items-center gap-1 text-xs font-medium',
-                deltaPct > 0 ? 'text-warning' : 'text-success'
+                deltaPct > 0
+                  ? 'text-warning-background'
+                  : 'text-success-background'
               )
             "
           >
