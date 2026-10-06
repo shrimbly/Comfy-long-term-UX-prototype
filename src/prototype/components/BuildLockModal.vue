@@ -11,19 +11,23 @@
 
   Covers everything below the tab strip while the current project's
   deployment builds: build then deploy progress with stage times. The graph
-  needs the deployment to load at all, so behind the progress there is only
-  a grey, inactive canvas. The tab strip stays live, so the project switcher
-  is the way out.
+  needs the deployment to load at all, so behind the progress there is an
+  empty canvas next to the editor's sidebar, both dimmed and inactive. The
+  tab strip stays live, so the project switcher is the way out.
 -->
 <template>
   <div
-    class="absolute inset-0 z-40 flex items-start justify-center overflow-y-auto bg-secondary-background p-4 sm:p-8"
+    class="absolute inset-0 z-40 flex items-start justify-center overflow-y-auto p-4 sm:p-8"
     role="dialog"
     aria-modal="true"
     :aria-labelledby="titleId"
   >
     <div
-      class="my-auto flex w-full max-w-[640px] flex-col gap-6 rounded-2xl border border-border-default bg-base-background p-9 text-base-foreground shadow-2xl"
+      class="absolute inset-y-0 right-0 left-14 bg-base-background bg-[linear-gradient(rgb(0_0_0/0.45)_1px,transparent_1px),linear-gradient(90deg,rgb(0_0_0/0.45)_1px,transparent_1px),linear-gradient(rgb(0_0_0/0.25)_1px,transparent_1px),linear-gradient(90deg,rgb(0_0_0/0.25)_1px,transparent_1px)] bg-size-[100px_100px,100px_100px,10px_10px,10px_10px]"
+    />
+    <div class="absolute inset-0 bg-black/50" />
+    <div
+      class="relative my-auto flex w-full max-w-[640px] flex-col gap-6 rounded-2xl border border-border-default bg-base-background p-9 text-base-foreground shadow-2xl"
     >
       <header class="flex flex-col gap-2.5">
         <span

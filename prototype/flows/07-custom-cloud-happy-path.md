@@ -64,7 +64,7 @@ Wiki: `../IA_Plan/wiki/concepts/custom-comfy-cloud.md`. Source: the 6 Oct "Custo
    - Step 3 · Platform's deploy dialog, as it is live: GPU (RTX PRO 6000, H100 SXM, H200 SXM, B200, with VRAM and price an hour), always-warm workers 0, max workers 3, Location, and ComfyUI startup flags. On the right: the estimated cost and, once a GPU is picked, the estimated time.
    - Pick **RTX PRO 6000**. GPU time shows $0.00 an hour idle and $13.62 at full load; model storage is $2.44 a month. Click **Create deployment**.
 6. **The build locks the project.**
-   - The app reloads into the new project, Matte R&D. The graph does not show: it needs the deployment, so there is only a grey, inactive canvas behind the build progress.
+   - The app reloads into the new project, Matte R&D. The graph does not show: it needs the deployment, so behind the build progress there is the editor's sidebar and an empty canvas, both dimmed and inactive.
    - Build progress runs: resolve, upload, install, bake. Deploy follows: start an RTX PRO 6000 worker, load models. Each stage shows a time.
    - The copy says about 19 minutes and "we'll email you". The demo plays it in about 18 seconds.
    - The project pill shows a blue dot and "Building · 12 min".

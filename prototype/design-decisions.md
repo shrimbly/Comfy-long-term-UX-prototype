@@ -1522,7 +1522,7 @@ Wiki: `decisions/missing-nodes-choose-where-it-runs.md` (step 1 order, review, a
 ## [2026-10-07] Flow 07: the runs-on picker like the project switcher; no graph while it builds
 
 - **Decision: the "Create a new project that runs on" menu is built like the project switcher (Willie picked "B" of three on the canvas, <https://claude.ai/artifact/PQby9iCSzrR7WMvbsqnY11>).** It has a search field and one list with no section headers. The deployments that run the workflow come first, marked "Ready". The ones that can't are greyed out, with the reason on the right ("Missing 1 node pack", "Missing 2 packs, 2 models"). **+ Create a new deployment · About 20 min** is the row below the list. "A new deployment with everything it needs" read as clunky. The project chooser uses the same "Missing …" wording.
-- **Decision: while a project's deployment builds, its graph is not shown.** The graph needs the deployment to load at all, so the lock screen shows a grey, inactive canvas behind the build progress. Before, it showed a dimmed but visible graph.
+- **Decision: while a project's deployment builds, its graph is not shown.** The graph needs the deployment to load at all, so behind the build progress the lock screen shows the editor's sidebar and an empty canvas grid, both dimmed and inactive. Before, it showed a dimmed but visible graph; a flat grey screen in between hid the sidebar too.
 
 Wiki: `decisions/build-locks-project-until-ready.md` says the node graph is disabled. This goes further: nothing of the graph shows until the deployment is ready. Promote? **yes**, as a refinement of that decision.
 
