@@ -301,6 +301,7 @@ export const usePrototypeCustomCloudStore = defineStore(
         ...deployments.value,
         {
           id: deploymentId,
+          workspaceId: fixture.currentWorkspaceId,
           name,
           kind: 'custom',
           release: 'v1',

@@ -5844,7 +5844,7 @@
       "settings": "Settings",
       "developers": "Developers",
       "help": "Help",
-      "groupYourWork": "Your work",
+      "groupYourWork": "Create",
       "groupRecents": "Recents",
       "groupLibrary": "Library",
       "groupDiscover": "Discover",
@@ -7203,6 +7203,38 @@
         "from": "From",
         "to": "to",
         "creditsSpent": "credits spent"
+      }
+    },
+    "environments": {
+      "title": "Environments",
+      "description": "Custom deployments for this workspace.",
+      "new": "New deployment",
+      "search": "Search deployments…",
+      "open": "Open {name}",
+      "buildVersion": "Build {version}",
+      "nodes": "No node packs | 1 node pack | {count} node packs",
+      "models": "No models | 1 model | {count} models",
+      "projects": "No projects | 1 project | {count} projects",
+      "sleepHint": "Starts when a workflow runs.",
+      "empty": "No custom deployments yet.",
+      "emptyHint": "Projects use Comfy Cloud until you choose a custom deployment.",
+      "noResults": "No deployments found.",
+      "clear": "Clear search",
+      "preview": "Preview only. Changes reset on reload.",
+      "name": "Deployment name",
+      "build": "Build",
+      "gpu": "GPU",
+      "warm": "Keep warm (minutes)",
+      "warmHint": "Time before the deployment sleeps after a run.",
+      "contents": "Models and custom nodes",
+      "usedBy": "Used by",
+      "noProjects": "No projects use this deployment.",
+      "invalid": "Enter a name and a whole number from 0 to 60.",
+      "create": "Create deployment",
+      "status": {
+        "ready": "Ready",
+        "asleep": "Sleeping",
+        "building": "Building"
       }
     }
   },

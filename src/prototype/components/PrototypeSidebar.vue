@@ -51,15 +51,20 @@
           :active="activeView.kind === 'templates'"
           @click="uiStore.go({ kind: 'templates' })"
         />
+        <SidebarItem
+          :label="t('prototype.sidebar.libraryMedia')"
+          icon="icon-[lucide--image]"
+          @click="showMediaAssetsNotice = true"
+        />
       </div>
 
       <nav class="flex flex-1 flex-col overflow-y-auto">
         <SidebarGroup
-          v-if="draftsProject || isLocalMode"
           :label="t('prototype.sidebar.groupYourWork')"
           :show-header="showGroupHeaders"
         >
           <SidebarItem
+            v-if="draftsProject || isLocalMode"
             :label="t('prototype.sidebar.drafts')"
             icon="icon-[lucide--workflow]"
             :active="activeView.kind === 'drafts'"
@@ -74,13 +79,12 @@
             "
             @click="uiStore.go({ kind: 'projects' })"
           />
-        </SidebarGroup>
-
-        <SidebarGroup :label="t('prototype.sidebar.groupLibrary')">
           <SidebarItem
-            :label="t('prototype.sidebar.libraryMedia')"
-            icon="icon-[lucide--image]"
-            @click="showMediaAssetsNotice = true"
+            v-if="isCloudMode"
+            :label="t('prototype.environments.title')"
+            icon="icon-[ph--stack-bold]"
+            :active="activeView.kind === 'environments'"
+            @click="uiStore.go({ kind: 'environments' })"
           />
         </SidebarGroup>
       </nav>
