@@ -14668,7 +14668,7 @@
       },
       "filename_prefix": {
         "name": "filename_prefix",
-        "tooltip": "Filename for saved images. Type @ to insert dates, dimensions, or values from other nodes."
+        "tooltip": "Filename for saved images. Type {'@'} to insert dates, dimensions, or values from other nodes."
       }
     }
   },
@@ -14755,7 +14755,7 @@
       },
       "filename_prefix": {
         "name": "filename_prefix",
-        "tooltip": "Filename for saved images. Type @ to insert dates, dimensions, or values from other nodes."
+        "tooltip": "Filename for saved images. Type {'@'} to insert dates, dimensions, or values from other nodes."
       }
     }
   },
@@ -14790,7 +14790,7 @@
       },
       "filename_prefix": {
         "name": "filename_prefix",
-        "tooltip": "Filename for saved images. Type @ to insert dates, dimensions, or values from other nodes."
+        "tooltip": "Filename for saved images. Type {'@'} to insert dates, dimensions, or values from other nodes."
       },
       "format": {
         "name": "format",
