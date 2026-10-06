@@ -53,10 +53,38 @@ describe('RunTargetDialog', () => {
     )
     await user.click(screen.getByRole('button', { name: 'Create deployment' }))
 
+    expect(
+      screen.getByRole('heading', { name: 'New project' })
+    ).toBeInTheDocument()
+    expect(screen.getByText('Runs on a new deployment')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Next: build' }))
+
     expect(store.dialogStep).toBe('build')
     expect(
       screen.getByRole('heading', { name: 'Create a deployment' })
     ).toBeInTheDocument()
+  })
+
+  it('names a project on the deployment that runs it, and shares it with the people added', async () => {
+    const { store, user } = await setup('proj-marketing')
+
+    await user.click(screen.getByRole('button', { name: 'Create project' }))
+    expect(screen.getByText('Runs on Acme Studio pipeline')).toBeInTheDocument()
+
+    store.newProjectTier = 'restricted'
+    expect(
+      await screen.findByPlaceholderText('Add people by name or email')
+    ).toBeInTheDocument()
+
+    await user.clear(screen.getByPlaceholderText('e.g. Summer Campaign'))
+    await user.type(
+      screen.getByPlaceholderText('e.g. Summer Campaign'),
+      'Matte finals'
+    )
+    await user.click(screen.getByRole('button', { name: 'Create project' }))
+
+    expect(store.dialogStep).toBeNull()
+    expect(store.reloadingToId).not.toBeNull()
   })
 
   it.for([

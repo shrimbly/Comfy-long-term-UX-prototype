@@ -56,7 +56,8 @@ Wiki: `../IA_Plan/wiki/concepts/custom-comfy-cloud.md`. Source: the 6 Oct "Custo
    - "Create a new project that runs on" shows **Acme Studio pipeline · Ready now**: that deployment already has everything.
    - Open the field. It works like the project switcher: a search field, then one list. Acme Studio pipeline is ticked and marked "Ready". Matte tests ("Missing 1 node pack") and Comfy Cloud ("Missing 2 packs, 2 models") are greyed out. Below the list is **+ Create a new deployment · About 20 min**.
    - Say: one deployment already runs it, but we make a new one anyway. Pick **Create a new deployment**. The main button changes to **Create deployment**. Click it.
-   - Step 2 · the build summary, as Platform shows it. Under "Suggested settings": Name (Matte R&D, editable in place), ComfyUI v0.39.1, Runtime (CUDA 13.0 · Python 3.12 · Torch 2.12.1), Open-source models (all allowed, 2 pre-installed), Partner models, Custom nodes (2 packs), Python packages.
+   - New project: a "+ Runs on a new deployment" chip, **Name** (Matte R&D) and **General access** (Anyone in Comfy Org · Workspace ▾), the same fields as the dashboard's New project dialog. Optional: switch to **Restricted** and add Alex under People with access. Click **Next: build**.
+   - Step 2 · the build summary, as Platform shows it. Under "Suggested settings": Name (the deployment's name, Matte R&D from the project, editable in place), ComfyUI v0.39.1, Runtime (CUDA 13.0 · Python 3.12 · Torch 2.12.1), Open-source models (all allowed, 2 pre-installed), Partner models, Custom nodes (2 packs), Python packages.
    - Optional: click any setting except the name. A confirmation asks "Customise the build on Platform?". Click **Cancel**.
    - Optional: click **Build with your agent** to show the prompt (`comfy skills show comfy-build`, `comfy build from-workflow …`), then **Back to the summary**. It is secondary on purpose.
    - Click **Next: deployment**.
@@ -85,7 +86,7 @@ Then click **Reset demo** and run it again.
 ## Shortcut and alternative
 
 - **Demo: drop incompatible workflow** does the same as step 4's drop, in whatever project is current. From a fresh reset that is My Workflows, which runs on Comfy Cloud.
-- In step 5, keep **Acme Studio pipeline** and click **Create project**. A new project, Matte R&D, is made on that deployment. The app reloads into it and `matte_pass` runs there with no build.
+- In step 5, keep **Acme Studio pipeline** and click **Create project**. The New project step shows "● Runs on Acme Studio pipeline": name it and choose its access, then **Create project**. The app reloads into it and `matte_pass` runs there with no build.
 - In step 5, click **Open in another project** and pick **Coca-Cola Ad**. `matte_pass` moves into Coca-Cola Ad and runs there.
 - **Demo: nothing runs it** from a Comfy Cloud project: the title reads "This workflow can't run on any deployment". It shows the three ticks and **Create deployment**, which goes to step 2. **Update an existing deployment ↗** is the quiet option; it opens on Platform.
 - **Demo: nothing runs it** from Personal R&D (on Matte tests): the title reads "This workflow can't run on Matte tests" and the table lists only acme-matte-tools. The main action is **Update on Platform ↗** (Matte tests v7 → v8; every project on it gets the release). **Create a new deployment instead** goes to step 2.

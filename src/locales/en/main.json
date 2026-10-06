@@ -6914,6 +6914,12 @@
         "thisProject": "{name} · this project",
         "createProject": "Create project",
         "createDeployment": "Create deployment",
+        "project": {
+          "title": "New project",
+          "runsOn": "Runs on {deployment}",
+          "runsOnNew": "Runs on a new deployment",
+          "nextBuild": "Next: build"
+        },
         "newLabel": "Create a new deployment for this workflow",
         "benefits": {
           "pinned": "Every node and model it needs, pinned to your versions",

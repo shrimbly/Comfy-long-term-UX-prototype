@@ -1525,3 +1525,14 @@ Wiki: `decisions/missing-nodes-choose-where-it-runs.md` (step 1 order, review, a
 - **Decision: while a project's deployment builds, its graph is not shown.** The graph needs the deployment to load at all, so the lock screen shows a grey, inactive canvas behind the build progress. Before, it showed a dimmed but visible graph.
 
 Wiki: `decisions/build-locks-project-until-ready.md` says the node graph is disabled. This goes further: nothing of the graph shows until the deployment is ready. Promote? **yes**, as a refinement of that decision.
+
+---
+
+## [2026-10-07] Flow 07: a new project is named and shared before it's made
+
+- **Decision: every path in the dialog that makes a project now passes a "New project" step.** It has Name, General access (Workspace or Restricted) and, when restricted, People with access. These are the dashboard's New project fields, now one shared component (`ProjectAccessFields.vue`). A chip says where the project will run: "● Runs on Acme Studio pipeline" or "+ Runs on a new deployment".
+  - **On a deployment that already runs it:** step 1's **Create project** opens this step, and its **Create project** makes the project and reloads into it.
+  - **On a new deployment:** step 1's **Create deployment** opens this step, and **Next: build** goes on to the build summary. The summary's Name row is now the deployment's name. It starts as the project's name.
+- Before, the dialog made projects as restricted with nobody else in them, under a fixed name.
+
+Canvas: <https://claude.ai/artifact/PQby9iCSzrR7WMvbsqnY11>, row "New step: name the project and choose who can access it". Wiki: `decisions/project-runs-on-shared-deployment.md` ("you name it and choose a backend for it"), and `concepts/three-level-permissions.md` for the access tiers. Promote? **maybe**: add "named and shared at creation, from any entry point" to the project entity page.

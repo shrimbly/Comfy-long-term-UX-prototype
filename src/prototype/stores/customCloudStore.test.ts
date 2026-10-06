@@ -132,10 +132,19 @@ describe('customCloudStore', () => {
     const { store } = await setup()
     openWorkflowIn(store, 'proj-marketing')
     store.dropIncompatibleWorkflow()
+    store.newProjectName = 'Matte finals'
+    store.newProjectTier = 'restricted'
+    store.newProjectCollaborators = ['user-alex']
     store.createProjectOn(store.deploymentTarget)
     vi.advanceTimersByTime(RELOAD_MS)
 
-    expect(store.currentProject?.name).toBe('Matte R&D')
+    expect(store.currentProject).toMatchObject({
+      name: 'Matte finals',
+      tier: 'restricted'
+    })
+    expect(store.currentProject?.members?.map((m) => m.userId)).toContain(
+      'user-alex'
+    )
     expect(store.currentDeployment.id).toBe('dep-acme-studio')
     expect(store.isLocked).toBe(false)
     expect(store.showsMissingNodes).toBe(false)

@@ -36,7 +36,7 @@
       </span>
       <span class="flex min-w-0 items-center gap-2">
         <input
-          v-model="customCloud.newProjectName"
+          v-model="customCloud.newDeploymentName"
           type="text"
           class="field-sizing-content min-w-0 border-0 bg-transparent p-0 text-right text-sm text-base-foreground outline-none focus:underline"
         />
@@ -69,7 +69,7 @@
       variant="muted-textonly"
       size="lg"
       class="mr-auto"
-      @click="customCloud.dialogStep = 'choose'"
+      @click="customCloud.dialogStep = 'project'"
     >
       {{ t('prototype.customCloud.dialog.back') }}
     </Button>

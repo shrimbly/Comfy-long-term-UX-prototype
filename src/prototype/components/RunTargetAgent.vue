@@ -68,6 +68,7 @@ const { copy, copied } = useClipboard({ legacy: true })
 
 const workflow = MATTE_PASS.name
 const projectName = computed(() => customCloud.newProjectName.trim())
+const deploymentName = computed(() => customCloud.newDeploymentName.trim())
 
 const agentPrompt = computed(() =>
   [
@@ -86,7 +87,7 @@ const agentPrompt = computed(() =>
       command: 'comfy skills show comfy-build'
     }),
     t('prototype.customCloud.agentPrompt.build'),
-    `  comfy build from-workflow --from ${workflow}.json --name "${projectName.value}"`,
+    `  comfy build from-workflow --from ${workflow}.json --name "${deploymentName.value}"`,
     '',
     tText('prototype.customCloud.agentPrompt.ready', {
       project: projectName.value

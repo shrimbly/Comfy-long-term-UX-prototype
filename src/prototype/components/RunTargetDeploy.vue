@@ -344,7 +344,7 @@ const maxWorkers = ref(DEFAULT_MAX_WORKERS)
 const location = ref<'anywhere' | 'us'>('anywhere')
 const startupFlags = ref('')
 
-const name = computed(() => customCloud.newProjectName.trim())
+const name = computed(() => customCloud.newDeploymentName.trim())
 const selectedGpu = computed(() =>
   PLATFORM_GPUS.find((gpu) => gpu.label === gpuLabel.value)
 )

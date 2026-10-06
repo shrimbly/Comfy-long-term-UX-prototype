@@ -28,7 +28,13 @@ import {
 import type { PlatformGpu } from '../fixtures/customCloud'
 import { onMockRunStateChange } from '../mockBackend'
 import type { MockRunState } from '../mockBackend'
-import type { Deployment, PersonaFixture, Project, Workflow } from '../types'
+import type {
+  Deployment,
+  PersonaFixture,
+  Project,
+  ProjectTier,
+  Workflow
+} from '../types'
 import {
   buildProgress,
   missingFrom,
@@ -41,7 +47,7 @@ import { usePrototypePersonaStore } from './personaStore'
 import { HOME_TAB_ID, usePrototypeTabsStore } from './tabsStore'
 import { usePrototypeUiStore } from './uiStore'
 
-type DialogStep = 'choose' | 'build' | 'agent' | 'deploy'
+type DialogStep = 'choose' | 'project' | 'build' | 'agent' | 'deploy'
 
 // Where a new project runs: an existing deployment's id, or a new deployment.
 export const NEW_BUILD_TARGET = 'new'
@@ -76,6 +82,10 @@ export const usePrototypeCustomCloudStore = defineStore(
     // the dialog for a workflow nothing runs yet.
     const nothingRunsIt = ref(false)
     const newProjectName = ref(DEFAULT_BUILD_PROJECT_NAME)
+    const newProjectTier = ref<ProjectTier>('workspace-wide')
+    const newProjectCollaborators = ref<string[]>([])
+    // A new deployment's name; the build summary starts it at the project's.
+    const newDeploymentName = ref(DEFAULT_BUILD_PROJECT_NAME)
     const build = shallowRef<ActiveBuild | null>(null)
     const now = ref(Date.now())
     const readyProjectId = ref<string | null>(null)
@@ -297,6 +307,8 @@ export const usePrototypeCustomCloudStore = defineStore(
         deploymentTargets.value.find((target) => target.runs)?.deployment.id ??
         NEW_BUILD_TARGET
       newProjectName.value = DEFAULT_BUILD_PROJECT_NAME
+      newProjectTier.value = 'workspace-wide'
+      newProjectCollaborators.value = []
       dialogStep.value = 'choose'
     }
 
@@ -334,19 +346,30 @@ export const usePrototypeCustomCloudStore = defineStore(
       if (progress.value?.done) finishBuild()
     }
 
+    // The project the dialog makes, with the name and access chosen in its
+    // "New project" step.
+    function createNewProject(deploymentId: string) {
+      const name = newProjectName.value.trim() || DEFAULT_BUILD_PROJECT_NAME
+      const restricted = newProjectTier.value === 'restricted'
+      return personaStore.createProject(
+        name,
+        newProjectTier.value,
+        restricted ? newProjectCollaborators.value : [],
+        { deploymentId, color: BUILD_PROJECT_COLOR }
+      )
+    }
+
     // A new project on a deployment that already runs matte_pass: no build.
     function createProjectOn(deploymentId: string) {
-      const name = newProjectName.value.trim() || DEFAULT_BUILD_PROJECT_NAME
-      const projectId = personaStore.createProject(name, 'restricted', [], {
-        deploymentId,
-        color: BUILD_PROJECT_COLOR
-      })
-      openInProject(projectId)
+      openInProject(createNewProject(deploymentId))
     }
 
     function buildAndDeploy(gpu: PlatformGpu) {
       const fixture = personaStore.fixture
-      const name = newProjectName.value.trim() || DEFAULT_BUILD_PROJECT_NAME
+      const name =
+        newDeploymentName.value.trim() ||
+        newProjectName.value.trim() ||
+        DEFAULT_BUILD_PROJECT_NAME
       const deploymentId = `dep-build-${Date.now()}`
       fixture.deployments = [
         ...deployments.value,
@@ -362,10 +385,7 @@ export const usePrototypeCustomCloudStore = defineStore(
           models: [...MATTE_PASS.models]
         }
       ]
-      const projectId = personaStore.createProject(name, 'restricted', [], {
-        deploymentId,
-        color: BUILD_PROJECT_COLOR
-      })
+      const projectId = createNewProject(deploymentId)
       // The build clock starts once the reload into the project ends.
       const startedAt = Date.now() + RELOAD_MS
       build.value = { projectId, deploymentId, startedAt, fixture }
@@ -436,6 +456,9 @@ export const usePrototypeCustomCloudStore = defineStore(
       dialogStep,
       deploymentTarget,
       newProjectName,
+      newProjectTier,
+      newProjectCollaborators,
+      newDeploymentName,
       deploymentTargets,
       projectTargets,
       chooseMode,

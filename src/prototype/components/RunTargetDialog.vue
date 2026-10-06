@@ -8,8 +8,9 @@
               incompatible-workflow dialog, redesigned on a canvas"
 
   "Choose where it runs": the positive replacement for the missing-nodes
-  error toast. Step 1 picks where the workflow runs; a new deployment goes on
-  to Platform's build summary (step 2) and its deploy dialog (step 3). The
+  error toast. Step 1 picks where the workflow runs; the "New project" step
+  names the project and sets its access; a new deployment then goes on to
+  Platform's build summary and its deploy dialog. The
   agent prompt is an alternative to step 3. Everything Platform owns (build
   settings, updating a deployment) opens there.
 -->
@@ -47,6 +48,11 @@
 
         <RunTargetChoose
           v-if="step === 'choose'"
+          :title-id="titleId"
+          @close="close"
+        />
+        <RunTargetProject
+          v-else-if="step === 'project'"
           :title-id="titleId"
           @close="close"
         />
@@ -89,6 +95,7 @@ import RunTargetAgent from './RunTargetAgent.vue'
 import RunTargetBuildSummary from './RunTargetBuildSummary.vue'
 import RunTargetChoose from './RunTargetChoose.vue'
 import RunTargetDeploy from './RunTargetDeploy.vue'
+import RunTargetProject from './RunTargetProject.vue'
 
 const { t } = useI18n()
 const toast = useToastStore()
