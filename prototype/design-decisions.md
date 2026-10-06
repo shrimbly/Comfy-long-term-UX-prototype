@@ -1560,3 +1560,12 @@ Supersedes "the build locks the project" in the entries above. Wiki: `decisions/
 - Code names (`drafts`, `isDrafts`, `saveToMyWorkflows`) are unchanged. One upstream ComfyUI string (`mediaAsset.actions.promoteToCloudFallbackDestination`) still says "My Workflows", because it sits outside the prototype.
 
 Wiki: `decisions/drafts-as-default-private-project.md` names the per-user project "Drafts". Promote? **yes**: settle the user-facing name as "Personal" there.
+
+---
+
+## [2026-10-07] Each saved workflow opens its own graph
+
+- **Decision: every saved fixture workflow opens a real graph of its own**, so switching tabs changes the graph. Before, every tab except `matte_pass` showed ComfyUI's default graph.
+- Each workflow gets one of five pipelines, picked from a hash of its id: Z-Image Turbo, HiDream with a detail LoRA (wide or portrait), SDXL batch of 4, or SD 1.5. The positive prompt comes from the workflow's name, and each graph has its own seed and save prefix. A new, unsaved workflow still opens the default graph.
+- Every node and model is one the in-browser backend serves on Comfy Cloud, so no saved workflow is flagged as missing anything. Only `matte_pass` is.
+- The wiki is silent on fixture graph content. This is a prototype-only working decision.

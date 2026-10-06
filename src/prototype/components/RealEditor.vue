@@ -10,7 +10,8 @@
   The real ComfyUI editor (GraphView: litegraph canvas, sidebars, Run
   button, queue) under the prototype's tab strip. It stays mounted, so the
   app boots once. This bridge keeps it in step with the prototype:
-    - each prototype workflow tab shows its own real workflow;
+    - each prototype workflow tab shows its own real workflow: a saved
+      workflow its own graph, a new one the default graph;
     - the in-browser backend serves the current project's deployment, so
       matte_pass's nodes are red where the deployment lacks them and clean
       once it has them;
@@ -67,6 +68,7 @@ import GraphView from '@/views/GraphView.vue'
 
 import { useProjectWorkflowsSidebarTab } from '../composables/useProjectWorkflowsSidebarTab'
 import { MATTE_PASS_GRAPH } from '../fixtures/mattePassGraph'
+import { savedWorkflowGraph } from '../fixtures/workflowGraphs'
 import { setMockDeployment } from '../mockBackend'
 import { objectInfo, PACK_NODE_TYPES } from '../mockBackend/nodeDefs'
 import { usePrototypeCustomCloudStore } from '../stores/customCloudStore'
@@ -135,8 +137,13 @@ async function registerDeploymentNodes() {
   }
 }
 
-function freshGraph(key: string | undefined): ComfyWorkflowJSON {
-  const graph = key === 'matte_pass' ? MATTE_PASS_GRAPH : defaultGraph
+function freshGraph(tab: NonNullable<typeof activeTab.value>) {
+  const graph: ComfyWorkflowJSON =
+    tab.workflowKey === 'matte_pass'
+      ? MATTE_PASS_GRAPH
+      : tab.workflowId
+        ? savedWorkflowGraph({ id: tab.workflowId, name: tab.label })
+        : defaultGraph
   return { ...structuredClone(graph), id: crypto.randomUUID() }
 }
 
@@ -158,13 +165,7 @@ async function showActiveTab(reload: boolean) {
       { ...QUIET_LOAD, checkForRerouteMigration: false }
     )
   } else if (!existing) {
-    await app.loadGraphData(
-      freshGraph(tab.workflowKey),
-      true,
-      true,
-      tab.label,
-      QUIET_LOAD
-    )
+    await app.loadGraphData(freshGraph(tab), true, true, tab.label, QUIET_LOAD)
     const path = workflowStore.activeWorkflow?.path
     if (path) tabsStore.setWorkflowPath(tab.id, path)
   }
