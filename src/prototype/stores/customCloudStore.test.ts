@@ -2,7 +2,7 @@ import { createPinia, setActivePinia } from 'pinia'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { DEMO_BUILD_MS } from '../fixtures/customCloud'
-import { COLD_START_MS, NEW_BUILD_TARGET, RELOAD_MS } from './customCloudStore'
+import { NEW_BUILD_TARGET, RELOAD_MS } from './customCloudStore'
 
 // The persona fixtures are module state the store mutates, so each test
 // loads fresh copies.
@@ -116,26 +116,26 @@ describe('customCloudStore', () => {
     expect(store.readyProjectId).toBe(project?.id)
   })
 
-  it('shows the cold-start note on the first run of a custom deployment', async () => {
-    const { store } = await setup()
-    openWorkflowIn(store, 'proj-personal-rnd')
-    expect(store.currentDeployment.status).toBe('asleep')
-
-    store.run()
-    expect(store.runState).toBe('starting')
-    vi.advanceTimersByTime(COLD_START_MS)
-    expect(store.runState).toBe('running')
-  })
-
-  it('reopens the dialog instead of running while nodes are missing', async () => {
+  it('opens the dialog instead of running while nodes are missing', async () => {
     const { store } = await setup()
     openWorkflowIn(store, 'proj-marketing')
     store.dropIncompatibleWorkflow()
     store.dialogStep = null
 
-    store.run()
+    store.requestRun()
 
-    expect(store.runState).toBe('idle')
+    expect(store.runRequested).toBe(false)
     expect(store.dialogStep).toBe('choose')
+  })
+
+  it('asks the editor to run once the project runs the workflow', async () => {
+    const { store } = await setup()
+    openWorkflowIn(store, 'proj-cocacola')
+    store.dropIncompatibleWorkflow()
+
+    store.requestRun()
+
+    expect(store.runRequested).toBe(true)
+    expect(store.dialogStep).toBeNull()
   })
 })

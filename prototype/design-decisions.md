@@ -1331,3 +1331,29 @@ Willie's review of the deployed preview:
 
 Wiki link: `decisions/project-switcher-in-tab-bar.md` still says "far left of the tab bar", and `concepts/custom-comfy-cloud.md` step 1 still says "Home shows projects". Both need a small update in the wiki.
 Promote? **yes**, as an amendment to those pages.
+
+---
+
+## [2026-10-06] Flow 07: real node graph on an in-browser backend
+
+Willie asked for the real node graph, "with all the happy path UI we already discussed", and confirmed it only needs to show the UI, not execute.
+
+- **Decision:** the editor tab is the real ComfyUI editor (`GraphView` inside `components/RealEditor.vue`). It replaces the capture-based `DemoEditorView` and its screenshot. It stays mounted, hidden while Home is active, so the app boots once.
+- **In-browser backend (`src/prototype/mockBackend/`).** This departs from WORKSPACE-UX-PROTO §2.2 ("no mock HTTP layer"). The deployed prototype has no server, and without answers to its API calls the real editor can't boot. Installed from `src/main.ts` for `PROTOTYPE_DEPLOY` builds only, it patches `fetch` for `/api/*`:
+  - settings and userdata are kept in memory
+  - `object_info` follows the current project's deployment
+  - the queue is empty, and a stand-in WebSocket replaces the server's
+  - Run is accepted, but nothing executes. On a custom deployment the backend reports a 4 s cold start, which drives the "Starting a worker" note under Run.
+- **Editor settings it serves:**
+  - Nodes 2.0, as on Comfy Cloud. Its red ring and "Error" footer flag both missing nodes and missing models.
+  - The Errors tab setting is on, because Nodes 2.0 needs it to flag missing models.
+  - Every warning is surfaced silently, and a guard closes the Errors overlay if anything opens it, so the brief's "no error toast or Issues panel" holds.
+  - Workflow tabs are moved to the editor's sidebar, and the prototype tab strip is the only one.
+  - No restored drafts, no unload prompt (Reset demo reloads), no tutorial.
+- **`matte_pass` is a real workflow** (`fixtures/mattePassGraph.ts`). It is a Flux dev product shot with the hero LoRA, then RMBG (`comfyui-rmbg`) and AcmeMatteRefine (`acme-matte-tools`). On Comfy Cloud four nodes are red: two missing models and two missing packs. On Personal R&D (Matte tests) only AcmeMatteRefine is red.
+- **Deployment ↔ node types.** On a project switch, or when a build turns ready, `RealEditor` points the backend at the new deployment and calls `app.reloadNodeDefs()`. It unregisters pack node types the deployment lacks, then reloads the active workflow so its nodes resolve again. It does this only while a workflow tab is showing: re-measuring Nodes 2.0 in a hidden editor collapses node sizes.
+- **Run with missing nodes** opens "choose where it runs". A capture-phase click on the editor's Run button stops the queue.
+- **GraphView:** the per-workflow `PrototypeProjectChip` is hidden under `/prototype`, where the tab-bar switcher replaces it.
+- **Known:** Escape doesn't close the tab-bar switcher menu while the editor is mounted; clicking outside does.
+
+Promote? **no** — prototype infrastructure, no IA change.

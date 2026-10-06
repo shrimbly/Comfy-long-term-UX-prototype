@@ -18,10 +18,12 @@
     class="prototype-root size-full bg-base-background text-sm text-base-foreground"
   >
     <router-view />
-    <!-- PrimeVue Toast targets. GraphView.vue mounts <GlobalToast /> for the
-         real app; the prototype path doesn't, so any useToast() add()s would
-         be dropped. Mounting both default and grouped toast renderers here. -->
-    <Toast />
+    <!-- PrimeVue Toast targets. The real editor (RealEditor → GraphView)
+         mounts <GlobalToast /> with its own default renderer, so this one
+         only covers the time before it mounts; two would show each toast
+         twice. The grouped renderer is prototype-only. -->
+
+    <Toast v-if="!customCloud.editorMounted" />
     <Toast group="save-to-cloud">
       <template #message>
         <div
@@ -57,8 +59,11 @@ import { onBeforeUnmount, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import { uploadProgress } from '../composables/useSimulatedSaveToCloud'
+import { usePrototypeCustomCloudStore } from '../stores/customCloudStore'
 
 const { t } = useI18n()
+// The real editor's GraphView mounts its own default toast renderer.
+const customCloud = usePrototypeCustomCloudStore()
 
 const DARK_THEME_CLASS = 'dark-theme'
 

@@ -49,7 +49,7 @@ Wiki: `../IA_Plan/wiki/concepts/custom-comfy-cloud.md`. Source: the 6 Oct "Custo
    - Open **Marketing 2026** and click **+ Workflow**.
    - The app reloads into Marketing 2026: a short "Opening Marketing 2026" screen, then the editor. The switcher next to the Home tab now reads Marketing 2026.
    - Drag any file onto the editor. It opens as `matte_pass` in a new tab.
-   - Load Diffusion Model and AcmeMatteRefine show red, with an Error tab. There is no error toast and no Issues panel.
+   - The graph is the real editor. Four nodes have a red ring and an **Error** footer: Load Diffusion Model and Load LoRA (their models are missing), and RMBG and AcmeMatteRefine (their packs are missing). There is no error toast and no Errors panel.
 5. **"Choose where it runs".** The dialog opens on its own.
    - Step 1 · Where it runs: the pitch, then what Comfy Cloud lacks (2 packs, 2 models).
    - Open the **Open it in** selector:
@@ -73,7 +73,7 @@ Wiki: `../IA_Plan/wiki/concepts/custom-comfy-cloud.md`. Source: the 6 Oct "Custo
    - A toast says "Matte R&D is ready" and offers **Run matte_pass**.
 8. **Cold start.**
    - Click **Run matte_pass** in the toast, or the editor's **Run** button.
-   - A small note under Run says "Starting a worker. The first run takes a little longer: usually under 20 seconds." The run counter shows "1 active".
+   - A small note under Run says "Starting a worker. The first run takes a little longer: usually under 20 seconds." The editor also shows its own "Job queued" toast. Nothing actually runs.
    - There is no warm/cold indicator anywhere else.
 9. **Switch projects from the tab bar.**
    - Click the project switcher, just right of the Home tab. Each project shows where it runs.
@@ -93,12 +93,24 @@ Then click **Reset demo** and run it again.
 - Projects page → project cards (`views/ProjectsView.vue`, `components/ProjectCard.vue`)
 - Project page → Settings → Deployment (`views/ProjectDetailView.vue`, `components/ProjectDeploymentSection.vue`)
 - Tab strip → project switcher (`components/PrototypeTabs.vue`, `components/ProjectSwitcher.vue`)
-- Demo editor (`views/DemoEditorView.vue`), run-target dialog (`components/RunTargetDialog.vue`, `RunTargetSelect.vue`), build lock (`components/BuildLockModal.vue`), ready toast, reload screen
+- The real editor (`components/RealEditor.vue` around `src/views/GraphView.vue`, served by `mockBackend/`), run-target dialog (`components/RunTargetDialog.vue`, `RunTargetSelect.vue`), build lock (`components/BuildLockModal.vue`), ready toast, reload screen
 - State: `stores/customCloudStore.ts`, tabs per project in `stores/tabsStore.ts`, data in `fixtures/customCloud.ts` + `fixtures/admin.ts`
 
 ## Editor approach
 
-The deployed prototype has no ComfyUI backend, so the real `GraphView` cannot boot. It fails in `userStore.initialize`. The editor tab instead shows a real editor capture (`public/prototype-fixtures/editor-capture.png`), scaled to fit. Live overlays sit on top of it: the `matte_pass` node patches, red rings and Error tabs, the Run button, the run counter and the cold-start note. ComfyUI's own tab bar is cropped off the capture, and the prototype draws its real tab strip instead.
+The editor tab is the real ComfyUI editor (`GraphView`): node graph, Nodes 2.0, sidebars, Run button, minimap. The deployed prototype has no ComfyUI server, so `src/prototype/mockBackend/` answers the editor's API calls in the browser:
+
+- settings and userdata are kept in memory
+- `object_info` follows the current project's deployment
+- the queue is empty, and a stand-in WebSocket replaces the server's
+
+Nothing executes. Run is accepted, and on a custom deployment the prototype shows the cold-start note.
+
+How it ties into the prototype:
+
+- **Tabs.** Each prototype tab maps to one real workflow. The editor's own workflow tabs are moved to its sidebar, so the prototype's tab strip is the only one on screen.
+- **Switching projects.** The node types re-register for the new project's deployment, and the graph reloads against them. That is how `matte_pass` loads red on Comfy Cloud and clean on its own build.
+- **Run with missing nodes.** It opens "choose where it runs" instead of queueing.
 
 ## Out of scope
 

@@ -45,6 +45,7 @@ import {
   watch,
   watchEffect
 } from 'vue'
+import { useRoute } from 'vue-router'
 
 import { runWhenGlobalIdle } from '@/base/common/async'
 import MenuHamburger from '@/components/MenuHamburger.vue'
@@ -101,7 +102,8 @@ import ManagerProgressToast from '@/workbench/extensions/manager/components/Mana
 
 import PrototypeProjectChip from '@/prototype/components/PrototypeProjectChip.vue'
 
-const isDevPrototype = true
+// Inside /prototype the tab-bar project switcher replaces the canvas chip.
+const isDevPrototype = !useRoute().path.startsWith('/prototype')
 
 setupAutoQueueHandler()
 useProgressFavicon()

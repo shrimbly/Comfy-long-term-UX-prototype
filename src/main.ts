@@ -31,6 +31,13 @@ import { i18n } from './i18n'
  */
 const isCloud = __DISTRIBUTION__ === 'cloud'
 
+// The deployed /prototype has no ComfyUI server: answer the editor's API
+// calls in the browser so the real node graph can run.
+if (import.meta.env.VITE_PROTOTYPE_DEPLOY) {
+  const { installMockBackend } = await import('@/prototype/mockBackend')
+  installMockBackend()
+}
+
 if (isCloud) {
   const { refreshRemoteConfig } =
     await import('@/platform/remoteConfig/refreshRemoteConfig')

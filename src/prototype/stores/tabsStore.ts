@@ -21,6 +21,8 @@ interface OpenTab {
   kind?: TabKind
   isDirty?: boolean
   workflowKey?: DemoWorkflowKey
+  // The real editor workflow this tab shows, once the editor has opened it.
+  workflowPath?: string
 }
 
 interface TabSet {
@@ -59,16 +61,26 @@ export const usePrototypeTabsStore = defineStore('prototype-tabs', () => {
   // Open a named workflow in a new tab and activate it (e.g. the project
   // page's "+ Workflow" simulating the editor opening the freshly-created
   // draft).
-  function openWorkflow(label: string, workflowKey?: DemoWorkflowKey) {
+  function openWorkflow(
+    label: string,
+    workflowKey?: DemoWorkflowKey,
+    workflowPath?: string
+  ) {
     const id = nextId()
     openTabs.value.push({
       id,
       label,
       kind: 'workflow',
       isDirty: true,
-      workflowKey
+      workflowKey,
+      workflowPath
     })
     activeTabId.value = id
+  }
+
+  function setWorkflowPath(id: string, workflowPath: string) {
+    const tab = openTabs.value.find((t) => t.id === id)
+    if (tab) tab.workflowPath = workflowPath
   }
 
   function openMediaAssets(label: string) {
@@ -118,6 +130,7 @@ export const usePrototypeTabsStore = defineStore('prototype-tabs', () => {
     select,
     addBlank,
     openWorkflow,
+    setWorkflowPath,
     openMediaAssets,
     close,
     swapProject,

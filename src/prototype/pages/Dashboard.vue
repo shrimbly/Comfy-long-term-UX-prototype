@@ -9,7 +9,8 @@
   Dashboard shell. Content is driven by the active top-bar tab:
     - Media-Assets tab active → real MediaAssetsView takes over the area
       below PrototypeTabs (it owns its own sidebar).
-    - A workflow tab → the demo editor (DemoEditorView).
+    - A workflow tab → the real ComfyUI editor (RealEditor). It stays
+      mounted, hidden while another tab is active, so it boots once.
     - Home tab → prototype dashboard with PrototypeSidebar / LibrarySidebar
       based on uiStore.activeView.
   Custom Comfy Cloud layers on top: a project whose deployment is building
@@ -19,9 +20,9 @@
 <template>
   <div
     class="relative flex h-screen w-full flex-col"
-    @dragover="onFileDragOver"
+    @dragover.capture="onFileDragOver"
     @dragleave="onFileDragLeave"
-    @drop="onFileDrop"
+    @drop.capture="onFileDrop"
   >
     <PrototypeTabs />
 
@@ -30,8 +31,7 @@
         <LocalMediaView v-if="isLocalMode" />
         <MediaAssetsView v-else />
       </div>
-      <DemoEditorView v-else-if="isEditorTabActive" />
-      <div v-else class="flex min-h-0 flex-1">
+      <div v-else-if="!isEditorTabActive" class="flex min-h-0 flex-1">
         <PrototypeSidebar />
 
         <main
@@ -50,6 +50,7 @@
           <SettingsView v-else-if="activeView.kind === 'settings'" />
         </main>
       </div>
+      <RealEditor v-show="isEditorTabActive" />
 
       <BuildLockModal
         v-if="customCloud.isLocked && customCloud.progress && currentProject"
@@ -99,6 +100,7 @@ import DemoControls from '../components/DemoControls.vue'
 import LocalMediaView from '../components/LocalMediaView.vue'
 import PersonaSwitcher from '../components/PersonaSwitcher.vue'
 import ProjectReloadOverlay from '../components/ProjectReloadOverlay.vue'
+import RealEditor from '../components/RealEditor.vue'
 import PrototypeSidebar from '../components/PrototypeSidebar.vue'
 import PrototypeTabs from '../components/PrototypeTabs.vue'
 import RunTargetDialog from '../components/RunTargetDialog.vue'
@@ -107,7 +109,6 @@ import { usePrototypeCustomCloudStore } from '../stores/customCloudStore'
 import { usePrototypePersonaStore } from '../stores/personaStore'
 import { MEDIA_ASSETS_TAB_ID, usePrototypeTabsStore } from '../stores/tabsStore'
 import { usePrototypeUiStore } from '../stores/uiStore'
-import DemoEditorView from '../views/DemoEditorView.vue'
 import DraftsView from '../views/DraftsView.vue'
 import HomeView from '../views/HomeView.vue'
 import ProjectDetailView from '../views/ProjectDetailView.vue'
@@ -150,8 +151,9 @@ const showPersonaSwitcher =
   import.meta.env.DEV || import.meta.env.VITE_PROTOTYPE_DEPLOY
 
 // Any file dropped on the app opens as the incompatible matte_pass workflow,
-// so a live demo can't miss. Media Assets keeps its own drop handling, and
-// in-app card drags (no files) pass straight through.
+// so a live demo can't miss. Caught on the way down, so the editor's own
+// drop handler never loads the file. Media Assets keeps its own drop
+// handling, and in-app card drags (no files) pass straight through.
 const isDraggingFile = ref(false)
 const handlesFileDrops = computed(
   () => customCloud.isEnabled && !isMediaAssetsTabActive.value
@@ -174,6 +176,7 @@ function onFileDragLeave(event: DragEvent) {
 function onFileDrop(event: DragEvent) {
   if (!handlesFileDrops.value || !carriesFiles(event)) return
   event.preventDefault()
+  event.stopPropagation()
   isDraggingFile.value = false
   customCloud.dropIncompatibleWorkflow()
 }

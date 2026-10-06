@@ -1037,10 +1037,6 @@
       },
       "editor": {
         "dropHint": "Drop to open the workflow",
-        "run": "Run",
-        "active": "{count} active",
-        "error": "Error",
-        "showAdvanced": "Show advanced",
         "coldStartTitle": "Starting a worker",
         "coldStartBody": "The first run takes a little longer: usually under 20 seconds."
       },

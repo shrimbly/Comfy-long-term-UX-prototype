@@ -8,8 +8,9 @@
 //
 // Drives the Custom Comfy Cloud demo: which project the tab strip belongs
 // to, the reload when it switches, the "choose where it runs" dialog for
-// the incompatible matte_pass workflow, the fast demo build that locks the
-// new project, and the cold-start note on the first run.
+// the incompatible matte_pass workflow, and the fast demo build that locks
+// the new project. Runs go through the real editor's queue; the in-browser
+// backend reports the run state, including the cold start.
 
 import { useIntervalFn, useTimeoutFn } from '@vueuse/core'
 import { defineStore } from 'pinia'
@@ -22,6 +23,8 @@ import {
   MATTE_PASS,
   WARM_MINUTES
 } from '../fixtures/customCloud'
+import { onMockRunStateChange } from '../mockBackend'
+import type { MockRunState } from '../mockBackend'
 import type { Deployment, PersonaFixture } from '../types'
 import {
   buildProgress,
@@ -35,15 +38,12 @@ import { usePrototypeTabsStore } from './tabsStore'
 import { usePrototypeUiStore } from './uiStore'
 
 type DialogStep = 'choose' | 'review' | 'agent'
-type RunState = 'idle' | 'starting' | 'running'
 
 // A target in the dialog: an existing project id, or a new project on a new
 // build.
 export const NEW_BUILD_TARGET = 'new'
 
 export const RELOAD_MS = 900
-export const COLD_START_MS = 4000
-const RUN_MS = 3000
 
 // The build keeps the fixture it started in, so it still finishes there if
 // the presenter flips persona mid-build.
@@ -70,7 +70,16 @@ export const usePrototypeCustomCloudStore = defineStore(
     const build = shallowRef<ActiveBuild | null>(null)
     const now = ref(Date.now())
     const readyProjectId = ref<string | null>(null)
-    const runState = ref<RunState>('idle')
+    const runState = ref<MockRunState>('idle')
+    // Set when something outside the editor (the ready toast) asks for a
+    // run; the editor queues it once its graph is in sync.
+    const runRequested = ref(false)
+    // The real editor brings its own toast renderer once mounted.
+    const editorMounted = ref(false)
+
+    onMockRunStateChange((state) => {
+      runState.value = state
+    })
 
     const isEnabled = computed(() => personaStore.fixture.mode === 'cloud')
     const deployments = computed(() => personaStore.fixture.deployments ?? [])
@@ -141,32 +150,7 @@ export const usePrototypeCustomCloudStore = defineStore(
       )
     })
 
-    const finishRun = useTimeoutFn(
-      () => {
-        runState.value = 'idle'
-      },
-      RUN_MS,
-      { immediate: false }
-    )
-
-    // A run on a custom deployment starts a worker first (the cold start).
-    const coldStart = useTimeoutFn(
-      () => {
-        runState.value = 'running'
-        finishRun.start()
-      },
-      COLD_START_MS,
-      { immediate: false }
-    )
-
-    function stopRun() {
-      coldStart.stop()
-      finishRun.stop()
-      runState.value = 'idle'
-    }
-
-    // A full reload lands on Home with that project's tabs and nothing
-    // in flight.
+    // A full reload lands on Home with that project's tabs.
     const reload = useTimeoutFn(
       (fromId: string, toId: string, afterSwitch?: () => void) => {
         tabsStore.swapProject(fromId, toId)
@@ -188,7 +172,7 @@ export const usePrototypeCustomCloudStore = defineStore(
         return
       }
       dialogStep.value = null
-      stopRun()
+      runState.value = 'idle'
       reloadingToId.value = projectId
       reload.start(fromId, projectId, afterSwitch)
     }
@@ -217,13 +201,14 @@ export const usePrototypeCustomCloudStore = defineStore(
       openRunTargetDialog()
     }
 
-    // Move matte_pass out of the current project and into another one.
+    // Move matte_pass, with its graph, out of the current project and into
+    // another one.
     function openInProject(projectId: string) {
       const tab = tabsStore.openTabs.find((t) => t.workflowKey === 'matte_pass')
       if (tab) tabsStore.close(tab.id)
       dialogStep.value = null
       switchProject(projectId, () =>
-        tabsStore.openWorkflow(MATTE_PASS.name, 'matte_pass')
+        tabsStore.openWorkflow(MATTE_PASS.name, 'matte_pass', tab?.workflowPath)
       )
     }
 
@@ -273,19 +258,10 @@ export const usePrototypeCustomCloudStore = defineStore(
       build.value = null
     }
 
-    function run() {
-      if (showsMissingNodes.value) {
-        openRunTargetDialog()
-        return
-      }
-      stopRun()
-      if (currentDeployment.value.kind === 'custom') {
-        runState.value = 'starting'
-        coldStart.start()
-        return
-      }
-      runState.value = 'running'
-      finishRun.start()
+    // Run with missing nodes is another way into "choose where it runs".
+    function requestRun() {
+      if (showsMissingNodes.value) openRunTargetDialog()
+      else runRequested.value = true
     }
 
     function runReadyWorkflow() {
@@ -297,7 +273,7 @@ export const usePrototypeCustomCloudStore = defineStore(
           (t) => t.workflowKey === 'matte_pass'
         )
         if (tab) tabsStore.select(tab.id)
-        run()
+        requestRun()
       })
     }
 
@@ -307,7 +283,6 @@ export const usePrototypeCustomCloudStore = defineStore(
       () => personaStore.currentPersonaId,
       () => {
         reload.stop()
-        stopRun()
         selectedProjectId.value = null
         reloadingToId.value = null
         switcherOpen.value = false
@@ -334,12 +309,15 @@ export const usePrototypeCustomCloudStore = defineStore(
       progress,
       readyProjectId,
       runState,
+      runRequested,
+      editorMounted,
       switchProject,
       openWorkflow,
+      openRunTargetDialog,
       dropIncompatibleWorkflow,
       openInProject,
       buildAndDeploy,
-      run,
+      requestRun,
       runReadyWorkflow
     }
   }
