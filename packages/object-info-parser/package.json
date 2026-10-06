@@ -1,0 +1,27 @@
+{
+  "name": "@comfyorg/object-info-parser",
+  "version": "1.0.0",
+  "description": "Shared object_info schemas and helpers",
+  "license": "GPL-3.0-only",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "format": "oxfmt --write",
+    "format:check": "oxfmt --check",
+    "test": "vitest run --config ./vitest.config.ts",
+    "typecheck": "tsx ../../scripts/vue-tsc-native.ts --noEmit"
+  },
+  "dependencies": {
+    "zod": "catalog:",
+    "zod-validation-error": "catalog:"
+  },
+  "devDependencies": {
+    "@vitest/coverage-v8": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

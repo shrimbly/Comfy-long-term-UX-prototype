@@ -1,86 +1,75 @@
 import { refDebounced } from '@vueuse/core'
 import { sortBy as sortByUtil } from 'es-toolkit'
 import Fuse from 'fuse.js'
-import { computed, ref } from 'vue'
-import type { Ref } from 'vue'
+import { storeToRefs } from 'pinia'
+import { computed, toValue, ref } from 'vue'
+import type { MaybeRef } from 'vue'
 
-import { useAssetTags } from '@/platform/assets/composables/useAssetTags'
+import { useMediaAssetFilterStore } from '@/platform/assets/composables/useMediaAssetFilterStore'
+import type { MediaAssetDateFilter } from '@/platform/assets/mediaAssetFilterOptions'
 import type { AssetItem } from '@/platform/assets/schemas/assetSchema'
-import type {
-  DatePreset,
-  MetadataFilter
-} from '@/platform/assets/types/metadataFilter'
-import {
-  DATE_PRESETS,
-  getDateRangeForPreset
-} from '@/platform/assets/types/metadataFilter'
-import type { PromptMetadata } from '@/platform/assets/utils/promptMetadataParser'
+import { getAssetDisplayName } from '@/platform/assets/utils/assetMetadataUtils'
 import { getMediaTypeFromFilename } from '@/utils/formatUtil'
 
-type SortOption = 'newest' | 'oldest' | 'longest' | 'fastest'
+type SortOption = 'newest' | 'oldest' | 'az' | 'za' | 'longest' | 'fastest'
 
 /**
  * Get timestamp from asset (either create_time or created_at)
  */
 const getAssetTime = (asset: AssetItem): number => {
-  return (
-    (asset.user_metadata?.create_time as number) ??
-    (asset.created_at ? new Date(asset.created_at).getTime() : 0)
-  )
+  const createTime = asset.user_metadata?.create_time
+  return typeof createTime === 'number'
+    ? createTime
+    : asset.created_at
+      ? new Date(asset.created_at).getTime()
+      : 0
 }
 
 /**
  * Get execution time from asset user_metadata
  */
 const getAssetExecutionTime = (asset: AssetItem): number => {
-  return (asset.user_metadata?.executionTimeInSeconds as number) ?? 0
+  const executionTime = asset.user_metadata?.executionTimeInSeconds
+  return typeof executionTime === 'number' ? executionTime : 0
 }
 
-function matchDateFilter(asset: AssetItem, value: string): boolean {
-  const assetTime = getAssetTime(asset)
-  if (assetTime === 0) return false
+function getDateThreshold(filter: MediaAssetDateFilter): number | null {
+  const now = Date.now()
 
-  if ((DATE_PRESETS as string[]).includes(value)) {
-    const { start, end } = getDateRangeForPreset(value as DatePreset)
-    return assetTime >= start.getTime() && assetTime < end.getTime()
+  switch (filter) {
+    case 'today': {
+      const startOfToday = new Date(now)
+      startOfToday.setHours(0, 0, 0, 0)
+      return startOfToday.getTime()
+    }
+    case 'week':
+      return now - 7 * 86_400_000
+    case 'month':
+      return now - 30 * 86_400_000
+    case 'year':
+      return new Date(new Date(now).getFullYear(), 0, 1).getTime()
+    default:
+      return null
   }
-
-  const parsed = Date.parse(value)
-  if (!Number.isNaN(parsed)) {
-    const dayStart = new Date(parsed)
-    dayStart.setHours(0, 0, 0, 0)
-    const dayEnd = new Date(dayStart)
-    dayEnd.setDate(dayEnd.getDate() + 1)
-    return assetTime >= dayStart.getTime() && assetTime < dayEnd.getTime()
-  }
-
-  return false
 }
 
-export interface MetadataExtractor {
-  getCached: (assetId: string) => PromptMetadata | null
-}
-
-interface UseMediaAssetFilteringOptions {
-  metadataExtractor?: MetadataExtractor
-  searchQuery?: Ref<string>
-  metadataFilters?: Ref<MetadataFilter[]>
-  mediaTypeFilters?: Ref<string[]>
-}
+const compareAssetNames = (a: AssetItem, b: AssetItem): number =>
+  getAssetDisplayName(a).localeCompare(getAssetDisplayName(b), undefined, {
+    numeric: true,
+    sensitivity: 'base'
+  })
 
 /**
  * Media Asset Filtering composable
  * Manages search, filter, and sort for media assets
  */
-export function useMediaAssetFiltering(
-  assets: Ref<AssetItem[]>,
-  options: UseMediaAssetFilteringOptions = {}
-) {
-  const searchQuery = options.searchQuery ?? ref('')
+export function useMediaAssetFiltering(assets: MaybeRef<readonly AssetItem[]>) {
+  const searchQuery = ref('')
   const debouncedSearchQuery = refDebounced(searchQuery, 50)
   const sortBy = ref<SortOption>('newest')
-  const mediaTypeFilters = options.mediaTypeFilters ?? ref<string[]>([])
-  const metadataFilters = options.metadataFilters ?? ref<MetadataFilter[]>([])
+  const { mediaTypeFilters, dateFilter } = storeToRefs(
+    useMediaAssetFilterStore()
+  )
 
   const fuseOptions = {
     keys: ['display_name', 'name'],
@@ -88,78 +77,49 @@ export function useMediaAssetFiltering(
     includeScore: true
   }
 
-  const { getTags } = useAssetTags()
-
-  const metadataFiltered = computed(() => {
-    if (metadataFilters.value.length === 0) return assets.value
-
-    return assets.value.filter((asset) => {
-      return metadataFilters.value.every((filter) => {
-        if (filter.field === 'date') {
-          return matchDateFilter(asset, filter.value)
-        }
-
-        if (filter.field === 'tag') {
-          const needle = filter.value.toLowerCase()
-          return getTags(asset).some((t) => t.toLowerCase() === needle)
-        }
-
-        if (filter.field === 'type') {
-          const mediaType = getMediaTypeFromFilename(asset.name)
-          return mediaType.toLowerCase() === filter.value.toLowerCase()
-        }
-
-        const extractor = options.metadataExtractor
-        if (!extractor) return false
-
-        const metadata = extractor.getCached(asset.id)
-        if (!metadata) return false
-
-        const fieldValue = metadata[filter.field as keyof PromptMetadata]
-        if (!fieldValue) return false
-        return String(fieldValue)
-          .toLowerCase()
-          .includes(filter.value.toLowerCase())
-      })
-    })
-  })
-
-  const fuse = computed(() => new Fuse(metadataFiltered.value, fuseOptions))
+  const fuse = computed(() => new Fuse(toValue(assets), fuseOptions))
 
   const searchFiltered = computed(() => {
     if (!debouncedSearchQuery.value.trim()) {
-      return metadataFiltered.value
+      return toValue(assets)
     }
 
     const results = fuse.value.search(debouncedSearchQuery.value)
     return results.map((result) => result.item)
   })
 
-  const typeFiltered = computed(() => {
-    if (mediaTypeFilters.value.length === 0) {
-      return searchFiltered.value
-    }
-
-    return searchFiltered.value.filter((asset) => {
-      const mediaType = getMediaTypeFromFilename(asset.name)
-      const normalizedType = mediaType.toLowerCase()
-      return mediaTypeFilters.value.includes(normalizedType)
-    })
-  })
-
   const filteredAssets = computed(() => {
+    const threshold = getDateThreshold(dateFilter.value)
+    const filtered = searchFiltered.value.filter((asset) => {
+      const matchesMediaType =
+        mediaTypeFilters.value.length === 0 ||
+        mediaTypeFilters.value.includes(
+          getMediaTypeFromFilename(asset.name).toLowerCase()
+        )
+      const matchesDate = threshold === null || getAssetTime(asset) >= threshold
+
+      return matchesMediaType && matchesDate
+    })
+
+    // Sort by create_time (output assets) or created_at (input assets)
     switch (sortBy.value) {
       case 'oldest':
-        return sortByUtil(typeFiltered.value, [getAssetTime])
+        // Ascending order (oldest first)
+        return sortByUtil(filtered, [getAssetTime])
       case 'longest':
-        return sortByUtil(typeFiltered.value, [
-          (asset) => -getAssetExecutionTime(asset)
-        ])
+        // Descending order (longest execution time first)
+        return sortByUtil(filtered, [(asset) => -getAssetExecutionTime(asset)])
       case 'fastest':
-        return sortByUtil(typeFiltered.value, [getAssetExecutionTime])
+        // Ascending order (fastest execution time first)
+        return sortByUtil(filtered, [getAssetExecutionTime])
+      case 'az':
+        return [...filtered].sort(compareAssetNames)
+      case 'za':
+        return [...filtered].sort((a, b) => compareAssetNames(b, a))
       case 'newest':
       default:
-        return sortByUtil(typeFiltered.value, [(asset) => -getAssetTime(asset)])
+        // Descending order (newest first) - negate for descending
+        return sortByUtil(filtered, [(asset) => -getAssetTime(asset)])
     }
   })
 
@@ -167,7 +127,7 @@ export function useMediaAssetFiltering(
     searchQuery,
     sortBy,
     mediaTypeFilters,
-    metadataFilters,
+    dateFilter,
     filteredAssets
   }
 }

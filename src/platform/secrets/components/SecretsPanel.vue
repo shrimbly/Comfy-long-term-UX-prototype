@@ -1,79 +1,75 @@
 <template>
-  <TabPanel value="Secrets" class="h-full">
-    <div class="flex h-full flex-col">
-      <div>
-        <h2 class="text-2xl font-bold">{{ $t('secrets.title') }}</h2>
-        <p class="mt-1 text-sm text-muted">{{ $t('secrets.description') }}</p>
-        <p class="mt-1 text-sm text-muted">
-          {{ $t('secrets.descriptionUsage') }}
-        </p>
-      </div>
-
-      <Divider class="my-4" />
-
-      <div class="my-4 flex items-center justify-between">
-        <h3 class="my-0 text-lg font-semibold">
-          {{ $t('secrets.modelProviders') }}
-        </h3>
-        <Button @click="openCreateDialog">
-          <i class="pi pi-plus mr-1" />
-          {{ $t('secrets.addSecret') }}
-        </Button>
-      </div>
-
-      <div v-if="loading" class="flex items-center justify-center py-8">
-        <ProgressSpinner class="size-8" />
-      </div>
-
-      <div
-        v-else-if="secrets.length === 0"
-        class="py-4 text-center text-sm text-muted"
-      >
-        {{ $t('secrets.noSecrets') }}
-      </div>
-
-      <div v-else class="flex flex-col gap-3">
-        <SecretListItem
-          v-for="secret in secrets"
-          :key="secret.id"
-          :secret="secret"
-          :loading="operatingSecretId === secret.id"
-          :disabled="operatingSecretId !== null"
-          @edit="openEditDialog(secret)"
-          @delete="confirmDelete(secret)"
-        />
-      </div>
-
-      <SecretFormDialog
-        v-model:visible="createDialogVisible"
-        mode="create"
-        :existing-providers="existingProviders"
-        @saved="fetchSecrets"
-      />
-
-      <SecretFormDialog
-        v-model:visible="editDialogVisible"
-        mode="edit"
-        :secret="selectedSecret"
-        :existing-providers="existingProviders"
-        @saved="fetchSecrets"
-      />
-
-      <ConfirmDialog group="secrets" />
+  <div class="flex h-full flex-col">
+    <div>
+      <h2 class="text-2xl font-bold">{{ $t('secrets.title') }}</h2>
+      <p class="mt-1 text-sm text-muted">{{ $t('secrets.description') }}</p>
+      <p class="mt-1 text-sm text-muted">
+        {{ $t('secrets.descriptionUsage') }}
+      </p>
     </div>
-  </TabPanel>
+
+    <div class="my-4 border-t border-interface-stroke" />
+
+    <div class="my-4 flex items-center justify-between">
+      <h3 class="my-0 text-lg font-semibold">
+        {{ $t('secrets.modelProviders') }}
+      </h3>
+      <Button @click="openCreateDialog">
+        <i class="pi pi-plus mr-1" />
+        {{ $t('secrets.addSecret') }}
+      </Button>
+    </div>
+
+    <div v-if="loading" class="flex items-center justify-center py-8">
+      <Spinner class="size-8" />
+    </div>
+
+    <div
+      v-else-if="secrets.length === 0"
+      class="py-4 text-center text-sm text-muted"
+    >
+      {{ $t('secrets.noSecrets') }}
+    </div>
+
+    <div v-else class="flex flex-col gap-3">
+      <SecretListItem
+        v-for="secret in secrets"
+        :key="secret.id"
+        :secret
+        :loading="operatingSecretId === secret.id"
+        :disabled="operatingSecretId !== null"
+        @edit="openEditDialog(secret)"
+        @delete="confirmDelete(secret)"
+      />
+    </div>
+
+    <SecretFormDialog
+      v-model:visible="createDialogVisible"
+      mode="create"
+      :existing-providers
+      :available-providers
+      @saved="fetchSecrets"
+    />
+
+    <SecretFormDialog
+      v-model:visible="editDialogVisible"
+      mode="edit"
+      :secret="selectedSecret"
+      :existing-providers
+      :available-providers
+      @saved="fetchSecrets"
+    />
+  </div>
 </template>
 
 <script setup lang="ts">
-import ConfirmDialog from 'primevue/confirmdialog'
-import Divider from 'primevue/divider'
-import ProgressSpinner from 'primevue/progressspinner'
-import TabPanel from 'primevue/tabpanel'
-import { useConfirm } from 'primevue/useconfirm'
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
+import { showConfirmDialog } from '@/components/dialog/confirm/confirmDialog'
 import Button from '@/components/ui/button/Button.vue'
+import Spinner from '@/components/ui/spinner/Spinner.vue'
+import { useDialogStore } from '@/stores/dialogStore'
 
 import { useSecrets } from '../composables/useSecrets'
 import type { SecretMetadata } from '../types'
@@ -81,14 +77,16 @@ import SecretFormDialog from './SecretFormDialog.vue'
 import SecretListItem from './SecretListItem.vue'
 
 const { t } = useI18n()
-const confirm = useConfirm()
+const dialogStore = useDialogStore()
 
 const {
   loading,
   secrets,
+  availableProviders,
   operatingSecretId,
   existingProviders,
   fetchSecrets,
+  fetchProviders,
   deleteSecret
 } = useSecrets()
 
@@ -106,14 +104,23 @@ function openEditDialog(secret: SecretMetadata) {
 }
 
 function confirmDelete(secret: SecretMetadata) {
-  confirm.require({
-    group: 'secrets',
-    header: t('secrets.deleteConfirmTitle'),
-    message: t('secrets.deleteConfirmMessage', { name: secret.name }),
-    acceptClass: 'p-button-danger',
-    accept: () => deleteSecret(secret)
+  const dialog = showConfirmDialog({
+    headerProps: { title: t('secrets.deleteConfirmTitle') },
+    props: {
+      promptText: t('secrets.deleteConfirmMessage', { name: secret.name })
+    },
+    footerProps: {
+      confirmText: t('g.delete'),
+      confirmVariant: 'destructive',
+      onCancel: () => dialogStore.closeDialog(dialog),
+      onConfirm: async () => {
+        dialogStore.closeDialog(dialog)
+        await deleteSecret(secret)
+      }
+    }
   })
 }
 
 fetchSecrets()
+fetchProviders()
 </script>

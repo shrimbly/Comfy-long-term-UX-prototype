@@ -1,10 +1,20 @@
 import type { Asset } from '@comfyorg/ingest-types'
-function createModelAsset(overrides: Partial<Asset> = {}): Asset {
+
+import type { AssetItem } from '@/platform/assets/schemas/assetSchema'
+
+/**
+ * Core-native asset shape: the ingest Asset plus the `loader_path` contract
+ * field that `supports_model_type_tags` backends emit (see
+ * `src/platform/assets/schemas/assetSchema.ts`).
+ */
+type CoreModelAsset = Asset & Pick<AssetItem, 'loader_path'>
+function createModelAsset(
+  overrides: Partial<Asset> = {}
+): Asset & { hash?: string } {
   return {
     id: 'test-model-001',
     name: 'model.safetensors',
-    asset_hash:
-      'blake3:0000000000000000000000000000000000000000000000000000000000000000',
+    hash: 'blake3:0000000000000000000000000000000000000000000000000000000000000000',
     size: 2_147_483_648,
     mime_type: 'application/octet-stream',
     tags: ['models', 'checkpoints'],
@@ -16,12 +26,13 @@ function createModelAsset(overrides: Partial<Asset> = {}): Asset {
   }
 }
 
-function createInputAsset(overrides: Partial<Asset> = {}): Asset {
+function createInputAsset(
+  overrides: Partial<Asset> = {}
+): Asset & { hash?: string } {
   return {
     id: 'test-input-001',
     name: 'input.png',
-    asset_hash:
-      'blake3:1111111111111111111111111111111111111111111111111111111111111111',
+    hash: 'blake3:1111111111111111111111111111111111111111111111111111111111111111',
     size: 2_048_576,
     mime_type: 'image/png',
     tags: ['input'],
@@ -32,12 +43,13 @@ function createInputAsset(overrides: Partial<Asset> = {}): Asset {
   }
 }
 
-function createOutputAsset(overrides: Partial<Asset> = {}): Asset {
+function createOutputAsset(
+  overrides: Partial<Asset> = {}
+): Asset & { hash?: string } {
   return {
     id: 'test-output-001',
     name: 'output_00001.png',
-    asset_hash:
-      'blake3:2222222222222222222222222222222222222222222222222222222222222222',
+    hash: 'blake3:2222222222222222222222222222222222222222222222222222222222222222',
     size: 4_194_304,
     mime_type: 'image/png',
     tags: ['output'],
@@ -47,6 +59,35 @@ function createOutputAsset(overrides: Partial<Asset> = {}): Asset {
     ...overrides
   }
 }
+/**
+ * A video generated through the Comfy Agent / cloud path: the assets API
+ * only builds `preview_url`/`thumbnail_url` for images, so a video record
+ * carries neither and the card must fall back to the file's own content URL.
+ */
+export const AGENT_VIDEO_ASSET: Asset = createOutputAsset({
+  id: '11111111-1111-4111-a111-111111111111',
+  name: 'agent_generated_video.mp4',
+  job_id: '22222222-2222-4222-a222-222222222222',
+  mime_type: 'video/mp4',
+  size: 6_163,
+  created_at: '2026-09-18T00:00:00.000Z',
+  updated_at: '2026-09-18T00:00:00.000Z',
+  last_access_time: '2026-09-18T00:00:00.000Z'
+})
+
+export const STALE_TEMP_FILENAME = 'ComfyUI_temp_thsmm_00001_.png'
+export const STALE_TEMP_CARD_TEXT = STALE_TEMP_FILENAME.replace(/\.[^.]+$/, '')
+export const STALE_TEMP_ASSET: Asset = createOutputAsset({
+  id: '55555555-5555-4555-a555-555555555555',
+  name: STALE_TEMP_FILENAME,
+  job_id: '66666666-6666-4666-a666-666666666666',
+  tags: ['output', 'temp'],
+  size: 12_345,
+  created_at: '2026-09-19T00:00:00.000Z',
+  updated_at: '2026-09-19T00:00:00.000Z',
+  last_access_time: '2026-09-19T00:00:00.000Z'
+})
+
 export const STABLE_CHECKPOINT: Asset = createModelAsset({
   id: 'test-checkpoint-001',
   name: 'sd_xl_base_1.0.safetensors',
@@ -86,44 +127,127 @@ export const STABLE_LORA: Asset = createModelAsset({
   updated_at: '2025-02-20T14:00:00Z'
 })
 
-export const STABLE_LORA_2: Asset = createModelAsset({
-  id: 'test-lora-002',
-  name: 'add_detail_v2.safetensors',
-  size: 226_492_416,
-  tags: ['models', 'loras'],
-  user_metadata: {
-    base_model: 'sd15',
-    description: 'Add Detail LoRA v2'
-  },
-  created_at: '2025-02-25T11:00:00Z',
-  updated_at: '2025-02-25T11:00:00Z'
+function createCoreModelAsset(
+  overrides: Partial<CoreModelAsset> = {}
+): CoreModelAsset {
+  return { ...createModelAsset(), ...overrides }
+}
+
+export const MODEL_TYPE_CHECKPOINT_NESTED: CoreModelAsset =
+  createCoreModelAsset({
+    id: 'mt-checkpoint-001',
+    name: 'sd_xl_base_1.0.safetensors',
+    tags: ['models', 'model_type:checkpoints'],
+    loader_path: 'SDXL/sd_xl_base_1.0.safetensors',
+    created_at: '2025-01-15T10:30:00Z',
+    updated_at: '2025-01-15T10:30:00Z'
+  })
+
+export const MODEL_TYPE_CHECKPOINT_ROOT: CoreModelAsset = createCoreModelAsset({
+  id: 'mt-checkpoint-002',
+  name: 'v1-5-pruned-emaonly.safetensors',
+  tags: ['models', 'model_type:checkpoints'],
+  loader_path: 'v1-5-pruned-emaonly.safetensors',
+  created_at: '2025-01-20T08:00:00Z',
+  updated_at: '2025-01-20T08:00:00Z'
 })
 
-export const STABLE_VAE: Asset = createModelAsset({
-  id: 'test-vae-001',
-  name: 'sdxl_vae.safetensors',
-  size: 334_641_152,
-  tags: ['models', 'vae'],
-  user_metadata: {
-    base_model: 'sdxl',
-    description: 'SDXL VAE'
-  },
-  created_at: '2025-01-18T16:00:00Z',
-  updated_at: '2025-01-18T16:00:00Z'
+export const MODEL_TYPE_CHECKPOINT_GGUF: CoreModelAsset = createCoreModelAsset({
+  id: 'mt-checkpoint-003',
+  name: 'flux_quantized.gguf',
+  tags: ['models', 'model_type:checkpoints'],
+  loader_path: 'flux_quantized.gguf',
+  created_at: '2025-02-01T09:00:00Z',
+  updated_at: '2025-02-01T09:00:00Z'
 })
 
-export const STABLE_EMBEDDING: Asset = createModelAsset({
-  id: 'test-embedding-001',
-  name: 'bad_prompt_v2.pt',
-  size: 32_768,
-  mime_type: 'application/x-pytorch',
-  tags: ['models', 'embeddings'],
-  user_metadata: {
-    base_model: 'sd15',
-    description: 'Negative Embedding: Bad Prompt v2'
-  },
-  created_at: '2025-02-01T09:30:00Z',
-  updated_at: '2025-02-01T09:30:00Z'
+export const MODEL_TYPE_CHECKPOINT_SCANNED: CoreModelAsset =
+  createCoreModelAsset({
+    id: 'mt-checkpoint-004',
+    name: 'freshly_scanned.safetensors',
+    tags: ['models', 'model_type:checkpoints'],
+    loader_path: 'freshly_scanned.safetensors',
+    created_at: '2025-02-10T09:00:00Z',
+    updated_at: '2025-02-10T09:00:00Z'
+  })
+
+/** An orphan: tagged and categorized, but unloadable (`loader_path: null`). */
+export const MODEL_TYPE_CHECKPOINT_ORPHAN: CoreModelAsset =
+  createCoreModelAsset({
+    id: 'mt-checkpoint-005',
+    name: 'orphaned_checkpoint.safetensors',
+    tags: ['models', 'model_type:checkpoints'],
+    loader_path: null,
+    created_at: '2025-02-15T09:00:00Z',
+    updated_at: '2025-02-15T09:00:00Z'
+  })
+
+/**
+ * The loader_path cutover window: a backend that already reports
+ * `supports_model_type_tags` but whose loader_path writer has not run yet,
+ * so walked assets carry the namespaced tag with no loader_path at all.
+ */
+export const MODEL_TYPE_CHECKPOINT_PRE_CUTOVER: CoreModelAsset =
+  createCoreModelAsset({
+    id: 'mt-checkpoint-006',
+    name: 'pre_cutover_checkpoint.safetensors',
+    tags: ['models', 'model_type:checkpoints'],
+    created_at: '2025-02-18T09:00:00Z',
+    updated_at: '2025-02-18T09:00:00Z'
+  })
+
+/**
+ * A legacy bare-tagged asset (no `model_type:` prefix) that still carries a
+ * `loader_path`, mimicking a `model_type:`-capable backend that has not
+ * finished re-tagging every asset. Asset grouping must fall back to bare-tag
+ * grouping for it instead of dropping it from the sidebar.
+ */
+export const MODEL_TYPE_CHECKPOINT_LEGACY_TAG: CoreModelAsset =
+  createCoreModelAsset({
+    id: 'mt-checkpoint-007',
+    name: 'legacy_tagged_checkpoint.safetensors',
+    tags: ['models', 'checkpoints'],
+    loader_path: 'legacy_tagged_checkpoint.safetensors',
+    created_at: '2025-02-22T09:00:00Z',
+    updated_at: '2025-02-22T09:00:00Z'
+  })
+
+/**
+ * An asset caught mid-migration: it already carries the authoritative
+ * `model_type:checkpoints` tag alongside its pre-migration bare-tag twin
+ * (`checkpoints`), plus an unrelated leftover bare tag (`loras`) that happens
+ * to match another real folder. A `model_type:`-covered asset must group by
+ * its `model_type:` tags alone, so it lands in `checkpoints` exactly once and
+ * never cross-lists into `loras`.
+ */
+export const MODEL_TYPE_CHECKPOINT_MID_RETAG: CoreModelAsset =
+  createCoreModelAsset({
+    id: 'mt-checkpoint-008',
+    name: 'mid_retag_checkpoint.safetensors',
+    tags: ['models', 'model_type:checkpoints', 'checkpoints', 'loras'],
+    loader_path: 'mid_retag_checkpoint.safetensors',
+    created_at: '2025-02-23T09:00:00Z',
+    updated_at: '2025-02-23T09:00:00Z'
+  })
+
+export const MODEL_TYPE_LORA: CoreModelAsset = createCoreModelAsset({
+  id: 'mt-lora-001',
+  name: 'detail_enhancer_v1.2.safetensors',
+  tags: ['models', 'model_type:loras'],
+  loader_path: 'detail_enhancer_v1.2.safetensors',
+  created_at: '2025-02-20T14:00:00Z',
+  updated_at: '2025-02-20T14:00:00Z'
+})
+
+export const MODEL_TYPE_LORA_README: CoreModelAsset = createCoreModelAsset({
+  id: 'mt-lora-002',
+  name: 'README.txt',
+  mime_type: 'text/plain',
+  size: 2_048,
+  tags: ['models', 'model_type:loras'],
+  loader_path: 'README.txt',
+  created_at: '2025-02-20T14:00:00Z',
+  updated_at: '2025-02-20T14:00:00Z'
 })
 
 export const STABLE_INPUT_IMAGE: Asset = createInputAsset({
@@ -136,26 +260,6 @@ export const STABLE_INPUT_IMAGE: Asset = createInputAsset({
   updated_at: '2025-03-01T09:00:00Z'
 })
 
-export const STABLE_INPUT_IMAGE_2: Asset = createInputAsset({
-  id: 'test-input-002',
-  name: 'mask_layer.png',
-  size: 1_048_576,
-  mime_type: 'image/png',
-  tags: ['input'],
-  created_at: '2025-03-05T10:00:00Z',
-  updated_at: '2025-03-05T10:00:00Z'
-})
-
-export const STABLE_INPUT_VIDEO: Asset = createInputAsset({
-  id: 'test-input-003',
-  name: 'clip_720p.mp4',
-  size: 15_728_640,
-  mime_type: 'video/mp4',
-  tags: ['input'],
-  created_at: '2025-03-08T14:30:00Z',
-  updated_at: '2025-03-08T14:30:00Z'
-})
-
 export const STABLE_OUTPUT: Asset = createOutputAsset({
   id: 'test-output-001',
   name: 'ComfyUI_00001_.png',
@@ -166,31 +270,6 @@ export const STABLE_OUTPUT: Asset = createOutputAsset({
   updated_at: '2025-03-10T12:00:00Z'
 })
 
-export const STABLE_OUTPUT_2: Asset = createOutputAsset({
-  id: 'test-output-002',
-  name: 'ComfyUI_00002_.png',
-  size: 3_670_016,
-  mime_type: 'image/png',
-  tags: ['output'],
-  created_at: '2025-03-10T12:05:00Z',
-  updated_at: '2025-03-10T12:05:00Z'
-})
-export const ALL_MODEL_FIXTURES: Asset[] = [
-  STABLE_CHECKPOINT,
-  STABLE_CHECKPOINT_2,
-  STABLE_LORA,
-  STABLE_LORA_2,
-  STABLE_VAE,
-  STABLE_EMBEDDING
-]
-
-export const ALL_INPUT_FIXTURES: Asset[] = [
-  STABLE_INPUT_IMAGE,
-  STABLE_INPUT_IMAGE_2,
-  STABLE_INPUT_VIDEO
-]
-
-export const ALL_OUTPUT_FIXTURES: Asset[] = [STABLE_OUTPUT, STABLE_OUTPUT_2]
 const CHECKPOINT_NAMES = [
   'sd_xl_base_1.0.safetensors',
   'v1-5-pruned-emaonly.safetensors',
@@ -304,3 +383,38 @@ export function generateOutputAssets(count: number): Asset[] {
     })
   )
 }
+
+/**
+ * Two outputs of one job, which the panel groups into a single card with the
+ * second output behind the "See more outputs" stack.
+ *
+ * `unflattenOutputAssets` picks the LAST previewable asset in created-at order
+ * as the card's representative, so `MULTI_OUTPUT_SECOND` is what the collapsed
+ * card shows and `MULTI_OUTPUT_FIRST` is what expanding the stack reveals.
+ * Names are short enough to survive `truncateFilename`'s 20-character rule, so
+ * a test can anchor on the rendered filename.
+ *
+ * Exists for the nested-output drag path (PM-1157/PM-1158): a drag from a
+ * nested row must carry that row's own output, not the representative's.
+ */
+export const MULTI_OUTPUT_JOB_ID = '77777777-7777-4777-a777-777777777777'
+
+export const MULTI_OUTPUT_FIRST: Asset = createOutputAsset({
+  id: '88888888-8888-4888-a888-888888888888',
+  name: 'out_one.png',
+  job_id: MULTI_OUTPUT_JOB_ID,
+  mime_type: 'image/png',
+  created_at: '2026-09-18T00:00:00.000Z',
+  updated_at: '2026-09-18T00:00:00.000Z',
+  last_access_time: '2026-09-18T00:00:00.000Z'
+})
+
+export const MULTI_OUTPUT_SECOND: Asset = createOutputAsset({
+  id: '99999999-9999-4999-a999-999999999999',
+  name: 'out_two.png',
+  job_id: MULTI_OUTPUT_JOB_ID,
+  mime_type: 'image/png',
+  created_at: '2026-09-18T00:00:01.000Z',
+  updated_at: '2026-09-18T00:00:01.000Z',
+  last_access_time: '2026-09-18T00:00:01.000Z'
+})

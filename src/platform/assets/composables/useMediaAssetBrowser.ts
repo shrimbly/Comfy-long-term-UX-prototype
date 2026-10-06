@@ -1,17 +1,17 @@
 import { useStorage } from '@vueuse/core'
 import { computed, ref, watch } from 'vue'
 
-import { useMediaAssets } from '@/platform/assets/composables/media/useMediaAssets'
 import { useOutputJobsAssets } from '@/platform/assets/composables/media/useOutputJobsAssets'
 import { useAssetFavorites } from '@/platform/assets/composables/useAssetFavorites'
 import { useAssetFilters } from '@/platform/assets/composables/useAssetFilters'
 import { useAssetPromptMetadata } from '@/platform/assets/composables/useAssetPromptMetadata'
 import { useAssetTagSelectionStore } from '@/platform/assets/composables/useAssetTagSelectionStore'
 import { useAssetTags } from '@/platform/assets/composables/useAssetTags'
-import { useMediaAssetFiltering } from '@/platform/assets/composables/useMediaAssetFiltering'
+import { useMediaAssetBrowserFiltering } from '@/platform/assets/composables/useMediaAssetBrowserFiltering'
 import type { AssetItem } from '@/platform/assets/schemas/assetSchema'
 import type { MetadataFilter } from '@/platform/assets/types/metadataFilter'
 import { parseFoldersFromFilenames } from '@/platform/assets/utils/folderParser'
+import { usePrototypeAssetsProvider } from '@/prototype/composables/usePrototypeAssetsProvider'
 
 type SourceId = 'output' | 'input'
 
@@ -24,10 +24,12 @@ type SourceId = 'output' | 'input'
  * tab/folder-view/custom-directory machinery.
  */
 export function useMediaAssetBrowser() {
-  const inputAssets = useMediaAssets('input')
+  // Only the /prototype dashboard mounts this browser, so it reads the
+  // prototype's fixture-driven provider and needs no backend.
+  const inputAssets = usePrototypeAssetsProvider('input')
   // Generated → full /files listing (every saved asset).
   // Temp     → queue-history jobs source (one preview per recent run).
-  const outputAssets = useMediaAssets('output')
+  const outputAssets = usePrototypeAssetsProvider('output')
   const outputJobsAssets = useOutputJobsAssets()
 
   const activeSources = ref<SourceId[]>(['output'])
@@ -98,7 +100,7 @@ export function useMediaAssetBrowser() {
     workflowTitle: metadataExtractor.getAvailableValues('workflowTitle')
   }))
 
-  const { sortBy, filteredAssets } = useMediaAssetFiltering(baseAssets, {
+  const { sortBy, filteredAssets } = useMediaAssetBrowserFiltering(baseAssets, {
     metadataExtractor,
     searchQuery,
     metadataFilters,

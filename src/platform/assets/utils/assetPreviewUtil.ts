@@ -1,18 +1,24 @@
+import { useFeatureFlags } from '@/composables/useFeatureFlags'
 import { assetService } from '@/platform/assets/services/assetService'
 import { api } from '@/scripts/api'
+import { useAssetsStore } from '@/stores/assetsStore'
+
+import { getAssetContentId } from './assetUrlUtil'
 
 interface AssetRecord {
   id: string
   name: string
-  asset_hash?: string
+  hash?: string | null
   preview_url?: string
   preview_id?: string | null
+  user_metadata?: Record<string, unknown>
 }
 
+/**
+ * Whether the backend can serve asset preview/thumbnail data.
+ */
 export function isAssetPreviewSupported(): boolean {
-  return (
-    assetService.isAssetAPIEnabled() || api.getServerFeature('assets', false)
-  )
+  return useFeatureFlags().flags.assetsEnabled
 }
 
 async function fetchAssets(
@@ -25,23 +31,23 @@ async function fetchAssets(
   return data.assets ?? []
 }
 
-function resolvePreviewUrl(asset: AssetRecord): string {
+export function resolvePreviewUrl(asset: AssetRecord): string {
   if (asset.preview_url) return api.apiURL(asset.preview_url)
 
-  const contentId = asset.preview_id ?? asset.id
+  const contentId = asset.preview_id ?? getAssetContentId(asset)
   return api.apiURL(`/assets/${contentId}/content`)
 }
 
 /**
  * Find an output asset record by content hash, falling back to name.
- * On cloud, output filenames are content-hashed; use asset_hash to match.
+ * On cloud, output filenames are content-hashed; use hash to match.
  * On local, filenames are not hashed; use name_contains to match.
  */
 export async function findOutputAsset(
   name: string
 ): Promise<AssetRecord | undefined> {
-  const byHash = await fetchAssets({ asset_hash: name })
-  const hashMatch = byHash.find((a) => a.asset_hash === name)
+  const byHash = await fetchAssets({ hash: name })
+  const hashMatch = byHash.find((a) => a.hash === name)
   if (hashMatch) return hashMatch
 
   const byName = await fetchAssets({ name_contains: name })
@@ -80,6 +86,7 @@ export async function persistThumbnail(
     await assetService.updateAsset(asset.id, {
       preview_id: uploaded.id
     })
+    await useAssetsStore().outputAssets.invalidate()
   } catch {
     // Non-critical — client still shows the rendered thumbnail
   }

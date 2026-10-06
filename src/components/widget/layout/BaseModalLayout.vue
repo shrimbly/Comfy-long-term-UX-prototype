@@ -30,14 +30,9 @@
         <slot name="leftPanel" />
       </nav>
 
-      <div
-        class="flex h-full min-h-0 flex-col overflow-hidden bg-base-background"
-      >
-        <header
-          v-if="$slots.header && !hideHeader"
-          class="flex h-18 w-full items-center justify-between gap-2 px-6"
-        >
-          <div class="flex min-w-0 flex-1 gap-2">
+      <div class="flex flex-col overflow-hidden bg-base-background">
+        <header v-if="$slots.header" :class="headerClass">
+          <div :class="headerContentClass">
             <Button
               v-if="!notMobile && !showLeftPanel"
               size="lg"
@@ -63,6 +58,7 @@
             <Button
               size="lg"
               class="w-10"
+              :variant="closeButtonVariant"
               :aria-label="t('g.closeDialog')"
               @click="closeDialog"
             >
@@ -75,11 +71,15 @@
           <slot name="contentFilter" />
           <h2
             v-if="!hasLeftPanel"
-            class="text-xxl m-0 px-6 pt-2 pb-6 capitalize select-none"
+            class="m-0 px-6 pt-2 pb-6 text-2xl capitalize select-none"
           >
             {{ contentTitle }}
           </h2>
-          <div ref="scrollContainerRef" :class="contentContainerClass">
+          <div
+            ref="contentContainer"
+            data-testid="base-modal-content"
+            :class="contentContainerClass"
+          >
             <slot name="content" />
           </div>
         </main>
@@ -119,6 +119,7 @@
             <Button
               size="lg"
               class="w-10 p-0"
+              :variant="closeButtonVariant"
               :aria-label="t('g.closeDialog')"
               @click="closeDialog"
             >
@@ -136,10 +137,11 @@
 
 <script setup lang="ts">
 import { useBreakpoints } from '@vueuse/core'
-import { computed, inject, ref, useSlots, useTemplateRef, watch } from 'vue'
+import { computed, inject, ref, useSlots, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import Button from '@/components/ui/button/Button.vue'
+import type { ButtonVariants } from '@comfyorg/design-system/button.variants'
 import { OnCloseKey } from '@/types/widgetTypes'
 import { cn } from '@comfyorg/tailwind-utils'
 
@@ -149,12 +151,12 @@ const SIZE_CLASSES = {
   sm: 'h-[80vh] w-[90vw] max-w-[960px]',
   md: 'h-[80vh] w-[90vw] max-w-[1400px]',
   lg: 'h-[80vh] w-[90vw] max-w-[1280px] aspect-[20/13] min-[1450px]:max-w-[1724px]',
-  full: 'h-full w-full max-w-[1400px] 2xl:max-w-[1600px]',
-  inspect: 'h-[98vh] w-[98vw]'
+  full: 'h-full w-full max-w-[1400px] 2xl:max-w-[1600px]'
 } as const
 
 type ModalSize = keyof typeof SIZE_CLASSES
 type ContentPadding = 'default' | 'compact' | 'none'
+type HeaderPadding = 'default' | 'symmetric'
 
 const {
   contentTitle,
@@ -162,14 +164,16 @@ const {
   size = 'lg',
   leftPanelWidth = '14rem',
   contentPadding = 'default',
-  hideHeader = false
+  headerPadding = 'default',
+  closeButtonVariant
 } = defineProps<{
   contentTitle: string
   rightPanelTitle?: string
   size?: ModalSize
   leftPanelWidth?: string
   contentPadding?: ContentPadding
-  hideHeader?: boolean
+  headerPadding?: HeaderPadding
+  closeButtonVariant?: ButtonVariants['variant']
 }>()
 
 const sizeClasses = computed(() => SIZE_CLASSES[size])
@@ -191,6 +195,7 @@ const notMobile = breakpoints.greater('md')
 
 const isLeftPanelOpen = ref<boolean>(true)
 const mobileMenuOpen = ref<boolean>(false)
+const contentContainer = ref<HTMLElement | null>(null)
 
 watch(notMobile, (isDesktop) => {
   if (!isDesktop) {
@@ -205,12 +210,23 @@ const showLeftPanel = computed(() => {
   return shouldShow
 })
 
+const headerClass = computed(() =>
+  cn(
+    'flex w-full items-center justify-between gap-2',
+    headerPadding === 'symmetric' ? 'px-6 py-5' : 'h-18 px-6'
+  )
+)
+
+const headerContentClass = computed(() =>
+  cn(
+    'flex min-w-0 flex-1 gap-2',
+    headerPadding === 'symmetric' && 'min-h-10 items-center'
+  )
+)
+
 const contentContainerClass = computed(() =>
   cn(
-    'flex min-h-0 flex-1 flex-col',
-    contentPadding === 'none'
-      ? 'relative overflow-hidden'
-      : 'scrollbar-custom overflow-y-auto',
+    'flex scrollbar-custom min-h-0 flex-1 flex-col overflow-y-auto',
     contentPadding === 'default' && 'px-6 pt-0 pb-10',
     contentPadding === 'compact' && 'px-6 pt-0 pb-2'
   )
@@ -234,10 +250,6 @@ const toggleRightPanel = () => {
   isRightPanelOpen.value = !isRightPanelOpen.value
 }
 
-const scrollContainerRef = useTemplateRef<HTMLElement>('scrollContainerRef')
-
-defineExpose({ scrollContainerRef })
-
 function handleEscape(event: KeyboardEvent) {
   const target = event.target
   if (!(target instanceof HTMLElement)) return
@@ -254,4 +266,11 @@ function handleEscape(event: KeyboardEvent) {
     isRightPanelOpen.value = false
   }
 }
+
+defineExpose({
+  getContentScrollTop: () => contentContainer.value?.scrollTop ?? 0,
+  setContentScrollTop: (scrollTop: number) => {
+    if (contentContainer.value) contentContainer.value.scrollTop = scrollTop
+  }
+})
 </script>

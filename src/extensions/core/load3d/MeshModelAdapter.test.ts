@@ -1,8 +1,11 @@
+import { isBinaryFbx, readFbxPolygons } from '@comfyorg/quad-wireframe-three'
 import * as THREE from 'three'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { fromAny } from '@total-typescript/shoehorn'
+import { describe, expect, it, vi } from 'vitest'
 
 import { MeshModelAdapter } from './MeshModelAdapter'
 import type { ModelLoadContext } from './ModelAdapter'
+import { faceSizesFor } from './quadWireframe/faceSizesRegistry'
 
 const stlLoaderStub = {
   setPath: vi.fn(),
@@ -10,8 +13,10 @@ const stlLoaderStub = {
 }
 const fbxLoaderStub = {
   setPath: vi.fn(),
-  loadAsync: vi.fn<(filename: string) => Promise<THREE.Object3D>>()
+  loadAsync: vi.fn<(filename: string) => Promise<THREE.Object3D>>(),
+  parse: vi.fn<(bytes: ArrayBuffer, path: string) => THREE.Object3D>()
 }
+vi.mock(import('@comfyorg/quad-wireframe-three'), { spy: true })
 const gltfLoaderStub = {
   setPath: vi.fn(),
   loadAsync: vi.fn<(filename: string) => Promise<{ scene: THREE.Object3D }>>()
@@ -23,49 +28,62 @@ const mtlLoaderStub = {
 const objLoaderStub = {
   setWorkerUrl: vi.fn(),
   setMaterials: vi.fn(),
+  setBaseObject3d: vi.fn(),
   loadAsync: vi.fn<(url: string) => Promise<THREE.Object3D>>()
 }
 
-vi.mock('three/examples/jsm/loaders/STLLoader', () => ({
-  STLLoader: class {
-    setPath = stlLoaderStub.setPath
-    loadAsync = stlLoaderStub.loadAsync
-  }
+vi.mock(import('three/examples/jsm/loaders/STLLoader'), () => ({
+  STLLoader: fromAny(
+    class {
+      setPath = stlLoaderStub.setPath
+      loadAsync = stlLoaderStub.loadAsync
+    }
+  )
 }))
 
-vi.mock('three/examples/jsm/loaders/FBXLoader', () => ({
-  FBXLoader: class {
-    setPath = fbxLoaderStub.setPath
-    loadAsync = fbxLoaderStub.loadAsync
-  }
+vi.mock(import('three/examples/jsm/loaders/FBXLoader'), () => ({
+  FBXLoader: fromAny(
+    class {
+      setPath = fbxLoaderStub.setPath
+      loadAsync = fbxLoaderStub.loadAsync
+      parse = fbxLoaderStub.parse
+    }
+  )
 }))
 
-vi.mock('three/examples/jsm/loaders/GLTFLoader', () => ({
-  GLTFLoader: class {
-    setPath = gltfLoaderStub.setPath
-    loadAsync = gltfLoaderStub.loadAsync
-  }
+vi.mock(import('three/examples/jsm/loaders/GLTFLoader'), () => ({
+  GLTFLoader: fromAny(
+    class {
+      setPath = gltfLoaderStub.setPath
+      loadAsync = gltfLoaderStub.loadAsync
+    }
+  )
 }))
 
-vi.mock('three/examples/jsm/loaders/MTLLoader', () => ({
-  MTLLoader: class {
-    setPath = mtlLoaderStub.setPath
-    loadAsync = mtlLoaderStub.loadAsync
-  }
+vi.mock(import('three/examples/jsm/loaders/MTLLoader'), () => ({
+  MTLLoader: fromAny(
+    class {
+      setPath = mtlLoaderStub.setPath
+      loadAsync = mtlLoaderStub.loadAsync
+    }
+  )
 }))
 
-vi.mock('wwobjloader2', () => ({
-  OBJLoader2Parallel: class {
-    setWorkerUrl = objLoaderStub.setWorkerUrl
-    setMaterials = objLoaderStub.setMaterials
-    loadAsync = objLoaderStub.loadAsync
-  },
-  MtlObjBridge: {
+vi.mock(import('wwobjloader2'), () => ({
+  OBJLoader2Parallel: fromAny(
+    class {
+      setWorkerUrl = objLoaderStub.setWorkerUrl
+      setMaterials = objLoaderStub.setMaterials
+      setBaseObject3d = objLoaderStub.setBaseObject3d
+      loadAsync = objLoaderStub.loadAsync
+    }
+  ),
+  MtlObjBridge: fromAny({
     addMaterialsFromMtlLoader: vi.fn().mockReturnValue([])
-  }
+  })
 }))
 
-vi.mock('wwobjloader2/bundle/worker/module?url', () => ({
+vi.mock(import('wwobjloader2/bundle/worker/module?url'), () => ({
   default: 'mock-worker-url'
 }))
 
@@ -91,10 +109,6 @@ function makeFbxLikeGroup(): THREE.Group {
 }
 
 describe('MeshModelAdapter', () => {
-  beforeEach(() => {
-    vi.clearAllMocks()
-  })
-
   describe('identity', () => {
     it('identifies as a mesh adapter with full capabilities', () => {
       const adapter = new MeshModelAdapter()
@@ -106,6 +120,7 @@ describe('MeshModelAdapter', () => {
       expect(adapter.capabilities.exportable).toBe(true)
       expect([...adapter.capabilities.materialModes]).toEqual([
         'original',
+        'clay',
         'normal',
         'wireframe'
       ])
@@ -160,8 +175,8 @@ describe('MeshModelAdapter', () => {
       expect(stlLoaderStub.setPath).toHaveBeenCalledWith('/api/view/')
       expect(stlLoaderStub.loadAsync).toHaveBeenCalledWith('model.stl')
       expect(ctx.setOriginalModel).toHaveBeenCalledWith(geometry)
-      expect(result).toBeInstanceOf(THREE.Group)
-      expect(result!.children[0]).toBeInstanceOf(THREE.Mesh)
+      expect(result!.object).toBeInstanceOf(THREE.Group)
+      expect(result!.object.children[0]).toBeInstanceOf(THREE.Mesh)
     })
   })
 
@@ -179,7 +194,53 @@ describe('MeshModelAdapter', () => {
       expect(fbxLoaderStub.loadAsync).toHaveBeenCalledWith('rig.fbx')
       expect(ctx.setOriginalModel).toHaveBeenCalledWith(fbxModel)
       expect(ctx.registerOriginalMaterial).toHaveBeenCalledTimes(1)
-      expect(result).toBe(fbxModel)
+      expect(result!.object).toBe(fbxModel)
+    })
+
+    it('parses fetched bytes and records binary FBX polygon sizes per mesh', async () => {
+      const fbxModel = makeFbxLikeGroup()
+      const mesh = fbxModel.children[0] as THREE.Mesh
+      const bytes = new ArrayBuffer(8)
+      const faceSizes = new Uint32Array(6).fill(4)
+      fbxLoaderStub.parse.mockReturnValue(fbxModel)
+      vi.mocked(isBinaryFbx).mockReturnValue(true)
+      vi.mocked(readFbxPolygons).mockReturnValue([
+        { id: 1, name: mesh.geometry.name, faceSizes }
+      ])
+      const fetchBytes = vi.fn(async () => bytes)
+
+      const adapter = new MeshModelAdapter()
+      const result = await adapter.load(
+        makeContext(),
+        '/api/view/',
+        'quads.fbx',
+        fetchBytes
+      )
+
+      expect(fbxLoaderStub.parse).toHaveBeenCalledWith(bytes, '/api/view/')
+      expect(fbxLoaderStub.loadAsync).not.toHaveBeenCalled()
+      expect(readFbxPolygons).toHaveBeenCalledWith(bytes)
+      expect(result!.object).toBe(fbxModel)
+      expect(faceSizesFor(mesh.geometry)).toEqual(faceSizes)
+    })
+
+    it('skips polygon lookup for ASCII FBX bytes', async () => {
+      const fbxModel = makeFbxLikeGroup()
+      fbxLoaderStub.parse.mockReturnValue(fbxModel)
+      vi.mocked(isBinaryFbx).mockReturnValue(false)
+
+      const adapter = new MeshModelAdapter()
+      await adapter.load(
+        makeContext(),
+        '/api/view/',
+        'ascii.fbx',
+        async () => new ArrayBuffer(8)
+      )
+
+      expect(readFbxPolygons).not.toHaveBeenCalled()
+      expect(
+        faceSizesFor((fbxModel.children[0] as THREE.Mesh).geometry)
+      ).toBeUndefined()
     })
 
     it('disables frustum culling on SkinnedMesh children', async () => {
@@ -224,7 +285,7 @@ describe('MeshModelAdapter', () => {
         'cube.obj'
       )
 
-      expect(result).toBeInstanceOf(THREE.Group)
+      expect(result!.object).toBeInstanceOf(THREE.Group)
       expect(objLoaderStub.setMaterials).not.toHaveBeenCalled()
     })
 
@@ -246,6 +307,24 @@ describe('MeshModelAdapter', () => {
       await adapter.load(ctx, '/api/view/', 'cube.obj')
 
       expect(ctx.registerOriginalMaterial).toHaveBeenCalledTimes(1)
+    })
+
+    it('resets baseObject3d on every load so meshes do not accumulate across calls', async () => {
+      objLoaderStub.loadAsync.mockResolvedValue(makeFbxLikeGroup())
+
+      const adapter = new MeshModelAdapter()
+      const ctx = makeContext('wireframe')
+      await adapter.load(ctx, '/api/view/', 'first.obj')
+      await adapter.load(ctx, '/api/view/', 'second.obj')
+
+      expect(objLoaderStub.setBaseObject3d).toHaveBeenCalledTimes(2)
+      const bases = objLoaderStub.setBaseObject3d.mock.calls.map(
+        ([base]) => base
+      )
+      expect(bases[0]).toBeInstanceOf(THREE.Object3D)
+      expect(bases[1]).toBeInstanceOf(THREE.Object3D)
+      // Each call should hand the loader a fresh container, not the same one.
+      expect(bases[0]).not.toBe(bases[1])
     })
   })
 
@@ -271,7 +350,33 @@ describe('MeshModelAdapter', () => {
       expect(ctx.setOriginalModel).toHaveBeenCalledWith(gltf)
       expect(computeNormals).toHaveBeenCalled()
       expect(ctx.registerOriginalMaterial).toHaveBeenCalledTimes(1)
-      expect(result).toBe(scene)
+      expect(result!.object).toBe(scene)
+    })
+
+    it('records polygon sizes for meshes flagged with FB_ngon_encoding', async () => {
+      const quad = new THREE.BufferGeometry()
+      quad.setAttribute(
+        'position',
+        new THREE.Float32BufferAttribute(
+          [0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0],
+          3
+        )
+      )
+      quad.setIndex([0, 1, 2, 0, 2, 3])
+      const flagged = new THREE.Mesh(quad, new THREE.MeshStandardMaterial())
+      flagged.userData.gltfExtensions = { FB_ngon_encoding: {} }
+      const plain = new THREE.Mesh(
+        quad.clone(),
+        new THREE.MeshStandardMaterial()
+      )
+      const scene = new THREE.Group().add(flagged, plain)
+      gltfLoaderStub.loadAsync.mockResolvedValue({ scene })
+
+      const adapter = new MeshModelAdapter()
+      await adapter.load(makeContext(), '/api/view/', 'nomad.glb')
+
+      expect(faceSizesFor(flagged.geometry)).toEqual(Uint32Array.from([4]))
+      expect(faceSizesFor(plain.geometry)).toBeUndefined()
     })
 
     it('also handles .gltf filenames', async () => {

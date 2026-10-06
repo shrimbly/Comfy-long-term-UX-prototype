@@ -1,250 +1,154 @@
 <template>
-  <SidebarTopArea :bottom-divider>
-    <MetadataSearchInput
-      v-model:search-query="internalSearchQuery"
-      v-model:metadata-filters="internalMetadataFilters"
-      v-model:composing="composing"
-      :available-tags="availableTags"
-      :available-values-by-field="availableValuesByField"
-    />
-    <template #actions>
-      <MediaAssetFilterButton
-        v-if="isCloud"
-        v-tooltip.top="{ value: $t('assetBrowser.filterBy') }"
-      >
-        <template #default="{ close }">
+  <div>
+    <SidebarTopArea>
+      <SearchInput
+        v-model="searchQuery"
+        :placeholder="
+          $t('g.searchPlaceholder', {
+            subject: $t('sideToolbar.labels.assets')
+          })
+        "
+      />
+      <template #actions>
+        <Menu v-if="isCloud" :modal="false">
+          <template #trigger>
+            <Button
+              v-tooltip.top="{ value: $t('assetBrowser.filterBy') }"
+              variant="secondary"
+              size="icon"
+              icon="icon-[lucide--list-filter]"
+              :indicator="hasActiveFilters"
+              :aria-label="$t('assetBrowser.filterBy')"
+            />
+          </template>
           <MediaAssetFilterMenu
-            :media-type-filters
-            :close
-            @update:media-type-filters="handleMediaTypeFiltersChange"
+            v-model:date-filter="dateFilter"
+            v-model:media-type-filters="mediaTypeFilters"
           />
-        </template>
-      </MediaAssetFilterButton>
+        </Menu>
+        <MediaAssetSettingsButton
+          v-tooltip.top="{ value: $t('sideToolbar.mediaAssets.viewSettings') }"
+        >
+          <template #default>
+            <MediaAssetSettingsMenu
+              v-model:view-mode="viewMode"
+              v-model:sort-by="sortBy"
+              :show-sort-options="isCloud"
+              :show-generation-time-sort
+            />
+          </template>
+        </MediaAssetSettingsButton>
+      </template>
+    </SidebarTopArea>
 
-      <!-- Sort button -->
-      <Popover>
-        <template #button>
-          <Button
-            v-tooltip.top="$t('assets.sort.tooltip')"
-            variant="secondary"
-            size="icon"
-          >
-            <i class="icon-[lucide--arrow-down-up]" />
-          </Button>
-        </template>
-        <template #default>
-          <div class="flex flex-col">
-            <Button
-              variant="textonly"
-              class="w-full"
-              @click="sortBy = 'newest'"
-            >
-              <span>{{ $t('sideToolbar.mediaAssets.sortNewestFirst') }}</span>
-              <i
-                class="ml-auto icon-[lucide--check] size-4"
-                :class="sortBy !== 'newest' && 'opacity-0'"
-              />
-            </Button>
-            <Button
-              variant="textonly"
-              class="w-full"
-              @click="sortBy = 'oldest'"
-            >
-              <span>{{ $t('sideToolbar.mediaAssets.sortOldestFirst') }}</span>
-              <i
-                class="ml-auto icon-[lucide--check] size-4"
-                :class="sortBy !== 'oldest' && 'opacity-0'"
-              />
-            </Button>
-            <template v-if="showGenerationTimeSort">
-              <Button
-                variant="textonly"
-                class="w-full"
-                @click="sortBy = 'longest'"
-              >
-                <span>{{
-                  $t('sideToolbar.mediaAssets.sortLongestFirst')
-                }}</span>
-                <i
-                  class="ml-auto icon-[lucide--check] size-4"
-                  :class="sortBy !== 'longest' && 'opacity-0'"
-                />
-              </Button>
-              <Button
-                variant="textonly"
-                class="w-full"
-                @click="sortBy = 'fastest'"
-              >
-                <span>{{
-                  $t('sideToolbar.mediaAssets.sortFastestFirst')
-                }}</span>
-                <i
-                  class="ml-auto icon-[lucide--check] size-4"
-                  :class="sortBy !== 'fastest' && 'opacity-0'"
-                />
-              </Button>
-            </template>
-          </div>
-        </template>
-      </Popover>
-
-      <!-- View mode button -->
-      <Popover>
-        <template #button>
-          <Button
-            v-tooltip.top="$t('assets.view.tooltip')"
-            variant="secondary"
-            size="icon"
-          >
-            <i class="icon-[lucide--settings-2]" />
-          </Button>
-        </template>
-        <template #default>
-          <div class="flex flex-col">
-            <Button
-              v-for="option in ALL_VIEW_OPTIONS"
-              :key="option.value"
-              variant="textonly"
-              class="w-full"
-              @click="viewMode = option.value"
-            >
-              <span class="flex items-center gap-2">
-                <i :class="option.icon" class="size-4" />
-                <span>{{ $t(option.labelKey) }}</span>
-              </span>
-              <i
-                class="ml-auto icon-[lucide--check] size-4"
-                :class="viewMode !== option.value && 'opacity-0'"
-              />
-            </Button>
-            <div class="my-1 border-t border-comfy-input" />
-            <Button
-              variant="textonly"
-              class="w-full"
-              @click="favoritesOnly = !favoritesOnly"
-            >
-              <span class="flex items-center gap-2">
-                <i
-                  :class="
-                    cn(
-                      'size-4',
-                      favoritesOnly
-                        ? 'icon-[ph--star-fill] text-citrine-400'
-                        : 'icon-[ph--star]'
-                    )
-                  "
-                />
-                <span>{{ $t('assets.filters.showFavoritesOnly') }}</span>
-              </span>
-              <i
-                class="ml-auto icon-[lucide--check] size-4"
-                :class="!favoritesOnly && 'opacity-0'"
-              />
-            </Button>
-            <template v-if="enableSidebarToggle">
-              <div class="my-1 border-t border-comfy-input" />
-              <Button
-                variant="textonly"
-                class="w-full"
-                @click="hideSidebar = !hideSidebar"
-              >
-                <span class="flex items-center gap-2">
-                  <i class="icon-[lucide--panel-left-close] size-4" />
-                  <span>{{ $t('assets.view.hideSidebar') }}</span>
-                </span>
-                <i
-                  class="ml-auto icon-[lucide--check] size-4"
-                  :class="!hideSidebar && 'opacity-0'"
-                />
-              </Button>
-            </template>
-          </div>
-        </template>
-      </Popover>
-    </template>
-  </SidebarTopArea>
+    <div
+      v-if="filterChips.length"
+      class="flex flex-wrap items-center gap-1.5 px-4 pb-2"
+    >
+      <span
+        v-for="chip in filterChips"
+        :key="chip.key"
+        class="inline-flex items-center gap-1 rounded-md bg-secondary-background py-1 pr-1 pl-2 text-xs whitespace-nowrap"
+      >
+        <span>{{ chip.label }}</span>
+        <Button
+          variant="textonly"
+          size="icon"
+          class="size-4 rounded-sm p-0"
+          :aria-label="
+            $t('sideToolbar.mediaAssets.removeFilter', {
+              label: chip.label
+            })
+          "
+          @click="removeFilter(chip.key)"
+        >
+          <i class="icon-[lucide--x] size-3" />
+        </Button>
+      </span>
+      <Button
+        variant="textonly"
+        class="h-6 px-1.5 text-xs text-muted-foreground"
+        @click="clearFilters"
+      >
+        {{ $t('sideToolbar.mediaAssets.clearFilters') }}
+      </Button>
+    </div>
+  </div>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 
-import Button from '@/components/ui/button/Button.vue'
-import Popover from '@/components/ui/Popover.vue'
 import SidebarTopArea from '@/components/sidebar/tabs/SidebarTopArea.vue'
-import type { MetadataFilter } from '@/platform/assets/types/metadataFilter'
+import Button from '@/components/ui/button/Button.vue'
+import Menu from '@/components/ui/menu/Menu.vue'
+import SearchInput from '@/components/ui/search-input/SearchInput.vue'
 import { isCloud } from '@/platform/distribution/types'
-import { cn } from '@comfyorg/tailwind-utils'
+import {
+  dateFilterOptions,
+  mediaTypeFilterOptions
+} from '@/platform/assets/mediaAssetFilterOptions'
+import type { MediaAssetDateFilter } from '@/platform/assets/mediaAssetFilterOptions'
 
-import MediaAssetFilterButton from './MediaAssetFilterButton.vue'
 import MediaAssetFilterMenu from './MediaAssetFilterMenu.vue'
-import MetadataSearchInput from './MetadataSearchInput.vue'
+import MediaAssetSettingsButton from './MediaAssetSettingsButton.vue'
+import MediaAssetSettingsMenu from './MediaAssetSettingsMenu.vue'
+import type { SortBy } from './MediaAssetSettingsMenu.vue'
+import type { MediaAssetViewMode } from './mediaAssetViewOptions'
 
-type SortBy = 'newest' | 'oldest' | 'longest' | 'fastest'
-export type ViewMode = 'list' | 'grid-sm' | 'grid-lg'
-
-const {
-  searchQuery,
-  showGenerationTimeSort = false,
-  mediaTypeFilters,
-  metadataFilters,
-  availableTags = [],
-  availableValuesByField,
-  bottomDivider = false,
-  enableSidebarToggle = false
-} = defineProps<{
-  searchQuery: string
+const { showGenerationTimeSort = false } = defineProps<{
   showGenerationTimeSort?: boolean
-  mediaTypeFilters: string[]
-  metadataFilters: MetadataFilter[]
-  availableTags?: string[]
-  availableValuesByField?: Record<'model' | 'lora' | 'workflowTitle', string[]>
-  bottomDivider?: boolean
-  enableSidebarToggle?: boolean
 }>()
 
-const emit = defineEmits<{
-  'update:searchQuery': [value: string]
-  'update:mediaTypeFilters': [value: string[]]
-  'update:metadataFilters': [value: MetadataFilter[]]
-}>()
-
+const searchQuery = defineModel<string>('searchQuery', { required: true })
 const sortBy = defineModel<SortBy>('sortBy', { required: true })
-const viewMode = defineModel<ViewMode>('viewMode', { required: true })
-const hideSidebar = defineModel<boolean>('hideSidebar', { default: false })
-const composing = defineModel<boolean>('composing', { default: false })
-const favoritesOnly = defineModel<boolean>('favoritesOnly', { default: false })
+const viewMode = defineModel<MediaAssetViewMode>('viewMode', { required: true })
+const dateFilter = defineModel<MediaAssetDateFilter>('dateFilter', {
+  required: true
+})
+const mediaTypeFilters = defineModel<string[]>('mediaTypeFilters', {
+  required: true
+})
 
-interface ViewOption {
-  value: ViewMode
-  icon: string
-  labelKey: string
+const { t } = useI18n()
+
+function labelFor(options: { value: string; label: string }[], value: string) {
+  return t(options.find((option) => option.value === value)?.label ?? value)
 }
 
-const ALL_VIEW_OPTIONS: ViewOption[] = [
-  { value: 'list', icon: 'icon-[lucide--list]', labelKey: 'assets.view.list' },
-  {
-    value: 'grid-sm',
-    icon: 'icon-[lucide--layout-grid]',
-    labelKey: 'assets.view.gridSmall'
-  },
-  {
-    value: 'grid-lg',
-    icon: 'icon-[lucide--square]',
-    labelKey: 'assets.view.gridLarge'
+const filterChips = computed(() => {
+  const chips = mediaTypeFilters.value.map((value) => ({
+    key: `media:${value}`,
+    label: labelFor(mediaTypeFilterOptions, value)
+  }))
+
+  if (dateFilter.value) {
+    chips.push({
+      key: 'date',
+      label: labelFor(dateFilterOptions, dateFilter.value)
+    })
   }
-]
 
-const internalSearchQuery = computed({
-  get: () => searchQuery,
-  set: (value: string) => emit('update:searchQuery', value)
+  return chips
 })
 
-const internalMetadataFilters = computed({
-  get: () => metadataFilters,
-  set: (value: MetadataFilter[]) => emit('update:metadataFilters', value)
-})
+const hasActiveFilters = computed(() => filterChips.value.length > 0)
 
-const handleMediaTypeFiltersChange = (value: string[]) => {
-  emit('update:mediaTypeFilters', value)
+function removeFilter(key: string) {
+  if (key === 'date') {
+    dateFilter.value = ''
+    return
+  }
+
+  const mediaType = key.slice('media:'.length)
+  mediaTypeFilters.value = mediaTypeFilters.value.filter(
+    (value) => value !== mediaType
+  )
+}
+
+function clearFilters() {
+  dateFilter.value = ''
+  mediaTypeFilters.value = []
 }
 </script>

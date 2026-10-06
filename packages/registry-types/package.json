@@ -6,11 +6,9 @@
   "exports": {
     ".": "./src/comfyRegistryTypes.ts"
   },
-  "packageManager": "pnpm@10.17.1",
-  "nx": {
-    "tags": [
-      "scope:shared",
-      "type:types"
-    ]
+  "scripts": {
+    "format": "oxfmt --write",
+    "format:check": "oxfmt --check",
+    "typecheck": "tsx ../../scripts/vue-tsc-native.ts --noEmit"
   }
 }

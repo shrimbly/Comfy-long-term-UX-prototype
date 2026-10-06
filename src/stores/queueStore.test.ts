@@ -1,11 +1,24 @@
-import { createTestingPinia } from '@pinia/testing'
-import { setActivePinia } from 'pinia'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import type { JobListItem } from '@/platform/remote/comfyui/jobs/jobTypes'
-import type { TaskOutput } from '@/schemas/apiSchema'
+import type { TaskOutput } from '@/platform/remote/comfyui/execution/types'
 import { api } from '@/scripts/api'
-import { TaskItemImpl, useQueueStore } from '@/stores/queueStore'
+import { useExecutionStore } from '@/stores/executionStore'
+import {
+  TaskItemImpl,
+  useQueuePendingTaskCountStore,
+  useQueueStore
+} from '@/stores/queueStore'
+import {
+  isAudioResult,
+  isImageResult,
+  isTextResult,
+  isVhsFormat,
+  isVideoResult,
+  resultItemHtmlAudioType,
+  resultItemHtmlVideoType,
+  resultItemSupportsPreview
+} from '@/utils/resultItem'
 
 // Fixture factory for JobListItem
 function createJob(
@@ -53,7 +66,7 @@ type QueueResponse = { Running: JobListItem[]; Pending: JobListItem[] }
 type QueueResolver = (value: QueueResponse) => void
 
 // Mock API
-vi.mock('@/scripts/api', () => ({
+vi.mock<unknown>(import('@/scripts/api'), () => ({
   api: {
     getQueue: vi.fn(),
     getHistory: vi.fn(),
@@ -64,6 +77,21 @@ vi.mock('@/scripts/api', () => ({
     removeEventListener: vi.fn()
   }
 }))
+
+describe('useQueuePendingTaskCountStore', () => {
+  it.for([
+    { name: 'null status', status: null },
+    { name: 'missing execution info', status: {} },
+    { name: 'missing queue count', status: { exec_info: {} } }
+  ])('preserves the count for $name', ({ status }) => {
+    const store = useQueuePendingTaskCountStore()
+    store.count = 3
+
+    store.update(new CustomEvent('status', { detail: status }))
+
+    expect(store.count).toBe(3)
+  })
+})
 
 describe('TaskItemImpl', () => {
   it('should exclude animated from flatOutputs', () => {
@@ -102,10 +130,10 @@ describe('TaskItemImpl', () => {
 
     const output = taskItem.flatOutputs[0]
 
-    expect(output.htmlVideoType).toBe('video/webm')
-    expect(output.isVideo).toBe(true)
-    expect(output.isVhsFormat).toBe(false)
-    expect(output.isImage).toBe(false)
+    expect(resultItemHtmlVideoType(output)).toBe('video/webm')
+    expect(isVideoResult(output)).toBe(true)
+    expect(isVhsFormat(output)).toBe(false)
+    expect(isImageResult(output)).toBe(false)
   })
 
   // https://github.com/Kosinkadink/ComfyUI-VideoHelperSuite/blob/0a75c7958fe320efcb052f1d9f8451fd20c730a8/videohelpersuite/nodes.py#L578-L590
@@ -127,10 +155,10 @@ describe('TaskItemImpl', () => {
 
     const output = taskItem.flatOutputs[0]
 
-    expect(output.htmlVideoType).toBe('video/webm')
-    expect(output.isVideo).toBe(true)
-    expect(output.isVhsFormat).toBe(true)
-    expect(output.isImage).toBe(false)
+    expect(resultItemHtmlVideoType(output)).toBe('video/webm')
+    expect(isVideoResult(output)).toBe(true)
+    expect(isVhsFormat(output)).toBe(true)
+    expect(isImageResult(output)).toBe(false)
   })
 
   it('should recognize mp4 video from core', () => {
@@ -150,9 +178,9 @@ describe('TaskItemImpl', () => {
 
     const output = taskItem.flatOutputs[0]
 
-    expect(output.htmlVideoType).toBe('video/mp4')
-    expect(output.isVideo).toBe(true)
-    expect(output.isImage).toBe(false)
+    expect(resultItemHtmlVideoType(output)).toBe('video/mp4')
+    expect(isVideoResult(output)).toBe(true)
+    expect(isImageResult(output)).toBe(false)
   })
 
   describe('audio format detection', () => {
@@ -180,16 +208,39 @@ describe('TaskItemImpl', () => {
 
         const output = taskItem.flatOutputs[0]
 
-        expect(output.htmlAudioType).toBe(mimeType)
-        expect(output.isAudio).toBe(true)
-        expect(output.isVideo).toBe(false)
-        expect(output.isImage).toBe(false)
-        expect(output.supportsPreview).toBe(true)
+        expect(resultItemHtmlAudioType(output)).toBe(mimeType)
+        expect(isAudioResult(output)).toBe(true)
+        expect(isVideoResult(output)).toBe(false)
+        expect(isImageResult(output)).toBe(false)
+        expect(resultItemSupportsPreview(output)).toBe(true)
       })
     })
   })
 
-  it.skip('should parse text outputs', () => {
+  it('should recognize text files saved under the files output key', () => {
+    const job = createHistoryJob(0, 'job-id')
+    const taskItem = new TaskItemImpl(job, {
+      'node-1': {
+        files: [
+          {
+            filename: 'result.txt',
+            type: 'output',
+            subfolder: ''
+          }
+        ]
+      }
+    })
+
+    const output = taskItem.flatOutputs[0]
+
+    expect(isTextResult(output)).toBe(true)
+    expect(isImageResult(output)).toBe(false)
+    expect(isVideoResult(output)).toBe(false)
+    expect(isAudioResult(output)).toBe(false)
+    expect(resultItemSupportsPreview(output)).toBe(true)
+  })
+
+  it('should parse text outputs', () => {
     const job: JobListItem = {
       ...createHistoryJob(0, 'text-job'),
       preview_output: {
@@ -205,6 +256,20 @@ describe('TaskItemImpl', () => {
     expect(task.flatOutputs[0].filename).toBe('')
     expect(task.previewableOutputs).toHaveLength(1)
     expect(task.previewOutput?.content).toBe('test')
+  })
+
+  it('should reject non-text preview outputs without a filename', () => {
+    const job: JobListItem = {
+      ...createHistoryJob(0, 'image-job'),
+      preview_output: {
+        nodeId: '5',
+        mediaType: 'images'
+      } satisfies JobListItem['preview_output']
+    }
+
+    const task = new TaskItemImpl(job)
+
+    expect(task.flatOutputs).toHaveLength(0)
   })
 
   describe('error extraction getters', () => {
@@ -258,15 +323,48 @@ describe('TaskItemImpl', () => {
       expect(taskItem.executionError).toEqual(errorDetail)
     })
   })
+
+  describe('previewableOutputsCount', () => {
+    it('returns undefined when the job has no previewable_outputs_count', () => {
+      const job = createHistoryJob(0, 'job-id')
+      const taskItem = new TaskItemImpl(job)
+      expect(taskItem.previewableOutputsCount).toBeUndefined()
+    })
+
+    it('returns the server-provided previewable_outputs_count', () => {
+      const job: JobListItem = {
+        ...createHistoryJob(0, 'job-id'),
+        previewable_outputs_count: 2
+      }
+      const taskItem = new TaskItemImpl(job)
+      expect(taskItem.previewableOutputsCount).toBe(2)
+    })
+
+    it('returns 0 when previewable_outputs_count is 0', () => {
+      const job: JobListItem = {
+        ...createHistoryJob(0, 'job-id'),
+        previewable_outputs_count: 0
+      }
+      const taskItem = new TaskItemImpl(job)
+      expect(taskItem.previewableOutputsCount).toBe(0)
+    })
+
+    it('normalizes an explicit null previewable_outputs_count to undefined', () => {
+      const job: JobListItem = {
+        ...createHistoryJob(0, 'job-id'),
+        previewable_outputs_count: null
+      }
+      const taskItem = new TaskItemImpl(job)
+      expect(taskItem.previewableOutputsCount).toBeUndefined()
+    })
+  })
 })
 
 describe('useQueueStore', () => {
   let store: ReturnType<typeof useQueueStore>
 
   beforeEach(() => {
-    setActivePinia(createTestingPinia({ stubActions: false }))
     store = useQueueStore()
-    vi.clearAllMocks()
   })
 
   const mockGetQueue = vi.mocked(api.getQueue)
@@ -340,11 +438,11 @@ describe('useQueueStore', () => {
       expect(store.isLoading).toBe(false)
     })
 
-    it('should clear loading state even if API fails', async () => {
+    it('should clear loading state even if the queue fetch fails', async () => {
       mockGetQueue.mockRejectedValue(new Error('API error'))
       mockGetHistory.mockResolvedValue([])
 
-      await expect(store.update()).rejects.toThrow('API error')
+      await store.update()
       expect(store.isLoading).toBe(false)
     })
   })
@@ -1018,10 +1116,9 @@ describe('useQueueStore', () => {
       const firstUpdate = store.update()
       void store.update() // coalesces, sets dirty
 
-      // First call rejects — but dirty flag triggers re-fetch
-      await expect(firstUpdate).rejects.toThrow('network error')
-
-      // Re-fetch was triggered
+      // First call resolves (allSettled absorbs the failure) but the dirty
+      // flag still triggers a re-fetch when the in-flight request finishes.
+      await firstUpdate
       expect(mockGetQueue).toHaveBeenCalledTimes(2)
 
       resolveSecond({ Running: [], Pending: [createPendingJob(2, 'new-job')] })
@@ -1029,6 +1126,88 @@ describe('useQueueStore', () => {
 
       expect(store.pendingTasks).toHaveLength(1)
       expect(store.pendingTasks[0].jobId).toBe('new-job')
+      expect(store.isLoading).toBe(false)
+    })
+  })
+
+  describe('update() partial failures', () => {
+    it('reconciles when the queue fetch succeeds, even with an empty snapshot', async () => {
+      mockGetQueue.mockResolvedValue({ Running: [], Pending: [] })
+      mockGetHistory.mockResolvedValue([])
+      const executionStore = useExecutionStore()
+      const reconcileSpy = vi.spyOn(executionStore, 'reconcileInitializingJobs')
+
+      await store.update()
+
+      expect(reconcileSpy).toHaveBeenCalledWith(new Set())
+    })
+
+    it('preserves prior queue state and skips reconcile when the queue fetch fails', async () => {
+      mockGetQueue
+        .mockResolvedValueOnce({
+          Running: [createRunningJob(0, 'run-1')],
+          Pending: []
+        })
+        .mockRejectedValueOnce(new Error('network down'))
+      mockGetHistory.mockResolvedValue([])
+      const executionStore = useExecutionStore()
+      const reconcileSpy = vi.spyOn(executionStore, 'reconcileInitializingJobs')
+
+      await store.update()
+      await store.update()
+
+      // First update reconciles with run-1; second update's queue fetch
+      // rejects, so reconcile must not be called again.
+      expect(reconcileSpy).toHaveBeenCalledTimes(1)
+      expect(reconcileSpy).toHaveBeenLastCalledWith(new Set(['run-1']))
+      expect(store.runningTasks).toHaveLength(1)
+      expect(store.runningTasks[0].jobId).toBe('run-1')
+    })
+
+    it('still updates history when only the queue fetch fails', async () => {
+      mockGetQueue.mockRejectedValue(new Error('queue down'))
+      mockGetHistory.mockResolvedValue([createHistoryJob(0, 'hist-1')])
+
+      await store.update()
+
+      expect(store.historyTasks).toHaveLength(1)
+      expect(store.historyTasks[0].jobId).toBe('hist-1')
+    })
+
+    it('still updates queue when only the history fetch fails', async () => {
+      mockGetQueue.mockResolvedValue({
+        Running: [createRunningJob(0, 'run-1')],
+        Pending: []
+      })
+      mockGetHistory.mockRejectedValue(new Error('history down'))
+
+      await store.update()
+
+      expect(store.runningTasks).toHaveLength(1)
+      expect(store.runningTasks[0].jobId).toBe('run-1')
+    })
+
+    it('preserves prior state and skips reconcile when both fetches fail', async () => {
+      mockGetQueue
+        .mockResolvedValueOnce({
+          Running: [createRunningJob(0, 'run-1')],
+          Pending: []
+        })
+        .mockRejectedValueOnce(new Error('queue down'))
+      mockGetHistory
+        .mockResolvedValueOnce([createHistoryJob(0, 'hist-1')])
+        .mockRejectedValueOnce(new Error('history down'))
+      const executionStore = useExecutionStore()
+      const reconcileSpy = vi.spyOn(executionStore, 'reconcileInitializingJobs')
+
+      await store.update()
+      await store.update()
+
+      expect(reconcileSpy).toHaveBeenCalledTimes(1)
+      expect(store.runningTasks).toHaveLength(1)
+      expect(store.runningTasks[0].jobId).toBe('run-1')
+      expect(store.historyTasks).toHaveLength(1)
+      expect(store.historyTasks[0].jobId).toBe('hist-1')
       expect(store.isLoading).toBe(false)
     })
   })

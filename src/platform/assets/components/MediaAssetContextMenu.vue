@@ -491,7 +491,7 @@ const contextMenuItems = computed<MenuItem[]>(() => {
   items.push({
     label: t('mediaAsset.actions.download'),
     icon: 'icon-[lucide--download]',
-    command: () => actions.downloadAsset(asset)
+    command: () => actions.downloadAssets([asset])
   })
 
   // Save to cloud (only for local-stored assets — prototype-only).
@@ -530,17 +530,6 @@ const contextMenuItems = computed<MenuItem[]>(() => {
       label: t('prototype.assetCard.remove'),
       icon: 'icon-[lucide--unlink]',
       command: () => emit('remove-from-comfy', asset)
-    })
-  }
-
-  // Move to
-  if (allowMoveActions) {
-    items.push({
-      label: t('mediaAsset.actions.moveTo'),
-      icon: 'icon-[lucide--folder-input]',
-      command: async () => {
-        if (asset) await actions.moveAssets(asset)
-      }
     })
   }
 

@@ -1,8 +1,9 @@
 import { readFileSync } from 'fs'
 
-import { test } from '@playwright/test'
+import { expect } from '@playwright/test'
+import { networkIsolationFixture as test } from '@e2e/fixtures/networkIsolationFixture'
 
-import type { AppMode } from '@/composables/useAppMode'
+import type { AppMode } from '@/utils/appMode'
 import type {
   ComfyApiWorkflow,
   ComfyWorkflowJSON
@@ -62,10 +63,37 @@ export class WorkflowHelper {
 
   async waitForDraftPersisted() {
     await this.comfyPage.page.waitForFunction(() =>
-      Object.keys(localStorage).some((k) =>
-        k.startsWith('Comfy.Workflow.Draft.v2:')
+      Object.keys(localStorage).some((key) =>
+        key.startsWith('Comfy.Workflow.Draft.v2:')
       )
     )
+  }
+
+  /** Waits for V2 draft index recency, not payload content freshness. */
+  async waitForDraftIndexUpdatedSince(updatedSince: number) {
+    await this.comfyPage.page.waitForFunction((indexUpdatedSince) => {
+      for (let i = 0; i < window.localStorage.length; i++) {
+        const key = window.localStorage.key(i)
+        if (!key?.startsWith('Comfy.Workflow.DraftIndex.v2:')) continue
+
+        const json = window.localStorage.getItem(key)
+        if (!json) continue
+
+        try {
+          const index = JSON.parse(json)
+          if (
+            typeof index.updatedAt === 'number' &&
+            index.updatedAt >= indexUpdatedSince
+          ) {
+            return true
+          }
+        } catch {
+          // Ignore malformed storage while waiting for persistence.
+        }
+      }
+
+      return false
+    }, updatedSince)
   }
 
   /**
@@ -77,6 +105,9 @@ export class WorkflowHelper {
   async reloadAndWaitForApp() {
     await this.comfyPage.page.reload({ waitUntil: 'domcontentloaded' })
     await this.comfyPage.waitForAppReady()
+    if (test.info().tags.includes('@vue-nodes')) {
+      await this.comfyPage.vueNodes.waitForNodes()
+    }
   }
 
   async loadGraphData(workflow: ComfyWorkflowJSON): Promise<void> {
@@ -85,13 +116,16 @@ export class WorkflowHelper {
       workflow
     )
     await this.comfyPage.nextFrame()
+    if (test.info().tags.includes('@vue-nodes')) {
+      await this.comfyPage.vueNodes.waitForNodes()
+    }
   }
 
   async loadWorkflow(workflowName: string) {
     await this.comfyPage.workflowUploadInput.setInputFiles(
       assetPath(`${workflowName}.json`)
     )
-    await this.waitForWorkflowIdle()
+    await expect(this.comfyPage.workflowUploadInput).toHaveValue('')
     await this.comfyPage.nextFrame()
     if (test.info().tags.includes('@vue-nodes')) {
       await this.comfyPage.vueNodes.waitForNodes()
@@ -170,7 +204,7 @@ export class WorkflowHelper {
 
   async getLinearModeFromGraph(): Promise<boolean | undefined> {
     return this.comfyPage.page.evaluate(() => {
-      return window.app!.rootGraph.extra?.linearMode as boolean | undefined
+      return window.app!.rootGraph.extra.linearMode as boolean | undefined
     })
   }
 
@@ -188,11 +222,31 @@ export class WorkflowHelper {
     })
   }
 
+  async openPersistedWorkflow(workflowName: string): Promise<void> {
+    await this.comfyPage.page.evaluate(async (name) => {
+      const store = (window.app!.extensionManager as WorkspaceStore).workflow
+      await store.syncWorkflows()
+      const workflow =
+        store.getWorkflowByPath(`workflows/${name}.json`) ??
+        store.persistedWorkflows.find(
+          (candidate) =>
+            candidate.filename === name ||
+            candidate.path.endsWith(`${name}.json`)
+        )
+      if (!workflow) {
+        throw new Error(`Persisted workflow not found: ${name}`)
+      }
+      await store.openWorkflow(workflow)
+    }, workflowName)
+    await this.waitForWorkflowIdle()
+    await this.comfyPage.vueNodes.waitForNodes()
+  }
+
   async waitForWorkflowIdle(timeout = 5000): Promise<void> {
     await this.comfyPage.page.waitForFunction(
       () =>
         !(window.app?.extensionManager as WorkspaceStore | undefined)?.workflow
-          ?.isBusy,
+          .isBusy,
       undefined,
       { timeout }
     )
@@ -200,6 +254,41 @@ export class WorkflowHelper {
 
   async switchToTab(tabName: string): Promise<void> {
     await this.comfyPage.menu.topbar.getWorkflowTab(tabName).click()
+    await this.waitForWorkflowIdle()
+  }
+
+  /** Node ids on the live graph, read from LiteGraph rather than the DOM. */
+  getGraphNodeIds(): Promise<string[]> {
+    return this.comfyPage.page.evaluate(() =>
+      window.app!.graph.nodes.map((node) => String(node.id))
+    )
+  }
+
+  /** A blank workflow tab, with an empty graph confirmed before returning. */
+  async newBlankWorkflow(): Promise<void> {
+    await this.comfyPage.command.executeCommand('Comfy.NewBlankWorkflow')
+    await expect.poll(() => this.getGraphNodeIds()).toEqual([])
+  }
+
+  /**
+   * Opens a new workflow tab, confirms it switched to an empty graph, then
+   * returns to the tab that was active beforehand.
+   */
+  async openNewTabThenReturn(): Promise<void> {
+    const { topbar } = this.comfyPage.menu
+    const originalTabIndex = (await topbar.getTabNames()).length - 1
+    await expect(
+      topbar.getTab(originalTabIndex).and(topbar.getActiveTab())
+    ).toBeVisible()
+    await topbar.newWorkflowButton.click()
+    await expect
+      .poll(() => topbar.getTabNames())
+      .toHaveLength(originalTabIndex + 2)
+    await expect.poll(() => this.getGraphNodeIds()).toEqual([])
+    await topbar.getTab(originalTabIndex).click()
+    await expect(
+      topbar.getTab(originalTabIndex).and(topbar.getActiveTab())
+    ).toBeVisible()
     await this.waitForWorkflowIdle()
   }
 

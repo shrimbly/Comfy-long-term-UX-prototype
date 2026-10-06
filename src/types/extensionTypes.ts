@@ -1,8 +1,8 @@
 import type { Component } from 'vue'
 
 import type { useWorkflowStore } from '@/platform/workflow/management/stores/workflowStore'
-import type { NodeId } from '@/platform/workflow/validation/schemas/workflowSchema'
-import type { ExecutionErrorWsMessage, NodeError } from '@/schemas/apiSchema'
+import type { ExecutionErrorWsMessage } from '@/platform/remote/comfyui/execution/types'
+import type { NodeError } from '@/platform/remote/comfyui/types'
 import type { useDialogService } from '@/services/dialogService'
 import type { ComfyCommand } from '@/stores/commandStore'
 
@@ -13,20 +13,6 @@ interface BaseSidebarTabExtension {
   iconBadge?: string | (() => string | null)
   tooltip?: string
   label?: string
-  panelSize?: number // Panel width percentage (default 20%)
-  panelMinSize?: number // Panel minimum width percentage (default SIDEBAR_MIN_SIZE)
-  /**
-   * Optional suffix appended to the splitter state key when this tab is active.
-   * Lets a tab persist distinct widths for different internal modes (e.g. the
-   * Assets tab stores one width for compact view and another for advanced view).
-   */
-  panelStateKeySuffix?: string
-  /**
-   * Extra pixels added to the panel's min-width at runtime (e.g. for a detail
-   * panel that should expand the sidebar additively without triggering a
-   * splitter remount).
-   */
-  panelExtraWidthPx?: number
 }
 
 interface BaseBottomPanelExtension {
@@ -125,13 +111,14 @@ export interface ExtensionManager {
   dialog: ReturnType<typeof useDialogService>
   command: CommandManager
   setting: {
+    // oxlint-disable-next-line typescript/no-unnecessary-type-parameters -- Custom extensions declare settings outside the generated schema.
     get: <T = unknown>(id: string) => T | undefined
-    set: <T = unknown>(id: string, value: T) => void
+    set: (id: string, value: unknown) => void
   }
   workflow: ReturnType<typeof useWorkflowStore>
 
   // Execution error state (read-only)
-  lastNodeErrors: Record<NodeId, NodeError> | null
+  lastNodeErrors: Record<string, NodeError> | null
   lastExecutionError: ExecutionErrorWsMessage | null
 
   /**

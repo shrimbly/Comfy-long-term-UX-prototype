@@ -1,3 +1,7 @@
+import { useStorage } from '@vueuse/core'
+
+import type { ServerFeatureFlag } from '@/composables/useFeatureFlags'
+
 /**
  * Remote configuration service
  *
@@ -22,18 +26,25 @@ import type { RemoteConfig } from './types'
  * - 'error': Failed to load config
  */
 type RemoteConfigState = 'unloaded' | 'anonymous' | 'authenticated' | 'error'
+export type AuthenticatedRemoteConfigState =
+  | 'unloaded'
+  | 'loading'
+  | 'authenticated'
+  | 'error'
 
 /**
  * Current load state of remote configuration
  */
 export const remoteConfigState = ref<RemoteConfigState>('unloaded')
+export const authenticatedRemoteConfigState =
+  ref<AuthenticatedRemoteConfigState>('unloaded')
+export const remoteConfigRevision = ref(0)
 
-/**
- * Whether the authenticated config has been loaded.
- * Use this to gate access to user-specific feature flags like teamWorkspacesEnabled.
- */
+export const remoteConfigErrorStatus = ref<number | null>(null)
+
+/** Whether the authenticated config has been loaded. */
 export const isAuthenticatedConfigLoaded = computed(
-  () => remoteConfigState.value === 'authenticated'
+  () => authenticatedRemoteConfigState.value === 'authenticated'
 )
 
 /**
@@ -50,3 +61,24 @@ export function configValueOrDefault<K extends keyof RemoteConfig>(
   const configValue = remoteConfig[key]
   return configValue || defaultValue
 }
+
+export const cachedBillingControlEnabled = useStorage<boolean | undefined>(
+  'billing_control_enabled' satisfies `${ServerFeatureFlag.BILLING_CONTROL_ENABLED}`,
+  undefined
+)
+
+export const cachedLegacyBillingMigrationEnabled = ref<boolean | undefined>()
+
+/**
+ * Last authenticated answer for the agent allowlist, so a transient /features
+ * failure cannot unmount the panel mid-session. Deliberately NOT `useStorage`
+ * like its neighbours above: a persisted grant is what let two browsers
+ * disagree for one account (PM-1707).
+ */
+export const sessionAgentGrant = ref<boolean | undefined>()
+export const sessionAgentGrantValidUntil = ref<number | undefined>()
+
+export const cachedV1PaymentRecovery = useStorage<boolean | undefined>(
+  'v1_payment_recovery' satisfies `${ServerFeatureFlag.V1_PAYMENT_RECOVERY}`,
+  undefined
+)

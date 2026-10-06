@@ -1,68 +1,72 @@
-import { createTestingPinia } from '@pinia/testing'
-import { render, screen, waitFor } from '@testing-library/vue'
+import { getActivePinia } from 'pinia'
 import userEvent from '@testing-library/user-event'
+import { render, screen, waitFor } from '@testing-library/vue'
 import PrimeVue from 'primevue/config'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createI18n } from 'vue-i18n'
+
+import { useTelemetry } from '@/platform/telemetry'
+
+import { resolveRunErrorMessage } from '@/platform/errorCatalog/errorMessageResolver'
+import { useCommandStore } from '@/stores/commandStore'
+import { useSystemStatsStore } from '@/stores/systemStatsStore'
+import { toNodeId } from '@/types/nodeId'
+import { createNodeExecutionId } from '@/types/nodeIdentification'
+import { validationError } from '@/utils/__tests__/nodeErrorHelpers'
+
 import ErrorNodeCard from './ErrorNodeCard.vue'
 import type { ErrorCardData } from './types'
 
 const mockGetLogs = vi.fn(() => Promise.resolve('mock server logs'))
-const mockSerialize = vi.fn(() => ({ nodes: [] }))
 const mockGenerateErrorReport = vi.fn(
   (_data?: unknown) => '# ComfyUI Error Report\n...'
 )
 
-vi.mock('@/scripts/api', () => ({
+vi.mock<unknown>(import('@/scripts/api'), () => ({
   api: {
     getLogs: () => mockGetLogs()
   }
 }))
 
-vi.mock('@/scripts/app', () => ({
-  app: {
-    rootGraph: {
-      serialize: () => mockSerialize()
-    }
-  }
-}))
+vi.mock(import('@/scripts/app'))
 
-vi.mock('@/utils/errorReportUtil', () => ({
+vi.mock(import('@/utils/errorReportUtil'), () => ({
   generateErrorReport: (data: unknown) => mockGenerateErrorReport(data)
 }))
 
-const mockTrackHelpResourceClicked = vi.fn()
-
-vi.mock('@/platform/telemetry', () => ({
-  useTelemetry: vi.fn(() => ({
-    trackUiButtonClicked: vi.fn(),
-    trackHelpResourceClicked: mockTrackHelpResourceClicked
-  }))
-}))
-
-const mockExecuteCommand = vi.fn()
-vi.mock('@/stores/commandStore', () => ({
-  useCommandStore: vi.fn(() => ({
-    execute: mockExecuteCommand
-  }))
-}))
-
-vi.mock('@/composables/useExternalLink', () => ({
-  useExternalLink: vi.fn(() => ({
-    staticUrls: {
-      githubIssues: 'https://github.com/Comfy-Org/ComfyUI/issues'
-    }
-  }))
-}))
+vi.mock(import('@/platform/telemetry'))
 
 describe('ErrorNodeCard.vue', () => {
   let i18n: ReturnType<typeof createI18n>
 
   beforeEach(() => {
-    vi.clearAllMocks()
     cardIdCounter = 0
     mockGetLogs.mockResolvedValue('mock server logs')
     mockGenerateErrorReport.mockReturnValue('# ComfyUI Error Report\n...')
+    vi.mocked(useCommandStore().execute).mockResolvedValue(undefined)
+    useSystemStatsStore().systemStats = {
+      system: {
+        os: 'Linux',
+        python_version: '3.11.0',
+        embedded_python: false,
+        comfyui_version: '1.0.0',
+        pytorch_version: '2.1.0',
+        ram_total: 32000,
+        ram_free: 16000,
+        argv: ['--listen']
+      },
+      devices: [
+        {
+          name: 'NVIDIA RTX 4090',
+          type: 'cuda',
+          index: 0,
+          vram_total: 24000,
+          vram_free: 12000,
+          torch_vram_total: 24000,
+          torch_vram_free: 12000
+        }
+      ]
+    }
 
     i18n = createI18n({
       legacy: false,
@@ -71,13 +75,15 @@ describe('ErrorNodeCard.vue', () => {
         en: {
           g: {
             copy: 'Copy',
+            details: 'Details',
             findIssues: 'Find Issues',
             findOnGithub: 'Find on GitHub',
             getHelpAction: 'Get Help'
           },
           rightSidePanel: {
             locateNode: 'Locate Node',
-            enterSubgraph: 'Enter Subgraph',
+            locateNodeFor: 'Locate {item}',
+            errorLog: 'Error log',
             findOnGithubTooltip: 'Search GitHub issues for related problems',
             getHelpTooltip:
               'Report this error and we\u0027ll help you resolve it'
@@ -90,55 +96,26 @@ describe('ErrorNodeCard.vue', () => {
     })
   })
 
-  function renderCard(
-    card: ErrorCardData,
-    options: { initialState?: Record<string, unknown> } = {}
-  ) {
+  function renderCard(card: ErrorCardData) {
     const user = userEvent.setup()
     const onCopyToClipboard = vi.fn()
-    render(ErrorNodeCard, {
-      props: { card, onCopyToClipboard },
+    const onLocateNode = vi.fn()
+    const { container } = render(ErrorNodeCard, {
+      props: { card, onCopyToClipboard, onLocateNode },
       global: {
-        plugins: [
-          PrimeVue,
-          i18n,
-          createTestingPinia({
-            createSpy: vi.fn,
-            initialState: options.initialState ?? {
-              systemStats: {
-                systemStats: {
-                  system: {
-                    os: 'Linux',
-                    python_version: '3.11.0',
-                    embedded_python: false,
-                    comfyui_version: '1.0.0',
-                    pytorch_version: '2.1.0',
-                    argv: ['--listen']
-                  },
-                  devices: [
-                    {
-                      name: 'NVIDIA RTX 4090',
-                      type: 'cuda',
-                      vram_total: 24000,
-                      vram_free: 12000,
-                      torch_vram_total: 24000,
-                      torch_vram_free: 12000
-                    }
-                  ]
-                }
-              }
-            }
-          })
-        ],
+        plugins: [PrimeVue, i18n, getActivePinia()!],
         stubs: {
-          Button: {
-            template:
-              '<button :aria-label="$attrs[\'aria-label\']"><slot /></button>'
-          }
+          TransitionCollapse: { template: '<div><slot /></div>' }
         }
       }
     })
-    return { user, onCopyToClipboard }
+    return { container, user, onCopyToClipboard, onLocateNode }
+  }
+
+  async function toggleRuntimeDetails(
+    user: ReturnType<typeof userEvent.setup>
+  ) {
+    await user.click(screen.getByRole('button', { name: /Details/ }))
   }
 
   let cardIdCounter = 0
@@ -147,7 +124,7 @@ describe('ErrorNodeCard.vue', () => {
     return {
       id: `exec-${++cardIdCounter}`,
       title: 'KSampler',
-      nodeId: '10',
+      nodeId: createNodeExecutionId([toNodeId(10)]),
       nodeTitle: 'KSampler',
       errors: [
         {
@@ -160,40 +137,101 @@ describe('ErrorNodeCard.vue', () => {
     }
   }
 
-  function makeValidationErrorCard(): ErrorCardData {
+  function makePromptErrorCard(): ErrorCardData {
     return {
-      id: `node-${++cardIdCounter}`,
-      title: 'CLIPTextEncode',
-      nodeId: '6',
-      nodeTitle: 'CLIP Text Encode',
+      id: '__prompt__',
+      title: 'Prompt has no outputs',
       errors: [
         {
-          message: 'Required input is missing',
-          details: 'Input: text'
+          message: 'Server Error: No outputs',
+          details: 'Error details',
+          displayMessage:
+            'The workflow does not contain any output nodes to produce a result.'
         }
       ]
     }
   }
 
-  it('displays enriched report for runtime errors on mount', async () => {
+  function makeValidationErrorCard(nodeDisplayName: string): ErrorCardData {
+    const error = validationError(
+      'required_input_missing',
+      'model',
+      {},
+      'Required input is missing',
+      'model'
+    )
+
+    return {
+      id: `validation-${++cardIdCounter}`,
+      title: 'Validation error',
+      errors: [
+        {
+          message: error.message,
+          details: error.details,
+          ...resolveRunErrorMessage({
+            kind: 'node_validation',
+            error,
+            nodeDisplayName
+          })
+        }
+      ]
+    }
+  }
+
+  it('shows runtime details by default and can collapse them', async () => {
     const reportText =
       '# ComfyUI Error Report\n## System Information\n- OS: Linux'
     mockGenerateErrorReport.mockReturnValue(reportText)
 
-    renderCard(makeRuntimeErrorCard())
+    const { user } = renderCard(makeRuntimeErrorCard())
 
     await waitFor(() => {
-      expect(screen.getByText(/ComfyUI Error Report/)).toBeInTheDocument()
+      expect(mockGenerateErrorReport).toHaveBeenCalledOnce()
     })
+    expect(screen.queryByRole('listitem')).not.toBeInTheDocument()
+    expect(screen.getByText('Error log')).toBeInTheDocument()
+    const detailsButton = screen.getByRole('button', { name: /Details/ })
+    const detailsRegion = screen.getByRole('region', { name: 'Error log' })
+    expect(detailsButton).toHaveAttribute(
+      'aria-controls',
+      detailsRegion.getAttribute('id')
+    )
+    expect(screen.getByText(/ComfyUI Error Report/)).toBeInTheDocument()
     expect(screen.getByText(/System Information/)).toBeInTheDocument()
     expect(screen.getByText(/OS: Linux/)).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: /Find on GitHub/ })
+    ).toBeInTheDocument()
+
+    await toggleRuntimeDetails(user)
+
+    expect(screen.queryByText(/ComfyUI Error Report/)).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: /Find on GitHub/ })
+    ).not.toBeInTheDocument()
+  })
+
+  it('locates the node when the runtime node title is clicked', async () => {
+    const { user, onLocateNode } = renderCard(makeRuntimeErrorCard())
+
+    await user.click(screen.getByRole('button', { name: 'KSampler' }))
+
+    expect(onLocateNode).toHaveBeenCalledWith('10')
+  })
+
+  it('exposes a node-specific accessible name on the locate button', () => {
+    renderCard(makeRuntimeErrorCard())
+
+    expect(
+      screen.getByRole('button', { name: 'Locate KSampler' })
+    ).toBeInTheDocument()
   })
 
   it('does not generate report for non-runtime errors', async () => {
-    renderCard(makeValidationErrorCard())
+    renderCard(makePromptErrorCard())
 
     await waitFor(() => {
-      expect(screen.getByText('Input: text')).toBeInTheDocument()
+      expect(screen.getByText('Error details')).toBeInTheDocument()
     })
 
     expect(mockGetLogs).not.toHaveBeenCalled()
@@ -201,12 +239,61 @@ describe('ErrorNodeCard.vue', () => {
   })
 
   it('displays original details for non-runtime errors', async () => {
-    renderCard(makeValidationErrorCard())
+    renderCard(makePromptErrorCard())
 
     await waitFor(() => {
-      expect(screen.getByText('Input: text')).toBeInTheDocument()
+      expect(screen.getByText('Error details')).toBeInTheDocument()
     })
     expect(screen.queryByText(/ComfyUI Error Report/)).not.toBeInTheDocument()
+  })
+
+  it('hides grouped catalog copy and shows the item label as a list item', async () => {
+    renderCard({
+      id: `node-${++cardIdCounter}`,
+      title: 'KSampler',
+      nodeId: createNodeExecutionId([toNodeId(10)]),
+      nodeTitle: 'KSampler',
+      errors: [
+        {
+          message: 'Required input is missing',
+          details: 'model',
+          displayTitle: 'Missing connection',
+          displayMessage:
+            'Required input slots have no connection feeding them.',
+          displayDetails: 'KSampler is missing a required input: model',
+          displayItemLabel: 'KSampler - model'
+        }
+      ]
+    })
+
+    await waitFor(() => {
+      expect(screen.getByText('KSampler - model')).toBeInTheDocument()
+    })
+    expect(screen.getByRole('listitem')).toHaveTextContent('KSampler - model')
+    expect(screen.queryByText('Missing connection')).not.toBeInTheDocument()
+    expect(
+      screen.queryByText(
+        'Required input slots have no connection feeding them.'
+      )
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByText('KSampler is missing a required input: model')
+    ).not.toBeInTheDocument()
+  })
+
+  it('renders catalog copy with literal special characters', () => {
+    const { container } = renderCard(makeValidationErrorCard('Foo & Bar <C>'))
+
+    expect(container.textContent).toContain('Foo & Bar <C>')
+    expect(container.textContent).not.toMatch(/&(?:amp|lt|gt);/)
+  })
+
+  it('renders script-like node names as literal text', () => {
+    const { container } = renderCard(
+      makeValidationErrorCard('<script>x</script>')
+    )
+
+    expect(container.textContent).toContain('<script>x</script>')
   })
 
   it('copies enriched report when copy button is clicked for runtime error', async () => {
@@ -216,29 +303,15 @@ describe('ErrorNodeCard.vue', () => {
     const { user, onCopyToClipboard } = renderCard(makeRuntimeErrorCard())
 
     await waitFor(() => {
-      expect(screen.getByText(/Full Report Content/)).toBeInTheDocument()
+      expect(mockGenerateErrorReport).toHaveBeenCalledOnce()
     })
+    expect(screen.getByText(/Full Report Content/)).toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: /Copy/ }))
 
     expect(onCopyToClipboard).toHaveBeenCalledTimes(1)
     expect(onCopyToClipboard.mock.calls[0][0]).toContain(
       '# Full Report Content'
-    )
-  })
-
-  it('copies original details when copy button is clicked for validation error', async () => {
-    const { user, onCopyToClipboard } = renderCard(makeValidationErrorCard())
-
-    await waitFor(() => {
-      expect(screen.getByText('Input: text')).toBeInTheDocument()
-    })
-
-    await user.click(screen.getByRole('button', { name: /Copy/ }))
-
-    expect(onCopyToClipboard).toHaveBeenCalledTimes(1)
-    expect(onCopyToClipboard.mock.calls[0][0]).toBe(
-      'Required input is missing\n\nInput: text'
     )
   })
 
@@ -266,8 +339,9 @@ describe('ErrorNodeCard.vue', () => {
     renderCard(makeRuntimeErrorCard())
 
     await waitFor(() => {
-      expect(screen.getByText(/Traceback line 1/)).toBeInTheDocument()
+      expect(mockGenerateErrorReport).toHaveBeenCalledOnce()
     })
+    expect(screen.getByText(/Traceback line 1/)).toBeInTheDocument()
   })
 
   it('opens GitHub issues search when Find Issue button is clicked', async () => {
@@ -276,9 +350,7 @@ describe('ErrorNodeCard.vue', () => {
     const { user } = renderCard(makeRuntimeErrorCard())
 
     await waitFor(() => {
-      expect(
-        screen.getByRole('button', { name: /Find on GitHub/ })
-      ).toBeInTheDocument()
+      expect(mockGenerateErrorReport).toHaveBeenCalledOnce()
     })
 
     await user.click(screen.getByRole('button', { name: /Find on GitHub/ }))
@@ -301,15 +373,15 @@ describe('ErrorNodeCard.vue', () => {
     const { user } = renderCard(makeRuntimeErrorCard())
 
     await waitFor(() => {
-      expect(
-        screen.getByRole('button', { name: /Get Help/ })
-      ).toBeInTheDocument()
+      expect(mockGenerateErrorReport).toHaveBeenCalledOnce()
     })
 
     await user.click(screen.getByRole('button', { name: /Get Help/ }))
 
-    expect(mockExecuteCommand).toHaveBeenCalledWith('Comfy.ContactSupport')
-    expect(mockTrackHelpResourceClicked).toHaveBeenCalledWith(
+    expect(useCommandStore().execute).toHaveBeenCalledWith(
+      'Comfy.ContactSupport'
+    )
+    expect(useTelemetry()?.trackHelpResourceClicked).toHaveBeenCalledWith(
       expect.objectContaining({
         resource_type: 'help_feedback',
         source: 'error_dialog'
@@ -334,7 +406,7 @@ describe('ErrorNodeCard.vue', () => {
     const card: ErrorCardData = {
       id: `exec-${++cardIdCounter}`,
       title: 'KSampler',
-      nodeId: '10',
+      nodeId: createNodeExecutionId([toNodeId(10)]),
       nodeTitle: 'KSampler',
       errors: [
         {
@@ -358,15 +430,10 @@ describe('ErrorNodeCard.vue', () => {
   })
 
   it('falls back to original details when systemStats is unavailable', async () => {
-    renderCard(makeRuntimeErrorCard(), {
-      initialState: {
-        systemStats: { systemStats: null }
-      }
-    })
+    useSystemStatsStore().systemStats = null
+    renderCard(makeRuntimeErrorCard())
 
-    await waitFor(() => {
-      expect(screen.getByText(/Traceback line 1/)).toBeInTheDocument()
-    })
+    expect(screen.getByText(/Traceback line 1/)).toBeInTheDocument()
 
     expect(mockGenerateErrorReport).not.toHaveBeenCalled()
   })

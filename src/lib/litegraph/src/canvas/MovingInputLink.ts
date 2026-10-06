@@ -1,5 +1,6 @@
 import type { LGraphNode } from '@/lib/litegraph/src/LGraphNode'
-import { LiteGraph } from '@/lib/litegraph/src/litegraph'
+import { transferLinkPresentation } from '@/core/graph/transferLinkPresentation'
+import { graphScopeOf } from '@/types/graphScopeId'
 import type { LLink } from '@/lib/litegraph/src/LLink'
 import type { Reroute } from '@/lib/litegraph/src/Reroute'
 import type { CustomEventTarget } from '@/lib/litegraph/src/infrastructure/CustomEventTarget'
@@ -27,7 +28,7 @@ export class MovingInputLink extends MovingLinkBase {
   readonly fromDirection: LinkDirection
   readonly fromSlotIndex: SlotIndex
   disconnectOnDrop: boolean
-  readonly disconnectOrigin: Point
+  readonly disconnectOrigin?: Point
 
   constructor(
     network: LinkNetwork,
@@ -69,6 +70,10 @@ export class MovingInputLink extends MovingLinkBase {
   ): LLink | null | undefined {
     if (input === this.inputSlot) return
 
+    const graph = this.inputNode.graph
+    if (!graph) return
+    const scope = graphScopeOf(graph)
+
     this.inputNode.disconnectInput(this.inputIndex, true)
     const link = this.outputNode.connectSlots(
       this.outputSlot,
@@ -76,6 +81,7 @@ export class MovingInputLink extends MovingLinkBase {
       input,
       this.fromReroute?.id
     )
+    transferLinkPresentation(scope, this.presentation, link?.id)
     if (link) events.dispatch('input-moved', this)
     return link
   }
@@ -92,11 +98,16 @@ export class MovingInputLink extends MovingLinkBase {
     output: SubgraphOutput,
     events?: CustomEventTarget<LinkConnectorEventMap>
   ): void {
+    const graph = this.inputNode.graph
+    if (!graph) return
+    const scope = graphScopeOf(graph)
+
     const newLink = output.connect(
       this.fromSlot,
       this.node,
       this.fromReroute?.id
     )
+    transferLinkPresentation(scope, this.presentation, newLink?.id)
     events?.dispatch('link-created', newLink)
   }
 
@@ -111,6 +122,9 @@ export class MovingInputLink extends MovingLinkBase {
     originalReroutes: Reroute[]
   ): void {
     const { outputNode, outputSlot, fromReroute } = this
+    const graph = this.inputNode.graph
+    if (!graph) return
+    const scope = graphScopeOf(graph)
 
     // Clean up reroutes
     for (const reroute of originalReroutes) {
@@ -127,6 +141,7 @@ export class MovingInputLink extends MovingLinkBase {
       input,
       existingLink.parentId
     )
+    transferLinkPresentation(scope, this.presentation, newLink?.id)
     if (newLink) events.dispatch('input-moved', this)
   }
 
@@ -136,24 +151,5 @@ export class MovingInputLink extends MovingLinkBase {
 
   disconnect(): boolean {
     return this.inputNode.disconnectInput(this.inputIndex, true)
-  }
-
-  drawConnectionCircle(ctx: CanvasRenderingContext2D, to: Readonly<Point>) {
-    if (!this.disconnectOnDrop) return
-
-    const [originX, originY] = this.disconnectOrigin
-    const radius = 35
-    const distSquared = (originX - to[0]) ** 2 + (originY - to[1]) ** 2
-
-    ctx.save()
-    ctx.strokeStyle = LiteGraph.WIDGET_OUTLINE_COLOR
-    ctx.lineWidth = 2
-    ctx.beginPath()
-    ctx.moveTo(originX + radius, originY)
-    ctx.arc(originX, originY, radius, 0, Math.PI * 2)
-    ctx.stroke()
-    ctx.restore()
-
-    this.disconnectOnDrop = distSquared < radius ** 2
   }
 }

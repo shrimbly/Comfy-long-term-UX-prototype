@@ -1,44 +1,52 @@
 import * as THREE from 'three'
+import { fromAny } from '@total-typescript/shoehorn'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+
+import { useSettingStore } from '@/platform/settings/settingStore'
 
 import type { ModelLoadContext } from './ModelAdapter'
 import * as ModelAdapterModule from './ModelAdapter'
 import { PointCloudModelAdapter } from './PointCloudModelAdapter'
 
-const mockSettingGet = vi.fn<(key: string) => unknown>()
-
-vi.mock('@/platform/settings/settingStore', () => ({
-  useSettingStore: () => ({ get: mockSettingGet })
-}))
-
-vi.mock('@/scripts/metadata/ply', () => ({
+vi.mock(import('@/scripts/metadata/ply'), () => ({
   isPLYAsciiFormat: vi.fn().mockReturnValue(false)
 }))
 
-vi.mock('three/examples/jsm/loaders/PLYLoader', () => ({
-  PLYLoader: class {
-    setPath = vi.fn()
-    parse = vi.fn(() => makePLYGeometry(false))
-  }
+const plyLoaderParse = vi.fn(() => makePLYGeometry({ withFaces: true }))
+const fastPlyLoaderParse = vi.fn(() => makePLYGeometry({ withFaces: true }))
+
+vi.mock(import('three/examples/jsm/loaders/PLYLoader'), () => ({
+  PLYLoader: fromAny(
+    class {
+      setPath = vi.fn()
+      parse = plyLoaderParse
+    }
+  )
 }))
 
-vi.mock('./loader/FastPLYLoader', () => ({
+vi.mock(import('./loader/FastPLYLoader'), () => ({
   FastPLYLoader: class {
-    parse = vi.fn(() => makePLYGeometry(false))
+    parse = fastPlyLoaderParse
   }
 }))
 
-function makePLYGeometry(withColors: boolean): THREE.BufferGeometry {
+function makePLYGeometry(opts: {
+  withColors?: boolean
+  withFaces?: boolean
+}): THREE.BufferGeometry {
   const geometry = new THREE.BufferGeometry()
   geometry.setAttribute(
     'position',
     new THREE.Float32BufferAttribute([0, 0, 0, 1, 0, 0, 0, 1, 0], 3)
   )
-  if (withColors) {
+  if (opts.withColors) {
     geometry.setAttribute(
       'color',
       new THREE.Float32BufferAttribute([1, 0, 0, 0, 1, 0, 0, 0, 1], 3)
     )
+  }
+  if (opts.withFaces) {
+    geometry.setIndex([0, 1, 2])
   }
   return geometry
 }
@@ -55,10 +63,6 @@ function makeContext(
 }
 
 describe('PointCloudModelAdapter', () => {
-  beforeEach(() => {
-    mockSettingGet.mockReset()
-  })
-
   describe('identity', () => {
     it('handles the ply extension', () => {
       const adapter = new PointCloudModelAdapter()
@@ -84,7 +88,7 @@ describe('PointCloudModelAdapter', () => {
 
   describe('load', () => {
     beforeEach(() => {
-      mockSettingGet.mockReturnValue('three')
+      vi.mocked(useSettingStore().get).mockReturnValue('three')
       vi.spyOn(ModelAdapterModule, 'fetchModelData').mockResolvedValue(
         new ArrayBuffer(0)
       )
@@ -96,8 +100,8 @@ describe('PointCloudModelAdapter', () => {
 
       const result = await adapter.load(ctx, '/api/view?', 'cloud.ply')
 
-      expect(result).toBeInstanceOf(THREE.Group)
-      const child = result!.children[0]
+      expect(result!.object).toBeInstanceOf(THREE.Group)
+      const child = result!.object.children[0]
       expect(child).toBeInstanceOf(THREE.Mesh)
       expect(ctx.setOriginalModel).toHaveBeenCalledTimes(1)
     })
@@ -108,9 +112,57 @@ describe('PointCloudModelAdapter', () => {
 
       const result = await adapter.load(ctx, '/api/view?', 'cloud.ply')
 
-      expect(result).toBeInstanceOf(THREE.Group)
-      const child = result!.children[0]
+      expect(result!.object).toBeInstanceOf(THREE.Group)
+      const child = result!.object.children[0]
       expect(child).toBeInstanceOf(THREE.Points)
+    })
+
+    it('forces Points rendering for a face-less PLY even on materialMode=original', async () => {
+      plyLoaderParse.mockReturnValueOnce(makePLYGeometry({ withFaces: false }))
+      const adapter = new PointCloudModelAdapter()
+      const ctx = makeContext('original')
+
+      const result = await adapter.load(ctx, '/api/view?', 'cloud.ply')
+
+      const child = result!.object.children[0]
+      expect(child).toBeInstanceOf(THREE.Points)
+    })
+
+    it('returns narrowed materialModes capability for a face-less PLY', async () => {
+      plyLoaderParse.mockReturnValueOnce(makePLYGeometry({ withFaces: false }))
+      const adapter = new PointCloudModelAdapter()
+
+      const result = await adapter.load(
+        makeContext('original'),
+        '/api/view?',
+        'cloud.ply'
+      )
+
+      expect([...result!.capabilities.materialModes]).toEqual(['pointCloud'])
+    })
+
+    it('returns full materialModes capability for a face-bearing PLY (independent of prior loads)', async () => {
+      const adapter = new PointCloudModelAdapter()
+      plyLoaderParse.mockReturnValueOnce(makePLYGeometry({ withFaces: false }))
+      const faceless = await adapter.load(
+        makeContext('original'),
+        '/api/view?',
+        'cloud.ply'
+      )
+      expect([...faceless!.capabilities.materialModes]).toEqual(['pointCloud'])
+
+      plyLoaderParse.mockReturnValueOnce(makePLYGeometry({ withFaces: true }))
+      const faceful = await adapter.load(
+        makeContext('original'),
+        '/api/view?',
+        'mesh.ply'
+      )
+      expect([...faceful!.capabilities.materialModes]).toEqual([
+        'original',
+        'pointCloud',
+        'normal',
+        'wireframe'
+      ])
     })
   })
 })

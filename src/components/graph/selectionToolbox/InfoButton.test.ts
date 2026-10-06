@@ -1,29 +1,26 @@
 import { render, screen } from '@testing-library/vue'
 import userEvent from '@testing-library/user-event'
-import { createPinia, setActivePinia } from 'pinia'
 import PrimeVue from 'primevue/config'
 import Tooltip from 'primevue/tooltip'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createI18n } from 'vue-i18n'
 
+import { useTelemetry } from '@/platform/telemetry'
+
 import InfoButton from '@/components/graph/selectionToolbox/InfoButton.vue'
 import Button from '@/components/ui/button/Button.vue'
 
-const { openPanelMock } = vi.hoisted(() => ({
-  openPanelMock: vi.fn()
+const { openNodeInfoMock } = vi.hoisted(() => ({
+  openNodeInfoMock: vi.fn()
 }))
 
-vi.mock('@/stores/workspace/rightSidePanelStore', () => ({
-  useRightSidePanelStore: () => ({
-    openPanel: openPanelMock
+vi.mock<unknown>(import('@/composables/graph/useSelectionState'), () => ({
+  useSelectionState: () => ({
+    openNodeInfo: openNodeInfoMock
   })
 }))
 
-vi.mock('@/platform/telemetry', () => ({
-  useTelemetry: () => ({
-    trackUiButtonClicked: vi.fn()
-  })
-}))
+vi.mock(import('@/platform/telemetry'))
 
 describe('InfoButton', () => {
   const i18n = createI18n({
@@ -39,8 +36,7 @@ describe('InfoButton', () => {
   })
 
   beforeEach(() => {
-    setActivePinia(createPinia())
-    vi.clearAllMocks()
+    openNodeInfoMock.mockReturnValue(true)
   })
 
   const renderComponent = () => {
@@ -53,12 +49,30 @@ describe('InfoButton', () => {
     })
   }
 
-  it('should open the info panel on click', async () => {
+  const clickNodeInfoButton = async () => {
     const user = userEvent.setup()
+    await user.click(screen.getByRole('button', { name: 'Node Info' }))
+  }
+
+  it('should open the node info panel on click', async () => {
     renderComponent()
 
-    await user.click(screen.getByRole('button', { name: 'Node Info' }))
+    await clickNodeInfoButton()
 
-    expect(openPanelMock).toHaveBeenCalledWith('info')
+    expect(openNodeInfoMock).toHaveBeenCalled()
+    expect(useTelemetry()?.trackUiButtonClicked).toHaveBeenCalledWith({
+      button_id: 'selection_toolbox_node_info_opened',
+      element_group: 'selection_toolbox'
+    })
+  })
+
+  it('should not track the click when the node info panel is unavailable', async () => {
+    openNodeInfoMock.mockReturnValue(false)
+    renderComponent()
+
+    await clickNodeInfoButton()
+
+    expect(openNodeInfoMock).toHaveBeenCalled()
+    expect(useTelemetry()?.trackUiButtonClicked).not.toHaveBeenCalled()
   })
 })

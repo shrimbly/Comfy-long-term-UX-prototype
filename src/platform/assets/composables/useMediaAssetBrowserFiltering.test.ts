@@ -1,0 +1,301 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { nextTick, ref } from 'vue'
+
+import type { AssetItem } from '@/platform/assets/schemas/assetSchema'
+
+import { useAssetTags } from './useAssetTags'
+import type { MetadataExtractor } from './useMediaAssetBrowserFiltering'
+import { useMediaAssetBrowserFiltering } from './useMediaAssetBrowserFiltering'
+
+function makeAsset(
+  overrides: Partial<AssetItem> & { id: string; name: string }
+): AssetItem {
+  return {
+    tags: [],
+    created_at: '2026-01-01T00:00:00Z',
+    updated_at: '2026-01-01T00:00:00Z',
+    ...overrides
+  }
+}
+
+describe('useMediaAssetBrowserFiltering - date filter', () => {
+  beforeEach(() => {
+    vi.useFakeTimers()
+    // Wednesday, 2025-03-12 14:30:00
+    vi.setSystemTime(new Date(2025, 2, 12, 14, 30, 0))
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it('filters assets by "today" preset', async () => {
+    const todayAsset = makeAsset({
+      id: '1',
+      name: 'today.png',
+      created_at: new Date(2025, 2, 12, 10, 0, 0).toISOString()
+    })
+    const yesterdayAsset = makeAsset({
+      id: '2',
+      name: 'yesterday.png',
+      created_at: new Date(2025, 2, 11, 10, 0, 0).toISOString()
+    })
+    const assets = ref([todayAsset, yesterdayAsset])
+
+    const { metadataFilters, filteredAssets } =
+      useMediaAssetBrowserFiltering(assets)
+    metadataFilters.value = [{ field: 'date', value: 'today' }]
+    await nextTick()
+
+    expect(filteredAssets.value.map((a) => a.id)).toEqual(['1'])
+  })
+
+  it('filters assets by "yesterday" preset', async () => {
+    const todayAsset = makeAsset({
+      id: '1',
+      name: 'today.png',
+      created_at: new Date(2025, 2, 12, 10, 0, 0).toISOString()
+    })
+    const yesterdayAsset = makeAsset({
+      id: '2',
+      name: 'yesterday.png',
+      created_at: new Date(2025, 2, 11, 10, 0, 0).toISOString()
+    })
+    const assets = ref([todayAsset, yesterdayAsset])
+
+    const { metadataFilters, filteredAssets } =
+      useMediaAssetBrowserFiltering(assets)
+    metadataFilters.value = [{ field: 'date', value: 'yesterday' }]
+    await nextTick()
+
+    expect(filteredAssets.value.map((a) => a.id)).toEqual(['2'])
+  })
+
+  it('filters assets by "thisWeek" preset', async () => {
+    const thisWeekAsset = makeAsset({
+      id: '1',
+      name: 'week.png',
+      created_at: new Date(2025, 2, 10, 10, 0, 0).toISOString()
+    })
+    const lastWeekAsset = makeAsset({
+      id: '2',
+      name: 'lastweek.png',
+      created_at: new Date(2025, 2, 1, 10, 0, 0).toISOString()
+    })
+    const assets = ref([thisWeekAsset, lastWeekAsset])
+
+    const { metadataFilters, filteredAssets } =
+      useMediaAssetBrowserFiltering(assets)
+    metadataFilters.value = [{ field: 'date', value: 'thisWeek' }]
+    await nextTick()
+
+    expect(filteredAssets.value.map((a) => a.id)).toEqual(['1'])
+  })
+
+  it('excludes assets with no timestamp', async () => {
+    const noDateAsset = makeAsset({ id: '1', name: 'nodate.png' })
+    const assets = ref([noDateAsset])
+
+    const { metadataFilters, filteredAssets } =
+      useMediaAssetBrowserFiltering(assets)
+    metadataFilters.value = [{ field: 'date', value: 'today' }]
+    await nextTick()
+
+    expect(filteredAssets.value).toEqual([])
+  })
+})
+
+describe('useMediaAssetBrowserFiltering - tag filter', () => {
+  it('filters assets by user tag', async () => {
+    const tagged = makeAsset({
+      id: '1',
+      name: 'tag-filter-1.png',
+      tags: ['output']
+    })
+    const untagged = makeAsset({
+      id: '2',
+      name: 'tag-filter-2.png',
+      tags: ['output']
+    })
+    useAssetTags().setTags(tagged, ['hero'])
+    const assets = ref([tagged, untagged])
+
+    const { metadataFilters, filteredAssets } =
+      useMediaAssetBrowserFiltering(assets)
+    metadataFilters.value = [{ field: 'tag', value: 'hero' }]
+    await nextTick()
+
+    expect(filteredAssets.value.map((a) => a.id)).toEqual(['1'])
+  })
+
+  it('matches user tags case-insensitively', async () => {
+    const asset = makeAsset({
+      id: '1',
+      name: 'tag-case.png',
+      tags: ['output']
+    })
+    useAssetTags().setTags(asset, ['Cinematic'])
+    const assets = ref([asset])
+
+    const { metadataFilters, filteredAssets } =
+      useMediaAssetBrowserFiltering(assets)
+    metadataFilters.value = [{ field: 'tag', value: 'cinematic' }]
+    await nextTick()
+
+    expect(filteredAssets.value.map((a) => a.id)).toEqual(['1'])
+  })
+
+  it('excludes assets with no user tags', async () => {
+    const asset = makeAsset({
+      id: '1',
+      name: 'tag-empty.png',
+      tags: ['output']
+    })
+    const assets = ref([asset])
+
+    const { metadataFilters, filteredAssets } =
+      useMediaAssetBrowserFiltering(assets)
+    metadataFilters.value = [{ field: 'tag', value: 'never-set' }]
+    await nextTick()
+
+    expect(filteredAssets.value).toEqual([])
+  })
+
+  it('does not match system tags like input/output', async () => {
+    const asset = makeAsset({
+      id: '1',
+      name: 'tag-system.png',
+      tags: ['output']
+    })
+    const assets = ref([asset])
+
+    const { metadataFilters, filteredAssets } =
+      useMediaAssetBrowserFiltering(assets)
+    metadataFilters.value = [{ field: 'tag', value: 'output' }]
+    await nextTick()
+
+    expect(filteredAssets.value).toEqual([])
+  })
+})
+
+describe('useMediaAssetBrowserFiltering - type filter', () => {
+  it('filters assets by media type', async () => {
+    const imageAsset = makeAsset({ id: '1', name: 'photo.png' })
+    const videoAsset = makeAsset({ id: '2', name: 'clip.mp4' })
+    const audioAsset = makeAsset({ id: '3', name: 'song.mp3' })
+    const assets = ref([imageAsset, videoAsset, audioAsset])
+
+    const { metadataFilters, filteredAssets } =
+      useMediaAssetBrowserFiltering(assets)
+    metadataFilters.value = [{ field: 'type', value: 'image' }]
+    await nextTick()
+
+    expect(filteredAssets.value.map((a) => a.id)).toEqual(['1'])
+  })
+
+  it('matches type case-insensitively', async () => {
+    const videoAsset = makeAsset({ id: '1', name: 'clip.mp4' })
+    const assets = ref([videoAsset])
+
+    const { metadataFilters, filteredAssets } =
+      useMediaAssetBrowserFiltering(assets)
+    metadataFilters.value = [{ field: 'type', value: 'Video' }]
+    await nextTick()
+
+    expect(filteredAssets.value.map((a) => a.id)).toEqual(['1'])
+  })
+
+  it('filters 3D assets', async () => {
+    const modelAsset = makeAsset({ id: '1', name: 'scene.glb' })
+    const imageAsset = makeAsset({ id: '2', name: 'photo.png' })
+    const assets = ref([modelAsset, imageAsset])
+
+    const { metadataFilters, filteredAssets } =
+      useMediaAssetBrowserFiltering(assets)
+    metadataFilters.value = [{ field: 'type', value: '3D' }]
+    await nextTick()
+
+    expect(filteredAssets.value.map((a) => a.id)).toEqual(['1'])
+  })
+})
+
+describe('useMediaAssetBrowserFiltering - prompt metadata filter', () => {
+  it('filters by prompt metadata field using extractor', async () => {
+    const asset1 = makeAsset({ id: '1', name: 'a.png' })
+    const asset2 = makeAsset({ id: '2', name: 'b.png' })
+    const assets = ref([asset1, asset2])
+
+    const extractor: MetadataExtractor = {
+      getCached: (id: string) => {
+        if (id === '1')
+          return {
+            model: 'sdxl.safetensors',
+            lora: null,
+            vae: null,
+            workflowTitle: null,
+            prompt: null,
+            steps: null,
+            seed: null
+          }
+        return null
+      }
+    }
+
+    const { metadataFilters, filteredAssets } = useMediaAssetBrowserFiltering(
+      assets,
+      {
+        metadataExtractor: extractor
+      }
+    )
+    metadataFilters.value = [{ field: 'model', value: 'sdxl' }]
+    await nextTick()
+
+    expect(filteredAssets.value.map((a) => a.id)).toEqual(['1'])
+  })
+})
+
+describe('useMediaAssetBrowserFiltering - combined filters', () => {
+  beforeEach(() => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date(2025, 2, 12, 14, 30, 0))
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it('combines date and tag filters with AND logic', async () => {
+    localStorage.clear()
+    const asset1 = makeAsset({
+      id: '1',
+      name: 'a.png',
+      tags: ['output'],
+      created_at: new Date(2025, 2, 12, 10, 0, 0).toISOString()
+    })
+    const asset2 = makeAsset({
+      id: '2',
+      name: 'b.png',
+      tags: ['input'],
+      created_at: new Date(2025, 2, 12, 10, 0, 0).toISOString()
+    })
+    const asset3 = makeAsset({
+      id: '3',
+      name: 'c.png',
+      tags: ['output'],
+      created_at: new Date(2025, 2, 11, 10, 0, 0).toISOString()
+    })
+    useAssetTags().setTags(asset1, ['hero'])
+    useAssetTags().setTags(asset3, ['hero'])
+    const assets = ref([asset1, asset2, asset3])
+
+    const { metadataFilters, filteredAssets } =
+      useMediaAssetBrowserFiltering(assets)
+    metadataFilters.value = [
+      { field: 'date', value: 'today' },
+      { field: 'tag', value: 'hero' }
+    ]
+    await nextTick()
+
+    expect(filteredAssets.value.map((a) => a.id)).toEqual(['1'])
+  })
+})

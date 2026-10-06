@@ -1,19 +1,22 @@
 <script setup lang="ts">
-import type { Locale } from '../../i18n/translations'
+import type { Locale } from '@/i18n/translations'
 
 import { ref } from 'vue'
 
-import { t } from '../../i18n/translations'
+import { translationsFor } from '@/i18n/translations'
 
 const {
   arcadeId,
   title,
+  aspectRatio = 16 / 9,
   locale = 'en'
 } = defineProps<{
   arcadeId: string
   title: string
+  aspectRatio?: number
   locale?: Locale
 }>()
+const { t } = translationsFor(locale)
 
 const loaded = ref(false)
 </script>
@@ -21,10 +24,11 @@ const loaded = ref(false)
 <template>
   <section
     class="px-4 py-8 lg:px-20 lg:py-16"
-    :aria-label="t('demos.embed.label', locale)"
+    :aria-label="t('demos.embed.label')"
   >
     <div
-      class="relative mx-auto aspect-video max-w-6xl overflow-hidden rounded-4xl border border-white/10"
+      class="relative mx-auto max-w-6xl overflow-hidden rounded-4xl border border-white/10"
+      :style="{ aspectRatio }"
     >
       <div
         v-if="!loaded"
@@ -32,17 +36,17 @@ const loaded = ref(false)
         class="absolute inset-0 flex flex-col items-center justify-center bg-black/50"
       >
         <div
-          class="border-primary-comfy-canvas/60 mb-4 size-10 animate-pulse rounded-full border-2"
+          class="mb-4 size-10 animate-pulse rounded-full border-2 border-primary-comfy-canvas/60"
         />
-        <p class="text-primary-warm-gray text-sm">
-          {{ t('demos.loading', locale) }}
+        <p class="text-sm text-primary-warm-gray">
+          {{ t('demos.loading') }}
         </p>
       </div>
 
       <iframe
         class="size-full"
         :src="`https://demo.arcade.software/${arcadeId}?embed&show_title=0`"
-        :title="`${t('demos.embed.label', locale)}: ${title}`"
+        :title="`${t('demos.embed.label')}: ${title}`"
         loading="lazy"
         allow="clipboard-write"
         referrerpolicy="strict-origin-when-cross-origin"
@@ -52,14 +56,14 @@ const loaded = ref(false)
 
     <noscript>
       <p class="text-primary-warm-gray mt-4 text-sm">
-        {{ t('demos.noscript', locale) }}
+        {{ t('demos.noscript.text') }}
         <a
           class="text-primary-comfy-yellow ml-2 underline"
           :href="`https://demo.arcade.software/${arcadeId}`"
           rel="noopener noreferrer"
           target="_blank"
         >
-          {{ t('demos.noscript.link', locale) }}
+          {{ t('demos.noscript.link') }}
         </a>
       </p>
     </noscript>

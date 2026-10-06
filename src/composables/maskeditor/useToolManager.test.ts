@@ -1,30 +1,14 @@
+import { useMaskEditorStore } from '@/stores/maskEditorStore'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { effectScope, nextTick, reactive } from 'vue'
+import { effectScope, nextTick } from 'vue'
 import type { EffectScope } from 'vue'
 
 import { useBrushDrawing } from '@/composables/maskeditor/useBrushDrawing'
 import { useToolManager } from '@/composables/maskeditor/useToolManager'
 import { Tools } from '@/extensions/core/maskeditor/types'
+import { app } from '@/scripts/app'
 
-type MockStore = {
-  currentTool: Tools
-  activeLayer: 'mask' | 'rgb'
-  pointerZone: HTMLElement | null
-  brushVisible: boolean
-  brushPreviewGradientVisible: boolean
-  isAdjustingBrush: boolean
-  isPanning: boolean
-}
-
-const mockStore: MockStore = reactive({
-  currentTool: Tools.MaskPen,
-  activeLayer: 'mask',
-  pointerZone: null,
-  brushVisible: true,
-  brushPreviewGradientVisible: false,
-  isAdjustingBrush: false,
-  isPanning: false
-}) as MockStore
+let mockStore: ReturnType<typeof useMaskEditorStore>
 
 const mockBrushDrawing = {
   startDrawing: vi.fn().mockResolvedValue(undefined),
@@ -48,41 +32,25 @@ const mockCoordinateTransform = {
   canvasToScreen: vi.fn()
 }
 
-vi.mock('@/stores/maskEditorStore', () => ({
-  useMaskEditorStore: vi.fn(() => mockStore)
-}))
-
-vi.mock('@/composables/maskeditor/useBrushDrawing', () => ({
+vi.mock<unknown>(import('@/composables/maskeditor/useBrushDrawing'), () => ({
   useBrushDrawing: vi.fn(() => mockBrushDrawing)
 }))
 
-vi.mock('@/composables/maskeditor/useCanvasTools', () => ({
+vi.mock<unknown>(import('@/composables/maskeditor/useCanvasTools'), () => ({
   useCanvasTools: vi.fn(() => mockCanvasTools)
 }))
 
-vi.mock('@/composables/maskeditor/useCoordinateTransform', () => ({
+vi.mock(import('@/composables/maskeditor/useCoordinateTransform'), () => ({
   useCoordinateTransform: vi.fn(() => mockCoordinateTransform)
 }))
 
-vi.mock('@/scripts/app', () => ({
-  app: {
-    extensionManager: {
-      setting: {
-        get: vi.fn((key: string) => {
-          if (key === 'Comfy.MaskEditor.UseDominantAxis') return false
-          if (key === 'Comfy.MaskEditor.BrushAdjustmentSpeed') return 1
-          return undefined
-        })
-      }
-    }
-  }
-}))
+vi.mock(import('@/scripts/app'))
 
 const mockKeyboard = {
   isKeyDown: vi.fn().mockReturnValue(false),
   addListeners: vi.fn(),
   removeListeners: vi.fn()
-}
+} satisfies Parameters<typeof useToolManager>[0]
 
 const mockPanZoom = {
   initializeCanvasPanZoom: vi.fn(),
@@ -96,41 +64,53 @@ const mockPanZoom = {
   invalidatePanZoom: vi.fn(),
   addPenPointerId: vi.fn(),
   removePenPointerId: vi.fn()
+} satisfies Parameters<typeof useToolManager>[1]
+
+type TestPointerEventInit = PointerEventInit & {
+  offsetX?: number
+  offsetY?: number
+  type?: string
 }
 
-const pointerEvent = (
-  init: Partial<PointerEvent> & { pointerType?: string }
-): PointerEvent => {
-  return {
-    preventDefault: vi.fn(),
+const pointerEvent = ({
+  offsetX = 0,
+  offsetY = 0,
+  type = 'pointerdown',
+  ...init
+}: TestPointerEventInit = {}): PointerEvent => {
+  const event = new PointerEvent(type, {
     pointerId: 1,
     pointerType: 'mouse',
     button: 0,
     buttons: 0,
     clientX: 0,
     clientY: 0,
-    offsetX: 0,
-    offsetY: 0,
     altKey: false,
     ...init
-  } as unknown as PointerEvent
+  })
+  vi.spyOn(event, 'preventDefault')
+  Object.defineProperties(event, {
+    offsetX: { value: offsetX },
+    offsetY: { value: offsetY }
+  })
+  return event
 }
 
 let scope: EffectScope | null = null
 
 const setup = (): ReturnType<typeof useToolManager> => {
   scope = effectScope()
-  return scope.run(() =>
-    useToolManager(
-      mockKeyboard as unknown as Parameters<typeof useToolManager>[0],
-      mockPanZoom as unknown as Parameters<typeof useToolManager>[1]
-    )
-  )!
+  return scope.run(() => useToolManager(mockKeyboard, mockPanZoom))!
 }
 
 describe('useToolManager', () => {
   beforeEach(() => {
-    vi.clearAllMocks()
+    vi.mocked(app.extensionManager.setting.get).mockImplementation((key) => {
+      if (key === 'Comfy.MaskEditor.UseDominantAxis') return false
+      if (key === 'Comfy.MaskEditor.BrushAdjustmentSpeed') return 1
+      return undefined
+    })
+    mockStore = useMaskEditorStore()
     mockStore.currentTool = Tools.MaskPen
     mockStore.activeLayer = 'mask'
     mockStore.pointerZone = document.createElement('div')
@@ -307,7 +287,9 @@ describe('useToolManager', () => {
 
     it('should start panning on middle mouse button (buttons===4)', async () => {
       const tm = setup()
-      await tm.handlePointerDown(pointerEvent({ buttons: 4 }))
+      await tm.handlePointerDown(
+        pointerEvent({ type: 'pointerdown', buttons: 4 })
+      )
 
       expect(mockPanZoom.handlePanStart).toHaveBeenCalled()
       expect(mockStore.brushVisible).toBe(false)
@@ -434,7 +416,19 @@ describe('useToolManager', () => {
 
     it('should pan on middle button drag', async () => {
       const tm = setup()
-      await tm.handlePointerMove(pointerEvent({ buttons: 4 }))
+      await tm.handlePointerMove(
+        pointerEvent({ type: 'pointermove', buttons: 4 })
+      )
+
+      expect(mockPanZoom.handlePanMove).toHaveBeenCalled()
+      expect(mockBrushDrawing.handleDrawing).not.toHaveBeenCalled()
+    })
+
+    it('should keep panning when middle button is held with another button', async () => {
+      const tm = setup()
+      await tm.handlePointerMove(
+        pointerEvent({ type: 'pointermove', buttons: 5 })
+      )
 
       expect(mockPanZoom.handlePanMove).toHaveBeenCalled()
       expect(mockBrushDrawing.handleDrawing).not.toHaveBeenCalled()

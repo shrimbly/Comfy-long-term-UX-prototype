@@ -1,0 +1,93 @@
+import { computed } from 'vue'
+import { useBillingContext } from '@/composables/billing/useBillingContext'
+import { useDialogStore } from '@/stores/dialogStore'
+/**
+ * Settings dialog migration regression net: `useSettingsDialog().show()` must
+ * open the Reka-renderer path with sizing that matches the previous
+ * `BaseModalLayout size="sm"` (960px × 80vh). Catches accidental reverts of
+ * the Phase 3 renderer flip.
+ */
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+
+const showDialog = vi.hoisted(() => vi.fn())
+const isCloudRef = vi.hoisted(() => ({ value: false }))
+
+vi.mock(import('@/platform/distribution/types'), () => ({
+  get isCloud() {
+    return isCloudRef.value
+  }
+}))
+
+vi.mock(import('@/i18n'))
+
+vi.mock(import('@/platform/telemetry'))
+
+beforeEach(() => {
+  const billing = useBillingContext()
+  Object.assign(billing, {
+    canAccessSubscriptionFeatures: computed(() => true),
+    isFreeTier: computed(() => false),
+    type: computed(() => 'legacy')
+  })
+  vi.mocked(useBillingContext).mockReturnValue(billing)
+})
+
+vi.mock(import('@/composables/billing/useBillingContext'))
+
+import { useSettingsDialog } from '@/platform/settings/composables/useSettingsDialog'
+
+beforeEach(() => {
+  useDialogStore().showDialog = showDialog
+  vi.mocked(useDialogStore().closeDialog).mockImplementation(() => undefined)
+})
+
+describe('useSettingsDialog', () => {
+  beforeEach(() => {
+    isCloudRef.value = false
+  })
+
+  it("show() opens the Reka renderer with size 'full' and 1280px content sizing", () => {
+    useSettingsDialog().show()
+    const [args] = showDialog.mock.calls[0]
+    expect(args.key).toBe('global-settings')
+    expect(args.dialogComponentProps.renderer).toBe('reka')
+    expect(args.dialogComponentProps.size).toBe('full')
+    expect(args.dialogComponentProps.contentClass).toContain('max-w-[1280px]')
+    expect(args.dialogComponentProps.contentClass).not.toContain(
+      'max-w-[960px]'
+    )
+    expect(args.dialogComponentProps.contentClass).toContain('h-[80vh]')
+  })
+
+  it('show() uses non-modal Reka so nested PrimeVue dialogs keep focus and pointer events', () => {
+    useSettingsDialog().show()
+    const [args] = showDialog.mock.calls[0]
+    expect(args.dialogComponentProps.modal).toBe(false)
+  })
+
+  it('show() omits overlayClass when not in workspace mode', () => {
+    useSettingsDialog().show()
+    const [args] = showDialog.mock.calls[0]
+    expect(args.dialogComponentProps.overlayClass).toBeUndefined()
+  })
+
+  it("show() sets overlayClass 'p-8' on Cloud", () => {
+    isCloudRef.value = true
+
+    useSettingsDialog().show()
+    const [args] = showDialog.mock.calls[0]
+    expect(args.dialogComponentProps.overlayClass).toBe('p-8')
+  })
+
+  it('show(panel) forwards defaultPanel to the dialog props', () => {
+    useSettingsDialog().show('about')
+    const [args] = showDialog.mock.calls[0]
+    expect(args.props.defaultPanel).toBe('about')
+  })
+
+  it('showAbout() opens the about panel', () => {
+    useSettingsDialog().showAbout()
+    const [args] = showDialog.mock.calls[0]
+    expect(args.props.defaultPanel).toBe('about')
+  })
+})

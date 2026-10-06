@@ -86,6 +86,7 @@ export function buildPrototypeMediaAssets(_personaId?: string): AssetItem[] {
         display_name: filename,
         size: 0,
         created_at: fileTimestamp(project.startDate, i),
+        updated_at: fileTimestamp(project.startDate, i),
         tags: project.fileTags,
         thumbnail_url: url,
         preview_url: url,

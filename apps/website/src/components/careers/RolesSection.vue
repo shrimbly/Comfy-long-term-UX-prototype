@@ -1,56 +1,109 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { useEventListener, useTemplateRefsList } from '@vueuse/core'
+import { computed, onMounted, ref } from 'vue'
 
-import type { Department } from '../../data/roles'
-import type { Locale } from '../../i18n/translations'
+import type { Department } from '@/data/roles'
+import type { Locale } from '@/i18n/translations'
 
-import { t } from '../../i18n/translations'
-import CategoryNav from '../common/CategoryNav.vue'
-import SectionLabel from '../common/SectionLabel.vue'
+import { prefersReducedMotion } from '@/composables/useReducedMotion'
+import { translationsFor } from '@/i18n/translations'
+import { scrollTo } from '@/scripts/smoothScroll'
+import CategoryNav from '@/components/common/CategoryNav.vue'
+import SectionLabel from '@/components/common/SectionLabel.vue'
 
 const { locale = 'en', departments = [] } = defineProps<{
   locale?: Locale
   departments?: readonly Department[]
 }>()
-
-const activeCategory = ref('all')
+const { t } = translationsFor(locale)
 
 const visibleDepartments = computed(() =>
   departments.filter((d) => d.roles.length > 0)
 )
 
-const categories = computed(() => [
-  { label: 'ALL', value: 'all' },
-  ...visibleDepartments.value.map((d) => ({ label: d.name, value: d.key }))
-])
-
-const filteredDepartments = computed(() =>
-  activeCategory.value === 'all'
-    ? visibleDepartments.value
-    : visibleDepartments.value.filter((d) => d.key === activeCategory.value)
+const categories = computed(() =>
+  visibleDepartments.value.map((d) => ({ label: d.name, value: d.key }))
 )
 
 const hasRoles = computed(() => visibleDepartments.value.length > 0)
+
+const activeCategory = ref('')
+
+const sectionRefs = useTemplateRefsList<HTMLElement>()
+
+let isScrolling = false
+let pendingFrame = 0
+
+const HEADER_OFFSET = -144
+const ACTIVATION_OFFSET = 300
+
+const deptElementId = (key: string) => `careers-dept-${key}`
+
+function pickActiveSection() {
+  pendingFrame = 0
+  if (isScrolling) return
+  const sections = sectionRefs.value as HTMLElement[]
+  if (sections.length === 0) return
+
+  let active = sections[0]
+  for (const el of sections) {
+    if (el.getBoundingClientRect().top - ACTIVATION_OFFSET <= 0) {
+      active = el
+    } else {
+      break
+    }
+  }
+  activeCategory.value = active.id.replace(/^careers-dept-/, '')
+}
+
+function scheduleUpdate() {
+  if (pendingFrame !== 0) return
+  pendingFrame = requestAnimationFrame(pickActiveSection)
+}
+
+onMounted(pickActiveSection)
+useEventListener('scroll', scheduleUpdate, { passive: true })
+useEventListener('resize', scheduleUpdate, { passive: true })
+
+function scrollToDepartment(deptKey: string) {
+  activeCategory.value = deptKey
+  isScrolling = true
+  const el = document.getElementById(deptElementId(deptKey))
+  if (!el) {
+    isScrolling = false
+    return
+  }
+  scrollTo(el, {
+    offset: HEADER_OFFSET,
+    duration: 0.8,
+    immediate: prefersReducedMotion(),
+    onComplete: () => {
+      isScrolling = false
+      pickActiveSection()
+    }
+  })
+}
 </script>
 
 <template>
   <section class="px-6 py-20 md:px-20 md:py-32" data-testid="careers-roles">
     <div class="mx-auto max-w-6xl">
-      <div class="flex flex-col gap-12 md:flex-row md:gap-20">
-        <div class="shrink-0 md:w-48">
+      <div class="flex flex-col gap-12 lg:flex-row lg:gap-20">
+        <div class="shrink-0 lg:min-w-48">
           <div
-            class="bg-primary-comfy-ink sticky top-20 z-10 py-4 md:top-28 md:py-0"
+            class="sticky top-20 z-10 bg-primary-comfy-ink py-4 md:top-28 md:py-0"
           >
             <h2
-              class="text-primary-comfy-canvas text-3xl font-light md:text-4xl"
+              class="text-3xl font-light text-primary-comfy-canvas md:text-4xl"
             >
-              {{ t('careers.roles.heading', locale) }}
+              {{ t('careers.roles.heading') }}
             </h2>
             <CategoryNav
               v-if="hasRoles"
-              v-model="activeCategory"
               :categories="categories"
+              :model-value="activeCategory"
               class="mt-4"
+              @update:model-value="scrollToDepartment"
             />
           </div>
         </div>
@@ -58,16 +111,18 @@ const hasRoles = computed(() => visibleDepartments.value.length > 0)
         <div class="min-w-0 flex-1">
           <p
             v-if="!hasRoles"
-            class="text-primary-warm-gray text-base md:text-lg"
+            class="text-base text-primary-warm-gray md:text-lg"
             data-testid="careers-roles-empty"
           >
-            {{ t('careers.roles.empty', locale) }}
+            {{ t('careers.roles.empty') }}
           </p>
 
           <div
-            v-for="dept in filteredDepartments"
+            v-for="dept in visibleDepartments"
+            :id="deptElementId(dept.key)"
+            :ref="sectionRefs.set"
             :key="dept.key"
-            class="mb-12 last:mb-0"
+            class="mb-12 scroll-mt-24 last:mb-0 md:scroll-mt-36"
           >
             <SectionLabel>
               {{ dept.name }}
@@ -76,33 +131,44 @@ const hasRoles = computed(() => visibleDepartments.value.length > 0)
             <a
               v-for="role in dept.roles"
               :key="role.id"
-              :href="role.applyUrl"
+              :href="role.jobUrl"
               target="_blank"
               rel="noopener noreferrer"
-              class="border-primary-warm-gray/20 group flex items-center justify-between border-b py-5"
+              class="group flex items-center gap-4 border-b border-primary-warm-gray/20 py-5 transition-colors duration-200 hover:border-primary-comfy-canvas"
               data-testid="careers-role-link"
             >
-              <div class="min-w-0">
+              <div
+                class="flex min-w-0 flex-1 flex-col md:flex-row md:items-baseline md:gap-x-4"
+              >
                 <span
-                  class="text-primary-comfy-canvas text-base font-medium md:text-lg"
+                  class="text-base font-medium text-primary-comfy-canvas md:text-lg"
                 >
                   {{ role.title }}
                 </span>
-                <span class="text-primary-warm-gray ml-3 text-sm">
-                  {{ role.department }}
-                </span>
+                <div
+                  class="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-sm text-primary-warm-gray md:mt-0 md:contents"
+                >
+                  <span>{{ role.department }}</span>
+                  <span class="md:hidden">{{ role.location }}</span>
+                </div>
               </div>
-              <div class="ml-4 flex shrink-0 items-center gap-3">
-                <span class="text-primary-warm-gray text-sm">
-                  {{ role.location }}
-                </span>
-                <img
-                  src="/icons/arrow-up-right.svg"
-                  alt=""
-                  class="size-5"
+              <span
+                class="hidden shrink-0 text-sm text-primary-warm-gray md:inline"
+              >
+                {{ role.location }}
+              </span>
+              <span
+                class="relative grid size-7 shrink-0 place-items-center rounded-sm bg-primary-comfy-yellow/0 transition-colors duration-300 ease-out group-hover:bg-primary-comfy-yellow"
+              >
+                <span
+                  class="size-5 bg-primary-comfy-yellow transition-colors duration-300 ease-out group-hover:bg-primary-comfy-ink"
+                  style="
+                    mask: url('/icons/arrow-up-right.svg') center / contain
+                      no-repeat;
+                  "
                   aria-hidden="true"
                 />
-              </div>
+              </span>
             </a>
           </div>
         </div>

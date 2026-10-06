@@ -1,4 +1,4 @@
-import { computed, ref } from 'vue'
+import { computed, ref, toValue } from 'vue'
 
 import type { AssetItem } from '@/platform/assets/schemas/assetSchema'
 import { useAssetsStore } from '@/stores/assetsStore'
@@ -7,31 +7,35 @@ import type { IAssetsProvider, IFolderNavigation } from './IAssetsProvider'
 
 /**
  * Provides the default Output-tab data source: one asset per completed job,
- * with generation-time metadata and paginated fetching. Folder navigation
- * is a no-op since this view groups by job (not by filesystem subfolder).
+ * with paginated fetching. Folder navigation is a no-op since this view
+ * groups by job (not by filesystem subfolder).
  */
 export function useOutputJobsAssets(): IAssetsProvider & IFolderNavigation {
   const assetsStore = useAssetsStore()
 
-  const media = computed<AssetItem[]>(() => assetsStore.outputJobAssets)
-  const loading = computed<boolean>(() => assetsStore.outputJobsLoading)
-  const error = computed<unknown>(() => assetsStore.outputJobsError)
+  const media = computed<AssetItem[]>(() => [
+    ...toValue(assetsStore.outputAssets.items)
+  ])
+  const loading = computed<boolean>(() =>
+    toValue(assetsStore.outputAssets.isLoading)
+  )
+  const error = ref<unknown>(null)
 
   const fetchMediaList = async (): Promise<AssetItem[]> => {
-    await assetsStore.updateOutputJobs()
-    return assetsStore.outputJobAssets
+    await assetsStore.outputAssets.invalidate()
+    return media.value
   }
 
   const refresh = () => fetchMediaList()
 
   const loadMore = async (): Promise<void> => {
-    await assetsStore.loadMoreOutputJobs()
+    await assetsStore.outputAssets.loadMore()
   }
 
-  const hasMore = computed<boolean>(() => assetsStore.outputJobsHasMore)
-  const isLoadingMore = computed<boolean>(
-    () => assetsStore.outputJobsLoadingMore
+  const hasMore = computed<boolean>(() =>
+    toValue(assetsStore.outputAssets.hasMore)
   )
+  const isLoadingMore = loading
 
   const folders = ref([])
   const currentPath = ref('')

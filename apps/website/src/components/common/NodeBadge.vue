@@ -18,7 +18,7 @@ const {
   <div
     :class="
       cn(
-        'font-formula-narrow flex h-11 items-stretch font-semibold **:select-none sm:h-auto',
+        'flex h-11 items-stretch font-formula-narrow font-semibold **:select-none sm:h-auto',
         sizeClass
       )
     "
@@ -26,7 +26,7 @@ const {
     <img
       src="/icons/node-left.svg"
       alt=""
-      class="-mx-px self-stretch"
+      class="-mx-px h-full w-auto self-stretch"
       aria-hidden="true"
     />
 
@@ -38,13 +38,13 @@ const {
         v-if="i > 0"
         src="/icons/node-union.svg"
         alt=""
-        class="-mx-px self-stretch"
+        class="-mx-px h-full w-auto self-stretch"
         aria-hidden="true"
       />
       <span
         :class="
           cn(
-            'bg-primary-comfy-yellow text-primary-comfy-ink flex items-center justify-center py-1.5 transition-all duration-300 sm:py-3 lg:py-5',
+            'flex items-center justify-center bg-primary-comfy-yellow py-1.5 text-primary-comfy-ink transition-all duration-300 sm:py-3 lg:py-5',
             segmentClass
           )
         "
@@ -72,7 +72,7 @@ const {
     <img
       src="/icons/node-right.svg"
       alt=""
-      class="-mx-px self-stretch"
+      class="-mx-px h-full w-auto self-stretch"
       aria-hidden="true"
     />
   </div>

@@ -5,36 +5,28 @@ import {
 import type { AppModeHelper } from '@e2e/fixtures/helpers/AppModeHelper'
 import type { ComfyPage } from '@e2e/fixtures/ComfyPage'
 import {
-  builderSaveAs,
-  openWorkflowFromSidebar,
+  saveCloseAndReopenInBuilder,
   setupBuilder
 } from '@e2e/fixtures/utils/builderTestUtils'
 
 const WIDGETS = ['seed', 'steps', 'cfg']
 
-/** Save as app, close it by loading default, reopen from sidebar, enter app mode. */
 async function saveCloseAndReopenAsApp(
   comfyPage: ComfyPage,
   appMode: AppModeHelper,
   workflowName: string
 ) {
-  await appMode.steps.goToPreview()
-  await builderSaveAs(appMode, workflowName)
-  await appMode.saveAs.closeButton.click()
-  await expect(appMode.saveAs.successDialog).toBeHidden()
-
-  await appMode.footer.exitBuilder()
-  await openWorkflowFromSidebar(comfyPage, workflowName)
+  await saveCloseAndReopenInBuilder(comfyPage, appMode, workflowName)
   await appMode.toggleAppMode()
 }
 
 test.describe('Builder input reordering', { tag: '@ui' }, () => {
+  test.use({
+    initialSettings: { 'Comfy.AppBuilder.VueNodeSwitchDismissed': true }
+  })
+
   test.beforeEach(async ({ comfyPage }) => {
     await comfyPage.appMode.enableLinearMode()
-    await comfyPage.settings.setSetting(
-      'Comfy.AppBuilder.VueNodeSwitchDismissed',
-      true
-    )
   })
 
   test('Drag first input to last position', async ({ comfyPage }) => {

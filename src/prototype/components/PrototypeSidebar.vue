@@ -89,7 +89,7 @@
       />
       <Button
         v-else-if="isLocalMode"
-        variant="gradient"
+        variant="subscribe"
         size="md"
         class="w-full gap-2"
       >

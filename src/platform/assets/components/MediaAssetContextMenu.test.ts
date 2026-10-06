@@ -15,7 +15,7 @@ const mockElectronAPI = vi.hoisted(() => ({
   openInputsFolder: vi.fn()
 }))
 
-vi.mock('vue-i18n', () => ({
+vi.mock<unknown>(import('vue-i18n'), () => ({
   useI18n: () => ({
     t: (key: string) => key
   }),
@@ -29,27 +29,30 @@ const mockFavorites = vi.hoisted(() => ({
   favoritedAssets: vi.fn(() => [])
 }))
 
-vi.mock('../composables/useAssetFavorites', () => ({
+vi.mock<unknown>(import('../composables/useAssetFavorites'), () => ({
   FAVORITE_TAG: 'favorite',
   useAssetFavorites: () => mockFavorites
 }))
 
-vi.mock('@/platform/distribution/types', () => ({
+vi.mock<unknown>(import('@/platform/distribution/types'), () => ({
   get isDesktop() {
     return mockData.isDesktop
   },
   isCloud: false
 }))
 
-vi.mock('@/utils/envUtil', () => ({
+vi.mock<unknown>(import('@/utils/envUtil'), () => ({
   electronAPI: () => mockElectronAPI
 }))
 
-vi.mock('@/platform/workflow/utils/workflowExtractionUtil', () => ({
-  supportsWorkflowMetadata: () => true
-}))
+vi.mock<unknown>(
+  import('@/platform/workflow/utils/workflowExtractionUtil'),
+  () => ({
+    supportsWorkflowMetadata: () => true
+  })
+)
 
-vi.mock('@/utils/formatUtil', () => ({
+vi.mock<unknown>(import('@/utils/formatUtil'), () => ({
   isPreviewableMediaType: () => true,
   getMediaTypeFromFilename: (name: string) => {
     if (/\.(mp4|webm|mov)$/i.test(name)) return 'video'
@@ -58,20 +61,27 @@ vi.mock('@/utils/formatUtil', () => ({
   }
 }))
 
-vi.mock('@/utils/loaderNodeUtil', () => ({
+vi.mock<unknown>(import('@/utils/loaderNodeUtil'), () => ({
   detectNodeTypeFromFilename: () => ({ nodeType: 'LoadImage' })
 }))
 
+vi.mock<unknown>(
+  import('@/prototype/composables/useSimulatedSaveToCloud'),
+  () => ({
+    useSimulatedSaveToCloud: () => ({ saveToCloud: vi.fn() })
+  })
+)
+
 const mediaAssetActions = {
   addWorkflow: vi.fn(),
-  downloadAsset: vi.fn(),
+  downloadAssets: vi.fn(),
   openWorkflow: vi.fn(),
   exportWorkflow: vi.fn(),
   copyJobId: vi.fn(),
   deleteAssets: vi.fn().mockResolvedValue(false)
 }
 
-vi.mock('../composables/useMediaAssetActions', () => ({
+vi.mock<unknown>(import('../composables/useMediaAssetActions'), () => ({
   useMediaAssetActions: () => mediaAssetActions
 }))
 
@@ -125,6 +135,8 @@ const asset: AssetItem = {
   id: 'asset-1',
   name: 'image.png',
   tags: [],
+  created_at: '2026-01-01T00:00:00Z',
+  updated_at: '2026-01-01T00:00:00Z',
   user_metadata: {}
 }
 
@@ -348,24 +360,32 @@ describe('MediaAssetContextMenu', () => {
       id: 'a',
       name: 'anchor.png',
       tags: [],
+      created_at: '2026-01-01T00:00:00Z',
+      updated_at: '2026-01-01T00:00:00Z',
       user_metadata: {}
     }
     const otherImage: AssetItem = {
       id: 'b',
       name: 'other.jpg',
       tags: [],
+      created_at: '2026-01-01T00:00:00Z',
+      updated_at: '2026-01-01T00:00:00Z',
       user_metadata: {}
     }
     const otherImage2: AssetItem = {
       id: 'c',
       name: 'another.png',
       tags: [],
+      created_at: '2026-01-01T00:00:00Z',
+      updated_at: '2026-01-01T00:00:00Z',
       user_metadata: {}
     }
     const video: AssetItem = {
       id: 'd',
       name: 'clip.mp4',
       tags: [],
+      created_at: '2026-01-01T00:00:00Z',
+      updated_at: '2026-01-01T00:00:00Z',
       user_metadata: {}
     }
 

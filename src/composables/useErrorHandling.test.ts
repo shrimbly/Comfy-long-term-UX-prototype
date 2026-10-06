@@ -1,5 +1,3 @@
-import { createTestingPinia } from '@pinia/testing'
-import { setActivePinia } from 'pinia'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import type { ErrorRecoveryStrategy } from '@/composables/useErrorHandling'
@@ -11,8 +9,6 @@ describe('useErrorHandling', () => {
   let errorHandler: ReturnType<typeof useErrorHandling>
 
   beforeEach(() => {
-    vi.clearAllMocks()
-    setActivePinia(createTestingPinia())
     errorHandler = useErrorHandling()
   })
 
@@ -324,11 +320,11 @@ describe('useErrorHandling', () => {
     })
 
     describe('network error detection', () => {
-      it.each([
+      it.for([
         ['Failed to fetch', 'Chrome/Edge'],
         ['NetworkError when attempting to fetch resource.', 'Firefox'],
         ['Load failed', 'Safari']
-      ])('should show disconnected toast for "%s" (%s)', async (message) => {
+      ])('should show disconnected toast for "%s" (%s)', async ([message]) => {
         const action = vi.fn(async () => {
           throw new TypeError(message)
         })
@@ -363,15 +359,6 @@ describe('useErrorHandling', () => {
     })
 
     describe('backward compatibility', () => {
-      it('should work without recovery strategies parameter', async () => {
-        const action = vi.fn(async () => 'success')
-        const wrapped = errorHandler.wrapWithErrorHandlingAsync(action)
-
-        const result = await wrapped()
-
-        expect(result).toBe('success')
-      })
-
       it('should work with empty recovery strategies array', async () => {
         const testError = new Error('test error')
         const action = vi.fn(async () => {

@@ -1,7 +1,10 @@
 import fs from 'fs'
 import { describe, expect, it } from 'vitest'
 
-import { validateComfyWorkflow } from '@/platform/workflow/validation/schemas/workflowSchema'
+import {
+  validateComfyWorkflow,
+  zClipboardItems
+} from '@/platform/workflow/validation/schemas/workflowSchema'
 import { defaultGraph } from '@/scripts/defaultGraph'
 
 const WORKFLOW_DIR = 'src/platform/workflow/validation/schemas/__fixtures__'
@@ -119,6 +122,31 @@ describe('parseComfyWorkflow', () => {
       const result = await validateComfyWorkflow(workflow)
       expect(result).toBeNull()
     })
+
+    it('accepts mixed int/string node ids and preserves linearMode', async () => {
+      const workflow = JSON.parse(JSON.stringify(defaultGraph))
+      workflow.extra = {
+        linearMode: true,
+        linearData: {
+          inputs: [
+            [3, 'file'],
+            [5, 'upscaler_model'],
+            [5, 'upscaler_resolution'],
+            ['5', 'upscaler_creativity']
+          ],
+          outputs: [4]
+        }
+      }
+      const result = await validateComfyWorkflow(workflow)
+      expect(result).not.toBeNull()
+      expect(result!.extra!.linearMode).toBe(true)
+      expect(result!.extra!.linearData!.inputs).toEqual([
+        [3, 'file'],
+        [5, 'upscaler_model'],
+        [5, 'upscaler_resolution'],
+        ['5', 'upscaler_creativity']
+      ])
+    })
   })
 
   it('workflow.nodes.pos', async () => {
@@ -178,6 +206,23 @@ describe('parseComfyWorkflow', () => {
     expect(validatedWorkflow!.nodes[0].widgets_values).toEqual({ foo: 'bar' })
   })
 
+  it('workflow.nodes.widgets_values preserves null entries', async () => {
+    // LGraphNode.serialize writes `val ?? null`, so null reaches the schema on
+    // ordinary saves. Validation must let it through unchanged, in both the
+    // array and the object form.
+    const workflow = JSON.parse(JSON.stringify(defaultGraph))
+
+    workflow.nodes[0].widgets_values = ['foo', null]
+    const arrayForm = await validateComfyWorkflow(workflow)
+    expect(arrayForm).not.toBeNull()
+    expect(arrayForm!.nodes[0].widgets_values).toEqual(['foo', null])
+
+    workflow.nodes[0].widgets_values = { foo: null }
+    const objectForm = await validateComfyWorkflow(workflow)
+    expect(objectForm).not.toBeNull()
+    expect(objectForm!.nodes[0].widgets_values).toEqual({ foo: null })
+  })
+
   it('workflow.links', async () => {
     const workflow = JSON.parse(JSON.stringify(defaultGraph))
 
@@ -194,12 +239,92 @@ describe('parseComfyWorkflow', () => {
     await expect(validateComfyWorkflow(workflow)).resolves.not.toBeNull()
   })
 
+  it('validates 0.4 link presentation without a reroute', async () => {
+    const workflow = JSON.parse(JSON.stringify(defaultGraph))
+    workflow.extra = {
+      ...workflow.extra,
+      linkPresentation: {
+        '1': { hidden: true, label: 'Preview' }
+      }
+    }
+
+    const validated = await validateComfyWorkflow(workflow)
+
+    expect(validated?.extra?.linkPresentation).toEqual({
+      '1': { hidden: true, label: 'Preview' }
+    })
+  })
+
+  it.for(['01', '1e0', '1.5', 'NaN', '9007199254740992'])(
+    'rejects noncanonical link presentation key %s',
+    async (linkId) => {
+      const workflow = {
+        ...structuredClone(defaultGraph),
+        extra: { linkPresentation: { [linkId]: { hidden: true } } }
+      }
+
+      await expect(validateComfyWorkflow(workflow)).resolves.toBeNull()
+    }
+  )
+
+  function schema1WorkflowWithLink(fields: Record<string, unknown>) {
+    return {
+      version: 1,
+      state: {
+        lastGroupId: 0,
+        lastNodeId: 2,
+        lastLinkId: 1,
+        lastRerouteId: 0
+      },
+      nodes: [],
+      groups: [],
+      links: [
+        {
+          id: 1,
+          origin_id: 1,
+          origin_slot: 0,
+          target_id: 2,
+          target_slot: 0,
+          type: 'MODEL',
+          ...fields
+        }
+      ]
+    }
+  }
+
+  it('validates visibility fields on schema 1 link objects', async () => {
+    const workflow = schema1WorkflowWithLink({ hidden: true, label: 'Preview' })
+
+    const validated = await validateComfyWorkflow(workflow)
+
+    expect(validated?.links?.[0]).toMatchObject({
+      hidden: true,
+      label: 'Preview'
+    })
+  })
+
+  it('rejects non-boolean hidden in the 0.4 presentation sidecar', async () => {
+    const workflow = JSON.parse(JSON.stringify(defaultGraph))
+    workflow.extra = {
+      ...workflow.extra,
+      linkPresentation: { '1': { hidden: 'yes' } }
+    }
+
+    await expect(validateComfyWorkflow(workflow)).resolves.toBeNull()
+  })
+
+  it('rejects a non-string label on schema 1 link objects', async () => {
+    const workflow = schema1WorkflowWithLink({ label: 42 })
+
+    await expect(validateComfyWorkflow(workflow)).resolves.toBeNull()
+  })
+
   describe('workflow.nodes.properties.aux_id', () => {
     const validAuxIds = [
       'valid/valid',
       'valid-username-with-dash/valid_github-repo-name-with-underscore'
     ]
-    it.each(validAuxIds)('valid aux_id: %s', async (aux_id) => {
+    it.for(validAuxIds)('valid aux_id: %s', async (aux_id) => {
       const workflow = JSON.parse(JSON.stringify(defaultGraph))
       workflow.nodes[0].properties.aux_id = aux_id
       await expect(validateComfyWorkflow(workflow)).resolves.not.toBeNull()
@@ -210,7 +335,7 @@ describe('parseComfyWorkflow', () => {
       'github-name/invalid spaces in repo',
       'not-both-names-with-slash'
     ]
-    it.each(invalidAuxIds)('invalid aux_id: %s', async (aux_id) => {
+    it.for(invalidAuxIds)('invalid aux_id: %s', async (aux_id) => {
       const workflow = JSON.parse(JSON.stringify(defaultGraph))
       workflow.nodes[0].properties.aux_id = aux_id
       await expect(validateComfyWorkflow(workflow)).resolves.toBeNull()
@@ -219,14 +344,14 @@ describe('parseComfyWorkflow', () => {
 
   describe('workflow.nodes.properties.cnr_id', () => {
     const validCnrIds = ['valid', 'valid-with-dash', 'valid_with_underscores']
-    it.each(validCnrIds)('valid cnr_id: %s', async (cnr_id) => {
+    it.for(validCnrIds)('valid cnr_id: %s', async (cnr_id) => {
       const workflow = JSON.parse(JSON.stringify(defaultGraph))
       workflow.nodes[0].properties.cnr_id = cnr_id
       await expect(validateComfyWorkflow(workflow)).resolves.not.toBeNull()
     })
 
     const invalidCnrIds = ['invalid cnr-id', 'invalid^cnr-id', 'invalid cnr id']
-    it.each(invalidCnrIds)('invalid cnr_id: %s', async (cnr_id) => {
+    it.for(invalidCnrIds)('invalid cnr_id: %s', async (cnr_id) => {
       const workflow = JSON.parse(JSON.stringify(defaultGraph))
       workflow.nodes[0].properties.cnr_id = cnr_id
       await expect(validateComfyWorkflow(workflow)).resolves.toBeNull()
@@ -248,7 +373,7 @@ describe('parseComfyWorkflow', () => {
       'v0.3.9-7-g1419dee',
       'v0.3.9-7-g1419dee-dirty'
     ]
-    it.each(validVersionStrings)('valid version: %s', async (ver) => {
+    it.for(validVersionStrings)('valid version: %s', async (ver) => {
       const workflow = JSON.parse(JSON.stringify(defaultGraph))
       workflow.nodes[0].properties.ver = ver
       await expect(validateComfyWorkflow(workflow)).resolves.not.toBeNull()
@@ -262,10 +387,90 @@ describe('parseComfyWorkflow', () => {
       // Git hash
       '080e6d4af809a46852d1c4b7ed85f06e8a3a72be-invalid'
     ]
-    it.each(invalidVersionStrings)('invalid version: %s', async (ver) => {
+    it.for(invalidVersionStrings)('invalid version: %s', async (ver) => {
       const workflow = JSON.parse(JSON.stringify(defaultGraph))
       workflow.nodes[0].properties.ver = ver
       await expect(validateComfyWorkflow(workflow)).resolves.toBeNull()
     })
+  })
+})
+
+describe('zClipboardItems', () => {
+  it('normalizes array-like widget values and preserves array slot types', () => {
+    const node = {
+      ...structuredClone(defaultGraph.nodes[0]),
+      inputs: [{ name: 'input', type: ['IMAGE', 'MASK'] }],
+      widgets_values: { 0: 'first', 1: 2, length: 2 }
+    }
+
+    const result = zClipboardItems.safeParse({ nodes: [node] })
+
+    expect(result.success).toBe(true)
+    if (!result.success) throw result.error
+    expect(result.data.nodes?.[0].inputs?.[0].type).toEqual(['IMAGE', 'MASK'])
+    expect(result.data.nodes?.[0].widgets_values).toEqual(['first', 2])
+  })
+
+  it('preserves indices when normalizing sparse widget values', () => {
+    const node = {
+      ...structuredClone(defaultGraph.nodes[0]),
+      widgets_values: { 0: 'first', 2: 'third', length: 3 }
+    }
+
+    const result = zClipboardItems.safeParse({ nodes: [node] })
+
+    expect(result.success).toBe(true)
+    if (!result.success) throw result.error
+    const values = result.data.nodes?.[0].widgets_values
+    expect(values).toHaveLength(3)
+    expect(values?.[0]).toBe('first')
+    expect(1 in (values ?? [])).toBe(false)
+    expect(values?.[2]).toBe('third')
+  })
+
+  test.for([
+    { length: 10_000, accepted: true },
+    { length: 10_001, accepted: false }
+  ])(
+    'accepts sparse widget lengths through the exact limit: $length',
+    ({ length, accepted }) => {
+      const node = {
+        ...structuredClone(defaultGraph.nodes[0]),
+        widgets_values: { 0: 'first', length }
+      }
+
+      expect(zClipboardItems.safeParse({ nodes: [node] }).success).toBe(
+        accepted
+      )
+    }
+  )
+
+  it('preserves named-record widget values as named values', () => {
+    const node = {
+      ...structuredClone(defaultGraph.nodes[0]),
+      widgets_values: { seed: 42, steps: 20 }
+    }
+
+    const result = zClipboardItems.safeParse({ nodes: [node] })
+
+    expect(result.success).toBe(true)
+    if (!result.success) throw result.error
+    expect(result.data.nodes?.[0].widgets_values).toBeUndefined()
+    expect(result.data.nodes?.[0].widgets_values_named).toEqual({
+      seed: 42,
+      steps: 20
+    })
+  })
+
+  it('defaults omitted legacy group and reroute fields', () => {
+    const result = zClipboardItems.safeParse({
+      groups: [{ title: 'Legacy group', bounding: [0, 0, 100, 100] }],
+      reroutes: [{ id: 4, pos: [10, 20] }]
+    })
+
+    expect(result.success).toBe(true)
+    if (!result.success) throw result.error
+    expect(result.data.groups?.[0].id).toBe(-1)
+    expect(result.data.reroutes?.[0].linkIds).toEqual([])
   })
 })

@@ -38,7 +38,8 @@ export function useHelpCenter() {
    */
   const toggleHelpCenter = () => {
     useTelemetry()?.trackUiButtonClicked({
-      button_id: 'sidebar_help_center_toggled'
+      button_id: 'sidebar_help_center_toggled',
+      element_group: 'sidebar'
     })
     helpCenterStore.toggle()
   }
@@ -68,7 +69,7 @@ export function useHelpCenter() {
    * Show the node conflict dialog with current conflict data
    */
   const showConflictModal = () => {
-    void showNodeConflictDialog({
+    showNodeConflictDialog({
       showAfterWhatsNew: true,
       dialogComponentProps: {
         onClose: () => {

@@ -88,11 +88,6 @@ test.beforeEach(async ({ comfyPage }) => {
   await comfyPage.settingDialog.category('Keybinding').click()
 })
 
-test.afterEach(async ({ comfyPage }) => {
-  await comfyPage.settings.setSetting('Comfy.Keybinding.NewBindings', [])
-  await comfyPage.settings.setSetting('Comfy.Keybinding.UnsetBindings', [])
-})
-
 async function registerNoBindingCommand(comfyPage: ComfyPage) {
   await comfyPage.page.evaluate((commandId) => {
     const app = window.app!
@@ -543,6 +538,56 @@ test.describe('Keybinding Panel', { tag: '@keyboard' }, () => {
       // Changing the filter triggers watch(filters, ...) which clears expansion
       await searchKeybindings(page, MULTI_BINDING_COMMAND + ' ')
       await expect(expansionContent).toBeHidden()
+    })
+  })
+
+  test.describe('Responsive Layout', () => {
+    test('Action buttons stay on screen without horizontal scroll at narrow widths', async ({
+      comfyPage
+    }) => {
+      const { page } = comfyPage
+
+      await searchKeybindings(page, MULTI_BINDING_COMMAND)
+      const row = getCommandRow(page, MULTI_BINDING_COMMAND)
+      await expect(row).toBeVisible()
+
+      await page.setViewportSize({ width: 480, height: 800 })
+
+      await expect(
+        row.getByRole('button', { name: /Delete/i })
+      ).toBeInViewport()
+      await expect(
+        row.getByRole('button', { name: /Add new keybinding/i })
+      ).toBeInViewport()
+
+      const hasHorizontalScroll = await page
+        .locator('.keybinding-panel .p-datatable-table-container')
+        .evaluate((el) => el.scrollWidth > el.clientWidth + 1)
+      expect(hasHorizontalScroll).toBe(false)
+    })
+
+    test('Keybinding column compresses with width while actions stay reachable', async ({
+      comfyPage
+    }) => {
+      const { page } = comfyPage
+
+      await searchKeybindings(page, MULTI_BINDING_COMMAND)
+      const row = getCommandRow(page, MULTI_BINDING_COMMAND)
+      const keybindingList = row.getByTestId('keybinding-list')
+      await expect(keybindingList).toBeVisible()
+
+      const listWidthAt = async (viewportWidth: number) => {
+        await page.setViewportSize({ width: viewportWidth, height: 800 })
+        return keybindingList.evaluate((el) => el.getBoundingClientRect().width)
+      }
+
+      const wideWidth = await listWidthAt(1280)
+      const narrowWidth = await listWidthAt(560)
+
+      expect(narrowWidth).toBeLessThan(wideWidth)
+      await expect(
+        row.getByRole('button', { name: /Delete/i })
+      ).toBeInViewport()
     })
   })
 })

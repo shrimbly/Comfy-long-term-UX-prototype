@@ -1,4 +1,4 @@
-import _ from 'es-toolkit/compat'
+import { union } from 'es-toolkit/compat'
 import { until, useAsyncState } from '@vueuse/core'
 import { defineStore } from 'pinia'
 import { computed, markRaw, ref, shallowRef, watch } from 'vue'
@@ -9,16 +9,19 @@ import type {
   LGraphNode,
   Subgraph
 } from '@/lib/litegraph/src/litegraph'
-import type {
-  ComfyWorkflowJSON,
-  NodeId
-} from '@/platform/workflow/validation/schemas/workflowSchema'
-import { useWorkflowDraftStore } from '@/platform/workflow/persistence/stores/workflowDraftStore'
-// eslint-disable-next-line import-x/no-restricted-paths
+import {
+  areWorkflowIdsEquivalent,
+  ensureWorkflowId,
+  getLegacyWorkflowId
+} from '@/platform/workflow/core/utils/workflowId'
+import type { ComfyWorkflowJSON } from '@/platform/workflow/validation/schemas/workflowSchema'
+import { useWorkflowDraftStoreV2 } from '@/platform/workflow/persistence/stores/workflowDraftStoreV2'
+// oxlint-disable-next-line comfy/no-restricted-paths
 import { useWorkflowThumbnail } from '@/renderer/core/thumbnail/useWorkflowThumbnail'
 import { api } from '@/scripts/api'
 import { app as comfyApp } from '@/scripts/app'
-import { defaultGraphJSON } from '@/scripts/defaultGraph'
+import { defaultGraph } from '@/scripts/defaultGraph'
+import { useExecutionStore } from '@/stores/executionStore'
 import type { NodeExecutionId, NodeLocatorId } from '@/types/nodeIdentification'
 import {
   createNodeExecutionId,
@@ -26,6 +29,8 @@ import {
   parseNodeExecutionId,
   parseNodeLocatorId
 } from '@/types/nodeIdentification'
+import { parseNodeId } from '@/types/nodeId'
+import type { NodeId } from '@/types/nodeId'
 import { generateUUID, getPathDetails } from '@/utils/formatUtil'
 import { syncEntities } from '@/utils/syncUtil'
 import { isSubgraph } from '@/utils/typeGuardUtil'
@@ -72,6 +77,7 @@ interface WorkflowStore {
   modifiedWorkflows: ComfyWorkflow[]
   getWorkflowByPath: (path: string) => ComfyWorkflow | null
   syncWorkflows: (dir?: string) => Promise<void>
+  isSyncLoading: boolean
   reorderWorkflows: (from: number, to: number) => void
 
   /** `true` if any subgraph is currently being viewed. */
@@ -82,12 +88,9 @@ interface WorkflowStore {
   executionIdToCurrentId: (id: string) => string | undefined
   nodeIdToNodeLocatorId: (nodeId: NodeId, subgraph?: Subgraph) => NodeLocatorId
   nodeToNodeLocatorId: (node: LGraphNode) => NodeLocatorId
-  nodeExecutionIdToNodeLocatorId: (
-    nodeExecutionId: NodeExecutionId | string
-  ) => NodeLocatorId | null
-  nodeLocatorIdToNodeId: (locatorId: NodeLocatorId | string) => NodeId | null
+  nodeLocatorIdToNodeId: (locatorId: NodeLocatorId) => NodeId
   nodeLocatorIdToNodeExecutionId: (
-    locatorId: NodeLocatorId | string,
+    locatorId: NodeLocatorId,
     targetSubgraph?: Subgraph
   ) => NodeExecutionId | null
 }
@@ -153,12 +156,15 @@ export const useWorkflowStore = defineStore('workflow', () => {
   const openWorkflowPaths = ref<string[]>([])
   const openWorkflowPathSet = computed(() => new Set(openWorkflowPaths.value))
   const openWorkflows = computed(() =>
-    openWorkflowPaths.value.map((path) => workflowLookup.value[path])
+    openWorkflowPaths.value
+      .map(getWorkflowByPath)
+      .filter((workflow) => workflow !== null)
   )
   const reorderWorkflows = (from: number, to: number) => {
-    const movedTab = openWorkflowPaths.value[from]
-    openWorkflowPaths.value.splice(from, 1)
-    openWorkflowPaths.value.splice(to, 0, movedTab)
+    const paths = openWorkflows.value.map((workflow) => workflow.path)
+    const [movedTab] = paths.splice(from, 1)
+    paths.splice(to, 0, movedTab)
+    openWorkflowPaths.value = paths
   }
   const isOpen = (workflow: ComfyWorkflow) =>
     openWorkflowPathSet.value.has(workflow.path)
@@ -186,7 +192,7 @@ export const useWorkflowStore = defineStore('workflow', () => {
     ): path is keyof typeof workflowLookup.value =>
       typeof path === 'string' && path in workflowLookup.value
 
-    openWorkflowPaths.value = _.union(
+    openWorkflowPaths.value = union(
       left,
       openWorkflowPaths.value,
       right
@@ -227,7 +233,7 @@ export const useWorkflowStore = defineStore('workflow', () => {
     const { directory, filename, suffix } = getPathDetails(basePath)
     let counter = 2
     let newPath = basePath
-    while (workflowLookup.value[newPath]) {
+    while (Object.hasOwn(workflowLookup.value, newPath)) {
       newPath = `${directory}/${filename} (${counter}).${suffix}`
       counter++
     }
@@ -256,20 +262,6 @@ export const useWorkflowStore = defineStore('workflow', () => {
     return workflow
   }
 
-  const ensureWorkflowId = (
-    workflowData?: ComfyWorkflowJSON
-  ): ComfyWorkflowJSON => {
-    const base = workflowData
-      ? (JSON.parse(JSON.stringify(workflowData)) as ComfyWorkflowJSON)
-      : (JSON.parse(defaultGraphJSON) as ComfyWorkflowJSON)
-
-    if (!base.id) {
-      base.id = generateUUID()
-    }
-
-    return base
-  }
-
   /**
    * Helper to create a new temporary workflow
    */
@@ -282,8 +274,11 @@ export const useWorkflowStore = defineStore('workflow', () => {
       modified: Date.now(),
       size: -1
     })
+    workflow.legacyId = getLegacyWorkflowId(workflowData?.id)
 
-    const initialWorkflowData = ensureWorkflowId(workflowData)
+    const initialWorkflowData = ensureWorkflowId(
+      structuredClone(workflowData ?? defaultGraph)
+    )
     workflow.originalContent = workflow.content =
       JSON.stringify(initialWorkflowData)
 
@@ -299,13 +294,9 @@ export const useWorkflowStore = defineStore('workflow', () => {
       ComfyWorkflow.basePath + (path ?? 'Unsaved Workflow.json')
     )
 
-    const normalizedWorkflowData = workflowData
-      ? ensureWorkflowId(workflowData)
-      : undefined
-
     // Try to reuse an existing loaded workflow with the same filename
     // that is not stored in the workflows directory
-    if (path && normalizedWorkflowData) {
+    if (path && workflowData) {
       const existingWorkflow = workflows.value.find(
         (w) => w.fullFilename === path
       )
@@ -313,14 +304,22 @@ export const useWorkflowStore = defineStore('workflow', () => {
         existingWorkflow?.changeTracker &&
         !existingWorkflow.directory.startsWith(
           ComfyWorkflow.basePath.slice(0, -1)
+        ) &&
+        areWorkflowIdsEquivalent(
+          existingWorkflow.activeState?.id,
+          workflowData.id,
+          existingWorkflow.legacyId
         )
       ) {
-        existingWorkflow.changeTracker.reset(normalizedWorkflowData)
+        existingWorkflow.legacyId ??= getLegacyWorkflowId(workflowData.id)
+        existingWorkflow.changeTracker.reset(
+          ensureWorkflowId(workflowData, existingWorkflow.activeState?.id)
+        )
         return existingWorkflow
       }
     }
 
-    return createNewWorkflow(fullPath, normalizedWorkflowData)
+    return createNewWorkflow(fullPath, workflowData)
   }
 
   /**
@@ -340,7 +339,7 @@ export const useWorkflowStore = defineStore('workflow', () => {
     openWorkflowPaths.value = openWorkflowPaths.value.filter(
       (path) => path !== workflow.path
     )
-    useWorkflowDraftStore().removeDraft(workflow.path)
+    useWorkflowDraftStoreV2().removeDraft(workflow.path)
     if (workflow.isTemporary) {
       clearThumbnail(workflow.key)
       delete workflowLookup.value[workflow.path]
@@ -355,15 +354,15 @@ export const useWorkflowStore = defineStore('workflow', () => {
    * @returns The next workflow or null if the shift is out of bounds.
    */
   const openedWorkflowIndexShift = (shift: number): ComfyWorkflow | null => {
-    const index = openWorkflowPaths.value.indexOf(
-      activeWorkflow.value?.path ?? ''
+    const index = openWorkflows.value.findIndex(
+      (workflow) => workflow.path === activeWorkflow.value?.path
     )
 
     if (index !== -1) {
       const length = openWorkflows.value.length
       const nextIndex = (index + shift + length) % length
       const nextWorkflow = openWorkflows.value[nextIndex]
-      return nextWorkflow ?? null
+      return nextWorkflow
     }
     return null
   }
@@ -387,8 +386,8 @@ export const useWorkflowStore = defineStore('workflow', () => {
       // Check if workflow is still open
       if (openWorkflowPathSet.value.has(path)) {
         validPaths.unshift(path)
-        const workflow = workflowLookup.value[path]
-        if (workflow) {
+        const workflow = getWorkflowByPath(path)
+        {
           // Lazy cleanup: keep only valid paths
           tabActivationHistory.value = validPaths
           return workflow
@@ -453,7 +452,14 @@ export const useWorkflowStore = defineStore('workflow', () => {
 
           existingWorkflow.unload()
         },
-        /* exclude */ (workflow) => workflow.isTemporary
+        /* exclude */ (workflow) => workflow.isTemporary,
+        /* beforeDelete */ (workflow, path) => {
+          if (isActive(workflow)) return false
+          openWorkflowPaths.value = openWorkflowPaths.value.filter(
+            (openPath) => openPath !== path
+          )
+          return true
+        }
       )
     },
     undefined,
@@ -496,9 +502,13 @@ export const useWorkflowStore = defineStore('workflow', () => {
       const oldPath = workflow.path
       const oldKey = workflow.key
       const wasBookmarked = bookmarkStore.isBookmarked(oldPath)
-      const draftStore = useWorkflowDraftStore()
+      const draftStore = useWorkflowDraftStoreV2()
 
       await workflow.rename(newPath)
+      useExecutionStore().rewriteSessionWorkflowPaths(
+        workflow.instanceId,
+        workflow.path
+      )
 
       // Synchronously swap old path for new path in lookup and open paths
       // to avoid a tab flicker caused by an async gap between detach/attach.
@@ -528,13 +538,13 @@ export const useWorkflowStore = defineStore('workflow', () => {
     isBusy.value = true
     try {
       await workflow.delete()
-      useWorkflowDraftStore().removeDraft(workflow.path)
+      useWorkflowDraftStoreV2().removeDraft(workflow.path)
       if (bookmarkStore.isBookmarked(workflow.path)) {
         await bookmarkStore.setBookmarked(workflow.path, false)
       }
       // Clear thumbnail when workflow is deleted
       clearThumbnail(workflow.key)
-      delete workflowLookup.value[workflow.path]
+      detachWorkflow(workflow)
     } finally {
       isBusy.value = false
     }
@@ -565,31 +575,34 @@ export const useWorkflowStore = defineStore('workflow', () => {
 
   /** @see WorkflowStore.updateActiveGraph */
   const updateActiveGraph = () => {
-    const subgraph = comfyApp.canvas?.subgraph
+    const canvas = comfyApp.canvasOrUndefined
+    if (!canvas) return
+    const subgraph = canvas.subgraph
     activeSubgraph.value = subgraph ? markRaw(subgraph) : undefined
-    if (!comfyApp.canvas) return
 
     isSubgraphActive.value = isSubgraph(subgraph)
   }
 
   const subgraphNodeIdToSubgraph = (id: string, graph: LGraph | Subgraph) => {
-    const node = graph.getNodeById(id)
+    const parsedNodeId = parseNodeId(id)
+    if (!parsedNodeId) return
+    const node = graph.getNodeById(parsedNodeId)
     if (node?.isSubgraphNode()) return node.subgraph
   }
 
   const getSubgraphsFromInstanceIds = (
     currentGraph: LGraph | Subgraph,
-    subgraphNodeIds: string[],
-    subgraphs: Subgraph[] = []
-  ): Subgraph[] => {
-    const currentPart = subgraphNodeIds.shift()
-    if (currentPart === undefined) return subgraphs
+    subgraphNodeIds: string[]
+  ): Subgraph[] | undefined => {
+    const currentPart = subgraphNodeIds.at(0)
+    const remainingParts = subgraphNodeIds.slice(1)
+    if (currentPart === undefined) return []
 
     const subgraph = subgraphNodeIdToSubgraph(currentPart, currentGraph)
-    if (subgraph === undefined) throw new Error('Subgraph not found')
+    if (subgraph === undefined) return
 
-    subgraphs.push(subgraph)
-    return getSubgraphsFromInstanceIds(subgraph, subgraphNodeIds, subgraphs)
+    const childSubgraphs = getSubgraphsFromInstanceIds(subgraph, remainingParts)
+    return childSubgraphs ? [subgraph, ...childSubgraphs] : undefined
   }
 
   //FIXME: use existing util function
@@ -603,17 +616,17 @@ export const useWorkflowStore = defineStore('workflow', () => {
       return
     }
 
-    // Parse the execution ID (e.g., "123:456:789")
-    const subgraphNodeIds = id.split(':')
+    const executionPath = parseNodeExecutionId(id)?.map(String)
+    if (!executionPath) return
 
-    // Start from the root graph
-    const graph = comfyApp.rootGraph
+    const nodeId = executionPath.at(-1)
+    if (nodeId === undefined) return
 
-    // If the last subgraph is the active subgraph, return the node ID
-    const subgraphs = getSubgraphsFromInstanceIds(graph, subgraphNodeIds)
-    if (subgraphs.at(-1) === subgraph) {
-      return subgraphNodeIds.at(-1)
-    }
+    const subgraphs = getSubgraphsFromInstanceIds(
+      comfyApp.rootGraph,
+      executionPath.slice(0, -1)
+    )
+    if (subgraphs?.at(-1) === subgraph) return nodeId
   }
 
   watch(activeWorkflow, updateActiveGraph)
@@ -631,7 +644,7 @@ export const useWorkflowStore = defineStore('workflow', () => {
     const targetSubgraph = subgraph ?? activeSubgraph.value
     if (!targetSubgraph) {
       // Node is in the root graph, return the node ID as-is
-      return String(nodeId)
+      return createNodeLocatorId(null, nodeId)
     }
 
     return createNodeLocatorId(targetSubgraph.id, nodeId)
@@ -645,55 +658,16 @@ export const useWorkflowStore = defineStore('workflow', () => {
   const nodeToNodeLocatorId = (node: LGraphNode): NodeLocatorId => {
     if (isSubgraph(node.graph))
       return createNodeLocatorId(node.graph.id, node.id)
-    return String(node.id)
-  }
-
-  /**
-   * Convert an execution ID to a NodeLocatorId
-   * @param nodeExecutionId The execution node ID (e.g., "123:456:789")
-   * @returns The NodeLocatorId or null if conversion fails
-   */
-  const nodeExecutionIdToNodeLocatorId = (
-    nodeExecutionId: NodeExecutionId | string
-  ): NodeLocatorId | null => {
-    // Handle simple node IDs (root graph - no colons)
-    if (!nodeExecutionId.includes(':')) {
-      return nodeExecutionId
-    }
-
-    const parts = parseNodeExecutionId(nodeExecutionId)
-    if (!parts || parts.length === 0) return null
-
-    const nodeId = parts[parts.length - 1]
-    const subgraphNodeIds = parts.slice(0, -1)
-
-    if (subgraphNodeIds.length === 0) {
-      // Node is in root graph, return the node ID as-is
-      return String(nodeId)
-    }
-
-    try {
-      const subgraphs = getSubgraphsFromInstanceIds(
-        comfyApp.rootGraph,
-        subgraphNodeIds.map((id) => String(id))
-      )
-      const immediateSubgraph = subgraphs[subgraphs.length - 1]
-      return createNodeLocatorId(immediateSubgraph.id, nodeId)
-    } catch {
-      return null
-    }
+    return createNodeLocatorId(null, node.id)
   }
 
   /**
    * Extract the node ID from a NodeLocatorId
    * @param locatorId The NodeLocatorId
-   * @returns The local node ID or null if invalid
+   * @returns The local node ID
    */
-  const nodeLocatorIdToNodeId = (
-    locatorId: NodeLocatorId | string
-  ): NodeId | null => {
-    const parsed = parseNodeLocatorId(locatorId)
-    return parsed?.localNodeId ?? null
+  const nodeLocatorIdToNodeId = (locatorId: NodeLocatorId): NodeId => {
+    return parseNodeLocatorId(locatorId)!.localNodeId
   }
 
   /**
@@ -703,7 +677,7 @@ export const useWorkflowStore = defineStore('workflow', () => {
    * @returns The execution ID or null if the node is not accessible from the target context
    */
   const nodeLocatorIdToNodeExecutionId = (
-    locatorId: NodeLocatorId | string,
+    locatorId: NodeLocatorId,
     targetSubgraph?: Subgraph
   ): NodeExecutionId | null => {
     const parsed = parseNodeLocatorId(locatorId)
@@ -713,7 +687,7 @@ export const useWorkflowStore = defineStore('workflow', () => {
 
     // If no subgraph UUID, this is a root graph node
     if (!subgraphUuid) {
-      return String(localNodeId)
+      return createNodeExecutionId([localNodeId])
     }
 
     // Find the path from root to the subgraph with this UUID
@@ -727,7 +701,7 @@ export const useWorkflowStore = defineStore('workflow', () => {
       }
 
       for (const node of graph._nodes) {
-        if (node.isSubgraphNode() && node.subgraph) {
+        if (node.isSubgraphNode()) {
           const result = findSubgraphPath(node.subgraph, targetUuid, [
             ...path,
             node.id
@@ -750,7 +724,7 @@ export const useWorkflowStore = defineStore('workflow', () => {
           comfyApp.rootGraph,
           path.slice(0, idx + 1).map((id) => String(id))
         )
-        return subgraphs[subgraphs.length - 1] === targetSubgraph
+        return subgraphs?.at(-1) === targetSubgraph
       })
     ) {
       return null
@@ -785,6 +759,7 @@ export const useWorkflowStore = defineStore('workflow', () => {
     modifiedWorkflows,
     getWorkflowByPath,
     syncWorkflows,
+    isSyncLoading,
     loadWorkflows,
 
     isSubgraphActive,
@@ -793,7 +768,6 @@ export const useWorkflowStore = defineStore('workflow', () => {
     executionIdToCurrentId,
     nodeIdToNodeLocatorId,
     nodeToNodeLocatorId,
-    nodeExecutionIdToNodeLocatorId,
     nodeLocatorIdToNodeId,
     nodeLocatorIdToNodeExecutionId
   }

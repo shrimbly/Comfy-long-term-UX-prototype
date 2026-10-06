@@ -7,7 +7,7 @@ import { TestIds } from '@e2e/fixtures/selectors'
 
 type ReleaseNote = components['schemas']['ReleaseNote']
 
-export type HelpMenuItemKey =
+type HelpMenuItemKey =
   | 'feedback'
   | 'help'
   | 'docs'
@@ -17,7 +17,7 @@ export type HelpMenuItemKey =
   | 'update-comfyui'
   | 'more'
 
-export class HelpCenterHelper {
+class HelpCenterHelper {
   public readonly button: Locator
   public readonly popup: Locator
   public readonly backdrop: Locator
@@ -74,7 +74,7 @@ export class HelpCenterHelper {
           body: JSON.stringify(releases)
         })
       } else {
-        await route.continue()
+        await route.fallback()
       }
     })
   }
@@ -117,8 +117,9 @@ export class HelpCenterHelper {
    */
   async stubExternalPages(): Promise<void> {
     for (const pattern of [
-      'https://www.comfy.org/**',
-      'https://github.com/**'
+      'https://comfy.org/**',
+      'https://github.com/**',
+      'https://discord.com/invite/comfyorg'
     ]) {
       await this.page.context().route(pattern, (route: Route) =>
         route.fulfill({

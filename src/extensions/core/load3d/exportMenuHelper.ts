@@ -1,13 +1,14 @@
 import { t } from '@/i18n'
 import type { IContextMenuValue } from '@/lib/litegraph/src/interfaces'
 import { useToastStore } from '@/platform/updates/common/toastStore'
-import Load3d from '@/extensions/core/load3d/Load3d'
+import type Load3d from '@/extensions/core/load3d/Load3d'
 import { LiteGraph } from '@/lib/litegraph/src/litegraph'
 
 const EXPORT_FORMATS = [
   { label: 'GLB', value: 'glb' },
   { label: 'OBJ', value: 'obj' },
-  { label: 'STL', value: 'stl' }
+  { label: 'STL', value: 'stl' },
+  { label: 'FBX', value: 'fbx' }
 ] as const
 
 /**

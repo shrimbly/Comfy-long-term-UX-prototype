@@ -1,15 +1,22 @@
 import axios from 'axios'
-import _ from 'es-toolkit/compat'
+import { cloneDeep, uniq } from 'es-toolkit/compat'
 import { defineStore } from 'pinia'
 import { computed, ref, watchEffect } from 'vue'
 
-import { t } from '@/i18n'
-import { isPromotedWidgetView } from '@/core/graph/subgraph/promotedWidgetTypes'
-import { resolvePromotedWidgetSource } from '@/core/graph/subgraph/resolvePromotedWidgetSource'
-import { resolveInputType } from '@/core/graph/widgets/dynamicTypes'
+import { resolveNodeDefText, t } from '@/i18n'
+import { promotedInputSource } from '@/core/graph/subgraph/promotedInputWidget'
+import { resolveConcretePromotedWidget } from '@/core/graph/subgraph/resolveConcretePromotedWidget'
+import { resolveDynamicInputSpec } from '@/core/graph/widgets/dynamicInputSpec'
+import {
+  collectSearchableInputTypes,
+  collectSearchableOutputTypes
+} from '@/schemas/nodeDef/searchableSlotTypes'
 import { LiteGraph } from '@/lib/litegraph/src/litegraph'
 import type { LGraphNode } from '@/lib/litegraph/src/litegraph'
-import { transformNodeDefV1ToV2 } from '@/schemas/nodeDef/migration'
+import {
+  transformNodeDefV1ToV2,
+  transformInputSpecV1ToV2
+} from '@/schemas/nodeDef/migration'
 import type {
   ComfyNodeDef as ComfyNodeDefV2,
   InputSpec as InputSpecV2,
@@ -24,7 +31,7 @@ import type {
 import { useSettingStore } from '@/platform/settings/settingStore'
 import { NodeSearchService } from '@/services/nodeSearchService'
 import { useSubgraphStore } from '@/stores/subgraphStore'
-import { ESSENTIALS_CATEGORY_CANONICAL } from '@/constants/essentialsNodes'
+import { NODE_TO_ESSENTIALS_CATEGORY } from '@/constants/essentialsNodes'
 import { CORE_NODE_MODULES, getNodeSource } from '@/types/nodeSource'
 import type { NodeSource } from '@/types/nodeSource'
 import type { TreeNode } from '@/types/treeExplorerTypes'
@@ -36,7 +43,6 @@ export class ComfyNodeDefImpl
 {
   // ComfyNodeDef fields (V1)
   readonly name: string
-  readonly display_name: string
   /**
    * Category is not marked as readonly as the bookmark system
    * needs to write to it to assign a node to a custom folder.
@@ -44,7 +50,6 @@ export class ComfyNodeDefImpl
   category: string
   readonly main_category?: string
   readonly python_module: string
-  readonly description: string
   readonly help: string
   readonly deprecated: boolean
   readonly experimental: boolean
@@ -100,13 +105,23 @@ export class ComfyNodeDefImpl
   // ComfyNodeDefImpl fields
   readonly nodeSource: NodeSource
   readonly inputTypes: string[]
+  readonly outputTypes: string[]
+
+  /**
+   * Raw `/object_info` text, kept unresolved so `display_name` and
+   * `description` can be resolved against the active locale on every read.
+   * Declared with TypeScript `private` rather than `#private`: Vue wraps store
+   * instances in a Proxy, and `#private` reads throw through one.
+   */
+  private readonly backendDisplayName?: string
+  private readonly backendDescription?: string
 
   /**
    * @internal
    * Migrate default input options to forceInput.
    */
   private static _migrateDefaultInput(nodeDef: ComfyNodeDefV1): ComfyNodeDefV1 {
-    const def = _.cloneDeep(nodeDef)
+    const def = cloneDeep(nodeDef)
     def.input ??= {}
     // For required inputs, now we have the input socket always present. Specifying
     // it now has no effect.
@@ -137,18 +152,21 @@ export class ComfyNodeDefImpl
     const obj = ComfyNodeDefImpl._migrateDefaultInput(def)
 
     /**
-     * Assign extra fields to `this` for compatibility with group node feature.
-     * TODO: Remove this once group node feature is removed.
+     * Copy fields that are declared on this class but not explicitly assigned
+     * below (e.g. `search_aliases`) straight from the source definition.
+     * `display_name` and `description` are held out: they are accessors with no
+     * setter, so assigning them here would throw.
      */
-    Object.assign(this, obj)
+    const { display_name, description, ...assignable } = obj
+    Object.assign(this, assignable)
 
     // Initialize V1 fields
     this.name = obj.name
-    this.display_name = obj.display_name
+    this.backendDisplayName = display_name || undefined
+    this.backendDescription = description || undefined
     this.category = obj.category
     this.main_category = obj.main_category
     this.python_module = obj.python_module
-    this.description = obj.description
     this.help = obj.help ?? ''
     this.deprecated = obj.deprecated ?? obj.category === ''
     this.experimental =
@@ -163,11 +181,8 @@ export class ComfyNodeDefImpl
     this.output_tooltips = obj.output_tooltips
     this.input_order = obj.input_order
     this.price_badge = obj.price_badge
-    this.essentials_category = obj.essentials_category
-      ? (ESSENTIALS_CATEGORY_CANONICAL.get(
-          obj.essentials_category.toLowerCase()
-        ) ?? obj.essentials_category)
-      : undefined
+    this.essentials_category =
+      NODE_TO_ESSENTIALS_CATEGORY[obj.name] ?? obj.essentials_category
     this.isGlobal = obj.isGlobal
     this.isCoreNode = CORE_NODE_MODULES.includes(
       this.python_module.split('.')[0]
@@ -181,9 +196,32 @@ export class ComfyNodeDefImpl
 
     // Initialize node source
     this.nodeSource = getNodeSource(obj.python_module, this.essentials_category)
-    this.inputTypes = _.uniq(
-      Object.values(this.inputs).flatMap(resolveInputType)
+    this.inputTypes = uniq(
+      Object.values(this.inputs).flatMap(collectSearchableInputTypes)
     )
+    this.outputTypes = uniq(
+      collectSearchableOutputTypes(
+        this.outputs,
+        this.inputs,
+        obj.output_matchtypes
+      )
+    )
+  }
+
+  /**
+   * Resolved against the active locale on read, so a locale switch retitles
+   * every def without refetching `/object_info`.
+   */
+  get display_name(): string {
+    return resolveNodeDefText(
+      'display_name',
+      this.name,
+      this.backendDisplayName
+    )
+  }
+
+  get description(): string {
+    return resolveNodeDefText('description', this.name, this.backendDescription)
   }
 
   get nodePath(): string {
@@ -212,7 +250,7 @@ export const SYSTEM_NODE_DEFS: Record<string, ComfyNodeDefV1> = {
   PrimitiveNode: {
     name: 'PrimitiveNode',
     display_name: 'Primitive',
-    category: 'utils',
+    category: 'utilities/primitive',
     input: { required: {}, optional: {} },
     output: ['*'],
     output_name: ['connect to widget input'],
@@ -224,7 +262,7 @@ export const SYSTEM_NODE_DEFS: Record<string, ComfyNodeDefV1> = {
   Reroute: {
     name: 'Reroute',
     display_name: 'Reroute',
-    category: 'utils',
+    category: 'utilities',
     input: { required: { '': ['*', {}] }, optional: {} },
     output: ['*'],
     output_name: [''],
@@ -236,7 +274,7 @@ export const SYSTEM_NODE_DEFS: Record<string, ComfyNodeDefV1> = {
   Note: {
     name: 'Note',
     display_name: 'Note',
-    category: 'utils',
+    category: 'utilities',
     input: {
       required: { text: ['STRING', { multiline: true }] },
       optional: {}
@@ -251,7 +289,7 @@ export const SYSTEM_NODE_DEFS: Record<string, ComfyNodeDefV1> = {
   MarkdownNote: {
     name: 'MarkdownNote',
     display_name: 'Markdown Note',
-    category: 'utils',
+    category: 'utilities',
     input: {
       required: { text: ['STRING', { multiline: true }] },
       optional: {}
@@ -296,7 +334,7 @@ export function createDummyFolderNodeDef(folderPath: string): ComfyNodeDefImpl {
     output_name: [],
     output_is_list: [],
     output_node: false
-  } as ComfyNodeDefV1)
+  })
 }
 
 /**
@@ -332,7 +370,11 @@ export const useNodeDefStore = defineStore('nodeDef', () => {
   const settingStore = useSettingStore()
 
   const nodeDefsByName = ref<Record<string, ComfyNodeDefImpl>>({})
-  const nodeDefsByDisplayName = ref<Record<string, ComfyNodeDefImpl>>({})
+  const nodeDefsByDisplayName = computed(() =>
+    Object.fromEntries(
+      Object.values(nodeDefsByName.value).map((d) => [d.display_name, d])
+    )
+  )
   const showDeprecated = ref(false)
   const showExperimental = ref(false)
   const showDevOnly = computed(() => settingStore.get('Comfy.DevMode'))
@@ -361,12 +403,8 @@ export const useNodeDefStore = defineStore('nodeDef', () => {
   const nodeDataTypes = computed(() => {
     const types = new Set<string>()
     for (const nodeDef of nodeDefs.value) {
-      for (const input of Object.values(nodeDef.inputs)) {
-        types.add(input.type)
-      }
-      for (const output of nodeDef.outputs) {
-        types.add(output.type)
-      }
+      for (const type of nodeDef.inputTypes) types.add(type)
+      for (const type of nodeDef.outputTypes) types.add(type)
     }
     return types
   })
@@ -376,6 +414,9 @@ export const useNodeDefStore = defineStore('nodeDef', () => {
       map[nodeDef.name] = nodeDef
     }
     return map
+  })
+  const allNodeDefsByDisplayName = computed(() => {
+    return Object.fromEntries(nodeDefs.value.map((d) => [d.display_name, d]))
   })
 
   const visibleNodeDefs = computed(() => {
@@ -390,7 +431,6 @@ export const useNodeDefStore = defineStore('nodeDef', () => {
 
   function updateNodeDefs(nodeDefs: ComfyNodeDefV1[]) {
     const newNodeDefsByName: Record<string, ComfyNodeDefImpl> = {}
-    const newNodeDefsByDisplayName: Record<string, ComfyNodeDefImpl> = {}
 
     for (const nodeDef of nodeDefs) {
       const nodeDefImpl =
@@ -399,19 +439,22 @@ export const useNodeDefStore = defineStore('nodeDef', () => {
           : new ComfyNodeDefImpl(nodeDef)
 
       newNodeDefsByName[nodeDef.name] = nodeDefImpl
-      newNodeDefsByDisplayName[nodeDef.display_name] = nodeDefImpl
     }
 
     nodeDefsByName.value = newNodeDefsByName
-    nodeDefsByDisplayName.value = newNodeDefsByDisplayName
   }
   function addNodeDef(nodeDef: ComfyNodeDefV1) {
     const nodeDefImpl = new ComfyNodeDefImpl(nodeDef)
     nodeDefsByName.value[nodeDef.name] = nodeDefImpl
-    nodeDefsByDisplayName.value[nodeDef.display_name] = nodeDefImpl
+  }
+  function removeNodeDef(nodeName: string) {
+    delete nodeDefsByName.value[nodeName]
+  }
+  function getNodeDefByName(nodeName: string): ComfyNodeDefImpl | undefined {
+    return nodeDefsByName.value[nodeName]
   }
   function fromLGraphNode(node: LGraphNode): ComfyNodeDefImpl | null {
-    const nodeTypeName = node.constructor?.nodeData?.name ?? node.type
+    const nodeTypeName = node.constructor.nodeData?.name ?? node.type
     if (!nodeTypeName) return null
     const nodeDef = nodeDefsByName.value[nodeTypeName] ?? null
     return nodeDef
@@ -425,15 +468,37 @@ export const useNodeDefStore = defineStore('nodeDef', () => {
       const nodeDef = fromLGraphNode(node)
       if (!nodeDef) return undefined
 
-      return nodeDef.inputs[widgetName]
+      if (Object.hasOwn(nodeDef.inputs, widgetName))
+        return nodeDef.inputs[widgetName]
+      const resolved = resolveDynamicInputSpec(
+        nodeDef.input,
+        widgetName,
+        (name) => node.widgets?.find((widget) => widget.name === name)?.value
+      )
+      return (
+        resolved &&
+        transformInputSpecV1ToV2(resolved.spec, {
+          name: widgetName,
+          isOptional: resolved.isOptional
+        })
+      )
     }
-    const widget = node.widgets?.find((w) => w.name === widgetName)
-    if (!widget || !isPromotedWidgetView(widget)) return undefined
-
-    const sourceWidget = resolvePromotedWidgetSource(node, widget)
-    if (!sourceWidget) return undefined
-
-    return getInputSpecForWidget(sourceWidget.node, sourceWidget.widget.name)
+    // A subgraph node's widget is a promoted input named after its slot; resolve
+    // the interior source and read its real spec instead of fabricating one.
+    const input = node.inputs.find((i) => i.name === widgetName)
+    if (!input) return undefined
+    const source = promotedInputSource(node, input)
+    if (!source) return undefined
+    const resolution = resolveConcretePromotedWidget(
+      node,
+      source.nodeId,
+      source.widgetName
+    )
+    if (resolution.status !== 'resolved') return undefined
+    return getInputSpecForWidget(
+      resolution.resolved.node,
+      resolution.resolved.widget.name
+    )
   }
 
   /**
@@ -502,6 +567,7 @@ export const useNodeDefStore = defineStore('nodeDef', () => {
     nodeDefsByName,
     nodeDefsByDisplayName,
     allNodeDefsByName,
+    allNodeDefsByDisplayName,
     showDeprecated,
     showExperimental,
     showDevOnly,
@@ -515,6 +581,8 @@ export const useNodeDefStore = defineStore('nodeDef', () => {
 
     updateNodeDefs,
     addNodeDef,
+    removeNodeDef,
+    getNodeDefByName,
     fromLGraphNode,
     getInputSpecForWidget,
     registerNodeDefFilter,
@@ -553,8 +621,10 @@ export const useNodeFrequencyStore = defineStore('nodeFrequency', () => {
   const nodeDefStore = useNodeDefStore()
   const topNodeDefs = computed<ComfyNodeDefImpl[]>(() => {
     return nodeNamesByFrequency.value
-      .map((nodeName: string) => nodeDefStore.nodeDefsByName[nodeName])
-      .filter((nodeDef: ComfyNodeDefImpl) => nodeDef !== undefined)
+      .flatMap((nodeName: string) => {
+        const nodeDef = nodeDefStore.getNodeDefByName(nodeName)
+        return nodeDef ? [nodeDef] : []
+      })
       .slice(0, topNodeDefLimit.value)
   })
 

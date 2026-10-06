@@ -1,11 +1,10 @@
-import { fireEvent, render, screen } from '@testing-library/vue'
 import userEvent from '@testing-library/user-event'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { fireEvent, render, screen } from '@testing-library/vue'
+import { describe, expect, it, vi } from 'vitest'
 import { nextTick } from 'vue'
 import { createI18n } from 'vue-i18n'
 
-import type { NodeId } from '@/platform/workflow/validation/schemas/workflowSchema'
-import type { ResultItemImpl } from '@/stores/queueStore'
+import type { AugmentedResultItem } from '@/utils/resultItem'
 
 import MediaLightbox from './MediaLightbox.vue'
 
@@ -18,34 +17,16 @@ const i18n = createI18n({
         close: 'Close',
         gallery: 'Gallery',
         previous: 'Previous',
-        next: 'Next'
-      },
-      mediaAsset: {
-        compare: {
-          pinSide: 'Pin to this side',
-          vs: 'vs',
-          mode: {
-            'side-by-side': 'Side by side',
-            wipe: 'Wipe',
-            flip: 'Flip'
-          }
-        }
+        next: 'Next',
+        videoFailedToLoad: 'Video failed to load',
+        textFailedToLoad: 'Text failed to load'
       }
     }
   }
 })
 
-type MockResultItem = Partial<ResultItemImpl> & {
-  filename: string
-  subfolder: string
-  type: string
-  nodeId: NodeId
-  mediaType: string
+type MockResultItem = AugmentedResultItem & {
   id?: string
-  url?: string
-  isImage?: boolean
-  isVideo?: boolean
-  isAudio?: boolean
 }
 
 describe('MediaLightbox', () => {
@@ -74,11 +55,8 @@ describe('MediaLightbox', () => {
       filename: 'image1.jpg',
       subfolder: 'outputs',
       type: 'output',
-      nodeId: '123' as NodeId,
+      nodeId: '123',
       mediaType: 'images',
-      isImage: true,
-      isVideo: false,
-      isAudio: false,
       url: 'image1.jpg',
       id: '1'
     },
@@ -86,11 +64,8 @@ describe('MediaLightbox', () => {
       filename: 'image2.jpg',
       subfolder: 'outputs',
       type: 'output',
-      nodeId: '456' as NodeId,
+      nodeId: '456',
       mediaType: 'images',
-      isImage: true,
-      isVideo: false,
-      isAudio: false,
       url: 'image2.jpg',
       id: '2'
     },
@@ -98,21 +73,14 @@ describe('MediaLightbox', () => {
       filename: 'image3.jpg',
       subfolder: 'outputs',
       type: 'output',
-      nodeId: '789' as NodeId,
+      nodeId: '789',
       mediaType: 'images',
-      isImage: true,
-      isVideo: false,
-      isAudio: false,
       url: 'image3.jpg',
       id: '3'
     }
   ]
 
-  beforeEach(() => {
-    document.body.innerHTML = ''
-  })
-
-  const renderGallery = (props = {}) => {
+  const renderGallery = (props = {}, stubs = {}) => {
     const onUpdateActiveIndex = vi.fn()
     const user = userEvent.setup()
     const { rerender, container } = render(MediaLightbox, {
@@ -124,11 +92,12 @@ describe('MediaLightbox', () => {
           ResultAudio: mockResultAudio
         },
         stubs: {
-          teleport: true
+          teleport: true,
+          ...stubs
         }
       },
       props: {
-        allGalleryItems: mockGalleryItems as ResultItemImpl[],
+        allGalleryItems: mockGalleryItems,
         activeIndex: 0,
         'onUpdate:activeIndex': onUpdateActiveIndex,
         ...props
@@ -157,7 +126,7 @@ describe('MediaLightbox', () => {
 
   it('hides navigation buttons for single item', async () => {
     renderGallery({
-      allGalleryItems: [mockGalleryItems[0]] as ResultItemImpl[]
+      allGalleryItems: [mockGalleryItems[0]]
     })
     await nextTick()
 
@@ -168,19 +137,19 @@ describe('MediaLightbox', () => {
   it('shows gallery when activeIndex changes from -1', async () => {
     const { rerender, container } = renderGallery({ activeIndex: -1 })
 
-    /* eslint-disable testing-library/no-container, testing-library/no-node-access */
+    /* oxlint-disable testing-library/no-container, testing-library/no-node-access */
     expect(container.querySelector('[data-mask]')).not.toBeInTheDocument()
-    /* eslint-enable testing-library/no-container, testing-library/no-node-access */
+    /* oxlint-enable testing-library/no-container, testing-library/no-node-access */
 
     await rerender({
-      allGalleryItems: mockGalleryItems as ResultItemImpl[],
+      allGalleryItems: mockGalleryItems,
       activeIndex: 0
     })
     await nextTick()
 
-    /* eslint-disable testing-library/no-container, testing-library/no-node-access */
+    /* oxlint-disable testing-library/no-container, testing-library/no-node-access */
     expect(container.querySelector('[data-mask]')).toBeInTheDocument()
-    /* eslint-enable testing-library/no-container, testing-library/no-node-access */
+    /* oxlint-enable testing-library/no-container, testing-library/no-node-access */
   })
 
   it('emits update:activeIndex with -1 when close button clicked', async () => {
@@ -193,7 +162,35 @@ describe('MediaLightbox', () => {
     expect(onUpdateActiveIndex).toHaveBeenCalledWith(-1)
   })
 
-  /* eslint-disable testing-library/prefer-user-event -- keyDown on dialog element for navigation, not text input */
+  it('keeps failed text media actionable until the viewer closes', async () => {
+    const fetchMock = vi.fn(() =>
+      Promise.resolve(new Response(null, { status: 503 }))
+    )
+    vi.stubGlobal('fetch', fetchMock)
+
+    const { user } = renderGallery(
+      {
+        allGalleryItems: [
+          {
+            ...mockGalleryItems[0],
+            filename: 'failed.txt',
+            mediaType: 'text',
+            url: '/api/view?filename=failed.txt'
+          }
+        ]
+      },
+      { ResultText: false }
+    )
+
+    expect(await screen.findByText('Text failed to load')).toBeInTheDocument()
+    expect(fetchMock).toHaveBeenCalledWith('/api/view?filename=failed.txt')
+
+    await user.click(screen.getByLabelText('Close'))
+
+    expect(screen.queryByText('Text failed to load')).not.toBeInTheDocument()
+  })
+
+  /* oxlint-disable testing-library/prefer-user-event -- keyDown on dialog element for navigation, not text input */
   describe('keyboard navigation', () => {
     it('navigates to next item on ArrowRight', async () => {
       const { onUpdateActiveIndex } = renderGallery({ activeIndex: 0 })
@@ -243,210 +240,104 @@ describe('MediaLightbox', () => {
       expect(onUpdateActiveIndex).toHaveBeenCalledWith(-1)
     })
   })
-  /* eslint-enable testing-library/prefer-user-event */
+  /* oxlint-enable testing-library/prefer-user-event */
 
-  describe('compare mode', () => {
-    /* eslint-disable testing-library/prefer-user-event */
-    const mockLightboxAssetView = {
-      name: 'LightboxAssetView',
-      template:
-        '<div class="mock-asset-view" :data-filename="item?.filename"></div>',
-      props: ['item']
-    }
-
-    const mockPinBadge = {
-      name: 'PinBadge',
-      template:
-        '<button class="mock-pin-badge" :data-pinned="pinned" @click="$emit(\'click\')"></button>',
-      props: ['pinned', 'label'],
-      emits: ['click']
-    }
-
-    const makeItem = (id: string, filename: string): MockResultItem => ({
-      filename,
-      subfolder: 'outputs',
+  /* oxlint-disable testing-library/no-node-access -- element identity is the behavior under test: the browser only keeps a video's buffer if the same node survives navigation. The real Teleport must render (the test-utils teleport stub remounts its subtree and would defeat KeepAlive), so queries go through document.body. */
+  describe('video retention across navigation', () => {
+    const videoItem = (n: number): MockResultItem => ({
+      filename: `v${n}.mp4`,
+      subfolder: '',
       type: 'output',
-      nodeId: id as NodeId,
-      mediaType: 'images',
-      isImage: true,
-      isVideo: false,
-      isAudio: false,
-      url: filename,
-      id
+      nodeId: `${n}`,
+      mediaType: 'video',
+      url: `http://assets.test/v${n}.mp4`,
+      id: `v${n}`
     })
 
-    const renderCompare = (items: MockResultItem[], props = {}) => {
-      const onUpdateActiveIndex = vi.fn()
-      const { container, rerender } = render(MediaLightbox, {
-        global: {
-          plugins: [i18n],
-          stubs: {
-            teleport: true,
-            LightboxAssetView: mockLightboxAssetView,
-            PinBadge: mockPinBadge,
-            ComfyImage: mockComfyImage,
-            ResultVideo: mockResultVideo,
-            ResultAudio: mockResultAudio
-          }
-        },
+    const renderTeleported = (items: MockResultItem[]) => {
+      const { rerender } = render(MediaLightbox, {
+        global: { plugins: [i18n] },
         props: {
-          allGalleryItems: [] as ResultItemImpl[],
-          activeIndex: 0,
-          compareItems: items as ResultItemImpl[],
-          'onUpdate:activeIndex': onUpdateActiveIndex,
-          ...props
-        },
-        container: document.body.appendChild(document.createElement('div'))
+          allGalleryItems: items,
+          activeIndex: 0
+        }
       })
-      return { container, rerender, onUpdateActiveIndex }
+      const show = async (activeIndex: number) => {
+        await rerender({
+          allGalleryItems: items,
+          activeIndex
+        })
+        await nextTick()
+      }
+      const video = () => document.body.querySelector('video')
+      return { show, video }
     }
 
-    const getAssetFilenames = (container: Element): string[] =>
-      Array.from(
-        // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access
-        container.querySelectorAll('[data-filename]')
-      ).map((el) => el.getAttribute('data-filename') ?? '')
-
-    it('renders both items in side-by-side layout by default', async () => {
-      const { container } = renderCompare([
-        makeItem('1', 'a.png'),
-        makeItem('2', 'b.png')
+    it('keeps the same video element when leaving and returning', async () => {
+      const { show, video } = renderTeleported([
+        videoItem(1),
+        mockGalleryItems[0]
       ])
       await nextTick()
-      expect(getAssetFilenames(container)).toEqual(['a.png', 'b.png'])
+
+      const first = video()
+      expect(first).not.toBeNull()
+      first!.dataset.probe = 'kept'
+
+      await show(1)
+      expect(video()).toBeNull()
+
+      await show(0)
+      const returned = video()
+      expect(returned).toBe(first)
+      expect(returned!.dataset.probe).toBe('kept')
     })
 
-    it('cycles modes on "/" key', async () => {
-      const { container } = renderCompare([
-        makeItem('1', 'a.png'),
-        makeItem('2', 'b.png')
-      ])
+    it('mounts a distinct element and source for a different video', async () => {
+      const { show, video } = renderTeleported([videoItem(1), videoItem(2)])
       await nextTick()
-      const dialog = screen.getByRole('dialog')
+      const first = video()
 
-      // Side-by-side shows both via LightboxAssetView stub
-      expect(getAssetFilenames(container).length).toBe(2)
+      await show(1)
+      const second = video()
 
-      // / → wipe: renders both direct <img> tags, stub count drops to 0
-      await fireEvent.keyDown(dialog, { key: '/' })
-      await nextTick()
-      // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access
-      const wipeImages = container.querySelectorAll(
-        'img[src="a.png"], img[src="b.png"]'
+      expect(second).not.toBe(first)
+      expect(second!.querySelector('source')!.getAttribute('src')).toBe(
+        'http://assets.test/v2.mp4'
       )
-      expect(wipeImages.length).toBe(2)
-
-      // / → flip (single pane, stub again)
-      await fireEvent.keyDown(dialog, { key: '/' })
-      await nextTick()
-      expect(getAssetFilenames(container)).toEqual(['a.png'])
     })
 
-    it('toggles flip with spacebar only (arrows navigate cursor)', async () => {
-      const { container } = renderCompare([
-        makeItem('1', 'a.png'),
-        makeItem('2', 'b.png'),
-        makeItem('3', 'c.png')
+    it('evicts the oldest video past the retention bound', async () => {
+      const { show, video } = renderTeleported([
+        videoItem(1),
+        videoItem(2),
+        videoItem(3),
+        videoItem(4)
       ])
       await nextTick()
-      const dialog = screen.getByRole('dialog')
+      const first = video()
 
-      // Jump to flip mode (click the flip button)
-      // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access
-      const flipButton = container.querySelector(
-        '[aria-label="Flip"]'
-      ) as HTMLElement
-      flipButton.click()
-      await nextTick()
-      // Initial: pinned=0 (a), cursor=1 (b); flip shows pinned (a)
-      expect(getAssetFilenames(container)).toEqual(['a.png'])
+      for (const index of [1, 2, 3]) await show(index)
 
-      // Spacebar toggles between pinned (a) and cursor (b)
-      await fireEvent.keyDown(dialog, { key: ' ' })
-      await nextTick()
-      expect(getAssetFilenames(container)).toEqual(['b.png'])
-
-      await fireEvent.keyDown(dialog, { key: ' ' })
-      await nextTick()
-      expect(getAssetFilenames(container)).toEqual(['a.png'])
-
-      // ArrowRight advances cursor (from b to c); flip still on pinned (a)
-      await fireEvent.keyDown(dialog, { key: 'ArrowRight' })
-      await nextTick()
-      expect(getAssetFilenames(container)).toEqual(['a.png'])
-
-      // Now space flips to the new cursor (c)
-      await fireEvent.keyDown(dialog, { key: ' ' })
-      await nextTick()
-      expect(getAssetFilenames(container)).toEqual(['c.png'])
+      await show(0)
+      expect(video()).not.toBe(first)
     })
 
-    it('advances cursor with arrow keys skipping the pinned item (3+ items)', async () => {
-      const { container } = renderCompare([
-        makeItem('1', 'a.png'),
-        makeItem('2', 'b.png'),
-        makeItem('3', 'c.png')
+    it('drops retained videos when the lightbox closes', async () => {
+      const { show, video } = renderTeleported([
+        videoItem(1),
+        mockGalleryItems[0]
       ])
       await nextTick()
-      const dialog = screen.getByRole('dialog')
+      const first = video()
 
-      // Initial: pinned=0 (a), cursor=1 (b) → [a, b]
-      expect(getAssetFilenames(container)).toEqual(['a.png', 'b.png'])
+      await show(-1)
+      await show(0)
 
-      await fireEvent.keyDown(dialog, { key: 'ArrowRight' })
-      await nextTick()
-      // Cursor advances 1 → 2 (skips pinned 0)
-      expect(getAssetFilenames(container)).toEqual(['a.png', 'c.png'])
-
-      await fireEvent.keyDown(dialog, { key: 'ArrowRight' })
-      await nextTick()
-      // Cursor wraps 2 → 0 (pinned), skips to 1
-      expect(getAssetFilenames(container)).toEqual(['a.png', 'b.png'])
+      const reopened = video()
+      expect(reopened).not.toBeNull()
+      expect(reopened).not.toBe(first)
     })
-
-    it('arrow keys are no-op with exactly 2 items', async () => {
-      const { container } = renderCompare([
-        makeItem('1', 'a.png'),
-        makeItem('2', 'b.png')
-      ])
-      await nextTick()
-      const dialog = screen.getByRole('dialog')
-
-      await fireEvent.keyDown(dialog, { key: 'ArrowRight' })
-      await nextTick()
-      expect(getAssetFilenames(container)).toEqual(['a.png', 'b.png'])
-    })
-
-    it('pin-swap swaps pinned side when clicking the unpinned panel', async () => {
-      const { container } = renderCompare([
-        makeItem('1', 'a.png'),
-        makeItem('2', 'b.png'),
-        makeItem('3', 'c.png')
-      ])
-      await nextTick()
-      // Initial: [a, b] → left = pinned (a), right = cursor (b)
-      expect(getAssetFilenames(container)).toEqual(['a.png', 'b.png'])
-
-      // Click the right panel (unpinned) to pin it instead.
-      // eslint-disable-next-line testing-library/no-container, testing-library/no-node-access
-      const rightAsset = container.querySelector(
-        '[data-filename="b.png"]'
-      ) as HTMLElement
-      // eslint-disable-next-line testing-library/no-node-access
-      const rightPanel = rightAsset.parentElement?.parentElement as HTMLElement
-      rightPanel.click()
-      await nextTick()
-      // Right pane now pinned (b), left is cursor which was previously pinned (a).
-      // After swap: left=compareItems[cursorIndex=0]=a, right=compareItems[pinnedIndex=1]=b.
-      // Visually [a,b] still — pin change affects navigation behavior.
-      expect(getAssetFilenames(container)).toEqual(['a.png', 'b.png'])
-
-      // Now ArrowRight advances the LEFT side (cursor) skipping index 1 (pinned)
-      const dialog = screen.getByRole('dialog')
-      await fireEvent.keyDown(dialog, { key: 'ArrowRight' })
-      await nextTick()
-      expect(getAssetFilenames(container)).toEqual(['c.png', 'b.png'])
-    })
-    /* eslint-enable testing-library/prefer-user-event */
   })
+  /* oxlint-enable testing-library/no-node-access */
 })

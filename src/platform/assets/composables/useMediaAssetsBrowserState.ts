@@ -11,11 +11,11 @@ import { useMediaAssetBrowser } from '@/platform/assets/composables/useMediaAsse
 import type { AssetItem } from '@/platform/assets/schemas/assetSchema'
 import type { MediaKind } from '@/platform/assets/schemas/mediaAssetSchema'
 import { assetToResultItem } from '@/platform/assets/utils/assetLightboxAdapter'
-import type { ResultItemImpl } from '@/stores/queueStore'
 import {
   getMediaTypeFromFilename,
   isPreviewableMediaType
 } from '@/utils/formatUtil'
+import type { AugmentedResultItem } from '@/utils/resultItem'
 
 const MIN_DENSITY = 160
 const MAX_DENSITY = 480
@@ -75,7 +75,7 @@ export function useMediaAssetsBrowserState(options: {
     browser.displayAssets.value.filter((a) => selectedIds.value.has(a.id))
   )
 
-  const { downloadMultipleAssets, deleteAssets } = useMediaAssetActions()
+  const { downloadAssets, deleteAssets } = useMediaAssetActions()
 
   function handleSelectAll() {
     selectedIds.value = new Set(browser.displayAssets.value.map((a) => a.id))
@@ -87,7 +87,7 @@ export function useMediaAssetsBrowserState(options: {
   }
 
   function handleDownloadSelected() {
-    downloadMultipleAssets(selectedAssets.value)
+    downloadAssets(selectedAssets.value)
     handleDeselectAll()
   }
 
@@ -277,7 +277,7 @@ export function useMediaAssetsBrowserState(options: {
   const galleryActiveIndex = ref(-1)
   const inspectActiveIndex = ref(-1)
   const isInspecting = computed(() => inspectActiveIndex.value !== -1)
-  const compareItems = ref<ResultItemImpl[]>([])
+  const compareItems = ref<AugmentedResultItem[]>([])
   const compareAssets = ref<AssetItem[]>([])
 
   watch(galleryActiveIndex, (index) => {

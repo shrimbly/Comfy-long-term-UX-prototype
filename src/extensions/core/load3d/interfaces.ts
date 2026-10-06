@@ -11,22 +11,56 @@ export type MaterialMode =
   | 'normal'
   | 'wireframe'
   | 'depth'
+  | 'clay'
 export type UpDirection = 'original' | '-x' | '+x' | '-y' | '+y' | '-z' | '+z'
 export type CameraType = 'perspective' | 'orthographic'
 export type BackgroundRenderModeType = 'tiled' | 'panorama'
+export type LoadFolder = 'temp' | 'output'
+
+interface CameraQuaternion {
+  x: number
+  y: number
+  z: number
+  w: number
+}
+
+interface CameraFrustum {
+  left: number
+  right: number
+  top: number
+  bottom: number
+}
 
 export interface CameraState {
   position: THREE.Vector3
   target: THREE.Vector3
   zoom: number
   cameraType: CameraType
+  quaternion?: CameraQuaternion
+  useCustomUp?: boolean
+  customUp?: { x: number; y: number; z: number }
+  fov?: number
+  aspect?: number
+  near?: number
+  far?: number
+  frustum?: CameraFrustum
 }
+
+// Coordinate system: right-handed, Y-up, world space
+export interface Model3DTransform {
+  position: { x: number; y: number; z: number } // scene units
+  quaternion: { x: number; y: number; z: number; w: number } // normalized, dimensionless; world rotation
+  scale: { x: number; y: number; z: number } // dimensionless multiplier
+}
+
+export type Model3DInfo = Model3DTransform[]
 
 export interface SceneConfig {
   showGrid: boolean
   backgroundColor: string
   backgroundImage?: string
   backgroundRenderMode?: BackgroundRenderModeType
+  models?: Model3DInfo
 }
 
 export type GizmoMode = 'translate' | 'rotate' | 'scale'
@@ -46,11 +80,20 @@ export interface ModelConfig {
   gizmo?: GizmoConfig
 }
 
-export interface CameraConfig {
+/** `Model Config` as persisted in node properties by older workflows. */
+export type StoredModelConfig = Omit<Partial<ModelConfig>, 'gizmo'> & {
+  gizmo?: Partial<GizmoConfig>
+}
+
+type CustomUpConfig =
+  | { hasCustomUp?: false }
+  | { hasCustomUp: true; useCustomUp: boolean }
+
+export type CameraConfig = {
   cameraType: CameraType
   fov: number
   state?: CameraState
-}
+} & CustomUpConfig
 
 export interface LightConfig {
   intensity: number
@@ -127,6 +170,7 @@ export interface CameraManagerInterface extends BaseManager {
   setFOV(fov: number): void
   setCameraState(state: CameraState): void
   getCameraState(): CameraState
+  setUseCustomUp(use: boolean): void
   handleResize(width: number, height: number): void
   setControls(controls: OrbitControls): void
 }
@@ -142,8 +186,8 @@ export interface LightingManagerInterface extends BaseManager {
 }
 
 export interface ViewHelperManagerInterface extends BaseManager {
-  viewHelper: ViewHelper
-  viewHelperContainer: HTMLDivElement
+  viewHelper: ViewHelper | null
+  viewHelperContainer: HTMLDivElement | null
   createViewHelper(container: Element | HTMLElement): void
   update(delta: number): void
   handleResize(): void
@@ -152,7 +196,7 @@ export interface ViewHelperManagerInterface extends BaseManager {
 export interface EventManagerInterface {
   addEventListener<T>(event: string, callback: EventCallback<T>): void
   removeEventListener<T>(event: string, callback: EventCallback<T>): void
-  emitEvent<T>(event: string, data: T): void
+  emitEvent(event: string, data: unknown): void
 }
 
 export interface AnimationManagerInterface extends BaseManager {
@@ -212,6 +256,14 @@ export interface LoadModelOptions {
    * (e.g. shared workflows on a fresh machine).
    */
   silentOnNotFound?: boolean
+}
+
+export interface SceneOverlay {
+  attach(scene: THREE.Scene): void
+  detach(): void
+  update?(deltaSeconds: number): void
+  onActiveCameraChange?(camera: THREE.Camera): void
+  dispose(): void
 }
 
 export interface LoaderManagerInterface {

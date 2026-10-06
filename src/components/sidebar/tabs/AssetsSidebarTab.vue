@@ -1,239 +1,233 @@
 <template>
   <SidebarTabTemplate
+    ref="panelRef"
     :title="isInFolderView ? '' : $t('sideToolbar.mediaAssets.title')"
+    :closable
     v-bind="$attrs"
   >
-    <template v-if="!isInFolderView" #title-icon>
-      <i class="mr-2 icon-[comfy--image-ai-edit] size-5 shrink-0" />
-    </template>
     <template #alt-title>
       <div
         v-if="isInFolderView"
         class="flex w-full items-center justify-between gap-2"
       >
-        <div class="flex items-center gap-2">
-          <span class="font-bold">{{ $t('assetBrowser.jobId') }}:</span>
-          <span class="text-sm">{{ folderJobId?.substring(0, 8) }}</span>
-          <button
-            class="m-0 cursor-pointer border-0 bg-transparent p-0 outline-0"
-            role="button"
-            @click="copyJobId"
+        <div class="flex min-w-0 flex-1 items-center gap-2">
+          <Button
+            v-tooltip.bottom="{
+              value: $t('sideToolbar.backToAssets'),
+              showDelay: 300
+            }"
+            variant="textonly"
+            size="icon"
+            type="button"
+            class="shrink-0"
+            :aria-label="$t('sideToolbar.backToAssets')"
+            @click="exitFolderView"
           >
-            <i class="icon-[lucide--copy] text-sm"></i>
-          </button>
+            <i class="icon-[lucide--arrow-left] size-4" />
+          </Button>
+          <span class="shrink-0 font-bold">
+            {{ $t('assetBrowser.jobId') }}:
+          </span>
+          <span class="min-w-0 truncate text-sm">{{ folderJobId }}</span>
+          <Button
+            v-tooltip.bottom="{
+              value: $t('g.copyJobId'),
+              showDelay: 300
+            }"
+            variant="textonly"
+            size="icon"
+            type="button"
+            class="shrink-0"
+            :aria-label="$t('g.copyJobId')"
+            @click="copyFolderJobId"
+          >
+            <i class="icon-[lucide--copy] size-4" />
+          </Button>
         </div>
-        <div>
+        <div class="shrink-0">
           <span>{{ formattedExecutionTime }}</span>
         </div>
       </div>
     </template>
-    <template #tool-buttons-pinned>
-      <button
-        v-tooltip.bottom="$t('mediaAssets.modal.openBrowser')"
-        type="button"
-        class="m-0 flex cursor-pointer items-center justify-center border-0 bg-transparent p-1 text-text-primary outline-0 hover:text-base-foreground"
-        :aria-label="$t('mediaAssets.modal.openBrowser')"
-        @click="openMediaAssetBrowser"
-      >
-        <i class="icon-[lucide--external-link] size-5" />
-      </button>
-    </template>
     <template #header>
-      <div v-if="isInFolderView" class="px-2 2xl:px-4">
-        <Button variant="secondary" size="lg" @click="exitFolderView">
-          <i class="icon-[lucide--arrow-left] size-4" />
-          <span>{{ $t('sideToolbar.backToAssets') }}</span>
-        </Button>
-      </div>
-
-      <MediaAssetFilterBar
-        v-model:search-query="searchQuery"
-        v-model:sort-by="sortBy"
-        v-model:view-mode="viewMode"
-        v-model:media-type-filters="mediaTypeFilters"
-        v-model:metadata-filters="metadataFilters"
-        v-model:favorites-only="favoritesOnly"
-        bottom-divider
-        :show-generation-time-sort="activeTab === 'temp'"
-        :available-tags="availableTags"
-        :available-values-by-field="availableValuesByField"
-      />
-      <MediaAssetFilterChipsBar v-model="metadataFilters" />
-      <div
-        v-if="!isInFolderView"
-        class="border-b border-comfy-input p-2 2xl:px-4"
-      >
+      <div v-if="!isInFolderView" class="overflow-x-auto px-4 pt-2 pb-px">
         <TabList v-model="activeTab">
           <Tab value="output">{{ $t('sideToolbar.labels.generated') }}</Tab>
           <Tab value="input">{{ $t('sideToolbar.labels.imported') }}</Tab>
         </TabList>
       </div>
+      <MediaAssetFilterBar
+        v-model:search-query="searchQuery"
+        v-model:sort-by="sortBy"
+        v-model:view-mode="viewMode"
+        v-model:date-filter="dateFilter"
+        v-model:media-type-filters="mediaTypeFilters"
+        :show-generation-time-sort="activeTab === 'output'"
+      />
     </template>
     <template #body>
-      <div
-        v-if="showLoadingState"
-        class="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-2 p-2"
-      >
+      <div v-bind="tabPanelAttrs" class="size-full">
         <div
-          v-for="n in skeletonCount"
-          :key="`skeleton-${n}`"
-          class="flex flex-col gap-2 p-2"
+          v-if="showLoadingState"
+          class="grid gap-2 p-2"
+          :style="skeletonGridStyle"
         >
-          <Skeleton class="aspect-square w-full rounded-lg" />
-          <div class="flex flex-col gap-1">
-            <Skeleton class="h-4 w-3/4" />
-            <Skeleton class="h-3 w-1/2" />
+          <div
+            v-for="n in skeletonCount"
+            :key="`skeleton-${n}`"
+            class="flex flex-col gap-2 p-2"
+          >
+            <Skeleton class="aspect-square w-full rounded-lg" />
+            <div class="flex flex-col gap-1">
+              <Skeleton class="h-4 w-3/4" />
+              <Skeleton class="h-3 w-1/2" />
+            </div>
+          </div>
+        </div>
+        <div v-else-if="showEmptyState">
+          <NoResultsPlaceholder
+            icon="pi pi-info-circle"
+            :title="
+              $t(
+                activeTab === 'input'
+                  ? 'sideToolbar.noImportedFiles'
+                  : 'sideToolbar.noGeneratedFiles'
+              )
+            "
+            :message="$t('sideToolbar.noFilesFoundMessage')"
+          />
+        </div>
+        <div
+          v-else
+          class="relative size-full py-2"
+          @click="handleEmptySpaceClick"
+        >
+          <AssetsSidebarListView
+            v-if="isListView"
+            :asset-items="listViewAssetItems"
+            :is-selected="isSelected"
+            :selectable-assets="listViewSelectableAssets"
+            :is-stack-expanded="isListViewStackExpanded"
+            :toggle-stack="toggleListViewStack"
+            :on-load-more="loadMoreAssets"
+            :can-load-more="canLoadMoreAssets"
+            @select-asset="handleAssetSelect"
+            @preview-asset="handleZoomClick"
+            @context-menu="handleAssetContextMenu"
+          />
+          <div v-else class="size-full">
+            <AssetsSidebarGridView
+              :assets="displayAssets"
+              :is-selected
+              :show-output-count
+              :get-output-count
+              :grid-mode
+              :on-load-more="loadMoreAssets"
+              :can-load-more="canLoadMoreAssets"
+              @select-asset="handleAssetSelect"
+              @toggle-asset-selection="handleAssetSelectionToggle"
+              @context-menu="handleAssetContextMenu"
+              @zoom="handleZoomClick"
+              @output-count-click="enterFolderView"
+            />
           </div>
         </div>
       </div>
-      <div v-else-if="showEmptyState">
-        <NoResultsPlaceholder
-          icon="pi pi-info-circle"
-          :title="$t(emptyStateTitleKey)"
-          :message="$t('sideToolbar.noFilesFoundMessage')"
-        />
-      </div>
-      <div
-        v-else
-        class="relative size-full py-2"
-        @click="handleEmptySpaceClick"
-      >
-        <AssetsSidebarListView
-          v-if="isListView"
-          :asset-items="listViewAssetItems"
-          :is-selected="isSelected"
-          :selectable-assets="listViewSelectableAssets"
-          :is-stack-expanded="isListViewStackExpanded"
-          :toggle-stack="toggleListViewStack"
-          @select-asset="handleAssetSelect"
-          @preview-asset="handleZoomClick"
-          @context-menu="handleAssetContextMenu"
-          @approach-end="handleApproachEnd"
-        />
-        <AssetsSidebarGridView
-          v-else
-          :assets="displayAssets"
-          :is-selected="isSelected"
-          :selected-ids="selectedIds"
-          :show-output-count="shouldShowOutputCount"
-          :get-output-count="getOutputCount"
-          :grid-size="gridSize"
-          @select-asset="handleAssetSelect"
-          @context-menu="handleAssetContextMenu"
-          @approach-end="handleApproachEnd"
-          @zoom="handleZoomClick"
-          @output-count-click="enterFolderView"
-        />
-        <AssetSelectionFloatingBar
-          :visible="hasSelection"
-          :count="totalOutputCount"
-          :show-delete="shouldShowDeleteButton"
-          bottom-offset="lg"
-          @select-all="handleSelectAll"
-          @deselect-all="handleDeselectAll"
-          @download="handleDownloadSelected"
-          @delete-selected="handleDeleteSelected"
-        />
-      </div>
+    </template>
+    <template #footer>
+      <MediaAssetSelectionBar
+        v-if="hasSelection"
+        :count="totalOutputCount"
+        :show-delete="shouldShowDeleteButton"
+        @deselect="handleDeselectAll"
+        @download="handleBulkDownload(selectedAssets)"
+        @delete="handleBulkDelete(selectedAssets)"
+      />
     </template>
   </SidebarTabTemplate>
+  <Teleport to="body">
+    <div
+      v-if="marqueeStyle"
+      class="pointer-events-none fixed z-9999 border border-primary-background bg-primary-background/20"
+      :style="marqueeStyle"
+    />
+  </Teleport>
   <MediaLightbox
     v-model:active-index="galleryActiveIndex"
-    v-model:compare-items="compareItems"
-    v-model:compare-assets="compareAssets"
     :all-gallery-items="galleryItems"
   />
-  <MediaAssetContextMenu
-    v-if="contextMenuAsset"
+  <ContextMenu
+    :id="contextMenuId"
     ref="contextMenuRef"
-    :asset="contextMenuAsset"
-    :asset-type="contextMenuAssetType"
-    :file-kind="contextMenuFileKind"
-    :show-delete-button="shouldShowDeleteButton"
-    :selected-assets="selectedAssets"
-    :is-bulk-mode="isBulkMode"
-    @zoom="handleZoomClick(contextMenuAsset)"
-    @hide="handleContextMenuHide"
-    @asset-deleted="refreshAssets"
-    @bulk-download="handleBulkDownload"
-    @bulk-delete="handleBulkDelete"
-    @bulk-compare="handleBulkCompare"
-    @bulk-add-to-workflow="handleBulkAddToWorkflow"
-    @bulk-open-workflow="handleBulkOpenWorkflow"
-    @bulk-export-workflow="handleBulkExportWorkflow"
-    @show-details="handleShowDetails"
-  />
-  <AssetDetailPopover
-    :asset="detailsAsset"
-    :anchor="detailsAnchor"
-    @close="closeDetails"
+    :model="contextMenuItems"
   />
 </template>
 
 <script setup lang="ts">
-import {
-  useAsyncState,
-  useDebounceFn,
-  useEventListener,
-  useStorage,
-  useTimeoutFn
-} from '@vueuse/core'
+import { unrefElement, useAsyncState, useStorage } from '@vueuse/core'
 import { useToast } from 'primevue/usetoast'
 import {
   computed,
   defineAsyncComponent,
-  nextTick,
   onMounted,
   onUnmounted,
   ref,
+  toValue,
+  useId,
+  useTemplateRef,
   watch
 } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import NoResultsPlaceholder from '@/components/common/NoResultsPlaceholder.vue'
+import { LOAD3D_VIEWER_DIALOG_PROPS } from '@/components/load3d/load3dViewerDialog'
 import AssetsSidebarGridView from '@/components/sidebar/tabs/AssetsSidebarGridView.vue'
 import AssetsSidebarListView from '@/components/sidebar/tabs/AssetsSidebarListView.vue'
 import SidebarTabTemplate from '@/components/sidebar/tabs/SidebarTabTemplate.vue'
+import Skeleton from '@/components/ui/skeleton/Skeleton.vue'
 import MediaLightbox from '@/components/sidebar/tabs/queue/MediaLightbox.vue'
 import Tab from '@/components/tab/Tab.vue'
 import TabList from '@/components/tab/TabList.vue'
 import Button from '@/components/ui/button/Button.vue'
-import Skeleton from '@/components/ui/skeleton/Skeleton.vue'
-import AssetDetailPopover from '@/platform/assets/components/AssetDetailPopover.vue'
-import AssetSelectionFloatingBar from '@/platform/assets/components/AssetSelectionFloatingBar.vue'
-import MediaAssetContextMenu from '@/platform/assets/components/MediaAssetContextMenu.vue'
+import ContextMenu from '@/components/ui/menu/ContextMenu.vue'
+import type { MenuItem } from '@/components/ui/menu/types'
+import { useDismissableOverlay } from '@/composables/useDismissableOverlay'
 import MediaAssetFilterBar from '@/platform/assets/components/MediaAssetFilterBar.vue'
-import MediaAssetFilterChipsBar from '@/platform/assets/components/MediaAssetFilterChipsBar.vue'
-import type { ViewMode } from '@/platform/assets/components/MediaAssetFilterBar.vue'
+import MediaAssetSelectionBar from '@/platform/assets/components/MediaAssetSelectionBar.vue'
+import {
+  getMediaAssetGridColumns,
+  MEDIA_ASSET_VIEW_MODE
+} from '@/platform/assets/components/mediaAssetViewOptions'
+import type {
+  MediaAssetGridMode,
+  MediaAssetViewMode
+} from '@/platform/assets/components/mediaAssetViewOptions'
 import { getAssetType } from '@/platform/assets/composables/media/assetMappers'
-import { useMediaAssets } from '@/platform/assets/composables/media/useMediaAssets'
-import { useOutputJobsAssets } from '@/platform/assets/composables/media/useOutputJobsAssets'
-import { useAssetFavorites } from '@/platform/assets/composables/useAssetFavorites'
-import { useAssetFilters } from '@/platform/assets/composables/useAssetFilters'
-import { useAssetPromptMetadata } from '@/platform/assets/composables/useAssetPromptMetadata'
+import { useAssetGridSelection } from '@/platform/assets/composables/useAssetGridSelection'
 import { useAssetSelection } from '@/platform/assets/composables/useAssetSelection'
-import { useAssetSelectionStore } from '@/platform/assets/composables/useAssetSelectionStore'
-import { useAssetTags } from '@/platform/assets/composables/useAssetTags'
 import { useMediaAssetActions } from '@/platform/assets/composables/useMediaAssetActions'
 import { useMediaAssetFiltering } from '@/platform/assets/composables/useMediaAssetFiltering'
 import { useOutputStacks } from '@/platform/assets/composables/useOutputStacks'
 import type { OutputAssetMetadata } from '@/platform/assets/schemas/assetMetadataSchema'
 import { getOutputAssetMetadata } from '@/platform/assets/schemas/assetMetadataSchema'
 import type { AssetItem } from '@/platform/assets/schemas/assetSchema'
-import type { MediaKind } from '@/platform/assets/schemas/mediaAssetSchema'
-import type { MetadataFilter } from '@/platform/assets/types/metadataFilter'
-import { assetToResultItem } from '@/platform/assets/utils/assetLightboxAdapter'
 import { getAssetDisplayName } from '@/platform/assets/utils/assetMetadataUtils'
+import {
+  getAssetFileUrl,
+  getAssetSubfolder
+} from '@/platform/assets/utils/assetUrlUtil'
 import { resolveOutputAssetItems } from '@/platform/assets/utils/outputAssetUtil'
 import { isCloud } from '@/platform/distribution/types'
+import { supportsWorkflowMetadata } from '@/platform/workflow/utils/workflowExtractionUtil'
+import { useAssetsStore } from '@/stores/assetsStore'
 import { useDialogStore } from '@/stores/dialogStore'
-import { useWorkspaceStore } from '@/stores/workspaceStore'
-import type { ResultItemImpl } from '@/stores/queueStore'
 import {
   formatDuration,
   getMediaTypeFromFilename,
   isPreviewableMediaType
 } from '@/utils/formatUtil'
+import { detectNodeTypeFromFilename } from '@/utils/loaderNodeUtil'
+import type { AugmentedResultItem } from '@/utils/resultItem'
 
 const Load3dViewerContent = defineAsyncComponent(
   () => import('@/components/load3d/Load3dViewerContent.vue')
@@ -241,147 +235,63 @@ const Load3dViewerContent = defineAsyncComponent(
 
 const { t } = useI18n()
 
+const { closable = true } = defineProps<{ closable?: boolean }>()
+
 const emit = defineEmits<{ assetSelected: [asset: AssetItem] }>()
 
-type ActiveTab = 'input' | 'output' | 'temp'
-const activeTab = ref<ActiveTab>('output')
+const activeTab = ref<'input' | 'output'>('output')
 const folderJobId = ref<string | null>(null)
 const folderExecutionTime = ref<number | undefined>(undefined)
 const expectedFolderCount = ref(0)
 const isInFolderView = computed(() => folderJobId.value !== null)
-const viewMode = useStorage<ViewMode>(
+const tabPanelAttrs = computed(() =>
+  isInFolderView.value
+    ? {}
+    : {
+        id: `tabpanel-${activeTab.value}`,
+        role: 'tabpanel',
+        tabindex: 0,
+        'aria-labelledby': `tab-${activeTab.value}`
+      }
+)
+const viewMode = useStorage<MediaAssetViewMode>(
   'Comfy.Assets.Sidebar.ViewMode',
-  'grid-sm'
+  MEDIA_ASSET_VIEW_MODE.grid
 )
-const isListView = computed(() => viewMode.value === 'list')
-const gridSize = computed<'sm' | 'lg'>(() =>
-  viewMode.value === 'grid-lg' ? 'lg' : 'sm'
+const isListView = computed(() => viewMode.value === MEDIA_ASSET_VIEW_MODE.list)
+const gridMode = computed<MediaAssetGridMode>(() =>
+  viewMode.value === MEDIA_ASSET_VIEW_MODE.gridSmall
+    ? MEDIA_ASSET_VIEW_MODE.gridSmall
+    : MEDIA_ASSET_VIEW_MODE.grid
 )
+const skeletonGridStyle = computed(() => ({
+  gridTemplateColumns: getMediaAssetGridColumns(gridMode.value)
+}))
 
-const contextMenuRef = ref<InstanceType<typeof MediaAssetContextMenu>>()
-const contextMenuAsset = ref<AssetItem | null>(null)
-const detailsAsset = ref<AssetItem | null>(null)
-const detailsAnchor = ref<HTMLElement | null>(null)
+const contextMenuRef = useTemplateRef('contextMenuRef')
+const contextMenuId = useId()
+const contextMenuItems = ref<MenuItem[]>([])
 
-function handleShowDetails(asset: AssetItem) {
-  selectionStore.setSelection([asset.id])
-  detailsAsset.value = asset
-  detailsAnchor.value = contextMenuAnchor ?? findSidebarAnchorForAsset(asset.id)
-}
-
-function closeDetails() {
-  detailsAsset.value = null
-  detailsAnchor.value = null
-}
-
-function findSpatialNeighbor(
-  currentId: string,
-  dir: 'up' | 'down',
-  candidates: readonly AssetItem[]
-): AssetItem | undefined {
-  const currentEl = findSidebarAnchorForAsset(currentId)
-  if (!currentEl) return undefined
-  const currentRect = currentEl.getBoundingClientRect()
-  const currentCenterX = currentRect.left + currentRect.width / 2
-  let inCol: { asset: AssetItem; score: number } | null = null
-  let offCol: { asset: AssetItem; score: number } | null = null
-  for (const candidate of candidates) {
-    if (candidate.id === currentId) continue
-    const el = findSidebarAnchorForAsset(candidate.id)
-    if (!el) continue
-    const rect = el.getBoundingClientRect()
-    const dy = rect.top - currentRect.top
-    if (dir === 'down' && dy <= 5) continue
-    if (dir === 'up' && dy >= -5) continue
-    const overlap =
-      Math.min(rect.right, currentRect.right) -
-      Math.max(rect.left, currentRect.left)
-    const overlapsColumn =
-      overlap > Math.min(rect.width, currentRect.width) * 0.3
-    if (overlapsColumn) {
-      const score = Math.abs(dy)
-      if (!inCol || score < inCol.score) inCol = { asset: candidate, score }
-    } else {
-      const candCenterX = rect.left + rect.width / 2
-      const dx = Math.abs(candCenterX - currentCenterX)
-      const score = dx + Math.abs(dy)
-      if (!offCol || score < offCol.score) offCol = { asset: candidate, score }
-    }
-  }
-  return inCol?.asset ?? offCol?.asset
-}
-
-function navigateSelection(direction: 'up' | 'down' | 'left' | 'right') {
-  if (selectedIds.value.size !== 1) return
-  const list = visibleAssets.value
-  const currentId = [...selectedIds.value][0]
-  const idx = list.findIndex((a) => a.id === currentId)
-  if (idx === -1) return
-  let next: AssetItem | undefined
-  if (direction === 'left') next = list[idx - 1]
-  else if (direction === 'right') next = list[idx + 1]
-  else next = findSpatialNeighbor(currentId, direction, list)
-  if (!next) return
-  selectionStore.setSelection([next.id])
-  if (detailsAsset.value) {
-    const el = findSidebarAnchorForAsset(next.id)
-    if (el) {
-      el.scrollIntoView({ block: 'nearest', behavior: 'auto' })
-      detailsAnchor.value = el
-    }
-    detailsAsset.value = next
-  }
-}
-
-useEventListener(window, 'keydown', (event: KeyboardEvent) => {
-  if (selectedIds.value.size !== 1) return
-  const target = event.target
-  if (
-    target instanceof HTMLElement &&
-    (target.isContentEditable ||
-      target.tagName === 'INPUT' ||
-      target.tagName === 'TEXTAREA' ||
-      target.tagName === 'SELECT')
-  )
-    return
-  const dir =
-    event.key === 'ArrowRight'
-      ? 'right'
-      : event.key === 'ArrowLeft'
-        ? 'left'
-        : event.key === 'ArrowDown'
-          ? 'down'
-          : event.key === 'ArrowUp'
-            ? 'up'
-            : null
-  if (!dir) return
-  event.preventDefault()
-  navigateSelection(dir)
+useDismissableOverlay({
+  isOpen: () => contextMenuRef.value?.visible ?? false,
+  getOverlayEl: () => document.getElementById(contextMenuId),
+  onDismiss: () => contextMenuRef.value?.hide(),
+  dismissOnScroll: true
 })
 
+// Determine if delete button should be shown
+// Hide delete button when in input tab and not in cloud (OSS mode - files are from local folders)
 const shouldShowDeleteButton = computed(() => {
   if (activeTab.value === 'input' && !isCloud) return false
   return true
 })
 
-const contextMenuAssetType = computed(() =>
-  contextMenuAsset.value ? getAssetType(contextMenuAsset.value.tags) : 'input'
-)
-
-const contextMenuFileKind = computed<MediaKind>(() =>
-  getMediaTypeFromFilename(contextMenuAsset.value?.name ?? '')
-)
-
-const shouldShowOutputCount = (item: AssetItem): boolean => {
-  if (activeTab.value !== 'temp' || isInFolderView.value) return false
+const showOutputCount = (item: AssetItem): boolean => {
+  if (activeTab.value !== 'output' || isInFolderView.value) {
+    return false
+  }
   return getOutputCount(item) > 1
 }
-
-const emptyStateTitleKey = computed(() => {
-  if (activeTab.value === 'input') return 'sideToolbar.noImportedFiles'
-  if (activeTab.value === 'temp') return 'sideToolbar.noTempFiles'
-  return 'sideToolbar.noGeneratedFiles'
-})
 
 const formattedExecutionTime = computed(() => {
   if (!folderExecutionTime.value) return ''
@@ -389,75 +299,54 @@ const formattedExecutionTime = computed(() => {
 })
 
 const toast = useToast()
+const assetsStore = useAssetsStore()
 
-const inputAssets = useMediaAssets('input')
-const outputAssets = useMediaAssets('output')
-const outputJobsAssets = useOutputJobsAssets()
-
+// Asset selection
 const {
   isSelected,
   selectedIds,
   handleAssetClick,
+  toggleAssetSelection,
+  selectAll,
+  setSelectedIds,
   hasSelection,
   clearSelection,
   getSelectedAssets,
   reconcileSelection,
   getOutputCount,
   getTotalOutputCount,
-  selectAll,
   activate: activateSelection,
   deactivate: deactivateSelection
 } = useAssetSelection()
-const selectionStore = useAssetSelectionStore()
 
-function handleSelectAll() {
-  selectAll(visibleAssets.value)
-}
+const panelRef = useTemplateRef('panelRef')
+const marqueePanelRef = computed(() => {
+  const el = unrefElement(panelRef)
+  return el instanceof HTMLElement ? el : undefined
+})
 
 const {
-  downloadMultipleAssets,
+  downloadAssets,
   deleteAssets,
+  addWorkflow,
+  openWorkflow,
+  exportWorkflow,
+  copyJobId,
   addMultipleToWorkflow,
   openMultipleWorkflows,
   exportMultipleWorkflows
 } = useMediaAssetActions()
 
-const totalOutputCount = computed(() =>
-  getTotalOutputCount(selectedAssets.value)
+const currentAssets = computed(() =>
+  activeTab.value === 'input'
+    ? assetsStore.inputAssets
+    : assetsStore.outputAssets
 )
-
-const favoritesOnly = ref(false)
-const searchQuery = ref('')
-
-const isFlattenedView = computed(
-  () => searchQuery.value.trim() !== '' || favoritesOnly.value
-)
-
-const tabAssets = computed(() => {
-  if (activeTab.value === 'input') return inputAssets
-  if (activeTab.value === 'temp') return outputJobsAssets
-  return outputAssets
-})
-const loading = computed(() =>
-  isFlattenedView.value
-    ? inputAssets.loading.value || outputAssets.loading.value
-    : tabAssets.value.loading.value
-)
-const error = computed(() =>
-  isFlattenedView.value
-    ? (inputAssets.error.value ?? outputAssets.error.value)
-    : tabAssets.value.error.value
-)
-const mediaAssets = computed<AssetItem[]>(() =>
-  isFlattenedView.value
-    ? [...inputAssets.media.value, ...outputAssets.media.value]
-    : tabAssets.value.media.value
-)
+const loading = computed(() => toValue(currentAssets.value.isLoading))
+const mediaAssets = computed(() => toValue(currentAssets.value.items))
 
 const galleryActiveIndex = ref(-1)
 const currentGalleryAssetId = ref<string | null>(null)
-const compareItems = ref<ResultItemImpl[]>([])
-const compareAssets = ref<AssetItem[]>([])
 
 const DEFAULT_SKELETON_COUNT = 6
 const skeletonCount = computed(() =>
@@ -478,68 +367,21 @@ const {
   { immediate: false, resetOnExecute: true }
 )
 
-const favorites = useAssetFavorites()
-
+// Base assets before search filtering
 const baseAssets = computed(() => {
-  const source = isInFolderView.value ? folderAssets.value : mediaAssets.value
-  return favoritesOnly.value ? favorites.favoritedAssets(source) : source
-})
-
-const userTags = useAssetTags()
-const availableTags = computed(() => userTags.allTags.value.map((t) => t.name))
-
-const metadataExtractor = useAssetPromptMetadata()
-const availableValuesByField = computed(() => ({
-  model: metadataExtractor.getAvailableValues('model'),
-  lora: metadataExtractor.getAvailableValues('lora'),
-  workflowTitle: metadataExtractor.getAvailableValues('workflowTitle')
-}))
-
-const metadataFilters = ref<MetadataFilter[]>([])
-const mediaTypeFilters = ref<string[]>([])
-
-const { sortBy, filteredAssets } = useMediaAssetFiltering(baseAssets, {
-  metadataExtractor,
-  searchQuery,
-  metadataFilters,
-  mediaTypeFilters
-})
-
-watch(
-  [metadataFilters, baseAssets],
-  ([filters, assets]) => {
-    if (filters.length > 0) metadataExtractor.extractBatch(assets)
-  },
-  { immediate: true }
-)
-
-const dateRangeFilter = useStorage<[Date, Date] | null>(
-  'Comfy.Assets.DateRange',
-  null
-)
-
-const assetFilters = useAssetFilters(filteredAssets)
-
-watch(
-  dateRangeFilter,
-  (value) => {
-    assetFilters.dateRange.value = value
-  },
-  { immediate: true }
-)
-
-watch(
-  () => assetFilters.dateRange.value,
-  (value) => {
-    dateRangeFilter.value = value
+  if (isInFolderView.value) {
+    return folderAssets.value
   }
-)
+  return mediaAssets.value
+})
 
-const displayAssets = computed(() =>
-  assetFilters.hasActiveFilters.value
-    ? assetFilters.filteredByDate.value
-    : filteredAssets.value
-)
+// Use media asset filtering composable
+const { searchQuery, sortBy, dateFilter, mediaTypeFilters, filteredAssets } =
+  useMediaAssetFiltering(baseAssets)
+
+const displayAssets = computed(() => {
+  return filteredAssets.value
+})
 
 const {
   assetItems: listViewAssetItems,
@@ -555,6 +397,16 @@ const visibleAssets = computed(() => {
   return listViewSelectableAssets.value
 })
 
+const { marqueeStyle } = useAssetGridSelection({
+  marqueeContainerRef: marqueePanelRef,
+  hoverTargetRef: marqueePanelRef,
+  getAssets: () => visibleAssets.value,
+  getSelectedIds: () => [...selectedIds.value],
+  setSelectedIds,
+  selectAll,
+  isEnabled: () => !isListView.value
+})
+
 const previewableVisibleAssets = computed(() =>
   visibleAssets.value.filter((asset) =>
     isPreviewableMediaType(getMediaTypeFromFilename(asset.name))
@@ -563,8 +415,8 @@ const previewableVisibleAssets = computed(() =>
 
 const selectedAssets = computed(() => getSelectedAssets(visibleAssets.value))
 
-const isBulkMode = computed(
-  () => hasSelection.value && selectedAssets.value.length > 1
+const totalOutputCount = computed(() =>
+  getTotalOutputCount(selectedAssets.value)
 )
 
 const isFolderLoading = computed(
@@ -578,10 +430,15 @@ const showLoadingState = computed(
 
 const showEmptyState = computed(
   () =>
-    !loading.value && !isFolderLoading.value && displayAssets.value.length === 0
+    !loading.value &&
+    !isFolderLoading.value &&
+    !canLoadMoreAssets.value &&
+    displayAssets.value.length === 0
 )
 
 watch(visibleAssets, (newAssets) => {
+  // Alternative: keep hidden selections and surface them in UI; for now prune
+  // so selection stays consistent with what this view can act on.
   reconcileSelection(newAssets)
   if (currentGalleryAssetId.value && galleryActiveIndex.value !== -1) {
     const newIndex = previewableVisibleAssets.value.findIndex(
@@ -594,65 +451,34 @@ watch(visibleAssets, (newAssets) => {
 watch(galleryActiveIndex, (index) => {
   if (index === -1) {
     currentGalleryAssetId.value = null
-    compareItems.value = []
-    compareAssets.value = []
   }
 })
 
-const galleryItems = computed(() =>
-  previewableVisibleAssets.value.map(assetToResultItem)
-)
-
-function handleBulkCompare(assets: AssetItem[], totalSelected: number) {
-  const items = assets.map(assetToResultItem)
-  if (items.length < 2) return
-  compareItems.value = items
-  compareAssets.value = assets
-  galleryActiveIndex.value = 0
-  if (totalSelected > items.length) {
-    toast.add({
-      severity: 'info',
-      summary: t('mediaAsset.compare.action'),
-      detail: t('mediaAsset.compare.filteredToast', {
-        n: items.length,
-        m: totalSelected - items.length
-      }),
-      life: 3000
-    })
-  }
-}
+const galleryItems = computed<AugmentedResultItem[]>(() => {
+  return previewableVisibleAssets.value.map((asset) => {
+    const mediaType = getMediaTypeFromFilename(asset.name)
+    return {
+      filename: asset.name,
+      subfolder: getAssetSubfolder(asset),
+      type: 'output',
+      nodeId: '0',
+      mediaType: mediaType === 'image' ? 'images' : mediaType,
+      url: asset.preview_url || ''
+    }
+  })
+})
 
 const refreshAssets = async () => {
-  if (isFlattenedView.value) {
-    await Promise.all([
-      inputAssets.fetchMediaList(),
-      outputAssets.fetchMediaList()
-    ])
-  } else {
-    await tabAssets.value.fetchMediaList()
-  }
-  if (error.value) {
-    console.error('Failed to refresh assets:', error.value)
-  }
+  await currentAssets.value.invalidate()
 }
-
-watch(isFlattenedView, async (flattened) => {
-  if (!flattened) return
-  const tasks: Promise<unknown>[] = []
-  if (inputAssets.media.value.length === 0) {
-    tasks.push(inputAssets.fetchMediaList())
-  }
-  if (outputAssets.media.value.length === 0) {
-    tasks.push(outputAssets.fetchMediaList())
-  }
-  await Promise.all(tasks)
-})
 
 watch(
   activeTab,
   () => {
     clearSelection()
+    // Clear search when switching tabs
     searchQuery.value = ''
+    // Reset pagination state when tab changes
     void refreshAssets()
   },
   { immediate: true }
@@ -665,41 +491,112 @@ function handleAssetSelect(asset: AssetItem, assets?: AssetItem[]) {
   handleAssetClick(asset, index, assetList)
 }
 
-const { start: scheduleCleanup, stop: cancelCleanup } = useTimeoutFn(
-  () => {
-    contextMenuAsset.value = null
-  },
-  0,
-  { immediate: false }
-)
-
-let contextMenuAnchor: HTMLElement | null = null
+function handleAssetSelectionToggle(asset: AssetItem) {
+  const index = visibleAssets.value.findIndex((item) => item.id === asset.id)
+  emit('assetSelected', asset)
+  toggleAssetSelection(asset, index, visibleAssets.value)
+}
 
 function handleAssetContextMenu(event: MouseEvent, asset: AssetItem) {
-  cancelCleanup()
-  contextMenuAsset.value = asset
-  const target = event.target
-  contextMenuAnchor =
-    target instanceof HTMLElement
-      ? ((target.closest('[data-asset-id]') as HTMLElement | null) ??
-        (target.closest('[data-asset-card]') as HTMLElement | null))
-      : null
-  void nextTick(() => {
-    contextMenuRef.value?.show(event)
-  })
-}
+  const assetType = getAssetType(asset.tags)
+  const canDelete =
+    shouldShowDeleteButton.value &&
+    (assetType === 'output' || (assetType === 'input' && isCloud))
+  const selection = selectedAssets.value
+  const isBulk = selection.length > 1 && isSelected(asset.id)
 
-function findSidebarAnchorForAsset(assetId: string): HTMLElement | null {
-  const el = document.querySelector(`[data-asset-id="${assetId}"]`)
-  return el instanceof HTMLElement ? el : null
-}
-
-function handleContextMenuHide() {
-  scheduleCleanup()
+  if (isBulk) {
+    contextMenuItems.value = [
+      {
+        label: t('mediaAsset.selection.multipleSelectedAssets'),
+        disabled: true
+      },
+      {
+        label: t('mediaAsset.selection.insertAllAssetsAsNodes'),
+        icon: 'icon-[comfy--node]',
+        command: () => handleBulkAddToWorkflow(selection)
+      },
+      {
+        label: t('mediaAsset.selection.openWorkflowAll'),
+        icon: 'icon-[comfy--workflow]',
+        command: () => handleBulkOpenWorkflow(selection)
+      },
+      {
+        label: t('mediaAsset.selection.exportWorkflowAll'),
+        icon: 'icon-[lucide--file-output]',
+        command: () => handleBulkExportWorkflow(selection)
+      },
+      {
+        label: t('mediaAsset.selection.downloadSelectedAll'),
+        icon: 'icon-[lucide--download]',
+        command: () => handleBulkDownload(selection)
+      },
+      {
+        label: t('mediaAsset.selection.deleteSelectedAll'),
+        icon: 'icon-[lucide--trash-2]',
+        visible: canDelete,
+        command: () => handleBulkDelete(selection)
+      }
+    ]
+  } else {
+    const hasWorkflow =
+      assetType === 'output' ||
+      (assetType === 'input' && supportsWorkflowMetadata(asset.name))
+    const hasJobId = assetType !== 'input'
+    contextMenuItems.value = [
+      {
+        label: t('mediaAsset.actions.inspect'),
+        icon: 'icon-[lucide--zoom-in]',
+        visible: isPreviewableMediaType(getMediaTypeFromFilename(asset.name)),
+        command: () => handleZoomClick(asset)
+      },
+      {
+        label: t('mediaAsset.actions.insertAsNodeInWorkflow'),
+        icon: 'icon-[comfy--node]',
+        visible: detectNodeTypeFromFilename(asset.name).nodeType !== null,
+        command: () => addWorkflow(asset)
+      },
+      {
+        label: t('mediaAsset.actions.download'),
+        icon: 'icon-[lucide--download]',
+        command: () => downloadAssets([asset])
+      },
+      { separator: true, visible: hasWorkflow },
+      {
+        label: t('mediaAsset.actions.openWorkflow'),
+        icon: 'icon-[comfy--workflow]',
+        visible: hasWorkflow,
+        command: () => openWorkflow(asset)
+      },
+      {
+        label: t('mediaAsset.actions.exportWorkflow'),
+        icon: 'icon-[lucide--file-output]',
+        visible: hasWorkflow,
+        command: () => exportWorkflow(asset)
+      },
+      { separator: true, visible: hasJobId },
+      {
+        label: t('mediaAsset.actions.copyJobId'),
+        icon: 'icon-[lucide--copy]',
+        visible: hasJobId,
+        command: () => copyJobId(asset)
+      },
+      { separator: true, visible: canDelete },
+      {
+        label: t('mediaAsset.actions.delete'),
+        icon: 'icon-[lucide--trash-2]',
+        visible: canDelete,
+        command: async () => {
+          if (await deleteAssets(asset)) await refreshAssets()
+        }
+      }
+    ]
+  }
+  contextMenuRef.value?.show(event)
 }
 
 const handleBulkDownload = (assets: AssetItem[]) => {
-  downloadMultipleAssets(assets)
+  downloadAssets(assets)
   clearSelection()
 }
 
@@ -724,20 +621,11 @@ const handleBulkExportWorkflow = async (assets: AssetItem[]) => {
   clearSelection()
 }
 
-const handleDownloadSelected = () => {
-  downloadMultipleAssets(selectedAssets.value)
-  clearSelection()
-}
-
-const handleDeleteSelected = async () => {
-  if (await deleteAssets(selectedAssets.value)) {
-    clearSelection()
-  }
-}
-
 const handleZoomClick = (asset: AssetItem) => {
   const mediaType = getMediaTypeFromFilename(asset.name)
-  if (!isPreviewableMediaType(mediaType)) return
+  if (!isPreviewableMediaType(mediaType)) {
+    return
+  }
 
   if (mediaType === '3D') {
     const dialogStore = useDialogStore()
@@ -746,12 +634,9 @@ const handleZoomClick = (asset: AssetItem) => {
       title: getAssetDisplayName(asset),
       component: Load3dViewerContent,
       props: {
-        modelUrl: asset.preview_url || ''
+        modelUrl: getAssetFileUrl(asset)
       },
-      dialogComponentProps: {
-        style: 'width: 80vw; height: 80vh;',
-        maximizable: true
-      }
+      dialogComponentProps: LOAD3D_VIEWER_DIALOG_PROPS
     })
     return
   }
@@ -773,6 +658,7 @@ const enterFolderView = async (asset: AssetItem) => {
   }
 
   const { jobId, executionTimeInSeconds } = metadata
+
   if (!jobId) {
     console.warn('Missing required folder view data')
     return
@@ -815,41 +701,33 @@ const handleDeselectAll = () => {
 }
 
 const handleEmptySpaceClick = () => {
-  if (hasSelection) {
+  if (hasSelection.value) {
     clearSelection()
   }
 }
 
-const copyJobId = async () => {
-  if (!folderJobId.value) return
-  try {
-    await navigator.clipboard.writeText(folderJobId.value)
-    toast.add({
-      severity: 'success',
-      summary: t('mediaAsset.jobIdToast.copied'),
-      detail: t('mediaAsset.jobIdToast.jobIdCopied'),
-      life: 2000
-    })
-  } catch {
-    toast.add({
-      severity: 'error',
-      summary: t('mediaAsset.jobIdToast.error'),
-      detail: t('mediaAsset.jobIdToast.jobIdCopyFailed')
-    })
+const copyFolderJobId = async () => {
+  if (folderJobId.value) {
+    try {
+      await navigator.clipboard.writeText(folderJobId.value)
+      toast.add({
+        severity: 'success',
+        summary: t('mediaAsset.jobIdToast.copied'),
+        detail: t('mediaAsset.jobIdToast.jobIdCopied'),
+        life: 2000
+      })
+    } catch (error) {
+      toast.add({
+        severity: 'error',
+        summary: t('mediaAsset.jobIdToast.error'),
+        detail: t('mediaAsset.jobIdToast.jobIdCopyFailed')
+      })
+    }
   }
 }
 
-const handleApproachEnd = useDebounceFn(async () => {
-  if (isInFolderView.value || isFlattenedView.value) return
-  if (activeTab.value !== 'temp') return
-  if (!outputJobsAssets.hasMore.value || outputJobsAssets.isLoadingMore.value) {
-    return
-  }
-  await outputJobsAssets.loadMore()
-}, 300)
-
-const workspaceStore = useWorkspaceStore()
-function openMediaAssetBrowser() {
-  workspaceStore.mediaAssetsTabActive = true
-}
+const loadMoreAssets = () => currentAssets.value.loadMore()
+const canLoadMoreAssets = computed(
+  () => !isInFolderView.value && toValue(currentAssets.value.hasMore)
+)
 </script>

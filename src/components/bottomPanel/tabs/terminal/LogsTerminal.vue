@@ -1,5 +1,5 @@
 <template>
-  <div class="size-full bg-transparent">
+  <div class="relative size-full bg-transparent">
     <p
       v-if="errorMessage"
       data-testid="terminal-error-message"
@@ -7,84 +7,41 @@
     >
       {{ errorMessage }}
     </p>
-    <ProgressSpinner
+    <Spinner
       v-else-if="loading"
       data-testid="terminal-loading-spinner"
-      class="relative inset-0 z-10 flex h-full items-center justify-center"
+      class="absolute inset-0 z-10 m-auto size-8"
     />
-    <BaseTerminal v-show="!loading" @created="terminalCreated" />
+    <BaseTerminal
+      v-show="!loading && !errorMessage"
+      @created="terminalCreated"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { until } from '@vueuse/core'
-import { storeToRefs } from 'pinia'
-import ProgressSpinner from 'primevue/progressspinner'
+import type { Terminal } from '@xterm/xterm'
 import type { Ref } from 'vue'
-import { onMounted, onUnmounted, ref } from 'vue'
+import { shallowRef } from 'vue'
 
+import Spinner from '@/components/ui/spinner/Spinner.vue'
+import { useLogsTerminal } from '@/composables/bottomPanelTabs/useLogsTerminal'
 import type { useTerminal } from '@/composables/bottomPanelTabs/useTerminal'
-import type { LogEntry, LogsWsMessage } from '@/schemas/apiSchema'
-import { api } from '@/scripts/api'
-import { useExecutionStore } from '@/stores/executionStore'
 
 import BaseTerminal from './BaseTerminal.vue'
 
-const errorMessage = ref('')
-const loading = ref(true)
+const terminal = shallowRef<Terminal>()
+const { errorMessage, loading } = useLogsTerminal(terminal)
 
 const terminalCreated = (
-  { terminal, useAutoSize }: ReturnType<typeof useTerminal>,
+  { terminal: instance, useAutoSize }: ReturnType<typeof useTerminal>,
   root: Ref<HTMLElement | undefined>
 ) => {
   // Auto-size terminal to fill container width.
   // minCols: 80 ensures minimum width for colab environments.
   // See https://github.com/comfyanonymous/ComfyUI/issues/6396
   useAutoSize({ root, autoRows: true, autoCols: true, minCols: 80 })
-
-  const update = (entries: Array<LogEntry>) => {
-    terminal.write(entries.map((e) => e.m).join(''))
-  }
-
-  const logReceived = (e: CustomEvent<LogsWsMessage>) => {
-    update(e.detail.entries)
-  }
-
-  const loadLogEntries = async () => {
-    const logs = await api.getRawLogs()
-    update(logs.entries)
-  }
-
-  const watchLogs = async () => {
-    const { clientId } = storeToRefs(useExecutionStore())
-    if (!clientId.value) {
-      await until(clientId).not.toBeNull()
-    }
-    await api.subscribeLogs(true)
-    api.addEventListener('logs', logReceived)
-  }
-
-  onMounted(async () => {
-    try {
-      await loadLogEntries()
-    } catch (err) {
-      console.error('Error loading logs', err)
-      // On older backends the endpoints won't exist
-      errorMessage.value =
-        'Unable to load logs, please ensure you have updated your ComfyUI backend.'
-      return
-    }
-
-    await watchLogs()
-    loading.value = false
-  })
-
-  onUnmounted(async () => {
-    if (api.clientId) {
-      await api.subscribeLogs(false)
-    }
-    api.removeEventListener('logs', logReceived)
-  })
+  terminal.value = instance
 }
 </script>
 

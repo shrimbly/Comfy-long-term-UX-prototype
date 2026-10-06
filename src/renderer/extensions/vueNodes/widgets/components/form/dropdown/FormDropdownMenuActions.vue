@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import Popover from 'primevue/popover'
+import Popover from '@/components/common/ImperativePopover.vue'
 import { ref, useTemplateRef } from 'vue'
 import { useI18n } from 'vue-i18n'
 
@@ -11,7 +11,8 @@ import type {
 } from '@/platform/assets/types/filterTypes'
 import { cn } from '@comfyorg/tailwind-utils'
 
-import FormSearchInput from '../FormSearchInput.vue'
+import AsyncSearchInput from '@/components/ui/search-input/AsyncSearchInput.vue'
+import { DROPDOWN_PANEL_CLASS } from './shared'
 import type { LayoutMode, SortOption } from './types'
 
 const { t } = useI18n()
@@ -22,6 +23,10 @@ defineProps<{
   ownershipOptions?: OwnershipFilterOption[]
   showBaseModelFilter?: boolean
   baseModelOptions?: FilterOption[]
+  candidateLabel?: string
+}>()
+const emit = defineEmits<{
+  (e: 'search-enter'): void
 }>()
 
 const layoutMode = defineModel<LayoutMode>('layoutMode')
@@ -31,7 +36,7 @@ const ownershipSelected = defineModel<OwnershipOption>('ownershipSelected', {
   default: 'all'
 })
 const baseModelSelected = defineModel<Set<string>>('baseModelSelected', {
-  default: new Set()
+  default: () => new Set()
 })
 
 const actionButtonStyle = cn(
@@ -95,11 +100,16 @@ function toggleBaseModelSelection(item: FilterOption) {
     ? new Set([...current].filter((v) => v !== item.value))
     : new Set([...current, item.value])
 }
+
+function handleSearchEnter(event: KeyboardEvent) {
+  event.preventDefault()
+  emit('search-enter')
+}
 </script>
 
 <template>
-  <div class="text-secondary flex gap-2 px-4">
-    <FormSearchInput
+  <div class="flex gap-2 px-4 text-muted-foreground">
+    <AsyncSearchInput
       v-model="searchQuery"
       autofocus
       :class="
@@ -109,7 +119,17 @@ function toggleBaseModelSelection(item: FilterOption) {
           'focus-within:ring-0 focus-within:outline-component-node-widget-background-highlighted/80'
         )
       "
+      @enter="handleSearchEnter"
     />
+    <span
+      v-if="candidateLabel"
+      role="status"
+      aria-live="polite"
+      aria-atomic="true"
+      class="sr-only"
+    >
+      {{ t('widgets.uploadSelect.topResult', { result: candidateLabel }) }}
+    </span>
 
     <Button
       ref="sortTriggerRef"
@@ -133,17 +153,11 @@ function toggleBaseModelSelection(item: FilterOption) {
     </Button>
     <Popover
       ref="sortPopoverRef"
-      :dismissable="true"
-      :close-on-escape="true"
-      unstyled
-      :pt="{
-        root: {
-          class: 'absolute z-50'
-        },
-        content: {
-          class: ['bg-transparent border-none p-0 pt-2 rounded-lg shadow-lg']
-        }
-      }"
+      align="start"
+      :content-class="[
+        DROPDOWN_PANEL_CLASS,
+        'border-none bg-transparent p-0 pt-2'
+      ]"
       @hide="isSortPopoverOpen = false"
     >
       <div
@@ -195,17 +209,11 @@ function toggleBaseModelSelection(item: FilterOption) {
     </Button>
     <Popover
       ref="ownershipPopoverRef"
-      :dismissable="true"
-      :close-on-escape="true"
-      unstyled
-      :pt="{
-        root: {
-          class: 'absolute z-50'
-        },
-        content: {
-          class: ['bg-transparent border-none p-0 pt-2 rounded-lg shadow-lg']
-        }
-      }"
+      align="start"
+      :content-class="[
+        DROPDOWN_PANEL_CLASS,
+        'border-none bg-transparent p-0 pt-2'
+      ]"
       @hide="isOwnershipPopoverOpen = false"
     >
       <div
@@ -257,17 +265,11 @@ function toggleBaseModelSelection(item: FilterOption) {
     </Button>
     <Popover
       ref="baseModelPopoverRef"
-      :dismissable="true"
-      :close-on-escape="true"
-      unstyled
-      :pt="{
-        root: {
-          class: 'absolute z-50'
-        },
-        content: {
-          class: ['bg-transparent border-none p-0 pt-2 rounded-lg shadow-lg']
-        }
-      }"
+      align="start"
+      :content-class="[
+        DROPDOWN_PANEL_CLASS,
+        'border-none bg-transparent p-0 pt-2'
+      ]"
       @hide="isBaseModelPopoverOpen = false"
     >
       <div

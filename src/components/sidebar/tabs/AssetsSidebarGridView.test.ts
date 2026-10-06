@@ -1,85 +1,81 @@
+import { fromPartial } from '@total-typescript/shoehorn'
+import { render, screen } from '@testing-library/vue'
+import { defineComponent } from 'vue'
 import { describe, expect, it } from 'vitest'
 
-import {
-  GAP_PX,
-  GRID_COLUMN_RANGES,
-  computeColumns
-} from './AssetsSidebarGridView.vue'
+import { MEDIA_ASSET_GRID_MODE } from '@/platform/assets/components/mediaAssetViewOptions'
+import type { MediaAssetGridMode } from '@/platform/assets/components/mediaAssetViewOptions'
+import type { AssetItem } from '@/platform/assets/schemas/assetSchema'
 
-describe('computeColumns', () => {
-  it('returns 1 column when width is 0', () => {
-    expect(computeColumns(0, 100, 200, GAP_PX)).toBe(1)
-  })
+import AssetsSidebarGridView from './AssetsSidebarGridView.vue'
 
-  it('returns 1 column when width is negative', () => {
-    expect(computeColumns(-100, 100, 200, GAP_PX)).toBe(1)
-  })
+const VirtualGridStub = defineComponent({
+  name: 'VirtualGrid',
+  props: {
+    items: {
+      type: Array,
+      default: () => []
+    }
+  },
+  template:
+    '<div><slot v-for="item in items" :key="item.key" name="item" :item="item" /></div>'
+})
 
-  it('collapses to 1 column when panel is narrower than min', () => {
-    const min = 100
-    const max = 200
-    // Width below min: single column that's smaller than min
-    const width = min - 20
-    expect(computeColumns(width, min, max, GAP_PX)).toBe(1)
-  })
+const MediaAssetCardStub = defineComponent({
+  name: 'MediaAssetCard',
+  props: {
+    showNativeVideoControls: {
+      type: Boolean,
+      default: true
+    }
+  },
+  template:
+    '<div data-testid="media-asset-card" :data-show-native-video-controls="showNativeVideoControls" />'
+})
 
-  it('packs 2 columns when panel is slightly wider than max', () => {
-    const min = 100
-    const max = 200
-    // Width slightly more than max (one column fits but cell would exceed max)
-    const width = max + 20
-    const cols = computeColumns(width, min, max, GAP_PX)
-    expect(cols).toBe(2)
-    const cellWidth = (width - GAP_PX * (cols - 1)) / cols
-    expect(cellWidth).toBeGreaterThanOrEqual(min)
-    expect(cellWidth).toBeLessThanOrEqual(max)
-  })
+const videoAsset: AssetItem = fromPartial({
+  id: 'video-asset',
+  name: 'clip.mp4',
+  tags: []
+})
 
-  it('packs max columns for wide panel with each cell within bounds', () => {
-    const min = 144
-    const max = 220
-    const width = 1200
-    const cols = computeColumns(width, min, max, GAP_PX)
-    const cellWidth = (width - GAP_PX * (cols - 1)) / cols
-    expect(cellWidth).toBeGreaterThanOrEqual(min)
-    expect(cellWidth).toBeLessThanOrEqual(max)
-    // Confirm packing is greedy: adding one more column would drop below min
-    const nextCellWidth = (width - GAP_PX * cols) / (cols + 1)
-    expect(nextCellWidth).toBeLessThan(min)
-  })
-
-  it('keeps cell width at or below max for extremely wide panels', () => {
-    const min = 96
-    const max = 140
-    const width = 4000
-    const cols = computeColumns(width, min, max, GAP_PX)
-    const cellWidth = (width - GAP_PX * (cols - 1)) / cols
-    expect(cellWidth).toBeLessThanOrEqual(max)
-  })
-
-  it('handles sm preset at typical sidebar widths', () => {
-    const { min, max } = GRID_COLUMN_RANGES.sm
-    const cols = computeColumns(600, min, max, GAP_PX)
-    const cellWidth = (600 - GAP_PX * (cols - 1)) / cols
-    expect(cellWidth).toBeGreaterThanOrEqual(min)
-    expect(cellWidth).toBeLessThanOrEqual(max)
-  })
-
-  it('sm always produces more columns than lg at typical sidebar widths', () => {
-    const sm = GRID_COLUMN_RANGES.sm
-    const lg = GRID_COLUMN_RANGES.lg
-    for (const width of [270, 320, 500, 700, 900]) {
-      const smCols = computeColumns(width, sm.min, sm.max, GAP_PX)
-      const lgCols = computeColumns(width, lg.min, lg.max, GAP_PX)
-      expect(smCols).toBeGreaterThan(lgCols)
+function renderGridView(gridMode: MediaAssetGridMode) {
+  return render(AssetsSidebarGridView, {
+    props: {
+      assets: [videoAsset],
+      isSelected: () => false,
+      showOutputCount: () => false,
+      getOutputCount: () => 0,
+      gridMode
+    },
+    global: {
+      stubs: {
+        VirtualGrid: VirtualGridStub,
+        MediaAssetCard: MediaAssetCardStub
+      }
     }
   })
+}
 
-  it('handles lg preset at typical sidebar widths', () => {
-    const { min, max } = GRID_COLUMN_RANGES.lg
-    const cols = computeColumns(800, min, max, GAP_PX)
-    const cellWidth = (800 - GAP_PX * (cols - 1)) / cols
-    expect(cellWidth).toBeGreaterThanOrEqual(min)
-    expect(cellWidth).toBeLessThanOrEqual(max)
-  })
+describe('AssetsSidebarGridView', () => {
+  it.for([
+    {
+      gridMode: MEDIA_ASSET_GRID_MODE.gridSmall,
+      expectedNativeControls: false
+    },
+    {
+      gridMode: MEDIA_ASSET_GRID_MODE.grid,
+      expectedNativeControls: true
+    }
+  ])(
+    'sets native video controls to $expectedNativeControls in $gridMode mode',
+    ({ gridMode, expectedNativeControls }) => {
+      renderGridView(gridMode)
+
+      expect(screen.getByTestId('media-asset-card')).toHaveAttribute(
+        'data-show-native-video-controls',
+        String(expectedNativeControls)
+      )
+    }
+  )
 })

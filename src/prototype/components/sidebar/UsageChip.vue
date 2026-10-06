@@ -7,7 +7,7 @@
 <template>
   <Button
     v-if="isUpgradeMode"
-    variant="gradient"
+    variant="subscribe"
     size="md"
     class="w-full gap-2"
   >

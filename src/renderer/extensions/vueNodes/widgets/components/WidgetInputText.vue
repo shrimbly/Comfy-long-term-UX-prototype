@@ -1,42 +1,36 @@
 <template>
-  <WidgetTemplateInput
-    v-if="widget.options?.templateInput"
-    v-model="modelValue"
-    :widget
-    :size
-  />
-  <WidgetLayoutField v-else :widget="layoutWidget">
+  <WidgetLayoutField :widget="layoutWidget">
     <div class="relative">
       <Loader
         v-if="loading"
         size="sm"
         class="absolute top-1/2 left-3 z-10 -translate-y-1/2 text-component-node-foreground"
       />
-      <InputText
+      <Input
         v-model="modelValue"
         v-bind="filteredProps"
         :class="
           cn(
             WidgetInputBaseClass,
-            'w-full px-4 hover:bg-component-node-widget-background-hovered',
+            'h-auto min-w-[4ch] truncate',
+            !isReadOnly && 'hover:bg-component-node-widget-background-hovered',
             size === 'large' ? 'py-3 text-sm' : 'py-2 text-xs',
             loading && 'pl-9'
           )
         "
         :aria-label="widget.name"
+        :aria-invalid="invalid || undefined"
         :readonly="isReadOnly"
-        size="small"
-        :pt="{ root: 'truncate min-w-[4ch]' }"
       />
     </div>
   </WidgetLayoutField>
 </template>
 
 <script setup lang="ts">
-import InputText from 'primevue/inputtext'
 import { computed } from 'vue'
 
 import Loader from '@/components/loader/Loader.vue'
+import Input from '@/components/ui/input/Input.vue'
 import type { SimplifiedWidget } from '@/types/simplifiedWidget'
 import { cn } from '@comfyorg/tailwind-utils'
 import {
@@ -46,7 +40,6 @@ import {
 
 import { WidgetInputBaseClass } from './layout'
 import WidgetLayoutField from './layout/WidgetLayoutField.vue'
-import WidgetTemplateInput from './WidgetTemplateInput.vue'
 
 const {
   widget,

@@ -33,6 +33,7 @@ function referencedToAssetItem(a: LibraryAsset): AssetItem {
     display_name: a.name,
     size: 0,
     created_at: a.updatedAt,
+    updated_at: a.updatedAt,
     tags: a.tags ?? [],
     thumbnail_url: a.previewUrl,
     preview_url: a.previewUrl,

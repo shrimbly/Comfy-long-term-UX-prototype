@@ -251,8 +251,9 @@ export const usePrototypeCustomCloudStore = defineStore(
       const active = build.value
       if (!active) return
       ticker.pause()
-      active.fixture.deployments = (active.fixture.deployments ?? []).map((d) =>
-        d.id === active.deploymentId ? { ...d, status: 'ready' as const } : d
+      active.fixture.deployments = (active.fixture.deployments ?? []).map(
+        (d) =>
+          d.id === active.deploymentId ? { ...d, status: 'ready' as const } : d
       )
       readyProjectId.value = active.projectId
       build.value = null

@@ -4,6 +4,7 @@ import {
   comfyExpect as expect,
   comfyPageFixture
 } from '@e2e/fixtures/ComfyPage'
+import type { ComfyPage } from '@e2e/fixtures/ComfyPage'
 import {
   LogsTerminalHelper,
   logsTerminalFixture
@@ -110,6 +111,59 @@ test.describe('Bottom Panel Logs', { tag: '@ui' }, () => {
       )
     })
 
+    test.describe('live log retention', () => {
+      test.use({
+        initialSettings: {
+          'Comfy.Locale': 'en',
+          'Comfy.NodeLibrary.NewDesign': false
+        }
+      })
+
+      for (const { change, act } of [
+        {
+          change: 'opening and closing the sidebar',
+          act: async (comfyPage: ComfyPage) => {
+            await comfyPage.menu.nodeLibraryTab.open()
+            await comfyPage.menu.nodeLibraryTab.close()
+          }
+        },
+        {
+          change: 'entering and leaving focus mode',
+          act: async (comfyPage: ComfyPage) => {
+            await comfyPage.setFocusMode(true)
+            await comfyPage.setFocusMode(false)
+          }
+        },
+        {
+          change: 'changing the locale',
+          act: async (comfyPage: ComfyPage) => {
+            await comfyPage.settingDialog.selectLocale('zh')
+          }
+        }
+      ]) {
+        test(`retains live logs after ${change}`, async ({
+          comfyPage,
+          getWebSocket
+        }) => {
+          const { logs } = comfyPage.bottomPanel
+          await comfyPage.bottomPanel.toggleLogs()
+          await expect(logs.loadingSpinner).toBeHidden()
+          await expect(logs.terminalRoot).toBeVisible()
+          const ws = await getWebSocket()
+          ws.send(LogsTerminalHelper.buildWsLogFrame(['Before layout change']))
+          await expect(logs.terminalRoot).toContainText('Before layout change')
+
+          await act(comfyPage)
+
+          await expect(logs.loadingSpinner).toBeHidden()
+          await expect(logs.terminalRoot).toBeVisible()
+          ws.send(LogsTerminalHelper.buildWsLogFrame(['After layout change']))
+          await expect(logs.terminalRoot).toContainText('After layout change')
+          await expect(logs.terminalRoot).toContainText('Before layout change')
+        })
+      }
+    })
+
     test('copy button copies terminal contents to clipboard', async ({
       comfyPage,
       logsTerminal
@@ -146,6 +200,69 @@ test.describe('Bottom Panel Logs', { tag: '@ui' }, () => {
         'Unable to load logs'
       )
       await expect(comfyPage.bottomPanel.logs.terminalRoot).toBeHidden()
+    })
+
+    test('resyncs the terminal when the WebSocket reconnects', async ({
+      comfyPage,
+      logsTerminal,
+      getWebSocket
+    }) => {
+      const subscribeFetches = await logsTerminal.mockSubscribeLogs()
+      const initialLine = 'pre-reboot log line'
+      const postRebootLineA = 'post-reboot line A'
+      const postRebootLineB = 'post-reboot line B'
+
+      await logsTerminal.mockRawLogs([initialLine])
+      await comfyPage.bottomPanel.toggleLogs()
+      await expect(comfyPage.bottomPanel.logs.terminalRoot).toContainText(
+        initialLine
+      )
+
+      // Swap the raw-logs mock so the next fetch returns the post-reboot view.
+      await logsTerminal.mockRawLogs([postRebootLineA, postRebootLineB])
+
+      const ws = await getWebSocket()
+      await logsTerminal.triggerReconnect(ws, subscribeFetches)
+
+      await expect(comfyPage.bottomPanel.logs.terminalRoot).toContainText(
+        postRebootLineA
+      )
+      await expect(comfyPage.bottomPanel.logs.terminalRoot).toContainText(
+        postRebootLineB
+      )
+      // reset() before write means the pre-reboot line must be gone.
+      await expect(comfyPage.bottomPanel.logs.terminalRoot).not.toContainText(
+        initialLine
+      )
+    })
+
+    test('resumes WebSocket log streaming after the reconnect', async ({
+      comfyPage,
+      logsTerminal,
+      getWebSocket
+    }) => {
+      const subscribeFetches = await logsTerminal.mockSubscribeLogs()
+      await logsTerminal.mockRawLogs(['initial'])
+      await comfyPage.bottomPanel.toggleLogs()
+      await expect(comfyPage.bottomPanel.logs.terminalRoot).toContainText(
+        'initial'
+      )
+
+      await logsTerminal.mockRawLogs(['after-reboot snapshot'])
+
+      const ws = await getWebSocket()
+      await logsTerminal.triggerReconnect(ws, subscribeFetches)
+
+      // The route handler fires again on the new connection; pull the latest
+      // WebSocketRoute and push a live frame to prove the 'logs' listener
+      // survived the reconnect.
+      const liveLine = 'live log emitted after the reconnect'
+      const newWs = await getWebSocket()
+      newWs.send(LogsTerminalHelper.buildWsLogFrame([liveLine]))
+
+      await expect(comfyPage.bottomPanel.logs.terminalRoot).toContainText(
+        liveLine
+      )
     })
   })
 })

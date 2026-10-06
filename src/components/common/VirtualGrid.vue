@@ -1,13 +1,10 @@
 <template>
   <div
     ref="container"
-    class="scrollbar-thin scrollbar-track-transparent scrollbar-thumb-(--dialog-surface) h-full overflow-y-auto [overflow-anchor:none] [scrollbar-gutter:stable]"
+    class="h-full scrollbar-thin scrollbar-thumb-(--dialog-surface) scrollbar-track-transparent scrollbar-gutter-stable overflow-y-auto [overflow-anchor:none]"
   >
-    <div v-if="$slots.header" ref="headerRef" data-virtual-grid-header>
-      <slot name="header" />
-    </div>
     <div :style="topSpacerStyle" />
-    <div :style="mergedGridStyle" data-virtual-grid-content>
+    <div :style="mergedGridStyle">
       <div
         v-for="(item, i) in renderedItems"
         :key="item.key"
@@ -21,52 +18,48 @@
 </template>
 
 <script setup lang="ts" generic="T">
-import { useElementSize, useScroll, whenever } from '@vueuse/core'
+import {
+  useElementSize,
+  useInfiniteScroll,
+  useScroll,
+  whenever
+} from '@vueuse/core'
 import { clamp, debounce } from 'es-toolkit/compat'
-import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import type { CSSProperties } from 'vue'
 
 type GridState = {
   start: number
   end: number
-  isNearEnd: boolean
 }
 
 const {
   items,
   gridStyle,
   bufferRows = 1,
-  scrollThrottle = 64,
   resizeDebounce = 64,
   defaultItemHeight = 200,
   defaultItemWidth = 200,
-  maxColumns = Infinity
+  maxColumns = Infinity,
+  onLoadMore,
+  canLoadMore = false
 } = defineProps<{
   items: (T & { key: string })[]
   gridStyle: CSSProperties
   bufferRows?: number
-  scrollThrottle?: number
   resizeDebounce?: number
   defaultItemHeight?: number
   defaultItemWidth?: number
   maxColumns?: number
-}>()
-
-const emit = defineEmits<{
-  /**
-   * Emitted when `bufferRows` (or fewer) rows remaining between scrollY and grid bottom.
-   */
-  'approach-end': []
+  onLoadMore?: () => unknown
+  canLoadMore?: boolean
 }>()
 
 const itemHeight = ref(defaultItemHeight)
 const itemWidth = ref(defaultItemWidth)
 const container = ref<HTMLElement | null>(null)
-const headerRef = ref<HTMLElement | null>(null)
-const headerHeight = computed(() => headerRef.value?.offsetHeight ?? 0)
 const { width, height } = useElementSize(container)
 const { y: scrollY } = useScroll(container, {
-  throttle: scrollThrottle,
   eventListenerOptions: { passive: true }
 })
 
@@ -84,9 +77,7 @@ const mergedGridStyle = computed<CSSProperties>(() => {
 })
 
 const viewRows = computed(() => Math.ceil(height.value / itemHeight.value))
-const offsetRows = computed(() =>
-  Math.floor(Math.max(0, scrollY.value - headerHeight.value) / itemHeight.value)
-)
+const offsetRows = computed(() => Math.floor(scrollY.value / itemHeight.value))
 const isValidGrid = computed(() => height.value && width.value && items?.length)
 
 const state = computed<GridState>(() => {
@@ -95,14 +86,32 @@ const state = computed<GridState>(() => {
 
   const fromCol = fromRow * cols.value
   const toCol = toRow * cols.value
-  const remainingCol = items.length - toCol
-  const hasMoreToRender = remainingCol >= 0
 
-  return {
-    start: clamp(fromCol, 0, items?.length),
-    end: clamp(toCol, fromCol, items?.length),
-    isNearEnd: hasMoreToRender && remainingCol <= cols.value * bufferRows
+  const total = items?.length ?? 0
+  const windowSize = Math.max(toCol - fromCol, 0)
+
+  // Clamp `end` to the current item count first, then clamp `start` against
+  // that already-valid bound (not the raw `fromCol`). This guarantees
+  // 0 <= start <= end <= total even when `fromCol`/`toCol` point past a list
+  // that just shrunk (filter change) or a column count that just grew
+  // (resize/zoom) while scrolled deep into the grid. es-toolkit's
+  // clamp(value, min, max) produces nonsensical results when min > max,
+  // which is exactly what happens if `start` is clamped against the
+  // unclamped `fromCol` in those cases.
+  const end = clamp(toCol, 0, total)
+  let start = clamp(fromCol, 0, end)
+
+  // If the scroll position still points entirely past the available items
+  // (the window collapsed to empty), shift it left to show the trailing
+  // items instead of leaving the view blank. A real browser would normally
+  // clamp the scroll position itself once the spacer heights shrink, but a
+  // stale/negative spacer height can get rejected by the CSSOM and prevent
+  // that from ever happening, so we clamp the window directly here.
+  if (start === end && total > 0) {
+    start = Math.max(0, end - windowSize)
   }
+
+  return { start, end }
 })
 const renderedItems = computed(() =>
   isValidGrid.value ? items.slice(state.value.start, state.value.end) : []
@@ -119,11 +128,13 @@ const bottomSpacerStyle = computed<CSSProperties>(() => ({
   height: rowsToHeight(items.length - state.value.end)
 }))
 
-whenever(
-  () => state.value.isNearEnd,
-  () => {
-    emit('approach-end')
-  }
+const distance = 2 * defaultItemHeight * (1 + bufferRows)
+useInfiniteScroll(
+  container,
+  async () => {
+    await onLoadMore?.()
+  },
+  { canLoadMore: () => canLoadMore, distance }
 )
 
 function updateItemSize(): void {
@@ -142,26 +153,9 @@ function updateItemSize(): void {
 }
 const onResize = debounce(updateItemSize, resizeDebounce)
 watch([width, height], onResize, { flush: 'post' })
-watch(
-  () => gridStyle,
-  () => {
-    itemWidth.value = defaultItemWidth
-    itemHeight.value = defaultItemHeight
-    nextTick(updateItemSize)
-  },
-  { flush: 'post' }
-)
+watch(() => gridStyle, updateItemSize, { flush: 'post' })
 whenever(() => items, updateItemSize, { flush: 'post' })
 onBeforeUnmount(() => {
   onResize.cancel()
-})
-
-defineExpose({
-  container,
-  itemHeight,
-  itemWidth,
-  cols,
-  headerHeight,
-  startIndex: computed(() => state.value.start)
 })
 </script>

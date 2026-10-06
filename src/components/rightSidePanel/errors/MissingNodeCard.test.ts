@@ -1,13 +1,20 @@
-import { createTestingPinia } from '@pinia/testing'
-import { render, screen } from '@testing-library/vue'
 import userEvent from '@testing-library/user-event'
+import { render, screen } from '@testing-library/vue'
+import { fromPartial } from '@total-typescript/shoehorn'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { computed } from 'vue'
 import { createI18n } from 'vue-i18n'
 
 import type { MissingPackGroup } from '@/components/rightSidePanel/errors/useErrorGroups'
+import { api } from '@/scripts/api'
+import { useSystemStatsStore } from '@/stores/systemStatsStore'
+import { useManagerState } from '@/workbench/extensions/manager/composables/useManagerState'
+import { useComfyManagerStore } from '@/workbench/extensions/manager/stores/comfyManagerStore'
+
+import MissingNodeCard from './MissingNodeCard.vue'
 
 const mockIsCloud = vi.hoisted(() => ({ value: false }))
-vi.mock('@/platform/distribution/types', () => ({
+vi.mock(import('@/platform/distribution/types'), () => ({
   get isCloud() {
     return mockIsCloud.value
   }
@@ -16,12 +23,10 @@ vi.mock('@/platform/distribution/types', () => ({
 const mockMissingCoreNodes = vi.hoisted(() => ({
   value: {} as Record<string, { type: string }[]>
 }))
-const mockSystemStats = vi.hoisted(() => ({
-  value: null as { system?: { comfyui_version?: string } } | null
-}))
 
-vi.mock(
-  '@/workbench/extensions/manager/composables/nodePack/useMissingNodes',
+vi.mock<unknown>(
+  import('@/workbench/extensions/manager/composables/nodePack/useMissingNodes'),
+
   () => ({
     useMissingNodes: () => ({
       missingCoreNodes: mockMissingCoreNodes,
@@ -33,55 +38,37 @@ vi.mock(
   })
 )
 
-vi.mock('@/stores/systemStatsStore', () => ({
-  useSystemStatsStore: () => ({
-    get systemStats() {
-      return mockSystemStats.value
-    }
-  })
-}))
-
 const mockApplyChanges = vi.hoisted(() => vi.fn())
 const mockIsRestarting = vi.hoisted(() => ({ value: false }))
-vi.mock('@/workbench/extensions/manager/composables/useApplyChanges', () => ({
-  useApplyChanges: () => ({
-    get isRestarting() {
-      return mockIsRestarting.value
-    },
-    applyChanges: mockApplyChanges
-  })
-}))
+vi.mock<unknown>(
+  import('@/workbench/extensions/manager/composables/useApplyChanges'),
 
-const mockIsPackInstalled = vi.hoisted(() => vi.fn(() => false))
-vi.mock('@/workbench/extensions/manager/stores/comfyManagerStore', () => ({
-  useComfyManagerStore: () => ({
-    isPackInstalled: mockIsPackInstalled
+  () => ({
+    useApplyChanges: () => ({
+      get isRestarting() {
+        return mockIsRestarting.value
+      },
+      applyChanges: mockApplyChanges
+    })
   })
-}))
+)
 
 const mockShouldShowManagerButtons = vi.hoisted(() => ({ value: false }))
-vi.mock('@/workbench/extensions/manager/composables/useManagerState', () => ({
-  useManagerState: () => ({
-    shouldShowManagerButtons: mockShouldShowManagerButtons
-  })
-}))
+vi.mock(import('@/workbench/extensions/manager/composables/useManagerState'))
 
-vi.mock('./MissingPackGroupRow.vue', () => ({
+vi.mock<unknown>(import('./MissingPackGroupRow.vue'), () => ({
   default: {
     name: 'MissingPackGroupRow',
     template: `<div class="pack-row" data-testid="pack-row"
       :data-show-info-button="String(showInfoButton)"
-      :data-show-node-id-badge="String(showNodeIdBadge)"
     >
       <button data-testid="locate-node" @click="$emit('locate-node', group.nodeTypes[0]?.nodeId)" />
       <button data-testid="open-manager-info" @click="$emit('open-manager-info', group.packId)" />
     </div>`,
-    props: ['group', 'showInfoButton', 'showNodeIdBadge'],
+    props: ['group', 'showInfoButton'],
     emits: ['locate-node', 'open-manager-info']
   }
 }))
-
-import MissingNodeCard from './MissingNodeCard.vue'
 
 const i18n = createI18n({
   legacy: false,
@@ -90,18 +77,16 @@ const i18n = createI18n({
     en: {
       rightSidePanel: {
         missingNodePacks: {
-          ossMessage: 'Missing node packs detected. Install them.',
-          cloudMessage: 'Unsupported node packs detected.',
           ossManagerDisabledHint:
             'To install missing nodes, first run {pipCmd} in your Python environment to install Node Manager, then restart ComfyUI with the {flag} flag.',
           applyChanges: 'Apply Changes'
         }
       },
       loadWorkflowWarning: {
-        outdatedVersion:
-          'Some nodes require a newer version of ComfyUI (current: {version}).',
-        outdatedVersionGeneric:
-          'Some nodes require a newer version of ComfyUI.',
+        newerVersionRequired:
+          'Some nodes require a newer version of ComfyUI (current: {version}). Please update to use all nodes.',
+        newerVersionRequiredGeneric:
+          'Some nodes require a newer version of ComfyUI. Please update to use all nodes.',
         coreNodesFromVersion: 'Requires ComfyUI {version}:',
         unknownVersion: 'unknown'
       }
@@ -124,7 +109,6 @@ function makePackGroups(count = 2): MissingPackGroup[] {
 function renderCard(
   props: Partial<{
     showInfoButton: boolean
-    showNodeIdBadge: boolean
     missingPackGroups: MissingPackGroup[]
   }> = {}
 ) {
@@ -132,48 +116,35 @@ function renderCard(
   const result = render(MissingNodeCard, {
     props: {
       showInfoButton: false,
-      showNodeIdBadge: false,
       missingPackGroups: makePackGroups(),
       ...props
     },
     global: {
-      plugins: [createTestingPinia({ createSpy: vi.fn }), i18n],
-      stubs: {
-        DotSpinner: { template: '<span role="status" aria-label="loading" />' }
-      }
+      plugins: [i18n]
     }
   })
   return { ...result, user }
 }
 
 describe('MissingNodeCard', () => {
-  beforeEach(() => {
-    mockApplyChanges.mockClear()
-    mockIsPackInstalled.mockReset()
-    mockIsPackInstalled.mockReturnValue(false)
+  beforeEach(async () => {
+    useManagerState().shouldShowManagerButtons = computed(
+      () => mockShouldShowManagerButtons.value
+    )
+    vi.spyOn(api, 'getSystemStats').mockResolvedValue(
+      fromPartial({ system: {}, devices: [] })
+    )
+    useSystemStatsStore()
+    await useSystemStatsStore().refetchSystemStats()
+    vi.mocked(useComfyManagerStore().isPackInstalled).mockReturnValue(false)
     mockIsCloud.value = false
     mockShouldShowManagerButtons.value = false
     mockIsRestarting.value = false
     mockMissingCoreNodes.value = {}
-    mockSystemStats.value = null
+    useSystemStatsStore().systemStats = null
   })
 
   describe('Rendering & Props', () => {
-    it('renders cloud message when isCloud is true', () => {
-      mockIsCloud.value = true
-      renderCard()
-      expect(
-        screen.getByText('Unsupported node packs detected.')
-      ).toBeInTheDocument()
-    })
-
-    it('renders OSS message when isCloud is false', () => {
-      renderCard()
-      expect(
-        screen.getByText('Missing node packs detected. Install them.')
-      ).toBeInTheDocument()
-    })
-
     it('renders correct number of MissingPackGroupRow components', () => {
       renderCard({ missingPackGroups: makePackGroups(3) })
       expect(screen.getAllByTestId('pack-row')).toHaveLength(3)
@@ -186,12 +157,10 @@ describe('MissingNodeCard', () => {
 
     it('passes props correctly to MissingPackGroupRow children', () => {
       renderCard({
-        showInfoButton: true,
-        showNodeIdBadge: true
+        showInfoButton: true
       })
       const row = screen.getAllByTestId('pack-row')[0]
       expect(row.getAttribute('data-show-info-button')).toBe('true')
-      expect(row.getAttribute('data-show-node-id-badge')).toBe('true')
     })
   })
 
@@ -227,29 +196,29 @@ describe('MissingNodeCard', () => {
 
     it('hides Apply Changes when manager enabled but no packs pending', () => {
       mockShouldShowManagerButtons.value = true
-      mockIsPackInstalled.mockReturnValue(false)
+      vi.mocked(useComfyManagerStore().isPackInstalled).mockReturnValue(false)
       renderCard()
       expect(screen.queryByText('Apply Changes')).not.toBeInTheDocument()
     })
 
     it('shows Apply Changes when at least one pack is pending restart', () => {
       mockShouldShowManagerButtons.value = true
-      mockIsPackInstalled.mockReturnValue(true)
+      vi.mocked(useComfyManagerStore().isPackInstalled).mockReturnValue(true)
       renderCard()
       expect(screen.getByText('Apply Changes')).toBeInTheDocument()
     })
 
     it('displays spinner during restart', () => {
       mockShouldShowManagerButtons.value = true
-      mockIsPackInstalled.mockReturnValue(true)
+      vi.mocked(useComfyManagerStore().isPackInstalled).mockReturnValue(true)
       mockIsRestarting.value = true
       renderCard()
-      expect(screen.getByRole('status')).toBeInTheDocument()
+      expect(screen.getByTestId('dot-spinner')).toBeInTheDocument()
     })
 
     it('disables button during restart', () => {
       mockShouldShowManagerButtons.value = true
-      mockIsPackInstalled.mockReturnValue(true)
+      vi.mocked(useComfyManagerStore().isPackInstalled).mockReturnValue(true)
       mockIsRestarting.value = true
       renderCard()
       expect(
@@ -259,7 +228,7 @@ describe('MissingNodeCard', () => {
 
     it('calls applyChanges when Apply Changes button is clicked', async () => {
       mockShouldShowManagerButtons.value = true
-      mockIsPackInstalled.mockReturnValue(true)
+      vi.mocked(useComfyManagerStore().isPackInstalled).mockReturnValue(true)
       const { user } = renderCard()
       await user.click(screen.getByRole('button', { name: /apply changes/i }))
       expect(mockApplyChanges).toHaveBeenCalledOnce()
@@ -273,17 +242,11 @@ describe('MissingNodeCard', () => {
       render(MissingNodeCard, {
         props: {
           showInfoButton: false,
-          showNodeIdBadge: false,
           missingPackGroups: makePackGroups(),
           onLocateNode
         },
         global: {
-          plugins: [createTestingPinia({ createSpy: vi.fn }), i18n],
-          stubs: {
-            DotSpinner: {
-              template: '<span role="status" aria-label="loading" />'
-            }
-          }
+          plugins: [i18n]
         }
       })
       await user.click(screen.getAllByTestId('locate-node')[0])
@@ -296,17 +259,11 @@ describe('MissingNodeCard', () => {
       render(MissingNodeCard, {
         props: {
           showInfoButton: false,
-          showNodeIdBadge: false,
           missingPackGroups: makePackGroups(),
           onOpenManagerInfo
         },
         global: {
-          plugins: [createTestingPinia({ createSpy: vi.fn }), i18n],
-          stubs: {
-            DotSpinner: {
-              template: '<span role="status" aria-label="loading" />'
-            }
-          }
+          plugins: [i18n]
         }
       })
       await user.click(screen.getAllByTestId('open-manager-info')[0])
@@ -324,7 +281,9 @@ describe('MissingNodeCard', () => {
       mockMissingCoreNodes.value = {
         '1.2.0': [{ type: 'TestNode' }]
       }
-      mockSystemStats.value = { system: { comfyui_version: '1.0.0' } }
+      useSystemStatsStore().$patch({
+        systemStats: { system: { comfyui_version: '1.0.0' } }
+      })
       const { container } = renderCard()
       expect(container.textContent).toContain('(current: 1.0.0)')
       expect(container.textContent).toContain('Requires ComfyUI 1.2.0:')
@@ -337,7 +296,9 @@ describe('MissingNodeCard', () => {
       }
       renderCard()
       expect(
-        screen.getByText('Some nodes require a newer version of ComfyUI.')
+        screen.getByText(
+          'Some nodes require a newer version of ComfyUI. Please update to use all nodes.'
+        )
       ).toBeInTheDocument()
     })
 
@@ -360,8 +321,8 @@ describe('MissingNodeCard', () => {
       }
       const { container } = renderCard()
       expect(container.textContent).toContain('AlphaNode, ZebraNode')
-      // eslint-disable-next-line testing-library/no-container
-      expect(container.textContent?.match(/ZebraNode/g)).toHaveLength(1)
+      // oxlint-disable-next-line testing-library/no-container
+      expect(container.textContent.match(/ZebraNode/g)).toHaveLength(1)
     })
 
     it('sorts versions in descending order', () => {
@@ -371,7 +332,7 @@ describe('MissingNodeCard', () => {
         '1.2.0': [{ type: 'Node2' }]
       }
       const { container } = renderCard()
-      const text = container.textContent ?? ''
+      const text = container.textContent
       const v13 = text.indexOf('1.3.0')
       const v12 = text.indexOf('1.2.0')
       const v11 = text.indexOf('1.1.0')

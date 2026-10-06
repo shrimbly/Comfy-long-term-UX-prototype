@@ -1,13 +1,28 @@
 import { until } from '@vueuse/core'
+import { delay } from 'es-toolkit'
 import { storeToRefs } from 'pinia'
 import {
   createRouter,
   createWebHashHistory,
   createWebHistory
 } from 'vue-router'
-import type { RouteLocationNormalized } from 'vue-router'
+import type {
+  LocationQueryRaw,
+  NavigationGuardNext,
+  RouteLocationNormalized
+} from 'vue-router'
+
+import { readSsoError, ssoStartUrl } from '@comfyorg/account-core/sso'
 
 import { useFeatureFlags } from '@/composables/useFeatureFlags'
+import type { CloudSignIn } from '@/platform/auth/session/cloudIdentityBoot'
+import { cloudSignIn } from '@/platform/auth/session/cloudIdentityBoot'
+import { useCloudWebSessionStore } from '@/platform/auth/session/cloudWebSessionStore'
+import {
+  hasRecentSsoReentry,
+  markSsoReentry,
+  readSsoHint
+} from '@/platform/auth/session/ssoReentryStorage'
 import { isCloud, isDesktop } from '@/platform/distribution/types'
 import { useTelemetry } from '@/platform/telemetry'
 import { useDialogService } from '@/services/dialogService'
@@ -16,8 +31,17 @@ import { useUserStore } from '@/stores/userStore'
 import LayoutDefault from '@/views/layouts/LayoutDefault.vue'
 
 import { prototypeRoutes } from '@/prototype/router'
+import { captureOAuthRequestId } from '@/platform/cloud/oauth/oauthState'
+import { SSO_ENTRY_OPEN_QUERY } from '@/platform/cloud/onboarding/sso/ssoEntryQuery'
+import { decideSsoReentry } from '@/platform/cloud/onboarding/sso/ssoReentry'
+import {
+  hasPendingDesktopLoginCode,
+  installDesktopLoginRedemption
+} from '@/platform/cloud/onboarding/desktopLoginRedemption'
+import { PRESERVED_QUERY_DEFINITIONS } from '@/platform/navigation/preservedQueryDefinitions'
 import { installPreservedQueryTracker } from '@/platform/navigation/preservedQueryTracker'
-import { PRESERVED_QUERY_NAMESPACES } from '@/platform/navigation/preservedQueryNamespaces'
+import { unmatchedRouteRedirect } from '@/platform/navigation/unmatchedRoute'
+import { preserveLoggedOutShareAuthAttribution } from '@/platform/workflow/sharing/utils/shareAuthAttribution'
 
 const cloudOnboardingRoutes = isCloud
   ? (await import('./platform/cloud/onboarding/onboardingCloudRoutes'))
@@ -37,15 +61,13 @@ function getBasePath(): string {
   if (isDesktop) return '/'
   // Standalone /prototype deploy is served from the domain root.
   if (import.meta.env.VITE_PROTOTYPE_DEPLOY) return '/'
-  if (isCloud) return import.meta.env?.BASE_URL || '/'
+  if (isCloud) return import.meta.env.BASE_URL || '/'
   return window.location.pathname
 }
 
 const basePath = getBasePath()
 
 function trackPageView(): void {
-  if (!isCloud || typeof window === 'undefined') return
-
   useTelemetry()?.trackPageView(document.title, {
     path: window.location.href
   })
@@ -86,7 +108,8 @@ const router = createRouter({
           component: () => import('@/views/UserSelectView.vue')
         }
       ]
-    }
+    },
+    { path: '/:pathMatch(.*)*', redirect: unmatchedRouteRedirect }
   ],
 
   scrollBehavior(_to, _from, savedPosition) {
@@ -98,28 +121,18 @@ const router = createRouter({
   }
 })
 
-installPreservedQueryTracker(router, [
-  {
-    namespace: PRESERVED_QUERY_NAMESPACES.TEMPLATE,
-    keys: ['template', 'source', 'mode']
-  },
-  {
-    namespace: PRESERVED_QUERY_NAMESPACES.SHARE,
-    keys: ['share']
-  },
-  {
-    namespace: PRESERVED_QUERY_NAMESPACES.INVITE,
-    keys: ['invite']
-  },
-  {
-    namespace: PRESERVED_QUERY_NAMESPACES.CREATE_WORKSPACE,
-    keys: ['create_workspace']
-  }
-])
+installPreservedQueryTracker(router, PRESERVED_QUERY_DEFINITIONS)
+
+router.beforeEach((to, _from, next) => {
+  captureOAuthRequestId(to.query)
+  next()
+})
 
 router.afterEach(() => {
   trackPageView()
 })
+
+const PUBLIC_ROUTE_SIGN_IN_TIMEOUT_MS = 3_000
 
 if (isCloud) {
   const { flags } = useFeatureFlags()
@@ -127,12 +140,14 @@ if (isCloud) {
     'cloud-login',
     'cloud-signup',
     'cloud-forgot-password',
+    'cloud-oauth-consent',
     'cloud-sorry-contact-support'
   ])
   const PUBLIC_ROUTE_PATHS = new Set([
     '/cloud/login',
     '/cloud/signup',
     '/cloud/forgot-password',
+    '/oauth/consent',
     '/cloud/sorry-contact-support'
   ])
 
@@ -142,8 +157,61 @@ if (isCloud) {
     const path = to.path
     return PUBLIC_ROUTE_PATHS.has(path)
   }
+  async function publicRouteSignIn(): Promise<CloudSignIn> {
+    return Promise.race([
+      cloudSignIn(),
+      delay(PUBLIC_ROUTE_SIGN_IN_TIMEOUT_MS).then(() => 'signed_out' as const)
+    ])
+  }
+  const watchedSessions = new WeakSet<object>()
+  /** Re-runs this guard on the current route, which then sends the tab to sign-in. */
+  function rerouteWhenSignedOutElsewhere(): void {
+    const webSession = useCloudWebSessionStore()
+    if (watchedSessions.has(webSession)) return
+    watchedSessions.add(webSession)
+    webSession.onSignedOutElsewhere(() => {
+      const { path, query, hash } = router.currentRoute.value
+      void router.replace({ path, query, hash, force: true })
+    })
+  }
+  /** A lapsed SSO session goes back through its identity provider, once per tab per window. */
+  function sendToSignIn(
+    to: RouteLocationNormalized,
+    query: LocationQueryRaw,
+    next: NavigationGuardNext
+  ): void {
+    const ssoError = flags.ssoEnabled
+      ? readSsoError(to.query.sso_error)
+      : undefined
+    const reentry = decideSsoReentry({
+      ssoEnabled: flags.ssoEnabled,
+      sessionEnd: useCloudWebSessionStore().sessionEnd(),
+      hint: readSsoHint(),
+      attempt: ssoError ? 'failed' : hasRecentSsoReentry() ? 'recent' : 'none'
+    })
+    if (reentry.kind === 'sso-redirect' && markSsoReentry()) {
+      window.location.assign(
+        ssoStartUrl({
+          email: reentry.email,
+          returnTo: to.fullPath,
+          origin: window.location.origin
+        })
+      )
+      return next(false)
+    }
+    next({
+      name: 'cloud-login',
+      query: {
+        ...query,
+        ...(reentry.kind !== 'login' && SSO_ENTRY_OPEN_QUERY),
+        ...(ssoError && { sso_error: ssoError })
+      }
+    })
+  }
+
   // Global authentication guard
   router.beforeEach(async (to, _from, next) => {
+    rerouteWhenSignedOutElsewhere()
     const authStore = useAuthStore()
 
     // Wait for Firebase auth to initialize
@@ -158,9 +226,20 @@ if (isCloud) {
       }
     }
 
-    // Pass authenticated users
-    const authHeader = await authStore.getAuthHeader()
-    const isLoggedIn = !!authHeader
+    let signIn = isPublicRoute(to)
+      ? await publicRouteSignIn()
+      : await cloudSignIn()
+    if (signIn === 'pending' && !isPublicRoute(to)) {
+      await useCloudWebSessionStore().whenDecided()
+      signIn = await cloudSignIn()
+    }
+    const needsFirebaseForDesktopCode =
+      signIn === 'signed_in' &&
+      authStore.currentUser === null &&
+      !authStore.signedInWithSso &&
+      hasPendingDesktopLoginCode()
+    const isLoggedIn = signIn === 'signed_in' && !needsFirebaseForDesktopCode
+    preserveLoggedOutShareAuthAttribution(to.query, isLoggedIn)
 
     // Allow public routes
     if (isPublicRoute(to)) {
@@ -181,17 +260,16 @@ if (isCloud) {
       return next()
     }
 
-    const query =
-      to.fullPath === '/'
-        ? undefined
-        : { previousFullPath: encodeURIComponent(to.fullPath) }
+    const query = {
+      ...(to.fullPath !== '/' && {
+        previousFullPath: encodeURIComponent(to.fullPath)
+      }),
+      ...(needsFirebaseForDesktopCode && { switchAccount: 'true' })
+    }
 
     // Check if route requires authentication
     if (to.meta.requiresAuth && !isLoggedIn) {
-      return next({
-        name: 'cloud-login',
-        query
-      })
+      return sendToSignIn(to, query, next)
     }
 
     // Handle other protected routes
@@ -203,16 +281,12 @@ if (isCloud) {
         return loginSuccess ? next() : next(false)
       }
 
-      // For web, redirect to login
-      return next({
-        name: 'cloud-login',
-        query
-      })
+      return sendToSignIn(to, query, next)
     }
 
     // User is logged in - check if they need onboarding (when enabled)
     // For root path, check actual user status to handle waitlisted users
-    if (!isDesktop && isLoggedIn && to.path === '/') {
+    if (!isDesktop && to.path === '/') {
       if (!flags.onboardingSurveyEnabled) {
         return next()
       }
@@ -221,7 +295,9 @@ if (isCloud) {
         await import('@/platform/cloud/onboarding/auth')
       try {
         // Check user's actual status
-        const surveyCompleted = await getSurveyCompletedStatus()
+        const surveyCompleted = await getSurveyCompletedStatus(
+          useAuthStore().userId
+        )
 
         // Survey is required for all users (when feature flag enabled)
         if (!surveyCompleted) {
@@ -237,6 +313,8 @@ if (isCloud) {
     // User is logged in and accessing protected route
     return next()
   })
+
+  installDesktopLoginRedemption(router)
 }
 
 export default router

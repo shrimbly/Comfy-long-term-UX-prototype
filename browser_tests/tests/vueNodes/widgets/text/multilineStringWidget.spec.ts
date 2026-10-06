@@ -5,6 +5,10 @@ import {
 import type { ComfyPage } from '@e2e/fixtures/ComfyPage'
 
 test.describe('Vue Multiline String Widget', { tag: '@vue-nodes' }, () => {
+  test.afterEach(async ({ comfyPage }) => {
+    await comfyPage.canvasOps.resetView()
+  })
+
   const getFirstClipNode = (comfyPage: ComfyPage) =>
     comfyPage.vueNodes.getNodeByTitle('CLIP Text Encode (Prompt)').first()
 
@@ -28,6 +32,30 @@ test.describe('Vue Multiline String Widget', { tag: '@vue-nodes' }, () => {
     await expect(textarea).toHaveValue(multilineValue)
   })
 
+  test('keeps paragraph breaks across a serialize and reload round-trip', async ({
+    comfyPage
+  }) => {
+    const textarea = getFirstMultilineStringWidget(comfyPage)
+
+    const paragraphs = [
+      'First paragraph, ending in a space ',
+      '',
+      'Second paragraph',
+      'still the second paragraph'
+    ].join('\n')
+
+    await textarea.fill(paragraphs)
+    await expect(textarea).toHaveValue(paragraphs)
+
+    const serialized = await comfyPage.workflow.getExportedWorkflow()
+    await comfyPage.workflow.loadGraphData(serialized)
+    await comfyPage.vueNodes.waitForNodes()
+
+    await expect(getFirstMultilineStringWidget(comfyPage)).toHaveValue(
+      paragraphs
+    )
+  })
+
   test('should retain value after focus changes', async ({ comfyPage }) => {
     const textarea = getFirstMultilineStringWidget(comfyPage)
 
@@ -44,7 +72,7 @@ test.describe('Vue Multiline String Widget', { tag: '@vue-nodes' }, () => {
 
   test('should use native context menu when focused', async ({ comfyPage }) => {
     const textarea = getFirstMultilineStringWidget(comfyPage)
-    const vueContextMenu = comfyPage.page.locator('.p-contextmenu')
+    const vueContextMenu = comfyPage.page.getByRole('menu')
 
     await textarea.focus()
     await textarea.click({ button: 'right' })
@@ -54,4 +82,23 @@ test.describe('Vue Multiline String Widget', { tag: '@vue-nodes' }, () => {
     await textarea.click({ button: 'right' })
     await expect(vueContextMenu).toBeVisible()
   })
+
+  test(
+    'Middle-click drag on textarea should pan canvas',
+    { tag: ['@canvas', '@widget'] },
+    async ({ comfyPage, comfyMouse }) => {
+      const textarea = getFirstMultilineStringWidget(comfyPage)
+      const offsetBefore = await comfyPage.canvasOps.getOffset()
+
+      await comfyMouse.middleDragFromCenter(
+        textarea,
+        { x: 140, y: 90 },
+        { steps: 10 }
+      )
+
+      await expect
+        .poll(() => comfyPage.canvasOps.getOffset())
+        .not.toEqual(offsetBefore)
+    }
+  )
 })

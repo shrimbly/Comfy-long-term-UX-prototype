@@ -1,12 +1,12 @@
+import { expect } from '@playwright/test'
 import type { Locator } from '@playwright/test'
 
 import type { RootCategoryId } from '@/components/searchbox/v2/rootCategories'
 import type { ComfyPage } from '@e2e/fixtures/ComfyPage'
 import { TestIds } from '@e2e/fixtures/selectors'
+import type { Position } from '@e2e/fixtures/types'
 
 const { searchBoxV2 } = TestIds
-
-export type { RootCategoryId }
 
 export class ComfyNodeSearchBoxV2 {
   readonly dialog: Locator
@@ -84,29 +84,41 @@ export class ComfyNodeSearchBoxV2 {
     await this.input.waitFor({ state: 'visible' })
   }
 
-  async openByDoubleClickCanvas(): Promise<void> {
+  async openByDoubleClickCanvas(position?: Position) {
+    const { x, y } = position ?? { x: 200, y: 200 }
     // Use page.mouse.dblclick (not canvas.dblclick) so the z-999 Vue overlay
     // does not intercept; coords target a viewport spot that is on the canvas
     // and clear of both the side toolbar and any default-graph nodes.
-    await this.comfyPage.page.mouse.dblclick(200, 200, { delay: 5 })
+    await this.comfyPage.page.mouse.dblclick(x, y, { delay: 5 })
   }
 
-  async ensureV2Search(): Promise<void> {
-    await this.comfyPage.settings.setSetting(
-      'Comfy.NodeSearchBoxImpl',
-      'default'
-    )
+  async addNode(query: string, options: { position?: Position } = {}) {
+    const position = options.position ?? { x: 200, y: 200 }
+    await this.openByDoubleClickCanvas(position)
+    await this.input.fill(query)
+    await expect(this.results.first()).toContainText(query)
+    await this.comfyPage.page.keyboard.press('Enter')
+    await expect(this.dialog).toBeHidden()
+    await this.comfyPage.page.mouse.click(position.x, position.y)
   }
 
-  async setup(): Promise<void> {
-    await this.ensureV2Search()
-    await this.comfyPage.settings.setSetting(
-      'Comfy.LinkRelease.Action',
-      'search box'
-    )
-    await this.comfyPage.settings.setSetting(
-      'Comfy.LinkRelease.ActionShift',
-      'search box'
-    )
+  /** {@link addNode}, returning the id the graph gave the added node. */
+  async addNodeAndGetId(
+    query: string,
+    options: { position?: Position } = {}
+  ): Promise<string> {
+    const before = new Set(await this.comfyPage.workflow.getGraphNodeIds())
+    await this.addNode(query, options)
+    await expect
+      .poll(async () =>
+        (await this.comfyPage.workflow.getGraphNodeIds()).filter(
+          (id) => !before.has(id)
+        )
+      )
+      .toHaveLength(1)
+    const after = await this.comfyPage.workflow.getGraphNodeIds()
+    const [added] = after.filter((id) => !before.has(id))
+    if (!added) throw new Error(`${query}: the search box add produced no node`)
+    return added
   }
 }

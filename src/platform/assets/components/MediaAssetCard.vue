@@ -1,44 +1,30 @@
 <template>
+  <!--
+    Root @click.stop keeps clicks outside the explicit selection regions from
+    reaching the panel's empty-space deselection handler.
+  -->
   <div
-    ref="cardContainerRef"
-    role="button"
-    :data-asset-id="asset?.id"
-    :aria-label="
-      asset
-        ? $t('assetBrowser.ariaLabel.assetCard', {
-            name: getAssetDisplayName(asset),
-            type: fileKind
-          })
-        : $t('assetBrowser.ariaLabel.loadingAsset')
-    "
-    :tabindex="loading ? -1 : 0"
     :class="
       cn(
-        'relative flex cursor-pointer flex-col overflow-hidden rounded-lg transition-colors duration-200',
-        'group select-none',
-        hideFooter ? 'gap-0 p-1' : 'gap-2 p-2',
-        selected && hideFooter && 'ring-2 ring-white ring-inset',
-        selected &&
-          !hideFooter &&
-          'ring-3 ring-modal-card-border-highlighted ring-inset',
-        !selected && 'hover:bg-modal-card-background-hovered/20'
+        'flex cursor-pointer flex-col overflow-hidden rounded-lg p-2 transition-colors duration-200',
+        'group gap-2 select-none',
+        selected
+          ? 'ring-3 ring-modal-card-border-highlighted ring-inset'
+          : 'hover:bg-modal-card-background-hovered/20'
       )
     "
     :data-selected="selected"
+    :data-asset-id="asset?.id"
     :draggable="true"
-    @click.stop="$emit('click')"
-    @contextmenu.prevent.stop="
-      asset ? emit('context-menu', $event, asset) : undefined
-    "
+    @click.stop
+    @contextmenu.prevent.stop="handleContextMenu"
     @dragstart="dragStart"
   >
     <!-- Top Area: Media Preview -->
     <div
-      class="relative overflow-hidden p-0"
-      :class="
-        cn(naturalAspect ? '' : 'aspect-square', hideFooter && 'rounded-md')
-      "
-      :style="naturalAspect ? { aspectRatio: previewAspectRatio } : undefined"
+      class="relative aspect-square overflow-hidden p-0"
+      @click.stop="handlePreviewClick"
+      @dblclick.stop="fileKind === 'image' && handleZoomClick()"
     >
       <!-- Loading State -->
       <div
@@ -52,11 +38,11 @@
         v-else-if="asset && adaptedAsset"
         :asset="adaptedAsset"
         :context="{ type: assetType }"
+        :show-native-controls="
+          fileKind === 'video' ? showNativeVideoControls : undefined
+        "
         class="absolute inset-0"
-        @view="handleZoomClick"
-        @download="actions.downloadAsset()"
-        @video-playing-state-changed="isVideoPlaying = $event"
-        @video-controls-changed="showVideoControls = $event"
+        @download="handleDownload"
         @image-loaded="handleImageLoaded"
       />
 
@@ -64,136 +50,72 @@
         <i class="icon-[lucide--trash-2] size-5" />
       </LoadingOverlay>
 
-      <!-- Action buttons overlay (top-left of the image). -->
-      <Transition
-        enter-active-class="transition-[transform,opacity] duration-150 ease-out"
-        leave-active-class="transition-[transform,opacity] duration-100 ease-in"
-        enter-from-class="scale-90 opacity-0"
-        leave-to-class="scale-90 opacity-0"
-      >
-        <div
-          v-if="showActionsOverlay"
-          class="absolute top-2 left-2 flex origin-top-left flex-wrap justify-start gap-2"
-        >
-          <IconGroup background-class="bg-white">
-            <Button
-              v-if="canFavorite"
-              variant="overlay-white"
-              size="icon"
-              :aria-label="
-                $t(
-                  isFavorited
-                    ? 'mediaAsset.actions.unfavorite'
-                    : 'mediaAsset.actions.favorite'
-                )
-              "
-              :aria-pressed="isFavorited"
-              @click.stop="handleFavoriteToggle"
-            >
-              <i
-                :class="
-                  cn(
-                    'size-4',
-                    isFavorited
-                      ? 'icon-[ph--star-fill] text-citrine-400'
-                      : 'icon-[ph--star]'
-                  )
-                "
-              />
-            </Button>
-            <Button
-              variant="overlay-white"
-              size="icon"
-              :aria-label="$t('mediaAsset.actions.moreOptions')"
-              @click.stop="
-                asset ? emit('context-menu', $event, asset) : undefined
-              "
-            >
-              <i class="icon-[lucide--ellipsis] size-4" />
-            </Button>
-          </IconGroup>
-        </div>
-      </Transition>
-
-      <!-- Compact favorited indicator (shown when not hovered) -->
-      <Transition
-        enter-active-class="transition-[transform,opacity] duration-150 ease-out"
-        leave-active-class="transition-[transform,opacity] duration-100 ease-in"
-        enter-from-class="scale-75 opacity-0"
-        leave-to-class="scale-75 opacity-0"
-      >
-        <button
-          v-if="!showActionsOverlay && canFavorite && isFavorited"
-          type="button"
-          class="absolute top-2 left-2 inline-flex origin-center cursor-pointer items-center justify-center rounded-md border-none bg-transparent p-0"
-          :aria-label="$t('mediaAsset.actions.unfavorite')"
-          :aria-pressed="true"
-          @click.stop="handleFavoriteToggle"
-        >
-          <i
-            class="icon-[ph--star-fill] size-3.5 text-citrine-400 drop-shadow-[0_1px_3px_rgba(0,0,0,0.85)]"
-          />
-        </button>
-      </Transition>
-
-      <!-- Creator chip (Explore-feed attribution). Bottom-left,
-           hover-revealed. Gated on user_metadata.creator so it only
-           renders for prototype fixtures — the real ComfyUI media
-           browser path leaves the corner empty. -->
-      <div
-        v-if="creator"
+      <Button
+        v-if="asset && !loading && !isDeleting"
+        variant="overlay-white"
+        size="icon"
         :class="
           cn(
-            'pointer-events-none absolute bottom-2 left-2 inline-flex items-center gap-1.5 rounded-full bg-black/55 py-1 pr-2.5 pl-1 text-white backdrop-blur-sm transition-opacity duration-150',
-            isHovered ? 'opacity-100' : 'opacity-0'
+            'pointer-events-none absolute top-2 left-2 z-1 size-6 rounded-full opacity-0 transition-opacity',
+            'group-hover:pointer-events-auto group-hover:opacity-100',
+            'focus-visible:pointer-events-auto focus-visible:opacity-100',
+            !selected &&
+              'bg-transparent text-white shadow-sm ring-2 ring-white ring-inset hover:bg-white/20'
+          )
+        "
+        :aria-label="
+          $t('assetBrowser.ariaLabel.assetCard', {
+            name: getAssetDisplayName(asset),
+            type: fileKind
+          })
+        "
+        :aria-pressed="selected ?? false"
+        @click.stop="emit('toggle-selection')"
+      >
+        <i
+          aria-hidden="true"
+          :class="
+            cn('icon-[lucide--check] size-4 shrink-0', !selected && 'opacity-0')
+          "
+        />
+      </Button>
+
+      <!-- Action buttons overlay (top-right) -->
+      <div
+        v-if="asset && !loading && !isDeleting"
+        :class="
+          cn(
+            'absolute top-2 right-2 z-1 flex flex-wrap justify-end gap-2',
+            'pointer-events-none opacity-0 transition-opacity',
+            'group-hover:pointer-events-auto group-hover:opacity-100',
+            'group-has-focus-visible:pointer-events-auto group-has-focus-visible:opacity-100',
+            'touch:pointer-events-auto touch:opacity-100'
           )
         "
       >
-        <span
-          class="grid size-5 place-items-center rounded-full text-[10px] font-semibold"
-          :style="{ backgroundColor: creator.avatarColor ?? '#7c7c7c' }"
-        >
-          {{ creatorInitial }}
-        </span>
-        <span class="text-xs/none">@{{ creator.username }}</span>
-      </div>
-
-      <!-- Referenced local media (prototype, Flow 03). Gated on
-           user_metadata.sourcePath so real ComfyUI assets never see it.
-           Missing → dim + relink CTA (click relinks via the host view);
-           linked → hover source-path badge. -->
-      <template v-if="referencePath">
-        <button
-          v-if="isReferenceMissing"
-          type="button"
-          class="absolute inset-0 flex cursor-pointer flex-col items-center justify-center gap-2 bg-base-background/70 text-center"
-          @click.stop="$emit('click')"
-        >
-          <i class="icon-[lucide--unlink] size-6 text-muted-foreground" />
-          <span
-            class="inline-flex items-center gap-1 rounded-full bg-primary-background px-3 py-1 text-xs font-medium text-button-surface-contrast"
+        <IconGroup background-class="bg-white">
+          <Button
+            variant="overlay-white"
+            size="icon"
+            :aria-label="$t('mediaAsset.actions.download')"
+            @click.stop="handleDownload"
           >
-            <i class="icon-[lucide--link] size-3.5" />
-            {{ $t('prototype.assetCard.relink') }}
-          </span>
-        </button>
-        <div
-          v-else
-          :class="
-            cn(
-              'pointer-events-none absolute inset-x-2 bottom-2 inline-flex items-center gap-1.5 rounded-full bg-black/55 px-2.5 py-1 text-white backdrop-blur-sm transition-opacity duration-150',
-              isHovered ? 'opacity-100' : 'opacity-0'
-            )
-          "
-        >
-          <i class="icon-[lucide--hard-drive] size-3 shrink-0" />
-          <span class="truncate text-xs/none">{{ referencePath }}</span>
-        </div>
-      </template>
+            <i class="icon-[lucide--download] size-4" />
+          </Button>
+          <Button
+            variant="overlay-white"
+            size="icon"
+            :aria-label="$t('mediaAsset.actions.moreOptions')"
+            @click.stop="handleContextMenu"
+          >
+            <i class="icon-[lucide--ellipsis] size-4" />
+          </Button>
+        </IconGroup>
+      </div>
     </div>
 
     <!-- Bottom Area: Media Info -->
-    <div v-if="!hideFooter" class="flex-1">
+    <div class="flex-1">
       <!-- Loading State -->
       <div v-if="loading" class="flex items-start justify-between">
         <div class="flex flex-col gap-1">
@@ -213,24 +135,21 @@
       <div
         v-else-if="asset && adaptedAsset"
         class="flex items-end justify-between gap-1.5"
+        @click.stop="emit('select')"
       >
-        <!-- Left side: Media name and metadata -->
-        <div class="flex flex-col gap-1">
-          <!-- Title -->
+        <div class="flex min-w-0 flex-col gap-1">
           <MediaTitle :file-name="fileName" />
-          <!-- Metadata -->
-          <div class="flex gap-1.5 text-xs text-muted-foreground">
+          <div class="flex items-center gap-1.5 text-xs text-muted-foreground">
             <span v-if="formattedDuration">{{ formattedDuration }}</span>
             <span v-if="metaInfo">{{ metaInfo }}</span>
           </div>
         </div>
-
-        <!-- Right side: Output count -->
         <div v-if="showOutputCount" class="shrink-0">
           <Button
             v-tooltip.top.pt:pointer-events-none="
               $t('mediaAsset.actions.seeMoreOutputs')
             "
+            :aria-label="$t('mediaAsset.actions.seeMoreOutputs')"
             variant="secondary"
             @click.stop="handleOutputCountClick"
           >
@@ -244,14 +163,12 @@
 </template>
 
 <script setup lang="ts">
-import { useElementHover } from '@vueuse/core'
+import { cn } from '@comfyorg/tailwind-utils'
 import { computed, defineAsyncComponent, provide, ref, toRef } from 'vue'
-import { useI18n } from 'vue-i18n'
 
 import IconGroup from '@/components/button/IconGroup.vue'
 import LoadingOverlay from '@/components/common/LoadingOverlay.vue'
 import Button from '@/components/ui/button/Button.vue'
-import { isCloud } from '@/platform/distribution/types'
 import { useAssetsStore } from '@/stores/assetsStore'
 import {
   formatDuration,
@@ -260,19 +177,16 @@ import {
   getMediaTypeFromFilename,
   isPreviewableMediaType
 } from '@/utils/formatUtil'
-import { cn } from '@comfyorg/tailwind-utils'
 
 import { getAssetType } from '../composables/media/assetMappers'
-import { getAssetUrl } from '../utils/assetUrlUtil'
-import { useAssetDimensionsCache } from '../composables/useAssetDimensionsCache'
-import {
-  ASSET_DRAG_MIME,
-  useAssetDragPreview
-} from '../composables/useAssetDragPreview'
-import { useAssetFavorites } from '../composables/useAssetFavorites'
+import { startAssetDrag } from '../utils/assetDragUtil'
+import { getAssetFileUrl, getAssetUrl } from '../utils/assetUrlUtil'
 import { useMediaAssetActions } from '../composables/useMediaAssetActions'
 import type { AssetItem } from '../schemas/assetSchema'
-import { getAssetDisplayName } from '../utils/assetMetadataUtils'
+import {
+  getAssetDisplayName,
+  resolveDisplayImageDimensions
+} from '../utils/assetMetadataUtils'
 import type { MediaKind } from '../schemas/mediaAssetSchema'
 import { MediaAssetKey } from '../schemas/mediaAssetSchema'
 import MediaTitle from './MediaTitle.vue'
@@ -298,22 +212,16 @@ const {
   asset,
   loading,
   selected,
-  selectedIds,
   showOutputCount,
   outputCount,
-  restrictStackFavorites = false,
-  naturalAspect = false,
-  hideFooter = false
+  showNativeVideoControls = true
 } = defineProps<{
   asset?: AssetItem
   loading?: boolean
   selected?: boolean
-  selectedIds?: ReadonlySet<string>
   showOutputCount?: boolean
   outputCount?: number
-  restrictStackFavorites?: boolean
-  naturalAspect?: boolean
-  hideFooter?: boolean
+  showNativeVideoControls?: boolean
 }>()
 
 const assetsStore = useAssetsStore()
@@ -324,77 +232,24 @@ const isDeleting = computed(() =>
 )
 
 const emit = defineEmits<{
-  click: []
+  // Image and info clicks use the standard selection rules.
+  select: []
+  // The selection control toggles only this asset in the current selection.
+  'toggle-selection': []
   zoom: [asset: AssetItem]
   'output-count-click': []
   'context-menu': [event: MouseEvent, asset: AssetItem]
 }>()
 
-const cardContainerRef = ref<HTMLElement>()
-
-const isVideoPlaying = ref(false)
-const showVideoControls = ref(false)
-
 // Store actual image dimensions
 const imageDimensions = ref<{ width: number; height: number } | undefined>()
 
-const isHovered = useElementHover(cardContainerRef)
-
 const actions = useMediaAssetActions()
-const favorites = useAssetFavorites()
-const dimensionsCache = useAssetDimensionsCache()
-
-const canFavorite = computed(() => {
-  if (loading || !asset || isDeleting.value) return false
-  if (restrictStackFavorites && showOutputCount) return false
-  return true
-})
-
-const isFavorited = computed(() =>
-  asset ? favorites.isFavorited(asset) : false
-)
-
-async function handleFavoriteToggle() {
-  if (asset) await favorites.toggleFavorite(asset)
-}
 
 // Get asset type from tags
 const assetType = computed(() => {
   return getAssetType(asset?.tags)
 })
-
-// Creator attribution. Only prototype Explore-feed fixtures set this;
-// gating on the metadata shape keeps the overlay invisible in the
-// real ComfyUI media browser path.
-interface CreatorMeta {
-  username: string
-  avatarColor?: string
-}
-const creator = computed<CreatorMeta | undefined>(() => {
-  const raw = asset?.user_metadata?.creator as
-    | { username?: unknown; avatarColor?: unknown }
-    | undefined
-  if (!raw || typeof raw.username !== 'string') return undefined
-  return {
-    username: raw.username,
-    avatarColor:
-      typeof raw.avatarColor === 'string' ? raw.avatarColor : undefined
-  }
-})
-
-const creatorInitial = computed(
-  () => creator.value?.username.trim().charAt(0).toUpperCase() ?? ''
-)
-
-// Referenced local media (prototype, Flow 03 — non-final). Gated on
-// user_metadata so the overlay never renders for real ComfyUI assets.
-const referencePath = computed<string | undefined>(() => {
-  const p = asset?.user_metadata?.sourcePath
-  return typeof p === 'string' ? p : undefined
-})
-const isReferenceMissing = computed(
-  () => asset?.user_metadata?.linkState === 'missing'
-)
 
 // Determine file type from extension
 const fileKind = computed((): MediaKind => {
@@ -406,19 +261,6 @@ const previewKind = computed((): PreviewKind => {
 })
 
 const canInspect = computed(() => isPreviewableMediaType(fileKind.value))
-
-const cachedDimensions = computed(() =>
-  asset ? dimensionsCache.getDimensions(asset.id) : null
-)
-
-const previewAspectRatio = computed(() => {
-  const dims = imageDimensions.value ?? cachedDimensions.value
-  if (dims && dims.width > 0 && dims.height > 0) {
-    return `${dims.width} / ${dims.height}`
-  }
-  if (fileKind.value === 'video') return '16 / 9'
-  return '1 / 1'
-})
 
 // Get filename without extension
 const fileName = computed(() => {
@@ -436,12 +278,17 @@ const adaptedAsset = computed(() => {
     src:
       fileKind.value === '3D'
         ? getAssetUrl(asset)
-        : asset.thumbnail_url || asset.preview_url || '',
+        : asset.thumbnail_url ||
+          asset.preview_url ||
+          (fileKind.value === 'video' || fileKind.value === 'audio'
+            ? getAssetFileUrl(asset, { disposition: 'inline' })
+            : ''),
     preview_url: asset.preview_url,
     preview_id: asset.preview_id,
     size: asset.size,
     tags: asset.tags || [],
     created_at: asset.created_at,
+    updated_at: asset.updated_at,
     duration: asset.user_metadata?.duration
       ? Number(asset.user_metadata.duration)
       : undefined,
@@ -451,9 +298,7 @@ const adaptedAsset = computed(() => {
 
 provide(MediaAssetKey, {
   asset: toRef(() => adaptedAsset.value),
-  context: toRef(() => ({ type: assetType.value })),
-  isVideoPlaying,
-  showVideoControls
+  context: toRef(() => ({ type: assetType.value }))
 })
 
 const formattedDuration = computed(() => {
@@ -469,23 +314,36 @@ const formattedDuration = computed(() => {
   return formatDuration(Number(duration))
 })
 
-// Get metadata info based on file kind
-const metaInfo = computed(() => {
-  if (!asset) return ''
-  // TODO(assets): Re-enable once /assets API returns original image dimensions in metadata (#10590)
-  if (fileKind.value === 'image' && imageDimensions.value && !isCloud) {
-    return `${imageDimensions.value.width}x${imageDimensions.value.height}`
-  }
-  if (asset.size && ['video', 'audio', '3D'].includes(fileKind.value)) {
-    return formatSize(asset.size)
-  }
-  return ''
+const displayImageDimensions = computed(() =>
+  resolveDisplayImageDimensions(asset, imageDimensions.value)
+)
+
+const format = computed(() => {
+  const suffix = getFilenameDetails(asset?.name ?? '').suffix
+  return suffix ? suffix.toUpperCase() : ''
 })
 
-const showActionsOverlay = computed(() => {
-  if (loading || !asset || isDeleting.value) return false
-  return isHovered.value || selected || isVideoPlaying.value
+const metaInfo = computed(() => {
+  if (!asset) return ''
+  const parts: string[] = []
+  if (format.value) parts.push(format.value)
+
+  if (fileKind.value === 'image' && displayImageDimensions.value) {
+    parts.push(
+      `${displayImageDimensions.value.width}x${displayImageDimensions.value.height}`
+    )
+  } else if (asset.size && ['video', 'audio', '3D'].includes(fileKind.value)) {
+    parts.push(formatSize(asset.size))
+  }
+
+  return parts.join(' ')
 })
+
+function handlePreviewClick(event: MouseEvent) {
+  const hasSelectionModifier = event.shiftKey || event.metaKey || event.ctrlKey
+  if (fileKind.value === 'video' && !hasSelectionModifier) return
+  emit('select')
+}
 
 const handleZoomClick = () => {
   if (asset && canInspect.value) {
@@ -495,31 +353,23 @@ const handleZoomClick = () => {
 
 const handleImageLoaded = (width: number, height: number) => {
   imageDimensions.value = { width, height }
-  if (asset) dimensionsCache.setDimensions(asset.id, width, height)
 }
 
 const handleOutputCountClick = () => {
   emit('output-count-click')
 }
 
-const dragPreview = useAssetDragPreview()
-const { t } = useI18n()
+function handleContextMenu(event: MouseEvent) {
+  if (!asset) return
+  emit('context-menu', event, asset)
+}
+
+function handleDownload() {
+  if (!asset) return
+  actions.downloadAssets([asset])
+}
 
 function dragStart(e: DragEvent) {
-  if (!asset) return
-
-  const { dataTransfer } = e
-  if (!dataTransfer) return
-
-  const dragIds =
-    selected && selectedIds && selectedIds.size > 1
-      ? [...selectedIds]
-      : [asset.id]
-
-  dataTransfer.setData(ASSET_DRAG_MIME, JSON.stringify(dragIds))
-  dataTransfer.effectAllowed = 'copyMove'
-
-  dragPreview.configure(dragIds, asset, t)
-  dragPreview.startDrag(e)
+  startAssetDrag(e, asset)
 }
 </script>

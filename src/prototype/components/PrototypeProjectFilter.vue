@@ -50,7 +50,8 @@ const options = computed(() => [
   }))
 ])
 
-function onChange(value: string | undefined) {
-  selectedProjectId.value = !value || value === ALL_OPTION_VALUE ? null : value
+function onChange(value: string | number | undefined) {
+  selectedProjectId.value =
+    !value || value === ALL_OPTION_VALUE ? null : String(value)
 }
 </script>

@@ -1,23 +1,45 @@
 <template>
-  <SelectRoot v-model="selectedItem" v-model:open="isOpen" :disabled>
+  <SearchableSingleSelect
+    v-if="searchable"
+    v-model="selectedItem"
+    v-bind="attrsWithoutClass"
+    :class="attrsClass"
+    :label
+    :options
+    :size
+    :invalid
+    :loading
+    :disabled
+    :search-placeholder
+    :list-max-height
+    :popover-min-width
+    :popover-max-width
+    :content-style
+  >
+    <template #icon><slot name="icon" /></template>
+  </SearchableSingleSelect>
+
+  <SelectRoot v-else v-model="selectedItem" v-model:open="isOpen" :disabled>
     <SelectTrigger
-      v-bind="$attrs"
+      v-bind="attrsWithoutClass"
       :aria-label="label || t('g.singleSelectDropdown')"
       :aria-busy="loading || undefined"
       :aria-invalid="invalid || undefined"
       :class="
-        selectTriggerVariants({
-          size,
-          border: invalid ? 'invalid' : 'none'
-        })
+        cn(
+          selectTriggerVariants({
+            size,
+            border: invalid ? 'invalid' : 'none'
+          }),
+          attrsClass
+        )
       "
     >
       <div
         :class="
           cn(
-            'flex flex-1 items-center gap-2 overflow-hidden py-2',
-            size === 'md' ? 'pl-3 text-xs' : 'pl-4 text-sm',
-            triggerInnerClass
+            'flex flex-1 items-center gap-2 overflow-hidden py-2 pl-2',
+            size === 'md' ? 'text-xs' : 'text-sm'
           )
         "
       >
@@ -38,7 +60,7 @@
         position="popper"
         :side-offset="8"
         align="start"
-        :style="[optionStyle, contentStyle]"
+        :style="[optionStyle, contentStyle, liftedContentStyle]"
         :class="cn(selectContentClass, 'min-w-(--reka-select-trigger-width)')"
         @keydown="onContentKeydown"
       >
@@ -92,30 +114,36 @@ import {
   selectItemVariants,
   selectTriggerVariants,
   stopEscapeToDocument
-} from '@/components/ui/select/select.variants'
+} from '@comfyorg/design-system/select.variants'
 import type { SelectOption } from '@/components/ui/select/types'
+import { useAttrsClass } from '@/composables/useAttrsClass'
+import { useModalLiftedZIndex } from '@/composables/useModalLiftedZIndex'
 import { usePopoverSizing } from '@/composables/usePopoverSizing'
 import { cn } from '@comfyorg/tailwind-utils'
+
+import SearchableSingleSelect from './SearchableSingleSelect.vue'
 
 defineOptions({
   inheritAttrs: false
 })
+const { attrsClass, attrsWithoutClass } = useAttrsClass()
 
 const {
   label,
-  options,
+  options = [],
   size = 'lg',
   invalid = false,
   loading = false,
   disabled = false,
+  searchable = false,
+  searchPlaceholder,
   listMaxHeight = '28rem',
   popoverMinWidth,
   popoverMaxWidth,
-  contentStyle,
-  triggerInnerClass
+  contentStyle
 } = defineProps<{
   label?: string
-  options?: SelectOption[]
+  options?: SelectOption<string | number>[]
   /** Trigger size: 'lg' (40px, Interface) or 'md' (32px, Node) */
   size?: 'lg' | 'md'
   /** Show invalid (destructive) border */
@@ -124,6 +152,8 @@ const {
   loading?: boolean
   /** Disable the select */
   disabled?: boolean
+  searchable?: boolean
+  searchPlaceholder?: string
   /** Maximum height of the dropdown panel (default: 28rem) */
   listMaxHeight?: string
   /** Minimum width of the popover (default: auto) */
@@ -131,16 +161,15 @@ const {
   /** Maximum width of the popover (default: auto) */
   popoverMaxWidth?: string
   contentStyle?: StyleValue
-  /** Tailwind classes merged onto the trigger's inner content row (the
-   *  flex row containing icon + value). Use this to override default
-   *  paddings when fitting the dropdown into a tight layout. */
-  triggerInnerClass?: string
 }>()
 
-const selectedItem = defineModel<string | undefined>({ required: true })
+const selectedItem = defineModel<string | number | undefined>({
+  required: true
+})
 
 const { t } = useI18n()
 const isOpen = ref(false)
+const liftedContentStyle = useModalLiftedZIndex(isOpen)
 
 function onContentKeydown(event: KeyboardEvent) {
   if (event.key === 'Escape') {

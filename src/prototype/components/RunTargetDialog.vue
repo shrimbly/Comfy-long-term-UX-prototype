@@ -212,8 +212,7 @@
           <div class="relative">
             <pre
               class="overflow-x-auto rounded-lg border border-border-subtle bg-secondary-background/40 p-4 font-mono text-xs/5 whitespace-pre-wrap text-base-foreground"
-              >{{ agentPrompt }}</pre
-            >
+              >{{ agentPrompt }}</pre>
           </div>
 
           <footer class="flex items-center gap-2.5">

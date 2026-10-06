@@ -25,9 +25,9 @@ export type ProjectTier = 'workspace-wide' | 'restricted' | 'private'
 
 // Asset-level roles per ../IA_Plan/wiki/concepts/three-level-permissions.md.
 // Post-MVP roles (Editor, Viewer) intentionally omitted.
-export type AssetRole = 'owner' | 'runner'
+type AssetRole = 'owner' | 'runner'
 
-export interface AssetAccess {
+interface AssetAccess {
   userId: string
   role: AssetRole
 }
@@ -35,7 +35,7 @@ export interface AssetAccess {
 // Project-level roles per ../IA_Plan/wiki/concepts/three-level-permissions.md.
 export type ProjectRole = 'owner' | 'collaborator'
 
-export interface ProjectMember {
+interface ProjectMember {
   userId: string
   role: ProjectRole
 }
@@ -44,7 +44,7 @@ export interface ProjectMember {
 // (see design-decisions.md 2026-06-16); the wider union is retained on the
 // data type because fixtures may still carry non-media seed data that is
 // simply not surfaced.
-export type LibrarySection = 'media' | 'models' | 'nodes' | 'prompts'
+type LibrarySection = 'media' | 'models' | 'nodes' | 'prompts'
 
 export interface User {
   id: string
@@ -107,7 +107,7 @@ export interface Project {
 // Custom Comfy Cloud (Project Homestead): a project runs on a Developer
 // Platform deployment. One deployment can back several projects, so updating
 // it updates every project on it. Comfy Cloud is the shared default.
-export type DeploymentKind = 'comfy-cloud' | 'custom'
+type DeploymentKind = 'comfy-cloud' | 'custom'
 export type DeploymentStatus = 'ready' | 'asleep' | 'building'
 
 export interface Deployment {
@@ -230,7 +230,7 @@ export type TemplateCategory =
   | 'llm'
   | 'utility'
 
-export type TemplateRuntime = 'comfyui' | 'api'
+type TemplateRuntime = 'comfyui' | 'api'
 
 export interface WorkflowTemplate {
   id: string
@@ -257,12 +257,12 @@ export interface WorkflowTemplate {
 // Comfy stores a pointer to a file the user keeps on their own disk and
 // never copies it. Referenced assets have no cloud project and carry a
 // link state + source path.
-export type AssetOrigin = 'generated' | 'imported' | 'referenced'
+type AssetOrigin = 'generated' | 'imported' | 'referenced'
 
 // Link state of a `referenced` media file. `missing` = the original moved
 // or was deleted; Comfy still holds the cached thumbnail and prompts a
 // relink (After Effects / Lightroom pattern).
-export type LinkState = 'linked' | 'missing'
+type LinkState = 'linked' | 'missing'
 
 export interface LibraryAsset {
   id: string
@@ -288,7 +288,7 @@ export interface LibraryAsset {
   previewUrl?: string
 }
 
-export interface UsageState {
+interface UsageState {
   creditsRemainingPct: number
   showUpgrade: boolean
 }
@@ -296,9 +296,9 @@ export interface UsageState {
 // Billing per ../IA_Plan/wiki/entities/workspace.md §"What it contains"
 // and §"Lifecycle" (billing does not auto-transfer with ownership).
 
-export type SubscriptionStatus = 'active' | 'past-due' | 'cancelled'
+type SubscriptionStatus = 'active' | 'past-due' | 'cancelled'
 
-export interface Subscription {
+interface Subscription {
   plan: WorkspacePlan
   status: SubscriptionStatus
   renewsAt: string
@@ -306,9 +306,9 @@ export interface Subscription {
   seatsIncluded: number
 }
 
-export type PaymentMethodKind = 'card' | 'invoice'
+type PaymentMethodKind = 'card' | 'invoice'
 
-export interface PaymentMethod {
+interface PaymentMethod {
   kind: PaymentMethodKind
   brand?: string
   last4?: string
@@ -317,15 +317,15 @@ export interface PaymentMethod {
   billingEmail?: string
 }
 
-export interface CreditBalance {
+interface CreditBalance {
   remaining: number
   monthlyAllowance: number
   resetsAt: string
 }
 
-export type InvoiceStatus = 'paid' | 'open' | 'past-due'
+type InvoiceStatus = 'paid' | 'open' | 'past-due'
 
-export interface Invoice {
+interface Invoice {
   id: string
   issuedAt: string
   amountUsd: number
@@ -344,7 +344,7 @@ export interface WorkspaceBilling {
 // per-member ceiling + period + reset cadence.
 export type CreditLimitPeriod = 'monthly' | 'weekly' | 'one-time'
 
-export interface MemberCreditLimit {
+interface MemberCreditLimit {
   memberId: string
   limit: number
   period: CreditLimitPeriod
@@ -361,7 +361,7 @@ export interface WorkspaceMember {
   joinedAt: string
 }
 
-export interface PendingInvite {
+interface PendingInvite {
   id: string
   email: string
   role: WorkspaceRole
@@ -383,7 +383,7 @@ export type RoleGrants = Record<DelegableCapability, boolean>
 //   concept:  ../IA_Plan/wiki/concepts/local-dashboard-views.md
 // 'local' personas have no projects, no workspace switcher, and a
 // filesystem-backed library (Outputs replaces Prompts).
-export type PersonaMode = 'cloud' | 'local'
+type PersonaMode = 'cloud' | 'local'
 
 export interface PersonaFixture {
   mode: PersonaMode

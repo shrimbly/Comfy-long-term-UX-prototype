@@ -1,36 +1,60 @@
 <template>
   <div
     v-if="imageUrls.length > 0"
-    class="image-preview group relative flex size-full min-h-55 min-w-16 flex-col justify-center px-2"
+    class="image-preview group relative flex size-full min-w-16 flex-col justify-center px-2"
+    :style="{ minHeight: `${IMAGE_PREVIEW_CONTENT_MIN_HEIGHT}px` }"
     @keydown="handleKeyDown"
   >
     <!-- Grid View -->
     <div
       v-if="viewMode === 'grid'"
+      ref="gridEl"
       data-testid="image-grid"
-      class="group/panel relative grid w-full gap-1 overflow-hidden rounded-sm p-1"
+      class="relative grid w-full flex-1 gap-1 rounded-sm p-1 contain-size"
       :style="{ gridTemplateColumns: `repeat(${gridCols}, 1fr)` }"
     >
-      <button
-        v-for="(url, index) in imageUrls"
+      <Button
+        v-for="(url, index) in gridImageUrls"
         :key="index"
-        class="focus-visible:ring-ring relative cursor-pointer overflow-hidden rounded-sm border-0 bg-transparent p-0 focus-visible:ring-2 focus-visible:outline-none"
+        size="unset"
+        class="overflow-hidden rounded-none p-0 ring-border-default hover:ring-1 focus-visible:ring-2"
         :aria-label="
           $t('g.viewImageOfTotal', {
             index: index + 1,
             total: imageUrls.length
           })
         "
-        @pointerdown="trackPointerStart"
-        @click="handleGridThumbnailClick($event, index)"
+        @click="handleGridClick(index)"
       >
         <img
+          v-if="!isHdrImageUrl(imageUrls[index])"
           :src="url"
           :alt="`${$t('g.galleryThumbnail')} ${index + 1}`"
           draggable="false"
           class="pointer-events-none size-full object-contain"
+          @load="updateAspectRatio($event, index)"
         />
-      </button>
+        <div
+          v-else
+          class="flex size-full flex-col items-center justify-center gap-1 text-base-foreground"
+        >
+          <i class="icon-[lucide--sun] size-6" />
+          <span class="text-xs">{{ $t('hdrViewer.hdrImage') }}</span>
+        </div>
+      </Button>
+      <div
+        v-if="canExportOutputs"
+        class="invisible absolute top-2 right-2 group-focus-within:visible group-hover:visible"
+      >
+        <button
+          :class="actionButtonClass"
+          :title="$t('g.downloadImages')"
+          :aria-label="$t('g.downloadImages')"
+          @click="handleExportOutputs"
+        >
+          <i class="icon-[lucide--folder-down] size-4" />
+        </button>
+      </div>
     </div>
 
     <!-- Gallery View (Image Wrapper) -->
@@ -59,12 +83,30 @@
         </p>
       </div>
       <!-- Loading State -->
-      <div v-if="showLoader && !imageError" class="size-full">
+      <div
+        v-if="showLoader && !imageError && !currentImageIsHdr"
+        class="size-full"
+      >
         <Skeleton class="size-full rounded-sm" />
       </div>
+      <button
+        v-if="!imageError && currentImageIsHdr"
+        type="button"
+        data-testid="hdr-open-button"
+        class="absolute inset-0 flex cursor-pointer flex-col items-center justify-center gap-3 border-0 bg-transparent text-base-foreground"
+        @click="openHdrViewer(currentImageUrl)"
+      >
+        <i class="icon-[lucide--sun] size-12" />
+        <span class="text-sm">{{ $t('hdrViewer.hdrImage') }}</span>
+        <span
+          class="rounded-md bg-base-foreground px-3 py-1.5 text-sm text-base-background"
+        >
+          {{ $t('hdrViewer.openInHdrViewer') }}
+        </span>
+      </button>
       <!-- Main Image -->
       <img
-        v-if="!imageError"
+        v-if="!imageError && !currentImageIsHdr"
         data-testid="main-image"
         :src="currentImageUrl"
         :alt="imageAltText"
@@ -80,7 +122,7 @@
       >
         <!-- Mask/Edit Button -->
         <button
-          v-if="!hasMultipleImages"
+          v-if="!hasMultipleImages && !imageError && !currentImageIsHdr"
           :class="actionButtonClass"
           :title="$t('g.editOrMaskImage')"
           :aria-label="$t('g.editOrMaskImage')"
@@ -89,8 +131,20 @@
           <i-comfy:mask class="size-4" />
         </button>
 
+        <!-- Layer Editor Button -->
+        <button
+          v-if="hasMultipleImages && !imageError"
+          :class="actionButtonClass"
+          :title="$t('g.openLayerEditor')"
+          :aria-label="$t('g.openLayerEditor')"
+          @click="handleOpenLayerEditor"
+        >
+          <i class="icon-[lucide--layers] size-4" />
+        </button>
+
         <!-- Download Button -->
         <button
+          v-if="!imageError"
           :class="actionButtonClass"
           :title="$t('g.downloadImage')"
           :aria-label="$t('g.downloadImage')"
@@ -114,7 +168,7 @@
 
     <!-- Image Dimensions (gallery mode only) -->
     <div
-      v-if="viewMode === 'gallery'"
+      v-if="viewMode === 'gallery' && !currentImageIsHdr"
       class="pt-2 text-center text-xs text-base-foreground"
     >
       <span
@@ -166,23 +220,33 @@
 </template>
 
 <script setup lang="ts">
-import { useTimeoutFn } from '@vueuse/core'
-import { computed, nextTick, ref, watch } from 'vue'
+import { useElementSize, useTimeoutFn } from '@vueuse/core'
+import { computed, nextTick, ref, useTemplateRef, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import { downloadFile } from '@/base/common/downloadUtil'
+import Button from '@/components/ui/button/Button.vue'
 import Skeleton from '@/components/ui/skeleton/Skeleton.vue'
 import { useMaskEditor } from '@/composables/maskeditor/useMaskEditor'
+import { useNodeOutputsExport } from '@/platform/assets/composables/useNodeOutputsExport'
+import { useTelemetry } from '@/platform/telemetry'
+import { describeImageLoadFailure } from '@/platform/telemetry/imageFailureDiagnostics'
 import { useToastStore } from '@/platform/updates/common/toastStore'
+import { openHdrViewer } from '@/services/hdrViewerService'
 import { useNodeOutputStore } from '@/stores/nodeOutputStore'
+import type { NodeId } from '@/types/nodeId'
+import { isHdrImageUrl } from '@/utils/hdrFormatUtil'
+import { getGridThumbnailUrl } from '@/utils/imageUtil'
 import { resolveNode } from '@/utils/litegraphUtil'
 import { cn } from '@comfyorg/tailwind-utils'
+
+import { IMAGE_PREVIEW_CONTENT_MIN_HEIGHT } from './imagePreviewLayout'
 
 interface ImagePreviewProps {
   /** Array of image URLs to display */
   readonly imageUrls: readonly string[]
   /** Optional node ID for context-aware actions */
-  readonly nodeId?: string
+  readonly nodeId?: NodeId
 }
 
 const { imageUrls, nodeId } = defineProps<ImagePreviewProps>()
@@ -190,6 +254,7 @@ const { imageUrls, nodeId } = defineProps<ImagePreviewProps>()
 const { t } = useI18n()
 const maskEditor = useMaskEditor()
 const nodeOutputStore = useNodeOutputStore()
+const { hasMultipleOutputs, showOutputsExportDialog } = useNodeOutputsExport()
 const toastStore = useToastStore()
 
 const actionButtonClass =
@@ -201,12 +266,17 @@ function defaultViewMode(urls: readonly string[]): ViewMode {
   return urls.length > 1 ? 'grid' : 'gallery'
 }
 
+const { width: gridWidth, height: gridHeight } = useElementSize(
+  useTemplateRef('gridEl')
+)
+
 const currentIndex = ref(0)
 const viewMode = ref<ViewMode>(defaultViewMode(imageUrls))
 const galleryPanelEl = ref<HTMLDivElement>()
 const actualDimensions = ref<string | null>(null)
 const imageError = ref(false)
 const showLoader = ref(false)
+const imageAspectRatio = ref(1)
 
 const { start: startDelayedLoader, stop: stopDelayedLoader } = useTimeoutFn(
   () => {
@@ -218,7 +288,13 @@ const { start: startDelayedLoader, stop: stopDelayedLoader } = useTimeoutFn(
 )
 
 const currentImageUrl = computed(() => imageUrls[currentIndex.value] ?? '')
+const currentImageIsHdr = computed(() => isHdrImageUrl(currentImageUrl.value))
+const gridImageUrls = computed(() => imageUrls.map(getGridThumbnailUrl))
 const hasMultipleImages = computed(() => imageUrls.length > 1)
+const canExportOutputs = computed(() => {
+  const node = nodeId ? resolveNode(nodeId) : undefined
+  return !!node && hasMultipleOutputs(node)
+})
 const imageAltText = computed(() =>
   t('g.viewImageOfTotal', {
     index: currentIndex.value + 1,
@@ -226,10 +302,8 @@ const imageAltText = computed(() =>
   })
 )
 const gridCols = computed(() => {
-  const count = imageUrls.length
-  if (count <= 4) return 2
-  if (count <= 9) return 3
-  return 4
+  const bias = gridWidth.value / gridHeight.value / imageAspectRatio.value
+  return Math.max(Math.round(Math.sqrt(imageUrls.length * bias)), 1)
 })
 
 watch(
@@ -273,18 +347,42 @@ function handleImageLoad(event: Event) {
   }
 }
 
+function updateAspectRatio(event: Event, index: number) {
+  if (!(event.target instanceof HTMLImageElement) || index !== 0) return
+  const { naturalWidth, naturalHeight } = event.target
+  if (naturalWidth && naturalHeight) {
+    imageAspectRatio.value = naturalWidth / naturalHeight
+  }
+}
+
 function handleImageError() {
   stopDelayedLoader()
   showLoader.value = false
   imageError.value = true
   actualDimensions.value = null
+
+  // The error UI is already up; the diagnostic probe runs behind it so a slow
+  // or hanging re-request never delays what the user sees.
+  const failedUrl = currentImageUrl.value
+  void describeImageLoadFailure(failedUrl).then((metadata) => {
+    useTelemetry()?.trackImageLoadFailed(metadata)
+  })
 }
 
 function handleEditMask() {
   if (!nodeId) return
-  const node = resolveNode(Number(nodeId))
+  const node = resolveNode(nodeId)
   if (!node) return
   maskEditor.openMaskEditor(node)
+}
+
+async function handleOpenLayerEditor() {
+  if (!nodeId) return
+  const node = resolveNode(nodeId)
+  if (!node) return
+  const { useLayerEditor } =
+    await import('@/renderer/extensions/layerEditor/composables/useLayerEditor')
+  useLayerEditor().openLayerEditor(node)
 }
 
 function handleDownload() {
@@ -299,6 +397,13 @@ function handleDownload() {
   }
 }
 
+function handleExportOutputs() {
+  if (!nodeId) return
+  const node = resolveNode(nodeId)
+  if (!node) return
+  showOutputsExportDialog(node)
+}
+
 function setCurrentIndex(index: number) {
   if (currentIndex.value === index) return
   if (index >= 0 && index < imageUrls.length) {
@@ -309,25 +414,20 @@ function setCurrentIndex(index: number) {
   }
 }
 
-const CLICK_THRESHOLD = 3
-let pointerStartPos = { x: 0, y: 0 }
-
-function trackPointerStart(event: PointerEvent) {
-  pointerStartPos = { x: event.clientX, y: event.clientY }
-}
-
-function handleGridThumbnailClick(event: MouseEvent, index: number) {
-  const dx = event.clientX - pointerStartPos.x
-  const dy = event.clientY - pointerStartPos.y
-  if (Math.abs(dx) > CLICK_THRESHOLD || Math.abs(dy) > CLICK_THRESHOLD) return
-  openImageInGallery(index)
-}
-
 async function openImageInGallery(index: number) {
   setCurrentIndex(index)
   viewMode.value = 'gallery'
   await nextTick()
   galleryPanelEl.value?.focus()
+}
+
+function handleGridClick(index: number) {
+  const url = imageUrls[index]
+  if (isHdrImageUrl(url)) {
+    openHdrViewer(url)
+    return
+  }
+  void openImageInGallery(index)
 }
 
 function getNavigationDotClass(index: number) {

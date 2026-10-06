@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-import { LiteGraph } from '@/lib/litegraph/src/litegraph'
+import { RenderShape } from '@/lib/litegraph/src/types/globalEnums'
 
 const nodeSlotSchema = z.object({
   CLIP: z.string(),
@@ -32,9 +32,9 @@ const litegraphBaseSchema = z.object({
   NODE_DEFAULT_BGCOLOR: z.string(),
   NODE_DEFAULT_BOXCOLOR: z.string(),
   NODE_DEFAULT_SHAPE: z.union([
-    z.literal(LiteGraph.BOX_SHAPE),
-    z.literal(LiteGraph.ROUND_SHAPE),
-    z.literal(LiteGraph.CARD_SHAPE),
+    z.literal(RenderShape.BOX),
+    z.literal(RenderShape.ROUND),
+    z.literal(RenderShape.CARD),
     // Legacy palettes have string field for NODE_DEFAULT_SHAPE.
     z.string()
   ]),
@@ -78,6 +78,7 @@ export const comfyBaseSchema = z.object({
   ['interface-panel-surface']: z.string().optional(),
   ['interface-panel-box-shadow']: z.string().optional(),
   ['interface-panel-drop-shadow']: z.string().optional(),
+  ['interface-floating-panel-shadow']: z.string().optional(),
   ['interface-panel-hover-surface']: z.string().optional(),
   ['interface-panel-selected-surface']: z.string().optional(),
   ['interface-button-hover-surface']: z.string().optional()
@@ -113,9 +114,7 @@ const completedPaletteSchema = z
   })
   .passthrough()
 
-export const colorPalettesSchema = z.record(paletteSchema)
-
 export type Colors = z.infer<typeof colorsSchema>
 export type Palette = z.infer<typeof paletteSchema>
 export type CompletedPalette = z.infer<typeof completedPaletteSchema>
-export type ColorPalettes = z.infer<typeof colorPalettesSchema>
+export type ColorPalettes = Record<string, Palette>
