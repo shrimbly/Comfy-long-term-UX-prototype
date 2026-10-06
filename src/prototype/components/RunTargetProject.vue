@@ -13,7 +13,7 @@
   new deployment it goes on to the build summary.
 -->
 <template>
-  <header class="flex flex-col items-start gap-2.5 pr-8">
+  <header class="flex flex-col items-start gap-2 pr-8">
     <h2 :id="titleId" class="m-0 text-2xl font-semibold">
       {{ t('prototype.customCloud.dialog.project.title') }}
     </h2>
@@ -32,33 +32,35 @@
     </span>
   </header>
 
-  <label class="flex flex-col gap-1.5">
-    <span
-      class="text-xs font-medium tracking-wide text-muted-foreground uppercase"
-    >
-      {{ t('prototype.views.projects.newProjectDialog.nameLabel') }}
-    </span>
-    <input
-      v-model="customCloud.newProjectName"
-      type="text"
-      :placeholder="
-        t('prototype.views.projects.newProjectDialog.namePlaceholder')
-      "
-      class="h-10 rounded-lg border border-border-subtle bg-secondary-background px-3 text-sm outline-none focus:border-base-foreground"
-      @keydown.enter="onNext"
-    />
-  </label>
+  <div class="flex flex-col gap-4">
+    <label class="flex flex-col gap-1.5">
+      <span
+        class="text-xs font-medium tracking-wide text-muted-foreground uppercase"
+      >
+        {{ t('prototype.views.projects.newProjectDialog.nameLabel') }}
+      </span>
+      <input
+        v-model="customCloud.newProjectName"
+        type="text"
+        :placeholder="
+          t('prototype.views.projects.newProjectDialog.namePlaceholder')
+        "
+        class="h-10 rounded-lg border border-border-subtle bg-secondary-background px-3 text-sm outline-none focus:border-base-foreground"
+        @keydown.enter="onNext"
+      />
+    </label>
 
-  <ProjectAccessFields
-    v-model:tier="customCloud.newProjectTier"
-    v-model:collaborators="customCloud.newProjectCollaborators"
-  />
+    <ProjectAccessFields
+      v-model:tier="customCloud.newProjectTier"
+      v-model:collaborators="customCloud.newProjectCollaborators"
+    />
+  </div>
 
   <footer class="flex items-center gap-2.5">
     <Button
       variant="muted-textonly"
       size="lg"
-      class="mr-auto"
+      class="mr-auto px-1"
       @click="customCloud.dialogStep = 'choose'"
     >
       {{ t('prototype.customCloud.dialog.back') }}

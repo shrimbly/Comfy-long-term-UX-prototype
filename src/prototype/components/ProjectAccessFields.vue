@@ -9,10 +9,10 @@
   dialog's "New project" step.
 -->
 <template>
-  <div class="flex min-h-0 flex-col gap-3">
-    <section class="flex shrink-0 flex-col gap-2">
+  <div class="flex min-h-0 flex-col gap-4">
+    <section class="flex shrink-0 flex-col gap-1.5">
       <h3
-        class="text-xs font-semibold tracking-wide text-muted-foreground uppercase"
+        class="m-0 text-xs font-semibold tracking-wide text-muted-foreground uppercase"
       >
         {{ t('prototype.views.project.sharing.generalAccessHeading') }}
       </h3>
@@ -39,10 +39,10 @@
 
     <section
       v-if="tier === 'restricted'"
-      class="flex min-h-0 flex-1 flex-col gap-2"
+      class="flex min-h-0 flex-1 flex-col gap-1.5"
     >
       <h3
-        class="text-xs font-semibold tracking-wide text-muted-foreground uppercase"
+        class="m-0 text-xs font-semibold tracking-wide text-muted-foreground uppercase"
       >
         {{ t('prototype.views.projects.newProjectDialog.peopleHeading') }}
       </h3>
