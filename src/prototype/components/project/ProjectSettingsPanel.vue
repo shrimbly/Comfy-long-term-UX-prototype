@@ -32,18 +32,7 @@
       </ProjectSettingsRow>
 
       <ProjectSettingsRow :label="t('prototype.projectPage.settings.access')">
-        <span class="flex items-center gap-3">
-          <span>{{ accessText }}</span>
-          <Button
-            v-if="share"
-            variant="link"
-            size="sm"
-            class="h-auto p-0"
-            @click="emit('share')"
-          >
-            {{ t('prototype.views.project.sharing.shareButton') }}
-          </Button>
-        </span>
+        <span>{{ accessText }}</span>
       </ProjectSettingsRow>
 
       <ProjectSettingsRow
@@ -57,20 +46,6 @@
             })
           }}
         </span>
-      </ProjectSettingsRow>
-
-      <ProjectSettingsRow
-        v-if="media"
-        :label="t('prototype.views.project.viewMediaAssets')"
-      >
-        <Button
-          variant="link"
-          size="sm"
-          class="h-auto p-0"
-          @click="emit('media')"
-        >
-          {{ t('prototype.projectPage.settings.open') }}
-        </Button>
       </ProjectSettingsRow>
     </dl>
 
@@ -114,20 +89,11 @@ import ProjectSettingsRow from './ProjectSettingsRow.vue'
 const {
   project,
   footer,
-  usage = false,
-  share = false,
-  media = false
+  usage = false
 } = defineProps<{
   project: Project
   footer: 'all-settings' | 'open-project'
   usage?: boolean
-  share?: boolean
-  media?: boolean
-}>()
-
-const emit = defineEmits<{
-  share: []
-  media: []
 }>()
 
 const { t } = useI18n()

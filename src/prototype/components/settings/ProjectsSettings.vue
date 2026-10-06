@@ -107,7 +107,7 @@
         <Button
           variant="muted-textonly"
           size="icon-sm"
-          :aria-label="t('prototype.projectPage.sheet.close')"
+          :aria-label="t('prototype.settings.projects.close')"
           @click="ui.settingsProjectId = null"
         >
           <i class="icon-[lucide--x] size-4" />

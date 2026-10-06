@@ -1532,3 +1532,12 @@ Pablo picked the Tabs header. The Quiet and Rail variants stay behind the switch
 Wiki link: `entities/workspace.md` §Identity (workspace stays the billing entity; this is attribution only). Open question dependency: `open-questions.md#per-member-credit-limits`, which only proposes workspace-level limits. The per-project cap is a prototype extension to feed back.
 
 Promote? **maybe**, if per-project caps survive review.
+
+---
+
+## [2026-10-07] Project page: Tabs is final; Quiet and Rail removed
+
+- **Decision: the Tabs header is the project page.** The presenter switcher and the Quiet and Rail variants are deleted, with the side sheet, the rail rows and the switcher's store state. One header, no toggle.
+- Reason: Pablo picked Tabs after comparing the three on the dev server. Dead variants cost more to keep in sync than they tell.
+
+Promote? **no**: the earlier "Tabs chosen" entry already carries the decision.

@@ -7147,16 +7147,11 @@
         "eyebrow": "Project",
         "name": "Name",
         "people": "People",
-        "workflows": "Workflows"
+        "workflows": "Workflows",
+        "close": "Close"
       }
     },
     "projectPage": {
-      "variant": {
-        "label": "Project page",
-        "tabs": "Tabs",
-        "quiet": "Quiet",
-        "rail": "Rail"
-      },
       "tabs": {
         "workflows": "Workflows",
         "usage": "Usage",
@@ -7175,12 +7170,8 @@
         "usage": "Usage",
         "thisMonth": "{credits} credits this month",
         "change": "Change",
-        "open": "Open",
         "allSettings": "All settings",
         "openProject": "Open project"
-      },
-      "sheet": {
-        "close": "Close"
       },
       "usage": {
         "member": "Member",

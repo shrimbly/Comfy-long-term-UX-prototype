@@ -2,7 +2,6 @@
 //   prototype scaffolding — local UI state for the active body view + the
 //   filter state for the Media library page.
 
-import { useLocalStorage } from '@vueuse/core'
 import { defineStore } from 'pinia'
 import { ref, watch } from 'vue'
 
@@ -18,10 +17,6 @@ export type SettingsPage =
   | 'billing'
   | 'policies'
   | 'projects'
-
-// Compared via the presenter switcher: a tab strip, a quiet header with a
-// settings sheet, or a right-hand rail.
-export type ProjectPageVariant = 'tabs' | 'quiet' | 'rail'
 
 type StorageFilter = 'all' | AssetStorage
 
@@ -110,10 +105,6 @@ export const usePrototypeUiStore = defineStore('prototype-ui', () => {
   const settingsPage = ref<SettingsPage>('general')
   // The project whose panel is open on the settings Projects page.
   const settingsProjectId = ref<string | null>(null)
-  const projectPageVariant = useLocalStorage<ProjectPageVariant>(
-    'prototype.projectPageVariant',
-    'tabs'
-  )
 
   function openSettings(page: SettingsPage = 'general') {
     settingsPage.value = page
@@ -190,7 +181,6 @@ export const usePrototypeUiStore = defineStore('prototype-ui', () => {
     activeView,
     settingsPage,
     settingsProjectId,
-    projectPageVariant,
     openSettings,
     openProjectSettings,
     projectFilter,

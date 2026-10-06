@@ -24,8 +24,7 @@ thumbnail below Settings in its left toolbar. Settings keep the Home tab and ope
 
 Workspace settings → Projects lists every project with where it runs. Picking
 one opens its settings in a panel on the right. The project page keeps three
-rows (Runs on, Access, Usage) and links there. The "Project page" switcher
-beside the persona toggle compares three headers: Tabs, Quiet and Rail.
+rows (Runs on, Access, Usage) and links there.
 
 Workspace policies have separate model and custom-node allowlists. Owners and
 admins can edit them. Members can view them. Changes apply to every project in
