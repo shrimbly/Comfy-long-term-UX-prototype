@@ -33,6 +33,7 @@ import {
   runsWorkflow,
   simulatedSeconds
 } from '../utils/deployment'
+import { rankRecentProjectIds } from '../utils/projectSwitcher'
 import { usePrototypePersonaStore } from './personaStore'
 import { usePrototypeTabsStore } from './tabsStore'
 import { usePrototypeUiStore } from './uiStore'
@@ -63,6 +64,8 @@ export const usePrototypeCustomCloudStore = defineStore(
     const uiStore = usePrototypeUiStore()
 
     const selectedProjectId = ref<string | null>(null)
+    // Projects switched away from this session, newest first.
+    const visitedProjectIds = ref<string[]>([])
     const reloadingToId = ref<string | null>(null)
     const switcherOpen = ref(false)
     const dialogStep = ref<DialogStep | null>(null)
@@ -97,6 +100,21 @@ export const usePrototypeCustomCloudStore = defineStore(
         switchableProjects.value.find(
           (p) => p.id === selectedProjectId.value
         ) ?? switchableProjects.value[0]
+    )
+
+    // The switcher's Recent: the current project, the ones you switched
+    // away from, then the projects of your latest workflow edits.
+    const recentProjectIds = computed(() =>
+      rankRecentProjectIds(
+        [
+          currentProject.value.id,
+          ...visitedProjectIds.value,
+          ...personaStore.recentWorkflows.map(
+            (w) => w.provenanceProjectId ?? w.projectId
+          )
+        ],
+        switchableProjects.value.map((p) => p.id)
+      )
     )
 
     function deploymentOf(projectId: string | undefined): Deployment {
@@ -170,6 +188,10 @@ export const usePrototypeCustomCloudStore = defineStore(
     ) {
       tabsStore.swapProject(fromId, toId)
       if (!tabsStore.openTabs.length) tabsStore.openSaved(draftsOf(toId))
+      visitedProjectIds.value = [
+        fromId,
+        ...visitedProjectIds.value.filter((id) => id !== fromId)
+      ]
       selectedProjectId.value = toId
       reloadingToId.value = null
       uiStore.goHome()
@@ -313,6 +335,7 @@ export const usePrototypeCustomCloudStore = defineStore(
       () => {
         reload.stop()
         selectedProjectId.value = null
+        visitedProjectIds.value = []
         reloadingToId.value = null
         switcherOpen.value = false
         dialogStep.value = null
@@ -324,6 +347,7 @@ export const usePrototypeCustomCloudStore = defineStore(
     return {
       isEnabled,
       switchableProjects,
+      recentProjectIds,
       currentProject,
       currentDeployment,
       deploymentOf,

@@ -6845,7 +6845,10 @@
       },
       "switcher": {
         "label": "Switch project",
-        "projects": "Projects",
+        "search": "Search projects",
+        "recent": "Recent",
+        "otherProjects": "Other projects",
+        "noMatch": "No projects match “{query}”",
         "allProjects": "All projects",
         "building": "Building · {minutes} min"
       },

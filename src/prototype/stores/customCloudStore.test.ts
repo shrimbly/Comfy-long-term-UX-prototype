@@ -81,6 +81,18 @@ describe('customCloudStore', () => {
     expect(tabs.activeTabId).toBe(tabs.openTabs[0].id)
   })
 
+  it('ranks the current project first in Recent, then the ones switched away from', async () => {
+    const { store } = await setup()
+    const startId = store.currentProject.id
+    openWorkflowIn(store, 'proj-marketing')
+    openWorkflowIn(store, 'proj-cocacola')
+    expect(store.recentProjectIds).toEqual([
+      'proj-cocacola',
+      'proj-marketing',
+      startId
+    ])
+  })
+
   it('opens the run-target dialog for matte_pass on Comfy Cloud, preselecting the project that runs it', async () => {
     const { store } = await setup()
     openWorkflowIn(store, 'proj-marketing')
