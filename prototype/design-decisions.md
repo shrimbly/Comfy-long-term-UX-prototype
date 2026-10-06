@@ -1439,3 +1439,10 @@ Wiki is silent on what opening a recent does across projects. Promote? **maybe**
 
 - **Decision: the project-switch transition is still a fake reload, styled as ComfyUI's real loading screen.** It uses the palette background and upstream's `LogoComfyWaveLoader` at the real splash size, so the Comfy logo fills with a rising wave. A muted "Opening {project}" caption stays under the logo, so the audience knows which project is loading.
 - **The switch now lasts 2.4 s instead of 0.9 s.** Before about 1.2 s, the wave hasn't reached the logo, so a shorter screen showed only an outline. The demo build's clock starts when the switch ends, so the lock screen still opens at the start of the build.
+
+---
+
+## [2026-10-07] Project switch: no reload between projects on the same deployment
+
+- **Decision: switching between projects on the same deployment is instant.** That includes every switch between two Comfy Cloud projects. The reload only exists because a deployment can load different frontend extensions. Moving to a project on a different deployment still shows the loading screen. Examples: Comfy Cloud to Coca-Cola Ad's Acme Studio, custom to custom, or into a new build.
+- The rule is "same deployment", not "both on Comfy Cloud". So two projects sharing one custom deployment (`decisions/project-runs-on-shared-deployment.md`) also switch instantly. The demo data has no such pair yet.

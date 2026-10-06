@@ -161,24 +161,28 @@ export const usePrototypeCustomCloudStore = defineStore(
         .toSorted((a, b) => b.updatedAt.localeCompare(a.updatedAt))
     }
 
-    // A full reload lands in the editor: the project's remembered tabs, or
-    // its drafts the first time, or a blank workflow if it has none.
-    const reload = useTimeoutFn(
-      (fromId: string, toId: string, afterSwitch?: () => void) => {
-        tabsStore.swapProject(fromId, toId)
-        if (!tabsStore.openTabs.length) tabsStore.openSaved(draftsOf(toId))
-        selectedProjectId.value = toId
-        reloadingToId.value = null
-        uiStore.goHome()
-        afterSwitch?.()
-        tabsStore.focusWorkflow()
-      },
-      RELOAD_MS,
-      { immediate: false }
-    )
+    // Entering a project lands in the editor: its remembered tabs, or its
+    // drafts the first time, or a blank workflow if it has none.
+    function enterProject(
+      fromId: string,
+      toId: string,
+      afterSwitch?: () => void
+    ) {
+      tabsStore.swapProject(fromId, toId)
+      if (!tabsStore.openTabs.length) tabsStore.openSaved(draftsOf(toId))
+      selectedProjectId.value = toId
+      reloadingToId.value = null
+      uiStore.goHome()
+      afterSwitch?.()
+      tabsStore.focusWorkflow()
+    }
 
-    // Projects can load different frontend extensions, so switching is a
-    // full reload for now: a brief transition, then that project's tabs.
+    const reload = useTimeoutFn(enterProject, RELOAD_MS, { immediate: false })
+
+    // A deployment can load different frontend extensions, so moving to a
+    // project on another deployment is a full reload for now: the loading
+    // screen, then that project. Projects on the same deployment (every
+    // Comfy Cloud project) switch at once.
     function switchProject(projectId: string, afterSwitch?: () => void) {
       const fromId = currentProject.value?.id
       if (!fromId || projectId === fromId) {
@@ -187,6 +191,10 @@ export const usePrototypeCustomCloudStore = defineStore(
       }
       dialogStep.value = null
       runState.value = 'idle'
+      if (deploymentOf(fromId).id === deploymentOf(projectId).id) {
+        enterProject(fromId, projectId, afterSwitch)
+        return
+      }
       reloadingToId.value = projectId
       reload.start(fromId, projectId, afterSwitch)
     }

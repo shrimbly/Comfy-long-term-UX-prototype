@@ -47,7 +47,7 @@ Wiki: `../IA_Plan/wiki/concepts/custom-comfy-cloud.md`. Source: the 6 Oct "Custo
    - Optional: switch the persona to Workspace Member and open the same page. "Change deployment" is gone.
 4. **Open a workflow, drop in an incompatible one.**
    - Open **Marketing 2026** and click **+ Workflow**.
-   - The app reloads into Marketing 2026: a loading screen like ComfyUI's own (the Comfy logo filling with a wave, "Opening Marketing 2026"), then the editor. The project pill after the Home tab now reads Marketing 2026.
+   - The editor opens in Marketing 2026 straight away: like every Comfy Cloud project, it runs on the same deployment as the one you were in, so there is no reload. The project pill after the Home tab now reads Marketing 2026.
    - Drag any file onto the editor. It opens as `matte_pass` in a new tab.
    - The graph is the real editor. Four nodes have a red ring and an **Error** footer: Load Diffusion Model and Load LoRA (their models are missing), and RMBG and AcmeMatteRefine (their packs are missing). There is no error toast and no Errors panel.
 5. **"Choose where it runs".** The dialog opens on its own.
@@ -77,7 +77,7 @@ Wiki: `../IA_Plan/wiki/concepts/custom-comfy-cloud.md`. Source: the 6 Oct "Custo
    - There is no warm/cold indicator anywhere else.
 9. **Switch projects from the tab bar.**
    - Click the project pill, just right of the Home tab. Each project shows where it runs.
-   - Pick **Coca-Cola Ad**. The loading screen shows, then the editor with your four Coca-Cola Ad drafts as tabs, newest first.
+   - Pick **Coca-Cola Ad**. It runs on its own deployment, so the app reloads: a loading screen like ComfyUI's own (the Comfy logo filling with a wave, "Opening Coca-Cola Ad"), then the editor with your four Coca-Cola Ad drafts as tabs, newest first.
    - Switch back to **Matte R&D** from the pill. Its `matte_pass` tab is still there.
 
 Then click **Reset demo** and run it again.

@@ -64,6 +64,15 @@ describe('customCloudStore', () => {
     expect(tabs.activeTabId).toBe(tabs.openTabs[0].id)
   })
 
+  it('switches between projects on the same deployment without a reload', async () => {
+    const { store, tabs } = await setup()
+    openWorkflowIn(store, 'proj-marketing')
+    store.switchProject('proj-brand')
+    expect(store.reloadingToId).toBeNull()
+    expect(store.currentProject.id).toBe('proj-brand')
+    expect(tabs.openTabs.map((t) => t.kind)).toEqual(['workflow'])
+  })
+
   it('opens a blank workflow in a project with no drafts', async () => {
     const { store, tabs } = await setup()
     store.switchProject('proj-brand')
