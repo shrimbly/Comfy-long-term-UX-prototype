@@ -56,21 +56,20 @@ Wiki: `../IA_Plan/wiki/concepts/custom-comfy-cloud.md`. Source: the 6 Oct "Custo
    - "Create a new project that runs on" shows **Acme Studio pipeline · Ready now**: that deployment already has everything.
    - Open the field. It works like the project switcher: a search field, then one list. Acme Studio pipeline is ticked and marked "Ready". Matte tests ("Missing 1 node pack") and Comfy Cloud ("Missing 2 packs, 2 models") are greyed out. Below the list is **+ Create a new deployment · About 20 min**.
    - Say: one deployment already runs it, but we make a new one anyway. Pick **Create a new deployment**. The main button changes to **Create deployment**. Click it.
-   - New project: a "+ Runs on a new deployment" chip, **Name** (Matte R&D) and **General access** (Anyone in Comfy Org · Workspace ▾), the same fields as the dashboard's New project dialog. Optional: switch to **Restricted** and add Alex under People with access. Click **Next: build**.
-   - Step 2 · the build summary, as Platform shows it. Under "Suggested settings": Name (the deployment's name, Matte R&D from the project, editable in place), ComfyUI v0.39.1, Runtime (CUDA 13.0 · Python 3.12 · Torch 2.12.1), Open-source models (all allowed, 2 pre-installed), Partner models, Custom nodes (2 packs), Python packages.
-   - Optional: click any setting except the name. A confirmation asks "Customise the build on Platform?". Click **Cancel**.
+   - Step 2 · the build summary, as Platform shows it. Under "Suggested settings": Name (the deployment's name, Matte R&D, editable in place), ComfyUI v0.39.1, Runtime (CUDA 13.0 · Python 3.12 · Torch 2.12.1), Open-source models (all allowed, 2 pre-installed), Partner models, Custom nodes (2 packs), Python packages.
+   - Optional: click any setting except the name. A confirmation asks, for example, "Change Runtime on Platform?". Click **Cancel**.
    - Optional: click **Build with your agent** to show the prompt (`comfy skills show comfy-build`, `comfy build from-workflow …`), then **Back to the summary**. It is secondary on purpose.
    - Click **Next: deployment**.
    - Step 3 · Platform's deploy dialog, as it is live: GPU (RTX PRO 6000, H100 SXM, H200 SXM, B200, with VRAM and price an hour), always-warm workers 0, max workers 3, Location, and ComfyUI startup flags. On the right: the estimated cost and, once a GPU is picked, the estimated time.
    - Pick **RTX PRO 6000**. GPU time shows $0.00 an hour idle and $13.62 at full load; model storage is $2.44 a month. Click **Create deployment**.
-6. **The build locks the project.**
-   - The app reloads into the new project, Matte R&D. The graph does not show: it needs the deployment, so behind the build progress there is the editor's sidebar and an empty canvas, both dimmed and inactive.
+6. **The deployment builds in the background.**
+   - The dialog turns into the build's progress: "Building Matte R&D". You stay in Marketing 2026; nothing is created or opened yet.
    - Build progress runs: resolve, upload, install, bake. Deploy follows: start an RTX PRO 6000 worker, load models. Each stage shows a time.
-   - The copy says about 19 minutes and "we'll email you". The demo plays it in about 18 seconds.
-   - The project pill shows a blue dot and "Building · 12 min".
-   - Optional: click **Switch to another project**. The project menu opens with its search field ready to type in, and the tab strip stays live. Press Esc to stay.
-7. **Ready: the flagged nodes are clear.**
-   - The modal closes, the amber rings are gone, and the pill's dot turns green.
+   - The copy says about 19 minutes and "We'll ask you to name the project when it's done". The demo plays it in about 18 seconds.
+   - Click **Keep working**. A chip in the tab strip reads "● Building Matte R&D · 18 min". Click it to see the progress again.
+7. **Name the project, then it opens.**
+   - When the deployment is done, the dialog comes back on **New project**: a "● Runs on Matte R&D" chip, **Name** (Matte R&D) and **General access** (Anyone in Comfy Org · Workspace ▾), the same fields as the dashboard's New project dialog. Optional: switch to **Restricted** and add Alex under People with access.
+   - Click **Create project**. The app reloads into Matte R&D. The amber rings are gone and the pill's dot is green.
    - A toast says "Matte R&D is ready".
 8. **Cold start.**
    - Click the editor's **Run** button.

@@ -53,12 +53,6 @@ describe('RunTargetDialog', () => {
     )
     await user.click(screen.getByRole('button', { name: 'Create deployment' }))
 
-    expect(
-      screen.getByRole('heading', { name: 'New project' })
-    ).toBeInTheDocument()
-    expect(screen.getByText('Runs on a new deployment')).toBeInTheDocument()
-    await user.click(screen.getByRole('button', { name: 'Next: build' }))
-
     expect(store.dialogStep).toBe('build')
     expect(
       screen.getByRole('heading', { name: 'Create a deployment' })
@@ -127,7 +121,7 @@ describe('RunTargetDialog', () => {
     expect(store.dialogStep).toBe('build')
   })
 
-  it('deploys on the GPU picked, showing its cost at full load', async () => {
+  it('deploys on the GPU picked, then shows the build without leaving the project', async () => {
     const { store, user } = await setup('proj-marketing')
     store.dialogStep = 'deploy'
 
@@ -140,7 +134,13 @@ describe('RunTargetDialog', () => {
     expect(screen.getByText('$13.62')).toBeInTheDocument()
 
     await user.click(create)
+    expect(
+      await screen.findByRole('heading', { name: 'Building Matte R&D' })
+    ).toBeInTheDocument()
+    expect(store.reloadingToId).toBeNull()
+
+    await user.click(screen.getByRole('button', { name: 'Keep working' }))
     expect(store.dialogStep).toBeNull()
-    expect(store.reloadingToId).not.toBeNull()
+    expect(store.buildingDeployment?.name).toBe('Matte R&D')
   })
 })

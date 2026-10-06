@@ -47,7 +47,13 @@ import { usePrototypePersonaStore } from './personaStore'
 import { HOME_TAB_ID, usePrototypeTabsStore } from './tabsStore'
 import { usePrototypeUiStore } from './uiStore'
 
-type DialogStep = 'choose' | 'project' | 'build' | 'agent' | 'deploy'
+type DialogStep =
+  | 'choose'
+  | 'project'
+  | 'build'
+  | 'agent'
+  | 'deploy'
+  | 'building'
 
 // Where a new project runs: an existing deployment's id, or a new deployment.
 export const NEW_BUILD_TARGET = 'new'
@@ -58,7 +64,6 @@ export const RELOAD_MS = 2400
 // The build keeps the fixture it started in, so it still finishes there if
 // the presenter flips persona mid-build.
 interface ActiveBuild {
-  projectId: string
   deploymentId: string
   startedAt: number
   fixture: PersonaFixture
@@ -84,9 +89,11 @@ export const usePrototypeCustomCloudStore = defineStore(
     const newProjectName = ref(DEFAULT_BUILD_PROJECT_NAME)
     const newProjectTier = ref<ProjectTier>('workspace-wide')
     const newProjectCollaborators = ref<string[]>([])
-    // A new deployment's name; the build summary starts it at the project's.
     const newDeploymentName = ref(DEFAULT_BUILD_PROJECT_NAME)
     const build = shallowRef<ActiveBuild | null>(null)
+    // The deployment just built: its project, once named, opens with the
+    // "ready" toast.
+    const builtDeploymentId = ref<string | null>(null)
     const now = ref(Date.now())
     const readyProjectId = ref<string | null>(null)
     const runState = ref<MockRunState>('idle')
@@ -141,9 +148,6 @@ export const usePrototypeCustomCloudStore = defineStore(
 
     const currentDeployment = computed(() =>
       deploymentOf(currentProject.value?.id)
-    )
-    const isLocked = computed(
-      () => currentDeployment.value.status === 'building'
     )
 
     const activeTab = computed(() =>
@@ -307,6 +311,7 @@ export const usePrototypeCustomCloudStore = defineStore(
         deploymentTargets.value.find((target) => target.runs)?.deployment.id ??
         NEW_BUILD_TARGET
       newProjectName.value = DEFAULT_BUILD_PROJECT_NAME
+      newDeploymentName.value = DEFAULT_BUILD_PROJECT_NAME
       newProjectTier.value = 'workspace-wide'
       newProjectCollaborators.value = []
       dialogStep.value = 'choose'
@@ -317,7 +322,7 @@ export const usePrototypeCustomCloudStore = defineStore(
     function dropIncompatibleWorkflow({
       nothingRuns = false
     }: { nothingRuns?: boolean } = {}) {
-      if (!isEnabled.value || isLocked.value) return
+      if (!isEnabled.value) return
       nothingRunsIt.value = nothingRuns
       const open = tabsStore.openTabs.find(
         (t) => t.workflowKey === 'matte_pass'
@@ -361,15 +366,24 @@ export const usePrototypeCustomCloudStore = defineStore(
 
     // A new project on a deployment that already runs matte_pass: no build.
     function createProjectOn(deploymentId: string) {
-      openInProject(createNewProject(deploymentId))
+      const projectId = createNewProject(deploymentId)
+      if (deploymentId === builtDeploymentId.value) {
+        builtDeploymentId.value = null
+        readyProjectId.value = projectId
+      }
+      openInProject(projectId)
     }
+
+    // The deployment being built, for the tab strip's "Building" chip.
+    const buildingDeployment = computed(() =>
+      build.value
+        ? deployments.value.find((d) => d.id === build.value?.deploymentId)
+        : undefined
+    )
 
     function buildAndDeploy(gpu: PlatformGpu) {
       const fixture = personaStore.fixture
-      const name =
-        newDeploymentName.value.trim() ||
-        newProjectName.value.trim() ||
-        DEFAULT_BUILD_PROJECT_NAME
+      const name = newDeploymentName.value.trim() || DEFAULT_BUILD_PROJECT_NAME
       const deploymentId = `dep-build-${Date.now()}`
       fixture.deployments = [
         ...deployments.value,
@@ -385,13 +399,10 @@ export const usePrototypeCustomCloudStore = defineStore(
           models: [...MATTE_PASS.models]
         }
       ]
-      const projectId = createNewProject(deploymentId)
-      // The build clock starts once the reload into the project ends.
-      const startedAt = Date.now() + RELOAD_MS
-      build.value = { projectId, deploymentId, startedAt, fixture }
+      build.value = { deploymentId, startedAt: Date.now(), fixture }
       now.value = Date.now()
       ticker.resume()
-      openInProject(projectId)
+      dialogStep.value = 'building'
     }
 
     function finishBuild() {
@@ -402,8 +413,17 @@ export const usePrototypeCustomCloudStore = defineStore(
         (d) =>
           d.id === active.deploymentId ? { ...d, status: 'ready' as const } : d
       )
-      readyProjectId.value = active.projectId
       build.value = null
+      // The project opens only once its deployment runs: name it now.
+      builtDeploymentId.value = active.deploymentId
+      deploymentTarget.value = active.deploymentId
+      nothingRunsIt.value = false
+      newProjectName.value =
+        deployments.value.find((d) => d.id === active.deploymentId)?.name ??
+        DEFAULT_BUILD_PROJECT_NAME
+      newProjectTier.value = 'workspace-wide'
+      newProjectCollaborators.value = []
+      dialogStep.value = 'project'
     }
 
     // Run with missing nodes is another way into "choose where it runs".
@@ -425,6 +445,7 @@ export const usePrototypeCustomCloudStore = defineStore(
         dialogStep.value = null
         nothingRunsIt.value = false
         readyProjectId.value = null
+        builtDeploymentId.value = null
         tabsStore.reset()
       }
     )
@@ -436,7 +457,6 @@ export const usePrototypeCustomCloudStore = defineStore(
       currentProject,
       currentDeployment,
       deploymentOf,
-      isLocked,
       showsMissingNodes,
       reloadingToId,
       switcherOpen,
@@ -450,6 +470,8 @@ export const usePrototypeCustomCloudStore = defineStore(
       projectTargets,
       chooseMode,
       progress,
+      buildingDeployment,
+      builtDeploymentId,
       readyProjectId,
       runState,
       runRequested,

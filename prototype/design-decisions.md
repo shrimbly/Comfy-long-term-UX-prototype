@@ -1536,3 +1536,17 @@ Wiki: `decisions/build-locks-project-until-ready.md` says the node graph is disa
 - Before, the dialog made projects as restricted with nobody else in them, under a fixed name.
 
 Canvas: <https://claude.ai/artifact/PQby9iCSzrR7WMvbsqnY11>, row "New step: name the project and choose who can access it". Wiki: `decisions/project-runs-on-shared-deployment.md` ("you name it and choose a backend for it"), and `concepts/three-level-permissions.md` for the access tiers. Promote? **maybe**: add "named and shared at creation, from any entry point" to the project entity page.
+
+---
+
+## [2026-10-07] Flow 07: the project opens only once its deployment is done
+
+- **Decision: a new deployment builds in the background, and its project is named and opened only once the deployment is done.**
+  - **Create deployment** turns the dialog into the build's progress. You stay in the project you were in.
+  - **Keep working** closes the dialog. A "● Building Matte R&D · 18 min" chip in the tab strip opens it again.
+  - When the deployment is done, the dialog comes back on the New project step: name and access. **Create project** opens the project, with the "ready" toast.
+- **The build no longer locks a project.** No project exists until the deployment runs, so the full-screen lock is gone.
+- The New project step now always names a project on a deployment that runs the workflow. On the new-deployment path it comes after the build, not before the build summary.
+- Before, **Create deployment** made the project at once and reloaded into it, locked behind the build.
+
+Supersedes "the build locks the project" in the entries above. Wiki: `decisions/build-locks-project-until-ready.md` says you shouldn't use the project until it's ready. This keeps that rule by not making the project until then. Promote? **yes**: update that decision page to say the project is created once the build is done.

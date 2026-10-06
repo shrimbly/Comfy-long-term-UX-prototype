@@ -8,9 +8,10 @@
               project is named and shared before it's made"
 
   The "New project" step: every path that makes a project names it and
-  chooses who can access it, with the dashboard's New project fields. On a
-  deployment that already runs the workflow it creates the project; on a
-  new deployment it goes on to the build summary.
+  chooses who can access it, with the dashboard's New project fields. It
+  comes after "Create project" on a deployment that runs the workflow, and
+  again when a new deployment finishes, so a project only opens once it
+  runs.
 -->
 <template>
   <header class="flex flex-col items-start gap-2 pr-8">
@@ -18,16 +19,14 @@
       {{ t('prototype.customCloud.dialog.project.title') }}
     </h2>
     <span
+      v-if="deployment"
       class="inline-flex h-7 items-center gap-2 rounded-full border border-border-subtle px-2.5 text-[13px] text-muted-foreground"
     >
-      <i v-if="!deployment" class="icon-[lucide--plus] size-3.5" />
-      <DeploymentStatusDot v-else :status="deployment.status" />
+      <DeploymentStatusDot :status="deployment.status" />
       {{
-        deployment
-          ? tText('prototype.customCloud.dialog.project.runsOn', {
-              deployment: deployment.name
-            })
-          : t('prototype.customCloud.dialog.project.runsOnNew')
+        tText('prototype.customCloud.dialog.project.runsOn', {
+          deployment: deployment.name
+        })
       }}
     </span>
   </header>
@@ -58,6 +57,7 @@
 
   <footer class="flex items-center gap-2.5">
     <Button
+      v-if="!justBuilt"
       variant="muted-textonly"
       size="lg"
       class="mr-auto px-1"
@@ -65,30 +65,29 @@
     >
       {{ t('prototype.customCloud.dialog.back') }}
     </Button>
-    <Button variant="muted-textonly" size="lg" @click="emit('close')">
+    <Button
+      variant="muted-textonly"
+      size="lg"
+      :class="cn(justBuilt && 'ml-auto')"
+      @click="emit('close')"
+    >
       {{ t('prototype.customCloud.dialog.notNow') }}
     </Button>
     <Button variant="inverted" size="lg" :disabled="!named" @click="onNext">
-      {{
-        deployment
-          ? t('prototype.customCloud.dialog.createProject')
-          : t('prototype.customCloud.dialog.project.nextBuild')
-      }}
+      {{ t('prototype.customCloud.dialog.createProject') }}
     </Button>
   </footer>
 </template>
 
 <script setup lang="ts">
+import { cn } from '@comfyorg/tailwind-utils'
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import Button from '@/components/ui/button/Button.vue'
 
 import { useTextT } from '../composables/useTextT'
-import {
-  NEW_BUILD_TARGET,
-  usePrototypeCustomCloudStore
-} from '../stores/customCloudStore'
+import { usePrototypeCustomCloudStore } from '../stores/customCloudStore'
 
 import DeploymentStatusDot from './DeploymentStatusDot.vue'
 import ProjectAccessFields from './ProjectAccessFields.vue'
@@ -105,23 +104,20 @@ const { t } = useI18n()
 const tText = useTextT()
 const customCloud = usePrototypeCustomCloudStore()
 
-// The existing deployment the project will run on; none for a new one.
-const deployment = computed(() =>
-  customCloud.deploymentTarget === NEW_BUILD_TARGET
-    ? undefined
-    : customCloud.deploymentTargets.find(
-        (target) => target.deployment.id === customCloud.deploymentTarget
-      )?.deployment
+const deployment = computed(
+  () =>
+    customCloud.deploymentTargets.find(
+      (target) => target.deployment.id === customCloud.deploymentTarget
+    )?.deployment
+)
+// Straight from a finished build there is no step to go back to.
+const justBuilt = computed(
+  () => customCloud.deploymentTarget === customCloud.builtDeploymentId
 )
 const named = computed(() => customCloud.newProjectName.trim().length > 0)
 
 function onNext() {
-  if (!named.value) return
-  if (deployment.value) {
-    customCloud.createProjectOn(deployment.value.id)
-    return
-  }
-  customCloud.newDeploymentName = customCloud.newProjectName.trim()
-  customCloud.dialogStep = 'build'
+  if (!named.value || !deployment.value) return
+  customCloud.createProjectOn(deployment.value.id)
 }
 </script>

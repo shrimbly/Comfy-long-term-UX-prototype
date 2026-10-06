@@ -69,7 +69,7 @@
       variant="muted-textonly"
       size="lg"
       class="mr-auto"
-      @click="customCloud.dialogStep = 'project'"
+      @click="customCloud.dialogStep = 'choose'"
     >
       {{ t('prototype.customCloud.dialog.back') }}
     </Button>

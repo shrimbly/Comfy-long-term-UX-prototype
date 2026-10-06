@@ -6915,9 +6915,7 @@
         "createDeployment": "Create deployment",
         "project": {
           "title": "New project",
-          "runsOn": "Runs on {deployment}",
-          "runsOnNew": "Runs on a new deployment",
-          "nextBuild": "Next: build"
+          "runsOn": "Runs on {deployment}"
         },
         "newLabel": "Create a new deployment for this workflow",
         "benefits": {
@@ -7007,12 +7005,12 @@
         "models": "- models: {models} ({local} is only on this machine)",
         "skill": "Read the skill first: {command}",
         "build": "Then create the build from the workflow:",
-        "ready": "When it is ready, it opens in Comfy Cloud in the project {project}."
+        "ready": "When it is ready, Comfy Cloud asks me to name a project on it."
       },
       "lock": {
-        "title": "Building {project}",
+        "title": "Building {deployment}",
         "minutesLeft": "Less than a minute left. | About 1 minute left. | About {count} minutes left.",
-        "body": "{project} opens when it's ready, and we'll email you. Work in another project in the meantime.",
+        "body": "We'll ask you to name the project when it's done.",
         "phase": {
           "build": "Build",
           "deploy": "Deploy"
@@ -7048,7 +7046,8 @@
         },
         "viewOnPlatform": "View on Platform",
         "platformToastDetail": "The build log and releases live there.",
-        "switchProject": "Switch to another project"
+        "keepWorking": "Keep working",
+        "chip": "Building {deployment} · {minutes} min"
       },
       "ready": {
         "title": "{project} is ready",

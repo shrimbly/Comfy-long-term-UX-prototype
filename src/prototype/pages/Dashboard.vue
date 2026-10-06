@@ -13,9 +13,8 @@
       mounted, invisible while another tab is active, so it boots once.
     - Home tab → prototype dashboard with PrototypeSidebar / LibrarySidebar
       based on uiStore.activeView.
-  Custom Comfy Cloud layers on top: a project whose deployment is building
-  is locked below the tab strip, a file dropped anywhere opens matte_pass,
-  and switching projects plays a reload transition.
+  Custom Comfy Cloud layers on top: a file dropped anywhere opens
+  matte_pass, and switching projects plays a reload transition.
 -->
 <template>
   <div
@@ -55,11 +54,6 @@
       </div>
       <RealEditor />
 
-      <BuildLockModal
-        v-if="customCloud.isLocked && customCloud.progress && currentProject"
-        :project="currentProject"
-        :progress="customCloud.progress"
-      />
       <BuildReadyToast v-if="readyProject" :project="readyProject" />
       <div
         v-if="isDraggingFile"
@@ -94,7 +88,6 @@ import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import MediaAssetsView from '@/platform/assets/components/MediaAssetsView.vue'
-import BuildLockModal from '../components/BuildLockModal.vue'
 import BuildReadyToast from '../components/BuildReadyToast.vue'
 import DemoControls from '../components/DemoControls.vue'
 import LocalMediaView from '../components/LocalMediaView.vue'
@@ -124,7 +117,6 @@ const customCloud = usePrototypeCustomCloudStore()
 const { activeView } = storeToRefs(uiStore)
 const { activeTabId, openTabs } = storeToRefs(tabsStore)
 const { fixture } = storeToRefs(personaStore)
-const { currentProject } = storeToRefs(customCloud)
 
 const isMediaAssetsTabActive = computed(
   () => activeTabId.value === MEDIA_ASSETS_TAB_ID
@@ -165,7 +157,7 @@ function carriesFiles(event: DragEvent) {
 function onFileDragOver(event: DragEvent) {
   if (!handlesFileDrops.value || !carriesFiles(event)) return
   event.preventDefault()
-  isDraggingFile.value = !customCloud.isLocked
+  isDraggingFile.value = true
 }
 
 function onFileDragLeave(event: DragEvent) {

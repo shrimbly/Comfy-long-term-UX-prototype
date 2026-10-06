@@ -53,7 +53,6 @@ import { useI18n } from 'vue-i18n'
 
 import Button from '@/components/ui/button/Button.vue'
 
-import { useTextT } from '../composables/useTextT'
 import { MATTE_PASS } from '../fixtures/customCloud'
 import { usePrototypeCustomCloudStore } from '../stores/customCloudStore'
 
@@ -62,12 +61,10 @@ const { titleId } = defineProps<{
 }>()
 
 const { t } = useI18n()
-const tText = useTextT()
 const customCloud = usePrototypeCustomCloudStore()
 const { copy, copied } = useClipboard({ legacy: true })
 
 const workflow = MATTE_PASS.name
-const projectName = computed(() => customCloud.newProjectName.trim())
 const deploymentName = computed(() => customCloud.newDeploymentName.trim())
 
 const agentPrompt = computed(() =>
@@ -89,9 +86,7 @@ const agentPrompt = computed(() =>
     t('prototype.customCloud.agentPrompt.build'),
     `  comfy build from-workflow --from ${workflow}.json --name "${deploymentName.value}"`,
     '',
-    tText('prototype.customCloud.agentPrompt.ready', {
-      project: projectName.value
-    })
+    t('prototype.customCloud.agentPrompt.ready')
   ].join('\n')
 )
 </script>

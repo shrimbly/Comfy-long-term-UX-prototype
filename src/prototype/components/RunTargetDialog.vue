@@ -10,7 +10,8 @@
   "Choose where it runs": the positive replacement for the missing-nodes
   error toast. Step 1 picks where the workflow runs; the "New project" step
   names the project and sets its access; a new deployment then goes on to
-  Platform's build summary and its deploy dialog. The
+  Platform's build summary and its deploy dialog, then the build's progress;
+  its project is named and opened only once the deployment is done. The
   agent prompt is an alternative to step 3. Everything Platform owns (build
   settings, updating a deployment) opens there.
 -->
@@ -62,7 +63,18 @@
           @customise="customising = $event"
         />
         <RunTargetAgent v-else-if="step === 'agent'" :title-id="titleId" />
-        <RunTargetDeploy v-else :title-id="titleId" @close="close" />
+        <RunTargetBuilding
+          v-else-if="step === 'building' && building"
+          :title-id="titleId"
+          :deployment="building.deployment"
+          :progress="building.progress"
+          @close="close"
+        />
+        <RunTargetDeploy
+          v-else-if="step === 'deploy'"
+          :title-id="titleId"
+          @close="close"
+        />
       </div>
     </div>
     <PlatformConfirm
@@ -92,6 +104,7 @@ import { usePrototypeCustomCloudStore } from '../stores/customCloudStore'
 
 import PlatformConfirm from './PlatformConfirm.vue'
 import RunTargetAgent from './RunTargetAgent.vue'
+import RunTargetBuilding from './RunTargetBuilding.vue'
 import RunTargetBuildSummary from './RunTargetBuildSummary.vue'
 import RunTargetChoose from './RunTargetChoose.vue'
 import RunTargetDeploy from './RunTargetDeploy.vue'
@@ -103,6 +116,14 @@ const customCloud = usePrototypeCustomCloudStore()
 const titleId = useId()
 const panel = useTemplateRef('panel')
 
+const building = computed(() =>
+  customCloud.buildingDeployment && customCloud.progress
+    ? {
+        deployment: customCloud.buildingDeployment,
+        progress: customCloud.progress
+      }
+    : null
+)
 const step = computed(() => customCloud.dialogStep)
 // The build setting whose "customise on Platform?" question is open.
 const customising = ref<string | null>(null)

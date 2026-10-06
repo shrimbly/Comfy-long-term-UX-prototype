@@ -373,11 +373,6 @@
       "count": 9
     }
   },
-  "src/prototype/components/BuildLockModal.vue": {
-    "comfy/no-primevue-imports": {
-      "count": 1
-    }
-  },
   "src/prototype/components/FolderCard.vue": {
     "comfy/no-primevue-imports": {
       "count": 3

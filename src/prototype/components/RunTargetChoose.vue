@@ -89,7 +89,7 @@
       <Button
         variant="inverted"
         size="lg"
-        @click="customCloud.dialogStep = 'project'"
+        @click="customCloud.dialogStep = 'build'"
       >
         {{ t('prototype.customCloud.dialog.createDeployment') }}
       </Button>
@@ -129,7 +129,7 @@
         variant="muted-textonly"
         size="lg"
         class="mr-auto px-1 font-normal"
-        @click="customCloud.dialogStep = 'project'"
+        @click="customCloud.dialogStep = 'build'"
       >
         {{ t('prototype.customCloud.dialog.createInstead') }}
       </Button>
@@ -197,7 +197,7 @@ const benefits = computed(() => [
 ])
 
 function onCreate() {
-  customCloud.dialogStep = 'project'
+  customCloud.dialogStep = newDeploymentPicked.value ? 'build' : 'project'
 }
 
 function onPlatform() {

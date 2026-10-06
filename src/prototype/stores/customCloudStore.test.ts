@@ -146,7 +146,6 @@ describe('customCloudStore', () => {
       'user-alex'
     )
     expect(store.currentDeployment.id).toBe('dep-acme-studio')
-    expect(store.isLocked).toBe(false)
     expect(store.showsMissingNodes).toBe(false)
   })
 
@@ -159,23 +158,20 @@ describe('customCloudStore', () => {
     expect(store.dialogStep).toBeNull()
   })
 
-  it('builds a new project, locks it until the fast build finishes, then clears the missing nodes', async () => {
-    const { store, personas } = await setup()
+  it('builds a deployment in the background, then names its project and opens it with the missing nodes gone', async () => {
+    const { store } = await setup()
     openWorkflowIn(store, 'proj-marketing')
     store.dropIncompatibleWorkflow()
     store.deploymentTarget = NEW_BUILD_TARGET
-    store.newProjectName = 'Matte R&D'
+    store.newDeploymentName = 'Matte R&D'
     store.buildAndDeploy(PLATFORM_GPUS[0])
-    vi.advanceTimersByTime(RELOAD_MS)
 
-    const project = store.currentProject
-    expect(project?.name).toBe('Matte R&D')
-    expect(personas.visibleProjects.some((p) => p.id === project?.id)).toBe(
-      true
-    )
-    expect(store.isLocked).toBe(true)
-    expect(store.currentDeployment.gpu).toBe('RTX PRO 6000')
-    expect(store.showsMissingNodes).toBe(true)
+    expect(store.dialogStep).toBe('building')
+    expect(store.currentProject?.id).toBe('proj-marketing')
+    expect(store.buildingDeployment).toMatchObject({
+      name: 'Matte R&D',
+      gpu: 'RTX PRO 6000'
+    })
     expect(store.progress?.stages.map((s) => s.state)).toEqual([
       'active',
       'pending',
@@ -185,15 +181,19 @@ describe('customCloudStore', () => {
       'pending'
     ])
 
-    vi.advanceTimersByTime(DEMO_BUILD_MS / 2)
-    expect(store.isLocked).toBe(true)
-    expect(store.progress?.done).toBe(false)
+    store.dialogStep = null
+    vi.advanceTimersByTime(DEMO_BUILD_MS + 400)
+    expect(store.buildingDeployment).toBeUndefined()
+    expect(store.dialogStep).toBe('project')
+    expect(store.newProjectName).toBe('Matte R&D')
+    expect(store.currentProject?.id).toBe('proj-marketing')
 
-    vi.advanceTimersByTime(DEMO_BUILD_MS / 2 + 400)
-    expect(store.isLocked).toBe(false)
+    store.createProjectOn(store.deploymentTarget)
+    vi.advanceTimersByTime(RELOAD_MS)
+    expect(store.currentProject?.name).toBe('Matte R&D')
     expect(store.currentDeployment.status).toBe('ready')
     expect(store.showsMissingNodes).toBe(false)
-    expect(store.readyProjectId).toBe(project?.id)
+    expect(store.readyProjectId).toBe(store.currentProject?.id)
   })
 
   it('opens the dialog instead of running while nodes are missing', async () => {
