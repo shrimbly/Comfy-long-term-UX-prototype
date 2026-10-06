@@ -5831,7 +5831,7 @@
   "prototype": {
     "sidebar": {
       "home": "Home",
-      "drafts": "My Workflows",
+      "drafts": "Personal",
       "explore": "Explore",
       "recents": "Recents",
       "projects": "Projects",
@@ -5919,7 +5919,7 @@
       "rename": "Rename",
       "renamePrompt": "Rename project",
       "delete": "Delete project",
-      "deleteConfirm": "Delete “{name}”? Its published workflows are removed. Drafts you copied from it stay in My Workflows.",
+      "deleteConfirm": "Delete “{name}”? Its published workflows are removed. Drafts you copied from it stay in Personal.",
       "leave": "Leave project",
       "leaveConfirm": "Leave “{name}”? You'll lose access unless you're re-invited.",
       "leaveAction": "Leave",
@@ -5941,7 +5941,7 @@
     },
     "components": {
       "newWorkflowTile": {
-        "subtitle": "Saves to My Workflows"
+        "subtitle": "Saves to Personal"
       }
     },
     "mediaAssets": {
@@ -6095,12 +6095,12 @@
       "target": "“{workflow}” · {project}",
       "confirmBody": "This replaces the team's version with your copy. Teammates will fork from yours.",
       "permissionTitle": "Only owners can publish",
-      "permissionBody": "Keep working in My Workflows, or ask a project owner to publish for you.",
-      "permissionBodyOwner": "Keep working in My Workflows, or ask {owner} to publish for you.",
+      "permissionBody": "Keep working in Personal, or ask a project owner to publish for you.",
+      "permissionBodyOwner": "Keep working in Personal, or ask {owner} to publish for you.",
       "installTitle": "Switch to the team install",
       "installBody": "Publishing needs {required}. You're on {current}.",
       "noInstall": "no local install",
-      "cancel": "Keep in My Workflows",
+      "cancel": "Keep in Personal",
       "askOwner": "Submit",
       "publish": "Publish"
     },
@@ -6204,7 +6204,7 @@
           "hint": "Find a workflow across projects"
         },
         "openDrafts": {
-          "label": "Open My Workflows"
+          "label": "Open Personal"
         },
         "openRecents": {
           "label": "Open Recents"
@@ -6236,10 +6236,10 @@
       "open": "Open",
       "rename": "Rename…",
       "duplicate": "Duplicate",
-      "fork": "Fork to My Workflows",
+      "fork": "Fork to Personal",
       "branch": "Branch",
       "checkOut": "Check out",
-      "saveToMyWorkflows": "Save to My Workflows",
+      "saveToMyWorkflows": "Save to Personal",
       "promoteToProject": "Publish to project…",
       "uploadToCloud": "Upload to cloud",
       "setThumbnail": "Set thumbnail",
@@ -6260,14 +6260,14 @@
       "toastStubSummary": "Prototype stub",
       "toast": {
         "forkedSummary": "Forked",
-        "forkedDetail": "A copy of \"{name}\" was added to My Workflows.",
+        "forkedDetail": "A copy of \"{name}\" was added to Personal.",
         "branchedSummary": "Branched",
         "branchedDetail": "A branch of \"{name}\" was created in the project.",
         "thumbnailSummary": "Thumbnail updated",
         "gotLatestSummary": "Updated to latest",
         "gotLatestDetail": "“{name}” now matches the current published version.",
         "savedCopySummary": "Checked out",
-        "savedCopyDetail": "\"{name}\" is checked out to My Workflows.",
+        "savedCopyDetail": "\"{name}\" is checked out to Personal.",
         "deletedSummary": "Deleted",
         "deletedDetail": "\"{name}\" has been deleted.",
         "savedToCloudSummary": "Saved to cloud",
@@ -6300,7 +6300,7 @@
     },
     "editor": {
       "projectChip": {
-        "myWorkflows": "My Workflows",
+        "myWorkflows": "Personal",
         "inProject": "In project",
         "notInProject": "Not in a project",
         "moveToProject": "Move to another project…",
@@ -6310,11 +6310,11 @@
         "saveCloud": "Cloud",
         "saveLocalHint": "Outputs are written to the Comfy output directory on disk.",
         "saveCloudProjectHint": "Outputs will be tracked under {project} in your workspace.",
-        "saveCloudMyWorkflowsHint": "Outputs will land in your cloud My Workflows.",
+        "saveCloudMyWorkflowsHint": "Outputs will land in Personal on Comfy Cloud.",
         "cloudSignInHint": "Sign in to save outputs to the cloud.",
         "demoLabel": "Demo state",
         "demoInProject": "In project",
-        "demoMyWorkflows": "My Workflows"
+        "demoMyWorkflows": "Personal"
       }
     },
     "editorWorkflows": {
@@ -6344,7 +6344,7 @@
         "resultsFolders": "Folders",
         "resultsPublished": "Published",
         "resultsDrafts": "Drafts",
-        "resultsMyWorkflows": "My Workflows",
+        "resultsMyWorkflows": "Personal",
         "resultsAssets": "Media assets",
         "resultsTemplates": "Templates",
         "recents": "Recents",
@@ -6396,13 +6396,13 @@
         }
       },
       "drafts": {
-        "title": "My Workflows",
+        "title": "Personal",
         "subtitle": "Your private space for new work",
         "recentHeading": "Recent",
         "empty": "Nothing here yet. Tap \"New Workflow\" to start.",
         "emptyHeading": "Your workflows will show up here",
         "templatesHeading": "Starter templates",
-        "searchPlaceholder": "Search My Workflows…",
+        "searchPlaceholder": "Search Personal…",
         "filterEmpty": "No workflows match your search.",
         "filterAria": "Filter workflows by storage",
         "sortAria": "Sort workflows",

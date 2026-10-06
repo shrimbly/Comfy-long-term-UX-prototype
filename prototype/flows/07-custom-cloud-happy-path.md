@@ -17,7 +17,7 @@ Wiki: `../IA_Plan/wiki/concepts/custom-comfy-cloud.md`. Source: the 6 Oct "Custo
   - **Demo: nothing runs it** opens `matte_pass` as if no deployment ran it yet, to show step 1's other two states.
   - **Reset demo** reloads the page. Every store is in memory, so a reload restores the seed data. Use it between run-throughs.
 - Have any file ready to drag in, e.g. a `.json` on the desktop. Every file dropped on the app opens as `matte_pass`.
-- The tab strip starts in **My Workflows**, the personal project every user has.
+- The tab strip starts in **Personal**, the personal project every user has.
 
 ## Fixture state
 
@@ -84,7 +84,7 @@ Then click **Reset demo** and run it again.
 
 ## Shortcut and alternative
 
-- **Demo: drop incompatible workflow** does the same as step 4's drop, in whatever project is current. From a fresh reset that is My Workflows, which runs on Comfy Cloud.
+- **Demo: drop incompatible workflow** does the same as step 4's drop, in whatever project is current. From a fresh reset that is Personal, which runs on Comfy Cloud.
 - In step 5, keep **Acme Studio pipeline** and click **Create project**. The New project step shows "● Runs on Acme Studio pipeline": name it and choose its access, then **Create project**. The app reloads into it and `matte_pass` runs there with no build.
 - In step 5, click **Open in another project** and pick **Coca-Cola Ad**. `matte_pass` moves into Coca-Cola Ad and runs there.
 - **Demo: nothing runs it** from a Comfy Cloud project: the title reads "This workflow can't run on Comfy Cloud". It shows the three ticks and **Create deployment**, which goes to step 2. **Update an existing deployment ↗** is the quiet option; it opens on Platform.

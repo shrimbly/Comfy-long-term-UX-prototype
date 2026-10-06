@@ -1550,3 +1550,13 @@ Canvas: <https://claude.ai/artifact/PQby9iCSzrR7WMvbsqnY11>, row "New step: name
 - Before, **Create deployment** made the project at once and reloaded into it, locked behind the build.
 
 Supersedes "the build locks the project" in the entries above. Wiki: `decisions/build-locks-project-until-ready.md` says you shouldn't use the project until it's ready. This keeps that rule by not making the project until then. Promote? **yes**: update that decision page to say the project is created once the build is done.
+
+---
+
+## [2026-10-07] "My Workflows" is now "Personal"
+
+- **Decision: the personal project is called "Personal" everywhere in the prototype**: the project switcher, the sidebar, page titles, menus ("Save to Personal", "Fork to Personal") and toasts.
+- Reason: projects hold more than workflows (assets, outputs, models), so "My Workflows" undersold what the personal project holds and read as a workflow list.
+- Code names (`drafts`, `isDrafts`, `saveToMyWorkflows`) are unchanged. One upstream ComfyUI string (`mediaAsset.actions.promoteToCloudFallbackDestination`) still says "My Workflows", because it sits outside the prototype.
+
+Wiki: `decisions/drafts-as-default-private-project.md` names the per-user project "Drafts". Promote? **yes**: settle the user-facing name as "Personal" there.

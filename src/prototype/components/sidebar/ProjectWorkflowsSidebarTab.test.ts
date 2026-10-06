@@ -83,7 +83,7 @@ describe('ProjectWorkflowsSidebarTab', () => {
     ])
   })
 
-  it('lists My Workflows’ own workflows, not the drafts another project claims, and no Project templates', () => {
+  it('lists Personal’s own workflows, not the drafts another project claims, and no Project templates', () => {
     setup()
 
     const workflows = screen.getByRole('region', { name: 'Workflows' })
@@ -122,7 +122,7 @@ describe('ProjectWorkflowsSidebarTab', () => {
     expect(
       itemNames(screen.getByRole('region', { name: 'Other projects' }))
     ).toEqual([
-      'My Workflows',
+      'Personal',
       'Marketing 2026',
       'Brand Library',
       'Q3 Launch Site',

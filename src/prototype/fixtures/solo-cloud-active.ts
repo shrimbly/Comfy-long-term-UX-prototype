@@ -30,7 +30,7 @@ const personalWorkspace = {
 const myWorkflows = {
   id: 'proj-drafts',
   workspaceId: personalWorkspace.id,
-  name: 'My Workflows',
+  name: 'Personal',
   tier: 'private' as const,
   ownerUserId: user.id,
   isDrafts: true,
