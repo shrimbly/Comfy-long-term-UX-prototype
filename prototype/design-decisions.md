@@ -1432,3 +1432,10 @@ The fork last synced with upstream on 2026-05-07. Willie wants the current upstr
 - **Decision: clicking a workflow card on Home opens it in the editor.** This covers Recents and search results. A draft opens in its provenance project, and any other workflow in its own project. The project switch works as before: the project's remembered tabs, else its drafts. A workflow that's already open reuses its tab.
 
 Wiki is silent on what opening a recent does across projects. Promote? **maybe**, with the project-switch entry above.
+
+---
+
+## [2026-10-07] Project switch: the loading screen looks like ComfyUI's own
+
+- **Decision: the project-switch transition is still a fake reload, styled as ComfyUI's real loading screen.** It uses the palette background and upstream's `LogoComfyWaveLoader` at the real splash size, so the Comfy logo fills with a rising wave. A muted "Opening {project}" caption stays under the logo, so the audience knows which project is loading.
+- **The switch now lasts 2.4 s instead of 0.9 s.** Before about 1.2 s, the wave hasn't reached the logo, so a shorter screen showed only an outline. The demo build's clock starts when the switch ends, so the lock screen still opens at the start of the build.

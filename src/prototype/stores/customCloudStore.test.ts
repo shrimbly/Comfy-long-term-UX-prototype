@@ -112,8 +112,8 @@ describe('customCloudStore', () => {
     expect(store.isLocked).toBe(true)
     expect(store.showsMissingNodes).toBe(true)
     expect(store.progress?.stages.map((s) => s.state)).toEqual([
-      'done',
       'active',
+      'pending',
       'pending',
       'pending',
       'pending',

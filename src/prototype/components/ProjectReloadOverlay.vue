@@ -4,40 +4,34 @@
               switching projects is a full reload, for now ("they can have
               different front end extensions")
 
-  The brief reload transition shown while the app "reloads" into another
-  project. Covers the whole window, tab strip included.
+  The reload transition shown while the app "reloads" into another
+  project, styled as ComfyUI's own loading screen (index.html's splash):
+  the palette background and the Comfy logo filling with a wave. Covers the
+  whole window, tab strip included.
 -->
 <template>
   <div
-    class="fixed inset-0 z-60 flex flex-col items-center justify-center gap-4 bg-base-background text-base-foreground"
+    class="fixed inset-0 z-60 flex flex-col items-center justify-center gap-6 bg-(--bg-color)"
     role="status"
     aria-live="polite"
   >
-    <ProjectTile :project :deployment />
-    <span class="text-sm">
+    <LogoComfyWaveLoader size="md" color="white" />
+    <span class="text-sm text-muted-foreground">
       {{
         tText('prototype.customCloud.reload.opening', { project: project.name })
       }}
-    </span>
-    <span
-      class="h-0.5 w-40 overflow-hidden rounded-full bg-secondary-background"
-    >
-      <span
-        class="block h-full w-1/3 animate-pulse rounded-full bg-primary-background"
-      />
     </span>
   </div>
 </template>
 
 <script setup lang="ts">
-import { useTextT } from '../composables/useTextT'
-import type { Deployment, Project } from '../types'
+import LogoComfyWaveLoader from '@/components/loader/LogoComfyWaveLoader.vue'
 
-import ProjectTile from './ProjectTile.vue'
+import { useTextT } from '../composables/useTextT'
+import type { Project } from '../types'
 
 defineProps<{
   project: Project
-  deployment: Deployment
 }>()
 
 const tText = useTextT()

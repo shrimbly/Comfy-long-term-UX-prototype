@@ -78,11 +78,7 @@
 
     <WorkflowDragGhost />
     <RunTargetDialog v-if="customCloud.dialogStep" />
-    <ProjectReloadOverlay
-      v-if="reloadingProject"
-      :project="reloadingProject"
-      :deployment="customCloud.deploymentOf(reloadingProject.id)"
-    />
+    <ProjectReloadOverlay v-if="reloadingProject" :project="reloadingProject" />
   </div>
 </template>
 

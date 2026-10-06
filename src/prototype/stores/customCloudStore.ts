@@ -43,7 +43,8 @@ type DialogStep = 'choose' | 'review' | 'agent'
 // build.
 export const NEW_BUILD_TARGET = 'new'
 
-export const RELOAD_MS = 900
+// Long enough for the loading screen's wave to rise through the logo.
+export const RELOAD_MS = 2400
 
 // The build keeps the fixture it started in, so it still finishes there if
 // the presenter flips persona mid-build.
@@ -258,7 +259,9 @@ export const usePrototypeCustomCloudStore = defineStore(
         deploymentId,
         color: BUILD_PROJECT_COLOR
       })
-      build.value = { projectId, deploymentId, startedAt: Date.now(), fixture }
+      // The build clock starts once the reload into the project ends.
+      const startedAt = Date.now() + RELOAD_MS
+      build.value = { projectId, deploymentId, startedAt, fixture }
       now.value = Date.now()
       ticker.resume()
       openInProject(projectId)
