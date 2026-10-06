@@ -77,6 +77,7 @@
       v-if="showPersonaSwitcher"
       class="fixed right-4 bottom-4 z-50 flex items-center gap-2 rounded-lg border border-border-subtle bg-secondary-background p-2 shadow-lg"
     >
+      <ProjectPageVariantSwitcher />
       <PersonaSwitcher />
       <DemoControls />
     </div>
@@ -103,6 +104,7 @@ import BuildReadyToast from '../components/BuildReadyToast.vue'
 import DemoControls from '../components/DemoControls.vue'
 import LocalMediaView from '../components/LocalMediaView.vue'
 import PersonaSwitcher from '../components/PersonaSwitcher.vue'
+import ProjectPageVariantSwitcher from '../components/project/ProjectPageVariantSwitcher.vue'
 import ProjectReloadOverlay from '../components/ProjectReloadOverlay.vue'
 import RealEditor from '../components/RealEditor.vue'
 import PrototypeSidebar from '../components/PrototypeSidebar.vue'

@@ -38,6 +38,9 @@ export type ProjectRole = 'owner' | 'collaborator'
 interface ProjectMember {
   userId: string
   role: ProjectRole
+  // Credits this member may spend in this project per month. Absent = no
+  // project-level cap. See ../IA_Plan/wiki/open-questions.md#per-member-credit-limits
+  creditLimit?: number
 }
 
 // Library sidebar sub-sections. MVP collapses the Library to Media only

@@ -200,9 +200,9 @@ export const adminFixture: PersonaFixture = {
       currentUserHasAccess: true,
       members: [
         { userId: user.id, role: 'owner' },
-        { userId: 'user-jane', role: 'collaborator' },
-        { userId: 'user-marcus', role: 'collaborator' },
-        { userId: 'user-alex', role: 'collaborator' }
+        { userId: 'user-jane', role: 'collaborator', creditLimit: 3000 },
+        { userId: 'user-marcus', role: 'collaborator', creditLimit: 2000 },
+        { userId: 'user-alex', role: 'collaborator', creditLimit: 1000 }
       ],
       creditsThisMonth: 9800,
       monthlyUsage: [

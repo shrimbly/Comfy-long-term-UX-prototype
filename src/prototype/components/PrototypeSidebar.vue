@@ -142,6 +142,7 @@ const settingsGroups = computed(() => [
           label: t('prototype.settings.workspaceGroup'),
           items: [
             { id: 'general' as SettingsPage, icon: 'icon-[lucide--settings]' },
+            { id: 'projects' as SettingsPage, icon: 'icon-[lucide--folder]' },
             {
               id: 'members' as SettingsPage,
               icon: 'icon-[lucide--users-round]'

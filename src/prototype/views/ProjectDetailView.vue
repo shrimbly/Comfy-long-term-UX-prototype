@@ -24,299 +24,243 @@
       @navigate="onBreadcrumb"
     />
 
-    <header class="flex items-end justify-between gap-4">
-      <PageTitle class="relative top-2">{{ project?.name }}</PageTitle>
-      <div v-if="project" class="flex items-center gap-2">
-        <button
-          v-if="project.tier !== 'private'"
-          type="button"
-          class="inline-flex h-9 cursor-pointer items-center gap-2 rounded-lg bg-secondary-background pr-3 pl-1.5 text-sm transition-colors hover:bg-secondary-background-hover"
-          @click="isSharingOpen = true"
-        >
-          <span
-            v-if="accessLevel !== 'private' && visibleAvatars.length"
-            class="flex items-center"
-          >
-            <span
-              v-for="(a, i) in visibleAvatars"
-              :key="a.userId"
-              :class="
-                cn(
-                  'grid size-6 place-items-center rounded-full border-2 border-secondary-background text-[10px] font-semibold text-button-surface-contrast',
-                  i > 0 && '-ml-2'
-                )
-              "
-              :style="{ backgroundColor: a.avatarColor }"
-              :title="a.name"
-            >
-              {{ a.initial }}
-            </span>
-            <span
-              v-if="hiddenAvatarCount > 0"
-              class="-ml-2 grid size-6 place-items-center rounded-full border-2 border-secondary-background bg-secondary-background-hover text-[10px] font-semibold text-muted-foreground"
-            >
-              {{
-                t('prototype.views.project.sharing.summaryMore', {
-                  count: hiddenAvatarCount
-                })
-              }}
-            </span>
-          </span>
-          <span class="text-muted-foreground">
-            {{ sharingSummary }}
-          </span>
-          <span class="mx-1 text-muted-foreground">·</span>
-          <span class="font-medium">
-            {{ t('prototype.views.project.sharing.shareButton') }}
-          </span>
-        </button>
-        <button
-          v-if="canViewUsage"
-          type="button"
-          :aria-pressed="activeTab === 'usage'"
-          :class="
-            cn(
-              'inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-lg px-3 text-sm transition-colors',
-              activeTab === 'usage'
-                ? 'bg-secondary-background-hover text-base-foreground'
-                : 'bg-secondary-background hover:bg-secondary-background-hover'
-            )
-          "
-          @click="toggleTab('usage')"
-        >
-          <span class="icon-[lucide--chart-column] size-4" />
-          {{ t('prototype.views.project.tabs.usage') }}
-        </button>
-        <Button
-          variant="secondary"
-          size="unset"
-          :aria-pressed="activeTab === 'settings'"
-          :class="
-            cn(
-              'h-9 gap-1.5 rounded-lg px-3 text-sm font-normal text-base-foreground',
-              activeTab === 'settings' && 'bg-secondary-background-hover'
-            )
-          "
-          @click="toggleTab('settings')"
-        >
-          <span class="icon-[lucide--settings] size-4" />
-          {{ t('prototype.customCloud.settings.button') }}
-        </Button>
-        <button
-          type="button"
-          class="inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-lg bg-secondary-background px-3 text-sm transition-colors hover:bg-secondary-background-hover"
-          @click="onViewMediaAssets"
-        >
-          <span class="icon-[lucide--image] size-4" />
-          {{ t('prototype.views.project.viewMediaAssets') }}
-        </button>
-        <button
-          type="button"
-          class="inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-lg bg-primary-background px-3 text-sm font-medium text-button-surface-contrast transition-colors hover:bg-primary-background-hover"
-          @click="onNewWorkflow"
-        >
-          {{ t('prototype.views.project.newWorkflow') }}
-        </button>
-      </div>
-    </header>
+    <ProjectPageHeader
+      v-if="project"
+      v-model:active-tab="activeTab"
+      :project
+      :variant="uiStore.projectPageVariant"
+      :can-view-usage="canViewUsage"
+      :workflow-count="workflows.length"
+      @share="isSharingOpen = true"
+      @media="onViewMediaAssets"
+      @settings="isSettingsSheetOpen = true"
+      @new-workflow="onNewWorkflow"
+    />
 
     <p v-if="!project" class="text-sm text-muted-foreground">
       {{ t('prototype.views.project.notFound') }}
     </p>
 
     <template v-else>
-      <div class="flex flex-col gap-6 border-t border-interface-stroke pt-3">
-        <template v-if="activeTab === 'workflows'">
-          <section
-            :class="
-              cn(
-                'flex flex-col gap-3 rounded-xl',
-                dropTarget === 'published' &&
-                  'outline-2 outline-offset-8 outline-primary-background outline-dashed'
-              )
-            "
-            @dragover="onPublishedDragOver"
-            @dragleave="onSectionDragLeave"
-            @drop="onPublishedDrop"
-          >
-            <div class="flex items-baseline justify-between">
-              <div class="flex items-center gap-1.5">
-                <h2
-                  class="text-sm font-semibold tracking-wide text-base-foreground uppercase"
-                >
-                  {{ t('prototype.views.project.workflowsHeading') }}
-                </h2>
-                <InfoTooltip
-                  :label="t('prototype.views.project.workflowsHeading')"
-                >
-                  <span>{{
-                    t('prototype.views.project.publishedInfo.shared')
-                  }}</span>
-                  <span>{{
-                    t('prototype.views.project.publishedInfo.copy')
-                  }}</span>
-                  <span>{{
-                    t('prototype.views.project.publishedInfo.publish')
-                  }}</span>
-                </InfoTooltip>
+      <div class="flex items-start gap-10">
+        <div class="flex min-w-0 flex-1 flex-col gap-6">
+          <template v-if="activeTab === 'workflows'">
+            <section
+              :class="
+                cn(
+                  'flex flex-col gap-3 rounded-xl',
+                  dropTarget === 'published' &&
+                    'outline-2 outline-offset-8 outline-primary-background outline-dashed'
+                )
+              "
+              @dragover="onPublishedDragOver"
+              @dragleave="onSectionDragLeave"
+              @drop="onPublishedDrop"
+            >
+              <div class="flex items-baseline justify-between">
+                <div class="flex items-center gap-1.5">
+                  <h2
+                    class="text-sm font-semibold tracking-wide text-base-foreground uppercase"
+                  >
+                    {{ t('prototype.views.project.workflowsHeading') }}
+                  </h2>
+                  <InfoTooltip
+                    :label="t('prototype.views.project.workflowsHeading')"
+                  >
+                    <span>{{
+                      t('prototype.views.project.publishedInfo.shared')
+                    }}</span>
+                    <span>{{
+                      t('prototype.views.project.publishedInfo.copy')
+                    }}</span>
+                    <span>{{
+                      t('prototype.views.project.publishedInfo.publish')
+                    }}</span>
+                  </InfoTooltip>
+                </div>
+                <div class="flex items-center gap-2">
+                  <Button
+                    v-if="!currentFolder"
+                    variant="textonly"
+                    size="sm"
+                    @click="creatingFolder = true"
+                  >
+                    <i class="icon-[lucide--folder-plus] size-4" />
+                    {{ t('prototype.folders.newFolder') }}
+                  </Button>
+                  <span
+                    v-if="workflows.length"
+                    class="text-xs text-muted-foreground"
+                  >
+                    {{
+                      t('prototype.views.project.workflowCount', {
+                        count: workflows.length
+                      })
+                    }}
+                  </span>
+                </div>
               </div>
-              <div class="flex items-center gap-2">
-                <Button
-                  v-if="!currentFolder"
-                  variant="textonly"
-                  size="sm"
-                  @click="creatingFolder = true"
+
+              <div
+                v-if="showFolders"
+                class="grid grid-cols-[repeat(auto-fill,minmax(14rem,1fr))] gap-6"
+              >
+                <FolderCard
+                  v-for="f in folders"
+                  :key="f.id"
+                  :folder="f"
+                  :count="workflowCount(f.id)"
+                  @open="enterFolder"
+                />
+              </div>
+
+              <SelectableWorkflowGrid
+                v-if="publishedHere.length"
+                :workflows="publishedHere"
+                :container-id="projectId"
+                layout-class="grid grid-cols-[repeat(auto-fill,minmax(14rem,1fr))] gap-6"
+              >
+                <template
+                  #default="{
+                    isSelected,
+                    selectionActive,
+                    onSelect,
+                    onContextMenu,
+                    onDragStart
+                  }"
                 >
-                  <i class="icon-[lucide--folder-plus] size-4" />
-                  {{ t('prototype.folders.newFolder') }}
-                </Button>
+                  <WorkflowCard
+                    v-for="wf in publishedHere"
+                    :key="wf.id"
+                    :workflow="wf"
+                    actions="published"
+                    draggable
+                    selectable
+                    :selected="isSelected(wf.id)"
+                    :selection-active="selectionActive"
+                    :copies="copiesByCanonical[wf.id] ?? []"
+                    @copy="onCopyWorkflow"
+                    @open="onOpenDraft"
+                    @open-project="onOpenProject"
+                    @select="onSelect(wf.id, $event)"
+                    @context-menu="onContextMenu($event)"
+                    @dragstart="onDragStart(wf.id, $event)"
+                  />
+                </template>
+              </SelectableWorkflowGrid>
+              <div
+                v-else-if="publishedEmpty"
+                class="rounded-xl border border-dashed border-border-subtle p-10 text-center text-sm text-muted-foreground"
+              >
+                {{ publishedEmpty }}
+              </div>
+            </section>
+
+            <section
+              :class="
+                cn(
+                  'flex flex-col gap-3 rounded-xl',
+                  dropTarget === 'drafts' &&
+                    'outline-2 outline-offset-8 outline-primary-background outline-dashed'
+                )
+              "
+              @dragover="onDraftsDragOver"
+              @dragleave="onSectionDragLeave"
+              @drop="onDraftsDrop"
+            >
+              <div class="flex items-baseline justify-between">
+                <div class="flex items-center gap-1.5">
+                  <h2
+                    class="text-sm font-semibold tracking-wide text-base-foreground uppercase"
+                  >
+                    {{ t('prototype.views.project.draftsHeading') }}
+                  </h2>
+                  <InfoTooltip
+                    :label="t('prototype.views.project.draftsHeading')"
+                  >
+                    <span>{{
+                      t('prototype.views.project.draftsInfo.private')
+                    }}</span>
+                    <span>{{
+                      t('prototype.views.project.draftsInfo.publish')
+                    }}</span>
+                  </InfoTooltip>
+                </div>
                 <span
-                  v-if="workflows.length"
+                  v-if="draftsWithMeta.length"
                   class="text-xs text-muted-foreground"
                 >
                   {{
-                    t('prototype.views.project.workflowCount', {
-                      count: workflows.length
+                    t('prototype.views.project.draftCount', {
+                      count: draftsWithMeta.length
                     })
                   }}
                 </span>
               </div>
-            </div>
-
-            <div
-              v-if="showFolders"
-              class="grid grid-cols-[repeat(auto-fill,minmax(14rem,1fr))] gap-6"
-            >
-              <FolderCard
-                v-for="f in folders"
-                :key="f.id"
-                :folder="f"
-                :count="workflowCount(f.id)"
-                @open="enterFolder"
-              />
-            </div>
-
-            <SelectableWorkflowGrid
-              v-if="publishedHere.length"
-              :workflows="publishedHere"
-              :container-id="projectId"
-              layout-class="grid grid-cols-[repeat(auto-fill,minmax(14rem,1fr))] gap-6"
-            >
-              <template
-                #default="{
-                  isSelected,
-                  selectionActive,
-                  onSelect,
-                  onContextMenu,
-                  onDragStart
-                }"
+              <div
+                v-if="draftsWithMeta.length"
+                class="grid grid-cols-[repeat(auto-fill,minmax(14rem,1fr))] gap-6"
               >
                 <WorkflowCard
-                  v-for="wf in publishedHere"
-                  :key="wf.id"
-                  :workflow="wf"
-                  actions="published"
+                  v-for="d in draftsWithMeta"
+                  :key="d.wf.id"
+                  :workflow="d.wf"
+                  :draft-meta="d.meta"
+                  actions="draft"
                   draggable
-                  selectable
-                  :selected="isSelected(wf.id)"
-                  :selection-active="selectionActive"
-                  :copies="copiesByCanonical[wf.id] ?? []"
-                  @copy="onCopyWorkflow"
                   @open="onOpenDraft"
+                  @publish="publishDraft"
                   @open-project="onOpenProject"
-                  @select="onSelect(wf.id, $event)"
-                  @context-menu="onContextMenu($event)"
-                  @dragstart="onDragStart(wf.id, $event)"
+                  @dragstart="onDraftDragStart(d.wf.id, $event)"
                 />
-              </template>
-            </SelectableWorkflowGrid>
-            <div
-              v-else-if="publishedEmpty"
-              class="rounded-xl border border-dashed border-border-subtle p-10 text-center text-sm text-muted-foreground"
-            >
-              {{ publishedEmpty }}
-            </div>
-          </section>
-
-          <section
-            :class="
-              cn(
-                'flex flex-col gap-3 rounded-xl',
-                dropTarget === 'drafts' &&
-                  'outline-2 outline-offset-8 outline-primary-background outline-dashed'
-              )
-            "
-            @dragover="onDraftsDragOver"
-            @dragleave="onSectionDragLeave"
-            @drop="onDraftsDrop"
-          >
-            <div class="flex items-baseline justify-between">
-              <div class="flex items-center gap-1.5">
-                <h2
-                  class="text-sm font-semibold tracking-wide text-base-foreground uppercase"
-                >
-                  {{ t('prototype.views.project.draftsHeading') }}
-                </h2>
-                <InfoTooltip
-                  :label="t('prototype.views.project.draftsHeading')"
-                >
-                  <span>{{
-                    t('prototype.views.project.draftsInfo.private')
-                  }}</span>
-                  <span>{{
-                    t('prototype.views.project.draftsInfo.publish')
-                  }}</span>
-                </InfoTooltip>
               </div>
-              <span
-                v-if="draftsWithMeta.length"
-                class="text-xs text-muted-foreground"
+              <div
+                v-else
+                class="rounded-xl border border-dashed border-border-subtle p-10 text-center text-sm text-muted-foreground"
               >
-                {{
-                  t('prototype.views.project.draftCount', {
-                    count: draftsWithMeta.length
-                  })
-                }}
-              </span>
-            </div>
-            <div
-              v-if="draftsWithMeta.length"
-              class="grid grid-cols-[repeat(auto-fill,minmax(14rem,1fr))] gap-6"
-            >
-              <WorkflowCard
-                v-for="d in draftsWithMeta"
-                :key="d.wf.id"
-                :workflow="d.wf"
-                :draft-meta="d.meta"
-                actions="draft"
-                draggable
-                @open="onOpenDraft"
-                @publish="publishDraft"
-                @open-project="onOpenProject"
-                @dragstart="onDraftDragStart(d.wf.id, $event)"
-              />
-            </div>
-            <div
-              v-else
-              class="rounded-xl border border-dashed border-border-subtle p-10 text-center text-sm text-muted-foreground"
-            >
-              {{ draftsEmptyMessage }}
-            </div>
-          </section>
-        </template>
+                {{ draftsEmptyMessage }}
+              </div>
+            </section>
+          </template>
 
-        <ProjectUsageSection
-          v-else-if="activeTab === 'usage'"
-          :usage="project?.monthlyUsage ?? []"
-          :project-name="project?.name ?? ''"
-        />
+          <ProjectUsageSection v-else-if="activeTab === 'usage'" :project />
 
-        <ProjectDeploymentSection
-          v-else-if="activeTab === 'settings'"
-          :project="project"
-        />
+          <ProjectSettingsPanel
+            v-else-if="activeTab === 'settings'"
+            :project
+            footer="all-settings"
+            class="max-w-md"
+          />
+        </div>
+
+        <aside
+          v-if="uiStore.projectPageVariant === 'rail'"
+          class="sticky top-0 w-64 shrink-0"
+        >
+          <ProjectSettingsPanel
+            :project
+            footer="all-settings"
+            :usage="canViewUsage"
+            share
+            media
+            @share="isSharingOpen = true"
+            @media="onViewMediaAssets"
+          />
+        </aside>
       </div>
     </template>
+
+    <ProjectSideSheet
+      v-if="isSettingsSheetOpen && project"
+      :title="t('prototype.projectPage.tabs.settings')"
+      @close="isSettingsSheetOpen = false"
+    >
+      <ProjectSettingsPanel
+        :project
+        footer="all-settings"
+        :usage="canViewUsage"
+      />
+    </ProjectSideSheet>
 
     <ProjectSharingDialog
       v-if="isSharingOpen && project && project.tier !== 'private'"
@@ -356,16 +300,16 @@
 import { cn } from '@comfyorg/tailwind-utils'
 import { useToast } from 'primevue/usetoast'
 import { storeToRefs } from 'pinia'
-import { computed, onMounted, ref, watchEffect } from 'vue'
+import { computed, onMounted, ref, watch, watchEffect } from 'vue'
 import { useI18n } from 'vue-i18n'
-
-import PageTitle from '../components/PageTitle.vue'
 
 import Button from '@/components/ui/button/Button.vue'
 
 import FolderCard from '../components/FolderCard.vue'
 import InfoTooltip from '../components/InfoTooltip.vue'
-import ProjectDeploymentSection from '../components/ProjectDeploymentSection.vue'
+import ProjectPageHeader from '../components/project/ProjectPageHeader.vue'
+import ProjectSettingsPanel from '../components/project/ProjectSettingsPanel.vue'
+import ProjectSideSheet from '../components/project/ProjectSideSheet.vue'
 import ProjectSharingDialog from '../components/ProjectSharingDialog.vue'
 import ProjectUsageSection from '../components/ProjectUsageSection.vue'
 import PromoteToProjectDialog from '../components/PromoteToProjectDialog.vue'
@@ -375,7 +319,6 @@ import PublishConfirmDialog from '../components/PublishConfirmDialog.vue'
 import SelectableWorkflowGrid from '../components/SelectableWorkflowGrid.vue'
 import WorkflowCard from '../components/WorkflowCard.vue'
 import { useFolderBrowser } from '../composables/useFolderBrowser'
-import { useProjectAccess } from '../composables/useProjectAccess'
 import { useWorkflowDrag } from '../composables/useWorkflowDrag'
 import { useWorkflowPublish } from '../composables/useWorkflowPublish'
 import { usePrototypeCustomCloudStore } from '../stores/customCloudStore'
@@ -383,9 +326,8 @@ import { usePrototypePersonaStore } from '../stores/personaStore'
 import { usePrototypeTabsStore } from '../stores/tabsStore'
 import { usePrototypeUiStore } from '../stores/uiStore'
 import type { Workflow } from '../types'
+import type { ProjectPageTab } from '../components/project/ProjectPageHeader.vue'
 import { deriveDraftMeta } from '../utils/draftMeta'
-
-type ProjectTabId = 'workflows' | 'usage' | 'settings'
 
 const { projectId } = defineProps<{
   projectId: string
@@ -410,7 +352,8 @@ const {
 } = useWorkflowPublish()
 
 const isSharingOpen = ref(false)
-const activeTab = ref<ProjectTabId>('workflows')
+const activeTab = ref<ProjectPageTab>('workflows')
+const isSettingsSheetOpen = ref(false)
 
 onMounted(() => {
   // A project just created via workflow promotion asks to open its share
@@ -473,11 +416,14 @@ const canViewUsage = computed(() => {
   )
 })
 
-// The header "Usage" and "Settings" buttons toggle the body between the
-// workflows content and that view (no tab strip).
-function toggleTab(tab: ProjectTabId) {
-  activeTab.value = activeTab.value === tab ? 'workflows' : tab
-}
+// Only the tabs header has a Usage or Settings tab to be on.
+watch(
+  () => uiStore.projectPageVariant,
+  (variant) => {
+    if (variant !== 'tabs') activeTab.value = 'workflows'
+    isSettingsSheetOpen.value = false
+  }
+)
 
 // If the viewer loses usage access while viewing it, fall back to workflows.
 watchEffect(() => {
@@ -696,23 +642,4 @@ function onViewMediaAssets() {
   uiStore.setProjectFilter(projectId)
   tabsStore.openMediaAssets(t('prototype.sidebar.libraryMedia'))
 }
-
-// People with access drive the Share button's avatar stack + summary.
-const { accessLevel, visibleAvatars, hiddenAvatarCount, peopleCount } =
-  useProjectAccess(project)
-
-const sharingSummary = computed(() => {
-  switch (accessLevel.value) {
-    case 'everyone':
-      return t('prototype.views.project.sharing.summaryAnyone', {
-        workspace: currentWorkspace.value?.name ?? ''
-      })
-    case 'private':
-      return t('prototype.views.project.sharing.summaryPrivate')
-    default:
-      return t('prototype.views.project.sharing.summaryRestricted', {
-        count: peopleCount.value
-      })
-  }
-})
 </script>

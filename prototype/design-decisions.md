@@ -1422,3 +1422,42 @@ The fork last synced with upstream on 2026-05-07. Willie wants the current upstr
   - The `gradient` Button variant is now `subscribe`: the local persona's Upgrade button is solid gold, not purple.
 - Wiki link: none; prototype infrastructure.
 - Promote? **no**.
+
+---
+
+## [2026-10-07] Project page: three header variants, environment on the page, settings → Projects
+
+Scope is the dashboard only. Flows where a dropped workflow does not fit the project stay as they are.
+
+**Three project-page headers, picked by a presenter switcher.** "Project page: Tabs / Quiet / Rail" sits beside the persona toggle and survives a reload.
+
+- **Tabs.** The environment chip sits next to the title. Workflows, Media, Usage and Settings are a tab strip under it. Media is another surface, so its tab opens Media assets instead of switching the body.
+- **Quiet.** No tabs. One meta line under the title: environment, people, workflow count. Media and Settings are icon buttons, and Settings opens a sheet on the right.
+- **Rail.** Title and "+ Workflow" only. A right-hand rail holds Runs on, Access with Share, Usage, Media assets and All settings.
+
+**The environment shows on the project page in every variant**, as a dot and a name. The status word shows only when it is not ready ("asleep", "building · 12 min"), so a healthy project reads as one name. Comfy Cloud shows too: the ask was to make the environment and its status explicit.
+
+**Project settings stay minimal and link out.** On the project page, settings are three rows: Runs on, Access, Usage. "All settings" opens the workspace settings page with that project selected. The old Deployment section (GPU, warm time, Manage on Platform, Change deployment) is gone from the project page.
+
+**Workspace settings gains a Projects page.** A list of every project the viewer can open, with where it runs, people and workflow count. Picking one opens a panel on the right with the same rows, "Change" for admins, and "Open project". Modeled on the Claude Console Workspaces page, where their workspaces map to our projects.
+
+Wiki link: `concepts/custom-comfy-cloud.md` step 3 ("in the settings you can see where it's deployed") now points at the project page rows and the settings Projects panel. `decisions/opinionated-roles-no-permission-matrix.md` still holds: only admins see Change.
+
+Open question: which header to keep. The switcher exists so Willie can compare them on the deployed preview.
+
+Promote? **maybe**, once a header is picked.
+
+---
+
+## [2026-10-07] Project page: Tabs chosen; credit attribution per member
+
+Pablo picked the Tabs header. The Quiet and Rail variants stay behind the switcher for now.
+
+- **Media assets is a button again, not a tab.** It opens its own top-bar tab, so a tab in the project strip misled: the strip now reads Workflows · Usage · Settings.
+- **The Usage tab attributes credits per member.** A donut for the share and a table with runs, credits and a limit bar per member. Rows come from the same sample records as workspace Usage, filtered to the project. API keys and other unattributed runs are their own row.
+- **Per-member limits are per project.** `ProjectMember.creditLimit` is new and optional. The bar reads "{used} of {limit}" and turns amber at 80% and red at 100%. A member without a project limit falls back to their workspace limit, and otherwise shows "No limit". The Matrix seeds Alex over his limit so the red state is visible.
+- Reason: enterprises ask for clear credit attribution first. The project page is where a lead looks for it, and a limit bar answers "who is about to run out" without a second screen.
+
+Wiki link: `entities/workspace.md` §Identity (workspace stays the billing entity; this is attribution only). Open question dependency: `open-questions.md#per-member-credit-limits`, which only proposes workspace-level limits. The per-project cap is a prototype extension to feed back.
+
+Promote? **maybe**, if per-project caps survive review.

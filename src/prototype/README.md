@@ -22,6 +22,11 @@ The workspace menu sits at the bottom of the sidebar. It opens account settings,
 workspace settings, and billing. The editor shows the same menu as a workspace
 thumbnail below Settings in its left toolbar. Settings keep the Home tab and open workflows.
 
+Workspace settings → Projects lists every project with where it runs. Picking
+one opens its settings in a panel on the right. The project page keeps three
+rows (Runs on, Access, Usage) and links there. The "Project page" switcher
+beside the persona toggle compares three headers: Tabs, Quiet and Rail.
+
 Workspace policies have separate model and custom-node allowlists. Owners and
 admins can edit them. Members can view them. Changes apply to every project in
 the current workspace and remain in memory until the page reloads. Built-in nodes

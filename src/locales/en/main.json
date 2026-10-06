@@ -6530,11 +6530,8 @@
             "placeholder": "e.g. comfyui_controlnet_aux"
           },
           "usage": {
-            "heading": "This project's usage this month",
-            "creditsValue": "{value} credits",
             "delta": "{pct}% vs last month",
             "recentHeading": "Recent months",
-            "export": "Export usage history",
             "exportedSummary": "Usage history exported",
             "exportedDetail": "Downloaded {count} months for {project}.",
             "note": "Billing is managed at the workspace level."
@@ -6853,18 +6850,6 @@
         "opening": "Opening {project}"
       },
       "settings": {
-        "button": "Settings",
-        "deployment": "Deployment",
-        "deploymentHint": "Where this project's workflows run. Everyone in the project runs on it.",
-        "runsOn": "Runs on",
-        "comfyCloudDetail": "The shared default. Projects without their own deployment run here.",
-        "sharedWith": "Only this project runs on it | Shared with 1 other project | Shared with {count} other projects",
-        "gpu": "GPU",
-        "gpuShared": "Picked for each run",
-        "warm": "Stays warm",
-        "warmValue": "{minutes} minutes after a run",
-        "manageOnPlatform": "Manage on Platform",
-        "change": "Change deployment",
         "platformToast": "Opens on the Developer Platform",
         "platformToastDetail": "Releases, staging and production are managed there.",
         "changeToastDetail": "Picking another deployment isn't in this prototype."
@@ -7044,6 +7029,10 @@
           "title": "Workspace settings",
           "description": "Manage the name and details of this workspace."
         },
+        "projects": {
+          "title": "Projects",
+          "description": "Every project in this workspace, and where each one runs."
+        },
         "members": {
           "title": "Members",
           "description": "Manage workspace access and member limits."
@@ -7141,6 +7130,57 @@
         "activeProjects": "Active projects",
         "empty": "No credit use in this period.",
         "unattributed": "API keys / unattributed"
+      },
+      "projects": {
+        "eyebrow": "Project",
+        "name": "Name",
+        "people": "People",
+        "workflows": "Workflows"
+      }
+    },
+    "projectPage": {
+      "variant": {
+        "label": "Project page",
+        "tabs": "Tabs",
+        "quiet": "Quiet",
+        "rail": "Rail"
+      },
+      "tabs": {
+        "workflows": "Workflows",
+        "usage": "Usage",
+        "settings": "Settings"
+      },
+      "meta": {
+        "everyone": "Everyone"
+      },
+      "environment": {
+        "buildingLeft": "building · {minutes} min",
+        "withStatus": "{name} · {status}"
+      },
+      "settings": {
+        "runsOn": "Runs on",
+        "access": "Access",
+        "usage": "Usage",
+        "thisMonth": "{credits} credits this month",
+        "change": "Change",
+        "open": "Open",
+        "allSettings": "All settings",
+        "openProject": "Open project"
+      },
+      "sheet": {
+        "close": "Close"
+      },
+      "usage": {
+        "heading": "Spend by member",
+        "thisMonth": "This month · {credits} credits",
+        "chart": "Credits by member",
+        "member": "Member",
+        "runs": "Runs",
+        "credits": "Credits",
+        "limit": "Limit",
+        "ofLimit": "{used} of {limit}",
+        "noLimit": "No limit",
+        "empty": "No credit use this month."
       }
     }
   },
