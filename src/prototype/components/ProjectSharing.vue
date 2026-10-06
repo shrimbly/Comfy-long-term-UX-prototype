@@ -14,7 +14,7 @@
 -->
 <template>
   <div class="flex flex-col gap-4">
-    <header class="flex items-baseline justify-between">
+    <header v-if="showHeader" class="flex items-baseline justify-between">
       <h2 class="text-lg font-semibold">
         {{ t('prototype.views.project.sharing.title') }}
       </h2>
@@ -187,8 +187,9 @@ import TierDropdown from './TierDropdown.vue'
 import { usePrototypePersonaStore } from '../stores/personaStore'
 import type { Project, ProjectRole } from '../types'
 
-const { project } = defineProps<{
+const { project, showHeader = true } = defineProps<{
   project: Project
+  showHeader?: boolean
 }>()
 
 const { t } = useI18n()

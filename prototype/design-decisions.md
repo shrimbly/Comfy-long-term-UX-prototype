@@ -1541,3 +1541,55 @@ Promote? **maybe**, if per-project caps survive review.
 - Reason: Pablo picked Tabs after comparing the three on the dev server. Dead variants cost more to keep in sync than they tell.
 
 Promote? **no**: the earlier "Tabs chosen" entry already carries the decision.
+
+---
+
+## [2026-10-07] Project settings for a studio; Members tab; usage ranges on the workspace page
+
+- **Decision: project settings are six sections, full width.** General (name, colour), Environment (runs on, Change for admins), Access (general access, people with a link to Members), Credits (monthly budget, default limit per member), Policies (follows the workspace, link to workspace policies) and Delete. Owners and workspace admins edit; everyone else reads.
+- **Decision: a Members tab on the project page.** It is the sharing panel inline, after Settings. The Share button in the header keeps opening the same panel as a dialog.
+- **Decision: project credit caps.** `Project.monthlyCreditBudget` and `Project.defaultMemberCreditLimit` are new and optional. A member's limit resolves project member → project default → workspace limit. The Matrix seeds a budget of 12,000 and a default of 2,000.
+- **Decision: the workspace Usage page uses the same range picker as the project Usage tab**, and its table sits on the page without an outer box.
+- **Sidebar: Environments moves next to Media assets**, out of the Create group. An environment is something you pick, not something you make here.
+- Not built, logged as options: archive a project when a production wraps; output storage and retention; naming rules for versions; a default template for new workflows; notifications per project.
+
+Wiki link: `entities/project.md`, `concepts/three-level-permissions.md`. Open question dependency: `open-questions.md#per-member-credit-limits` (workspace-level only in the wiki; project caps are a prototype extension).
+
+Promote? **maybe**, with the per-member limit entry.
+
+---
+
+## [2026-10-07] Project settings as a bento grid; environment sheet
+
+- **Decision: the settings sections are cards in a two-column grid.** Same six sections, each with its title and hint at the top and its rows below.
+- **Decision: the environment row opens a sheet on the right.** Two tabs:
+  - **Contents:** the custom nodes and models the build pins. On Comfy Cloud there is nothing pinned, so it shows "All that the workspace allows" with the counts from the workspace policies. The intro says projects inherit the workspace policies and can only narrow them.
+  - **Status:** the status chip, build, GPU, keep-warm time and the projects on it. Custom environments link to the Environments page.
+- Reason: the environment is the setting a studio asks about most, and its contents are what decide whether a workflow runs. The sheet keeps that one click from settings without leaving the project.
+
+Wiki link: `concepts/custom-comfy-cloud.md`, `decisions/custom-nodes-as-configuration.md`. The wiki is silent on whether a project may narrow the workspace allowlists; the sheet states the inheritance rule as the working answer.
+
+Promote? **maybe**: the inherit-and-narrow rule, once reviewed.
+
+---
+
+## [2026-10-07] Project settings: one column, no dividers, a thumbnail; Change environment is real; Policies card dropped
+
+- **Layout:** the cards stack in one column with a lifted background. Rows inside a card have no dividers.
+- **General shows the project thumbnail**, the same four-tile preview as the project card, instead of the colour swatch.
+- **Change environment opens a picker.** Comfy Cloud and the workspace's custom environments as radio rows, each with its GPU and how many projects use it. "New deployment" opens the existing create dialog, and the new one is selected on return. Switch sets `project.deploymentId`. The same picker serves the settings Projects panel.
+- **The Policies card is gone.** The rule lives in the environment sheet, whose Contents tab links to Workspace policies.
+
+Wiki link: `decisions/project-runs-on-shared-deployment.md`. The wiki does not say who may move a project between deployments; the picker shows for owners and workspace admins, like the rest of the settings.
+
+Promote? **no**.
+
+---
+
+## [2026-10-07] Workflow cards open on double click
+
+- **Decision: a double click opens a workflow in the editor**, in its project: a draft's provenance project, else its own. A single click no longer opens anything, and a shift, cmd or ctrl click still selects. Published cards keep their buttons, since opening one means checking it out first.
+- Reason: Pablo asked for file-browser behaviour on Home. It also stops accidental editor loads while scanning cards.
+- Also this round: the environment sheet lists Comfy Cloud's allowed packs and models by name, its tabs show only a bottom stroke, and admins get an "Edit deployment" button that hands off to the Developer Platform.
+
+Promote? **no**.

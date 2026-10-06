@@ -204,6 +204,8 @@ export const adminFixture: PersonaFixture = {
         { userId: 'user-marcus', role: 'collaborator', creditLimit: 2000 },
         { userId: 'user-alex', role: 'collaborator', creditLimit: 1000 }
       ],
+      monthlyCreditBudget: 12000,
+      defaultMemberCreditLimit: 2000,
       creditsThisMonth: 9800,
       monthlyUsage: [
         { month: '2026-01', credits: 3200 },
@@ -257,8 +259,7 @@ export const adminFixture: PersonaFixture = {
       name: 'Style studies'
     },
     { id: 'folder-mtx-bul', projectId: 'proj-the-matrix', name: 'BUL' },
-    { id: 'folder-mtx-lob', projectId: 'proj-the-matrix', name: 'LOB' },
-    { id: 'folder-mtx-run', projectId: 'proj-the-matrix', name: 'RUN' }
+    { id: 'folder-mtx-lob', projectId: 'proj-the-matrix', name: 'LOB' }
   ],
   workflows: [
     {
@@ -663,7 +664,6 @@ export const adminFixture: PersonaFixture = {
       id: 'wf-mtx-run-fx',
       projectId: 'proj-the-matrix',
       name: 'MTX_RUN_0050_fx',
-      folderId: 'folder-mtx-run',
       description:
         'Digital rain generator — procedural green-glyph cascade with depth-driven density and trailing falloff.',
       kind: 'workflow',
@@ -742,6 +742,15 @@ export const adminFixture: PersonaFixture = {
       name: 'MTX_RUN_0080_fx',
       updatedAt: '2026-06-22',
       storage: 'local',
+      provenanceProjectId: 'proj-the-matrix'
+    },
+    {
+      // Created in-project (no source) — a wire-removal pass on the subway shot.
+      id: 'wf-mw-mtx-sen-wire',
+      projectId: myWorkflows.id,
+      name: 'MTX_SEN_0320_wire',
+      updatedAt: '2026-06-21',
+      storage: 'cloud',
       provenanceProjectId: 'proj-the-matrix'
     },
 

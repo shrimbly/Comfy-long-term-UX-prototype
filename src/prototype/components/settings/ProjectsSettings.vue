@@ -113,7 +113,7 @@
           <i class="icon-[lucide--x] size-4" />
         </Button>
       </header>
-      <ProjectSettingsPanel :project="selected" footer="open-project" usage />
+      <ProjectSettingsPanel :project="selected" />
     </aside>
   </div>
 </template>

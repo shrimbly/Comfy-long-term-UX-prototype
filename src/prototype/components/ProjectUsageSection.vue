@@ -7,37 +7,18 @@
     log:    ../prototype/design-decisions.md (2026-10-07) — credit
             attribution per member on the project page
 
-  Credits the project spent in a range, split by member: a range switcher,
+  Credits the project spent in a range, split by member: a range picker,
   the total, and a table with runs, credits and each member's progress
   against their monthly limit in this project. Export is a client-side CSV.
 -->
 <template>
   <div class="flex flex-col gap-6">
     <div class="flex flex-wrap items-center justify-between gap-4">
-      <div
-        role="radiogroup"
-        :aria-label="t('prototype.projectPage.usage.rangeLabel')"
-        class="flex items-center gap-0.5 rounded-lg border border-border-subtle p-0.5"
-      >
-        <button
-          v-for="option in USAGE_RANGES"
-          :key="option"
-          type="button"
-          role="radio"
-          :aria-checked="range === option"
-          :class="
-            cn(
-              'h-8 cursor-pointer rounded-md px-3 text-sm transition-colors',
-              range === option
-                ? 'bg-secondary-background-hover text-base-foreground'
-                : 'text-muted-foreground hover:text-base-foreground'
-            )
-          "
-          @click="range = option"
-        >
-          {{ t(`prototype.projectPage.usage.range.${option}`) }}
-        </button>
-      </div>
+      <UsageRangePicker
+        v-model="range"
+        v-model:from="customFrom"
+        v-model:to="customTo"
+      />
       <Button
         variant="secondary"
         size="md"
@@ -47,26 +28,6 @@
         <i class="icon-[lucide--download] size-4" />
         {{ t('prototype.settings.usage.export') }}
       </Button>
-    </div>
-
-    <div v-if="range === 'custom'" class="flex items-center gap-2 text-sm">
-      <input
-        v-model="customFrom"
-        type="date"
-        :max="customTo"
-        :aria-label="t('prototype.projectPage.usage.from')"
-        :class="dateInputClass"
-      />
-      <span class="text-muted-foreground">
-        {{ t('prototype.projectPage.usage.to') }}
-      </span>
-      <input
-        v-model="customTo"
-        type="date"
-        :min="customFrom"
-        :aria-label="t('prototype.projectPage.usage.to')"
-        :class="dateInputClass"
-      />
     </div>
 
     <div class="flex flex-col gap-1">
@@ -190,22 +151,16 @@ import { useToastStore } from '@/platform/updates/common/toastStore'
 
 import { usePrototypePersonaStore } from '../stores/personaStore'
 import type { Project } from '../types'
-import {
-  USAGE_RANGES,
-  daysBetween,
-  usageRangeFactor
-} from '../utils/usageRange'
+import { daysBetween, usageRangeFactor } from '../utils/usageRange'
 import type { UsageRange } from '../utils/usageRange'
 import { sampleUsage, usageCsv } from '../utils/workspaceUsage'
+import UsageRangePicker from './UsageRangePicker.vue'
 
 const { project } = defineProps<{
   project: Project
 }>()
 
 const CURRENT_MONTH = '2026-10'
-
-const dateInputClass =
-  'h-8 rounded-md border border-border-subtle bg-base-background px-2 text-sm text-base-foreground outline-none focus:border-base-foreground'
 
 const { t } = useI18n()
 const toast = useToastStore()
@@ -255,7 +210,11 @@ const rows = computed(() =>
         detail: member?.email ?? '',
         runs: Math.round(record.runs * factor.value),
         credits: Math.round(record.credits * factor.value),
-        limit: projectMember?.creditLimit ?? workspaceLimit ?? null
+        limit:
+          projectMember?.creditLimit ??
+          project.defaultMemberCreditLimit ??
+          workspaceLimit ??
+          null
       }
     })
     .slice()

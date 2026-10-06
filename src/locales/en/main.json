@@ -6863,8 +6863,7 @@
       },
       "settings": {
         "platformToast": "Opens on the Developer Platform",
-        "platformToastDetail": "Releases, staging and production are managed there.",
-        "changeToastDetail": "Picking another deployment isn't in this prototype."
+        "platformToastDetail": "Releases, staging and production are managed there."
       },
       "editor": {
         "dropHint": "Drop to open the workflow",
@@ -7155,7 +7154,8 @@
       "tabs": {
         "workflows": "Workflows",
         "usage": "Usage",
-        "settings": "Settings"
+        "settings": "Settings",
+        "members": "Members"
       },
       "meta": {
         "everyone": "Everyone"
@@ -7170,8 +7170,27 @@
         "usage": "Usage",
         "thisMonth": "{credits} credits this month",
         "change": "Change",
-        "allSettings": "All settings",
-        "openProject": "Open project"
+        "openProject": "Open project",
+        "general": "General",
+        "name": "Name",
+        "environment": "Environment",
+        "environmentHint": "Where every workflow in this project runs.",
+        "generalAccess": "General access",
+        "people": "People",
+        "manage": "Manage",
+        "credits": "Credits",
+        "creditsHint": "Caps for this project. Billing stays with the workspace.",
+        "budget": "Monthly budget",
+        "budgetHint": "Runs stop when the project reaches it.",
+        "memberLimit": "Limit per member",
+        "memberLimitHint": "The default for each member. Set a different limit in Members.",
+        "notSet": "Not set",
+        "workspacePolicies": "Workspace policies",
+        "danger": "Delete project",
+        "dangerHint": "Removes the project and its workflows. Drafts in My Workflows stay.",
+        "delete": "Delete project",
+        "deleteConfirm": "Delete {name}? This cannot be undone.",
+        "thumbnail": "Thumbnail"
       },
       "usage": {
         "member": "Member",
@@ -7194,6 +7213,30 @@
         "from": "From",
         "to": "to",
         "creditsSpent": "credits spent"
+      },
+      "environmentSheet": {
+        "open": "Open environment",
+        "contents": "Contents",
+        "status": "Status",
+        "inherit": "Projects inherit the workspace policies. A project can only narrow them.",
+        "customNodes": "Custom nodes",
+        "models": "Models",
+        "statusLabel": "Status",
+        "build": "Build",
+        "gpu": "GPU",
+        "gpuShared": "Picked for each run",
+        "keepWarm": "Keep warm",
+        "warmValue": "{minutes} min after a run",
+        "usedBy": "Used by",
+        "alwaysOn": "The shared default. Always on.",
+        "manage": "Manage environments",
+        "none": "None allowed",
+        "edit": "Edit deployment"
+      },
+      "environmentPicker": {
+        "title": "Change environment",
+        "hint": "Every workflow in this project will run there. Open workflows reload.",
+        "switch": "Switch"
       }
     },
     "environments": {

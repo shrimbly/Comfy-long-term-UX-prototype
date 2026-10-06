@@ -105,7 +105,15 @@ export interface Project {
   deploymentId?: string
   // Colour tile shown in the tab-bar project switcher and project menus.
   color?: string
+  // Credits the project may spend per month, and the cap each member gets
+  // unless ProjectMember.creditLimit says otherwise. Absent = no cap.
+  monthlyCreditBudget?: number
+  defaultMemberCreditLimit?: number
 }
+
+export type ProjectCreditSettings = Partial<
+  Pick<Project, 'monthlyCreditBudget' | 'defaultMemberCreditLimit'>
+>
 
 // Custom Comfy Cloud (Project Homestead): a project runs on a Developer
 // Platform deployment. One deployment can back several projects, so updating

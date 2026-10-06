@@ -7,7 +7,7 @@
 
   Title row of the project page: the environment chip beside the title,
   Share, Media assets and "+ Workflow" on the right, and a tab strip for
-  Workflows, Usage and Settings. Media assets stays a button because it
+  Workflows, Usage, Settings and Members. Media assets stays a button because it
   opens its own top-bar tab.
 -->
 <template>
@@ -121,7 +121,7 @@ import type { Project } from '../../types'
 import PageTitle from '../PageTitle.vue'
 import ProjectEnvironmentChip from './ProjectEnvironmentChip.vue'
 
-export type ProjectPageTab = 'workflows' | 'usage' | 'settings'
+export type ProjectPageTab = 'workflows' | 'usage' | 'settings' | 'members'
 
 const { project, activeTab, canViewUsage } = defineProps<{
   project: Project
@@ -153,6 +153,7 @@ const tabs = computed<{ id: ProjectPageTab; label: string }[]>(() => [
   ...(canViewUsage
     ? [{ id: 'usage' as const, label: t('prototype.projectPage.tabs.usage') }]
     : []),
-  { id: 'settings', label: t('prototype.projectPage.tabs.settings') }
+  { id: 'settings', label: t('prototype.projectPage.tabs.settings') },
+  { id: 'members', label: t('prototype.projectPage.tabs.members') }
 ])
 </script>

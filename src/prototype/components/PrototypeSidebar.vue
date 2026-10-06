@@ -56,6 +56,13 @@
           icon="icon-[lucide--image]"
           @click="showMediaAssetsNotice = true"
         />
+        <SidebarItem
+          v-if="isCloudMode"
+          :label="t('prototype.environments.title')"
+          icon="icon-[ph--stack-bold]"
+          :active="activeView.kind === 'environments'"
+          @click="uiStore.go({ kind: 'environments' })"
+        />
       </div>
 
       <nav class="flex flex-1 flex-col overflow-y-auto">
@@ -78,13 +85,6 @@
               activeView.kind === 'projects' || activeView.kind === 'project'
             "
             @click="uiStore.go({ kind: 'projects' })"
-          />
-          <SidebarItem
-            v-if="isCloudMode"
-            :label="t('prototype.environments.title')"
-            icon="icon-[ph--stack-bold]"
-            :active="activeView.kind === 'environments'"
-            @click="uiStore.go({ kind: 'environments' })"
           />
         </SidebarGroup>
       </nav>

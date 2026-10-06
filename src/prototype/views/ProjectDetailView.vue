@@ -221,11 +221,16 @@
 
         <ProjectUsageSection v-else-if="activeTab === 'usage'" :project />
 
-        <ProjectSettingsPanel
+        <ProjectSettingsTab
           v-else-if="activeTab === 'settings'"
           :project
-          footer="all-settings"
-          class="max-w-md"
+          @members="activeTab = 'members'"
+        />
+
+        <ProjectSharing
+          v-else-if="activeTab === 'members'"
+          :project
+          :show-header="false"
         />
       </div>
     </template>
@@ -276,7 +281,8 @@ import Button from '@/components/ui/button/Button.vue'
 import FolderCard from '../components/FolderCard.vue'
 import InfoTooltip from '../components/InfoTooltip.vue'
 import ProjectPageHeader from '../components/project/ProjectPageHeader.vue'
-import ProjectSettingsPanel from '../components/project/ProjectSettingsPanel.vue'
+import ProjectSettingsTab from '../components/project/ProjectSettingsTab.vue'
+import ProjectSharing from '../components/ProjectSharing.vue'
 import ProjectSharingDialog from '../components/ProjectSharingDialog.vue'
 import ProjectUsageSection from '../components/ProjectUsageSection.vue'
 import PromoteToProjectDialog from '../components/PromoteToProjectDialog.vue'
