@@ -37,7 +37,7 @@
               v-if="environments.canManage && deployment.kind === 'custom'"
               variant="secondary"
               size="sm"
-              @click="openPlatform"
+              @click="isEditing = true"
             >
               {{ t('prototype.projectPage.environmentSheet.edit') }}
             </Button>
@@ -174,6 +174,11 @@
       </aside>
     </div>
   </Teleport>
+  <DeploymentSettingsDialog
+    v-if="isEditing"
+    :deployment
+    @close="isEditing = false"
+  />
 </template>
 
 <script setup lang="ts">
@@ -182,7 +187,6 @@ import { computed, ref, useId } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import Button from '@/components/ui/button/Button.vue'
-import { useToastStore } from '@/platform/updates/common/toastStore'
 import Tabs from '@/components/ui/tabs/Tabs.vue'
 import TabsContent from '@/components/ui/tabs/TabsContent.vue'
 import TabsList from '@/components/ui/tabs/TabsList.vue'
@@ -195,6 +199,7 @@ import { usePrototypePolicyStore } from '../../stores/policyStore'
 import { usePrototypeUiStore } from '../../stores/uiStore'
 import type { Deployment } from '../../types'
 import DeploymentStatusDot from '../DeploymentStatusDot.vue'
+import DeploymentSettingsDialog from './DeploymentSettingsDialog.vue'
 import ProjectSettingsRow from './ProjectSettingsRow.vue'
 
 const { deployment } = defineProps<{
@@ -213,10 +218,10 @@ const ui = usePrototypeUiStore()
 const personaStore = usePrototypePersonaStore()
 const policies = usePrototypePolicyStore()
 const environments = usePrototypeEnvironmentStore()
-const toast = useToastStore()
 const titleId = useId()
 
 const tab = ref('contents')
+const isEditing = ref(false)
 
 const subtitle = computed(() =>
   [deployment.release, deployment.gpu].filter(Boolean).join(' · ')
@@ -263,16 +268,6 @@ const usedBy = computed(() =>
 function openPolicies() {
   emit('close')
   ui.openSettings('policies')
-}
-
-// Releases live on the Developer Platform, which the prototype can't open.
-function openPlatform() {
-  toast.add({
-    severity: 'info',
-    summary: t('prototype.customCloud.settings.platformToast'),
-    detail: t('prototype.customCloud.settings.platformToastDetail'),
-    life: 3000
-  })
 }
 
 function openEnvironments() {

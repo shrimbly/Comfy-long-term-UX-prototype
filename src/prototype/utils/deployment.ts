@@ -103,3 +103,9 @@ export function buildProgress(simSeconds: number): BuildProgress {
     done: simSeconds >= TOTAL_SECONDS
   }
 }
+
+// 'v3' → 'v4'. Anything else starts a new line of releases.
+export function nextRelease(release: string | undefined): string {
+  const match = /^v(\d+)$/.exec(release ?? '')
+  return match ? `v${Number(match[1]) + 1}` : 'v1'
+}

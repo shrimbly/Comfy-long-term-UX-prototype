@@ -1593,3 +1593,30 @@ Promote? **no**.
 - Also this round: the environment sheet lists Comfy Cloud's allowed packs and models by name, its tabs show only a bottom stroke, and admins get an "Edit deployment" button that hands off to the Developer Platform.
 
 Promote? **no**.
+
+---
+
+## [2026-10-07] Media assets live in the dashboard, with filters in one row
+
+- **Decision: the sidebar's Media assets opens a dashboard view**, like Projects or Environments, instead of a workbench tab with its own sidebar. The project page's Media assets button and the project context menu land there with the project filter set.
+- **Decision: one row of filters.** Modality tabs with counts (All, Images, Videos, 3D, Audio), a Project dropdown and a Favorites toggle. Counts follow the other two filters, so a tab says what it would show.
+- **Decision: cards carry the file name and "project · size · age"** under a square preview. Video gets a play badge, audio and 3D an icon in place of a preview. A star on hover favorites the asset; favorites live in memory.
+- **Fixture:** media assets now point at the workspace's real projects, carry a modality and a size, and include a few videos, audio files and a 3D model. The old notice dialog is gone.
+
+Wiki link: `entities/media-file.md`, `entities/output.md`. The wiki is silent on favorites; working answer: per viewer, not shared.
+
+Promote? **maybe**: the "media as a dashboard view" shape, once Willie has seen it.
+
+---
+
+## [2026-10-07] Project cards show members; Edit deployment opens the deployment dialog
+
+- **Project cards** show the member count instead of the workflow count, and Comfy Cloud gets a cloud icon in place of the status dot, matching the tab-bar pill.
+- **Edit deployment opens a dialog rebuilt from Willie's editor "Create a deployment"**: the deployment as its source row, then Name, ComfyUI version, Runtime, Open-source models (all allowed, with the pre-installed ones listed), Partner models, Custom nodes (listed) and Python packages. Footer: Back, Build with your agent, Save and rebuild.
+- **Save and rebuild bumps the release and starts the demo build.** The deployment shows "building · N min" wherever it appears, and a project on it locks until ready. A rebuild does not open a project or offer a run when it finishes, unlike a new build.
+- Willie's dialog lives in his editor branch, which is not in this repo, so the wiring here is the prototype's own build machinery.
+- `Deployment.comfyVersion` and `Deployment.runtime` are new and optional.
+
+Wiki link: `concepts/custom-comfy-cloud.md`, `decisions/build-locks-project-until-ready.md`.
+
+Promote? **maybe**, together with the environment sheet.

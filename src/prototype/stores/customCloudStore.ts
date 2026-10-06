@@ -25,10 +25,17 @@ import {
 } from '../fixtures/customCloud'
 import { onMockRunStateChange } from '../mockBackend'
 import type { MockRunState } from '../mockBackend'
-import type { Deployment, PersonaFixture, Project, Workflow } from '../types'
+import type {
+  Deployment,
+  DeploymentBuildSettings,
+  PersonaFixture,
+  Project,
+  Workflow
+} from '../types'
 import {
   buildProgress,
   missingFrom,
+  nextRelease,
   resolveDeployment,
   runsWorkflow,
   simulatedSeconds
@@ -54,7 +61,12 @@ interface ActiveBuild {
   deploymentId: string
   startedAt: number
   fixture: PersonaFixture
+  // A new build opens its project when ready; a rebuild only unlocks it.
+  kind: 'new' | 'rebuild'
 }
+
+export const COMFY_VERSIONS = ['v0.39.1', 'v0.38.4', 'v0.37.2']
+export const DEFAULT_RUNTIME = 'CUDA 13.0 · Python 3.12 · Torch 2.12.1'
 
 export const usePrototypeCustomCloudStore = defineStore(
   'prototype-custom-cloud',
@@ -318,7 +330,7 @@ export const usePrototypeCustomCloudStore = defineStore(
       })
       // The build clock starts once the reload into the project ends.
       const startedAt = Date.now() + RELOAD_MS
-      build.value = { projectId, deploymentId, startedAt, fixture }
+      build.value = { projectId, deploymentId, startedAt, fixture, kind: 'new' }
       now.value = Date.now()
       ticker.resume()
       openInProject(projectId)
@@ -332,8 +344,43 @@ export const usePrototypeCustomCloudStore = defineStore(
         (d) =>
           d.id === active.deploymentId ? { ...d, status: 'ready' as const } : d
       )
-      readyProjectId.value = active.projectId
+      if (active.kind === 'new') readyProjectId.value = active.projectId
       build.value = null
+    }
+
+    // Save a deployment's settings and rebuild it as the next release. Every
+    // project on it shows the build, and the current one locks if it is one
+    // of them.
+    function rebuildDeployment(
+      deploymentId: string,
+      settings: DeploymentBuildSettings
+    ) {
+      const fixture = personaStore.fixture
+      const target = deployments.value.find((d) => d.id === deploymentId)
+      if (!target || build.value) return
+      fixture.deployments = deployments.value.map((d) =>
+        d.id === deploymentId
+          ? {
+              ...d,
+              ...settings,
+              release: nextRelease(d.release),
+              status: 'building' as const
+            }
+          : d
+      )
+      const projectId =
+        fixture.projects.find((p) => p.deploymentId === deploymentId)?.id ??
+        currentProject.value?.id ??
+        ''
+      build.value = {
+        projectId,
+        deploymentId,
+        startedAt: Date.now(),
+        fixture,
+        kind: 'rebuild'
+      }
+      now.value = Date.now()
+      ticker.resume()
     }
 
     // Run with missing nodes is another way into "choose where it runs".
@@ -398,6 +445,7 @@ export const usePrototypeCustomCloudStore = defineStore(
       dropIncompatibleWorkflow,
       openInProject,
       buildAndDeploy,
+      rebuildDeployment,
       requestRun,
       runReadyWorkflow
     }

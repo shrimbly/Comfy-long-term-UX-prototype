@@ -5950,11 +5950,6 @@
         "allProjects": "All projects"
       }
     },
-    "mediaAssetsNotice": {
-      "title": "Media Assets",
-      "body": "This will open Alex's Media Assets tab.",
-      "ok": "Got it"
-    },
     "workflowsEmpty": {
       "blankCanvas": "Blank canvas",
       "openTemplates": "Open templates"
@@ -5972,9 +5967,22 @@
       "tagsEmpty": "No tags on assets in this section yet."
     },
     "media": {
-      "add": "Add media",
-      "missingBanner": "{count} linked file is missing | {count} linked files are missing",
-      "devSimulateFolder": "Simulate folder moved (dev)"
+      "title": "Media assets",
+      "modality": {
+        "all": "All",
+        "image": "Images",
+        "video": "Videos",
+        "model3d": "3D",
+        "audio": "Audio"
+      },
+      "project": "Project",
+      "allProjects": "All projects",
+      "favorites": "Favorites",
+      "favorite": "Add to favorites",
+      "unfavorite": "Remove from favorites",
+      "noProject": "No project",
+      "count": "No assets | 1 asset | {count} assets",
+      "empty": "No assets match these filters."
     },
     "relinkDialog": {
       "title": "Relink file",
@@ -6472,7 +6480,8 @@
         "viewMode": {
           "grid": "Grid view",
           "list": "List view"
-        }
+        },
+        "memberCount": "{count} member | {count} members"
       },
       "project": {
         "notFound": "Project not found in current workspace.",
@@ -7270,6 +7279,28 @@
         "asleep": "Sleeping",
         "building": "Building"
       }
+    },
+    "deploymentDialog": {
+      "title": "Edit deployment",
+      "settings": "Settings",
+      "name": "Name",
+      "comfy": "ComfyUI",
+      "latestStable": "Latest stable",
+      "runtime": "Runtime",
+      "ossModels": "Open-source models",
+      "allAllowed": "All allowed",
+      "preinstalled": "No models pre-installed | 1 model pre-installed | {count} models pre-installed",
+      "partnerModels": "Partner models",
+      "customNodes": "Custom nodes",
+      "packs": "No packs | 1 pack | {count} packs",
+      "pythonPackages": "Python packages",
+      "nonePinned": "None pinned",
+      "back": "Back",
+      "save": "Save and rebuild",
+      "rebuilding": "Rebuilding {name}",
+      "rebuildingDetail": "About 19 minutes. Projects on it wait until it is ready.",
+      "agentIntro": "Copy this into Claude Code, Codex or another agent. The build shows up here as it runs.",
+      "agentGoal": "Update the Comfy Cloud deployment \"{name}\" to ComfyUI {version}. Keep its custom nodes and models."
     }
   },
   "mediaAssets": {

@@ -135,7 +135,13 @@ export interface Deployment {
   // What the build contains — drives "runs it" vs "what it lacks".
   nodePacks: string[]
   models: string[]
+  // The build's ComfyUI version and runtime, e.g. 'v0.39.1' and
+  // 'CUDA 13.0 · Python 3.12 · Torch 2.12.1'. Custom deployments only.
+  comfyVersion?: string
+  runtime?: string
 }
+
+export type DeploymentBuildSettings = Pick<Deployment, 'name' | 'comfyVersion'>
 
 // Storage medium for an asset. Per
 //   decision: ../IA_Plan/wiki/decisions/save-destination-workflow-level.md

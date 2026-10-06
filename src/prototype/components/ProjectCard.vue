@@ -48,11 +48,7 @@
         </span>
         <span class="flex items-center justify-between gap-2">
           <span class="text-xs text-muted-foreground">
-            {{
-              t('prototype.views.projects.workflowCount', {
-                count: workflows.length
-              })
-            }}
+            {{ t('prototype.views.projects.memberCount', peopleCount) }}
           </span>
           <span
             v-if="!project.currentUserHasAccess"
@@ -61,9 +57,8 @@
             {{ t('prototype.views.projects.noAccess') }}
           </span>
         </span>
-        <DeploymentLabel
+        <ProjectEnvironmentChip
           :deployment
-          with-dot
           class="text-xs text-muted-foreground"
         />
       </span>
@@ -90,10 +85,9 @@
       </span>
       <span class="flex min-w-0 flex-1 flex-col">
         <span class="truncate text-sm/tight">{{ project.name }}</span>
-        <DeploymentLabel
+        <ProjectEnvironmentChip
           v-if="project.currentUserHasAccess"
           :deployment
-          with-dot
           class="text-xs text-muted-foreground"
         />
         <span v-else class="truncate text-xs text-muted-foreground italic">
@@ -116,11 +110,12 @@ import { cn } from '@comfyorg/tailwind-utils'
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
+import { useProjectAccess } from '../composables/useProjectAccess'
 import { usePrototypeCustomCloudStore } from '../stores/customCloudStore'
 import { workflowThumbnail } from '../utils/thumbnail'
 import type { Project, Workflow } from '../types'
 
-import DeploymentLabel from './DeploymentLabel.vue'
+import ProjectEnvironmentChip from './project/ProjectEnvironmentChip.vue'
 import ProjectAccessBadge from './ProjectAccessBadge.vue'
 import ProjectContextMenu from './ProjectContextMenu.vue'
 
@@ -149,6 +144,7 @@ const tiles = computed(() => {
 
 const customCloud = usePrototypeCustomCloudStore()
 const deployment = computed(() => customCloud.deploymentOf(project.id))
+const { peopleCount } = useProjectAccess(() => project)
 
 type MenuHandle = { show: (event: MouseEvent) => void }
 const menuRef = ref<MenuHandle | null>(null)

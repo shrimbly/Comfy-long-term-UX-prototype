@@ -3,12 +3,17 @@
     concept: ../IA_Plan/wiki/concepts/custom-comfy-cloud.md — where a project
              runs, and whether it is up
 
-  Dot + name. The status word shows only when the environment is not ready
-  ("asleep", "building · 12 min"), so a healthy project reads as one name.
+  Dot + name, or a cloud icon for Comfy Cloud, which is always up. The
+  status word shows only when the environment is not ready ("asleep",
+  "building · 12 min"), so a healthy project reads as one name.
 -->
 <template>
   <span class="inline-flex min-w-0 items-center gap-2">
-    <DeploymentStatusDot :status="deployment.status" />
+    <i
+      v-if="deployment.kind === 'comfy-cloud'"
+      class="icon-[lucide--cloud] size-3.5 shrink-0 text-muted-foreground"
+    />
+    <DeploymentStatusDot v-else :status="deployment.status" />
     <span class="truncate">{{ label }}</span>
   </span>
 </template>

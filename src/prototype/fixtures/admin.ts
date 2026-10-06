@@ -1238,6 +1238,8 @@ export const adminFixture: PersonaFixture = {
       status: 'ready',
       gpu: 'RTX 5090',
       warmMinutes: 2,
+      comfyVersion: 'v0.39.1',
+      runtime: 'CUDA 13.0 · Python 3.12 · Torch 2.12.1',
       nodePacks: ['comfyui-rmbg', 'acme-matte-tools', 'comfyui-impact-pack'],
       models: ['flux1-dev-fp8', 'acme_hero_lora_v5', 'sdxl-base-1.0']
     },
@@ -1249,6 +1251,8 @@ export const adminFixture: PersonaFixture = {
       status: 'asleep',
       gpu: 'RTX 4090',
       warmMinutes: 2,
+      comfyVersion: 'v0.38.4',
+      runtime: 'CUDA 12.8 · Python 3.11 · Torch 2.9.0',
       nodePacks: ['comfyui-rmbg'],
       models: ['flux1-dev-fp8', 'acme_hero_lora_v5']
     }

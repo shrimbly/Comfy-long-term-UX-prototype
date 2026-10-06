@@ -25,6 +25,7 @@ type ActiveView =
   | { kind: 'drafts' }
   | { kind: 'projects' }
   | { kind: 'environments' }
+  | { kind: 'media' }
   | { kind: 'project'; projectId: string }
   | { kind: 'recents' }
   | { kind: 'templates' }

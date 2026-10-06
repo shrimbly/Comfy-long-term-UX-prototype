@@ -296,7 +296,6 @@ import { useWorkflowDrag } from '../composables/useWorkflowDrag'
 import { useWorkflowPublish } from '../composables/useWorkflowPublish'
 import { usePrototypeCustomCloudStore } from '../stores/customCloudStore'
 import { usePrototypePersonaStore } from '../stores/personaStore'
-import { usePrototypeTabsStore } from '../stores/tabsStore'
 import { usePrototypeUiStore } from '../stores/uiStore'
 import type { Workflow } from '../types'
 import type { ProjectPageTab } from '../components/project/ProjectPageHeader.vue'
@@ -310,7 +309,6 @@ const { t } = useI18n()
 const toast = useToast()
 const personaStore = usePrototypePersonaStore()
 const uiStore = usePrototypeUiStore()
-const tabsStore = usePrototypeTabsStore()
 const customCloud = usePrototypeCustomCloudStore()
 const { fixture, currentWorkspace, draftsProject } = storeToRefs(personaStore)
 const {
@@ -603,6 +601,6 @@ function onDraftsDrop(event: DragEvent) {
 
 function onViewMediaAssets() {
   uiStore.setProjectFilter(projectId)
-  tabsStore.openMediaAssets(t('prototype.sidebar.libraryMedia'))
+  uiStore.go({ kind: 'media' })
 }
 </script>
