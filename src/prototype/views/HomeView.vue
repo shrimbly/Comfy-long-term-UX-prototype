@@ -115,6 +115,7 @@
             v-for="wf in matchedPublished"
             :key="wf.id"
             :workflow="wf"
+            @open="onOpenWorkflow"
           />
         </div>
       </div>
@@ -131,6 +132,7 @@
             v-for="wf in matchedDrafts"
             :key="wf.id"
             :workflow="wf"
+            @open="onOpenWorkflow"
           />
         </div>
       </div>
@@ -147,6 +149,7 @@
             v-for="wf in matchedMyWorkflows"
             :key="wf.id"
             :workflow="wf"
+            @open="onOpenWorkflow"
           />
         </div>
       </div>
@@ -207,6 +210,7 @@
             v-for="wf in recentsStrip"
             :key="wf.id"
             :workflow="wf"
+            @open="onOpenWorkflow"
           />
         </div>
       </section>
@@ -285,6 +289,7 @@ import {
   gettingStartedTemplates,
   workflowTemplates
 } from '../fixtures/templates'
+import { usePrototypeCustomCloudStore } from '../stores/customCloudStore'
 import { usePrototypePersonaStore } from '../stores/personaStore'
 import { usePrototypeUiStore } from '../stores/uiStore'
 import type { Workflow } from '../types'
@@ -336,6 +341,7 @@ const featuredModels: FeaturedCard[] = [
 const { t } = useI18n()
 const uiStore = usePrototypeUiStore()
 const personaStore = usePrototypePersonaStore()
+const customCloud = usePrototypeCustomCloudStore()
 const { recentWorkflows, visibleProjects, draftsProject, fixture } =
   storeToRefs(personaStore)
 
@@ -508,6 +514,13 @@ watch(trimmedQuery, () => {
 
 function showGroup(type: ResultType): boolean {
   return resultFilter.value === 'all' || resultFilter.value === type
+}
+
+// A workflow opens in the editor, in the project it belongs to: a draft's
+// provenance project, else its own.
+function onOpenWorkflow(workflowId: string) {
+  const wf = fixture.value.workflows.find((w) => w.id === workflowId)
+  if (wf) customCloud.openWorkflow(wf.provenanceProjectId ?? wf.projectId, wf)
 }
 
 function onOpenProject(projectId: string) {

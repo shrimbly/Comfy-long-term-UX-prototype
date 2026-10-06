@@ -1,8 +1,8 @@
 <!--
   Implements:
-    Mirrors ../../../../components/topbar/WorkflowTabs.vue — same vertical
-    dividers per tab, active-tab underline, 0.75 opacity on inactive, and a
-    trailing "+" button.
+    Mirrors ../../../../components/topbar/WorkflowTabs.vue and
+    WorkflowTab.vue — the same Tabs components and classes, so hover,
+    active state, unsaved dot and close button match the real editor.
 
   The one tab bar above Home and the editor (LayoutDefault mounts it).
   Differences vs upstream:
@@ -49,71 +49,92 @@
       v-if="showSwitcher && customCloud.currentProject"
       :project="customCloud.currentProject"
     />
-    <div class="flex min-w-0 flex-1 items-stretch">
-      <div
-        v-if="tabsStore.openTabs.length"
-        class="flex min-w-0 overflow-x-auto"
-      >
+    <div
+      class="flex h-full min-w-0 flex-auto flex-row gap-1 overflow-hidden px-1"
+    >
+      <div class="overflow-hidden">
         <div
-          v-for="tab in tabsStore.openTabs"
-          :key="tab.id"
-          :class="
-            cn(
-              'relative flex shrink-0 items-center border-r border-interface-stroke',
-              isTabActive(tab.id)
-                ? 'opacity-100'
-                : 'opacity-75 hover:opacity-100'
-            )
-          "
+          class="flex size-full scrollbar-thin scrollbar-thumb-alpha-smoke-500-50 scrollbar-track-transparent overflow-x-auto overflow-y-hidden p-0"
         >
-          <Button
-            variant="muted-textonly"
-            class="h-full rounded-none"
-            :aria-pressed="isTabActive(tab.id)"
-            @click="onSelectTab(tab.id)"
-            @click.middle="tabsStore.close(tab.id)"
+          <Tabs
+            class="h-full"
+            :model-value="isEditorRoute ? '' : tabsStore.activeTabId"
+            activation-mode="manual"
+            @update:model-value="onSelectTab(String($event))"
           >
-            <i
-              v-if="tab.kind === 'builder'"
-              class="icon-[lucide--hammer] size-4 text-muted-foreground"
-              aria-hidden="true"
-            />
-            <i
-              v-else-if="tab.kind === 'app'"
-              class="icon-[lucide--panels-top-left] size-4 text-primary-background"
-              aria-hidden="true"
-            />
-            <i
-              v-else-if="tab.kind === 'media-assets'"
-              class="icon-[comfy--image-ai-edit] size-4"
-              aria-hidden="true"
-            />
-            <span class="max-w-40 truncate">{{ tab.label }}</span>
-          </Button>
-          <Button
-            variant="muted-textonly"
-            size="icon-sm"
-            :aria-label="t('prototype.tabs.closeTab')"
-            @click="tabsStore.close(tab.id)"
-          >
-            <i class="icon-[lucide--x] size-3.5" aria-hidden="true" />
-          </Button>
-          <span
-            v-if="isTabActive(tab.id)"
-            class="absolute inset-x-0 bottom-0 h-px bg-primary-background"
-          />
+            <TabsList class="h-full flex-nowrap gap-1">
+              <div
+                v-for="tab in tabsStore.openTabs"
+                :key="tab.id"
+                class="group/tab relative h-full shrink-0"
+                @click.middle="tabsStore.close(tab.id)"
+              >
+                <TabsTrigger
+                  :value="tab.id"
+                  class="h-full max-w-full min-w-22.5 py-2 pr-2 pl-3"
+                >
+                  <i
+                    v-if="tab.kind === 'builder'"
+                    class="icon-[lucide--hammer] bg-muted-foreground"
+                  />
+                  <i
+                    v-else-if="tab.kind === 'app'"
+                    class="icon-[lucide--panels-top-left] bg-primary-background"
+                  />
+                  <i
+                    v-else-if="tab.kind === 'media-assets'"
+                    class="icon-[comfy--image-ai-edit]"
+                  />
+                  <span
+                    class="inline-block max-w-[150px] truncate font-inter text-sm leading-none font-normal text-inherit"
+                  >
+                    {{ tab.label }}
+                  </span>
+                  <span class="relative size-4 shrink-0">
+                    <span
+                      v-if="tab.isDirty"
+                      :class="
+                        cn(
+                          'absolute top-1/2 left-1/2 z-10 size-2 -translate-1/2 rounded-full group-focus-within/tab:hidden group-hover/tab:hidden',
+                          isTabActive(tab.id)
+                            ? 'bg-base-foreground'
+                            : 'bg-smoke-800'
+                        )
+                      "
+                    />
+                  </span>
+                </TabsTrigger>
+                <Button
+                  :class="
+                    cn(
+                      'absolute top-1/2 right-2 size-4 -translate-y-1/2 rounded-none p-0 text-smoke-800 group-focus-within/tab:visible group-hover/tab:visible',
+                      isTabActive(tab.id) && !tab.isDirty
+                        ? 'visible'
+                        : 'invisible'
+                    )
+                  "
+                  variant="muted-textonly"
+                  size="unset"
+                  :aria-label="t('prototype.tabs.closeTab')"
+                  @click.stop="tabsStore.close(tab.id)"
+                >
+                  <i class="icon-[lucide--x] size-4" />
+                </Button>
+              </div>
+            </TabsList>
+          </Tabs>
         </div>
       </div>
       <Button
         v-if="!isEditorRoute"
+        class="shrink-0 self-center rounded-lg"
         variant="muted-textonly"
         size="icon"
-        class="aspect-square h-full w-auto shrink-0 rounded-none"
         :title="t('prototype.tabs.newTab')"
         :aria-label="t('prototype.tabs.newTab')"
         @click="tabsStore.addBlank"
       >
-        <i class="icon-[lucide--plus] size-4" aria-hidden="true" />
+        <i class="pi pi-plus" />
       </Button>
       <WorkflowTabs
         v-else
@@ -165,6 +186,9 @@ import WorkflowTabs from '@/components/topbar/WorkflowTabs.vue'
 import TopbarBadges from '@/components/topbar/TopbarBadges.vue'
 import TopbarSubscribeButton from '@/components/topbar/TopbarSubscribeButton.vue'
 import Button from '@/components/ui/button/Button.vue'
+import Tabs from '@/components/ui/tabs/Tabs.vue'
+import TabsList from '@/components/ui/tabs/TabsList.vue'
+import TabsTrigger from '@/components/ui/tabs/TabsTrigger.vue'
 import ProjectSwitcher from './ProjectSwitcher.vue'
 import { usePrototypeCustomCloudStore } from '../stores/customCloudStore'
 import { usePrototypeNavigationStore } from '../stores/navigationStore'

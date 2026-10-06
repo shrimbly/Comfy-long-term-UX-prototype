@@ -10,6 +10,8 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 
+import type { Workflow } from '../types'
+
 type TabKind = 'workflow' | 'app' | 'builder' | 'media-assets'
 
 // Demo workflows the editor knows how to draw (see DemoEditorView).
@@ -21,6 +23,8 @@ interface OpenTab {
   kind?: TabKind
   isDirty?: boolean
   workflowKey?: DemoWorkflowKey
+  // The saved (fixture) workflow this tab shows, if any.
+  workflowId?: string
   // The real editor workflow this tab shows, once the editor has opened it.
   workflowPath?: string
 }
@@ -78,15 +82,22 @@ export const usePrototypeTabsStore = defineStore('prototype-tabs', () => {
     activeTabId.value = id
   }
 
-  // Open several saved workflows at once, showing the first.
-  function openAll(labels: string[]) {
-    const tabs = labels.map((label) => ({
-      id: nextId(),
-      label,
-      kind: 'workflow' as const
-    }))
-    openTabs.value.push(...tabs)
-    if (tabs[0]) activeTabId.value = tabs[0].id
+  // Open saved workflows as tabs, reusing any already open, and show the
+  // first.
+  function openSaved(workflows: Pick<Workflow, 'id' | 'name'>[]) {
+    const tabIds = workflows.map((workflow) => {
+      const open = openTabs.value.find((t) => t.workflowId === workflow.id)
+      if (open) return open.id
+      const id = nextId()
+      openTabs.value.push({
+        id,
+        label: workflow.name,
+        kind: 'workflow',
+        workflowId: workflow.id
+      })
+      return id
+    })
+    if (tabIds[0]) activeTabId.value = tabIds[0]
   }
 
   // Show a workflow: the active one, else the first open one, else a new
@@ -150,7 +161,7 @@ export const usePrototypeTabsStore = defineStore('prototype-tabs', () => {
     select,
     addBlank,
     openWorkflow,
-    openAll,
+    openSaved,
     focusWorkflow,
     setWorkflowPath,
     openMediaAssets,

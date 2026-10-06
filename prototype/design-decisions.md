@@ -1422,3 +1422,13 @@ The fork last synced with upstream on 2026-05-07. Willie wants the current upstr
   - The `gradient` Button variant is now `subscribe`: the local persona's Upgrade button is solid gold, not purple.
 - Wiki link: none; prototype infrastructure.
 - Promote? **no**.
+
+---
+
+## [2026-10-07] Tab bar: upstream tab styling, a cloud icon for Comfy Cloud, Recents open the editor
+
+- **Decision: workflow tabs use upstream's tab components.** They use the same `Tabs` components and classes as the real editor's `WorkflowTab`, so hover, active state, the unsaved dot and the close button match. Home and the project pill keep the prototype's own design.
+- **Decision: Comfy Cloud projects show a cloud icon in the pill.** It replaces the status dot. Comfy Cloud is always up, so a green dot said nothing. The dot stays for custom deployments (building, ready, asleep). The personal project keeps its person icon.
+- **Decision: clicking a workflow card on Home opens it in the editor.** This covers Recents and search results. A draft opens in its provenance project, and any other workflow in its own project. The project switch works as before: the project's remembered tabs, else its drafts. A workflow that's already open reuses its tab.
+
+Wiki is silent on what opening a recent does across projects. Promote? **maybe**, with the project-switch entry above.

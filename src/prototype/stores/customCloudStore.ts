@@ -25,7 +25,7 @@ import {
 } from '../fixtures/customCloud'
 import { onMockRunStateChange } from '../mockBackend'
 import type { MockRunState } from '../mockBackend'
-import type { Deployment, PersonaFixture } from '../types'
+import type { Deployment, PersonaFixture, Workflow } from '../types'
 import {
   buildProgress,
   missingFrom,
@@ -151,14 +151,13 @@ export const usePrototypeCustomCloudStore = defineStore(
     })
 
     // The viewer's drafts for a project, newest first.
-    function draftNames(projectId: string) {
+    function draftsOf(projectId: string) {
       const draftsId = personaStore.draftsProject?.id
       return personaStore.fixture.workflows
         .filter(
           (w) => w.projectId === draftsId && w.provenanceProjectId === projectId
         )
         .toSorted((a, b) => b.updatedAt.localeCompare(a.updatedAt))
-        .map((w) => w.name)
     }
 
     // A full reload lands in the editor: the project's remembered tabs, or
@@ -166,7 +165,7 @@ export const usePrototypeCustomCloudStore = defineStore(
     const reload = useTimeoutFn(
       (fromId: string, toId: string, afterSwitch?: () => void) => {
         tabsStore.swapProject(fromId, toId)
-        if (!tabsStore.openTabs.length) tabsStore.openAll(draftNames(toId))
+        if (!tabsStore.openTabs.length) tabsStore.openSaved(draftsOf(toId))
         selectedProjectId.value = toId
         reloadingToId.value = null
         uiStore.goHome()
@@ -191,8 +190,12 @@ export const usePrototypeCustomCloudStore = defineStore(
       reload.start(fromId, projectId, afterSwitch)
     }
 
-    function openWorkflow(projectId: string, label: string) {
-      switchProject(projectId, () => tabsStore.openWorkflow(label))
+    // A saved workflow opens in its project, in its tab if already open.
+    function openWorkflow(
+      projectId: string,
+      workflow: Pick<Workflow, 'id' | 'name'>
+    ) {
+      switchProject(projectId, () => tabsStore.openSaved([workflow]))
     }
 
     function openRunTargetDialog() {

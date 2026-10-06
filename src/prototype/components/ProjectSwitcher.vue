@@ -7,11 +7,12 @@
               — working: reload, for now
 
   Project switcher in the tab strip, after Home and before the tabs: "the
-  parent of all". A neutral pill with the deployment's status dot (blue with
-  a halo and the minutes left while building, green when ready, grey when
-  asleep), the name cut at about 15 characters and shown in full on hover.
-  The menu lists every project, with its colour tile and where it runs.
-  Picking one reloads into that project's remembered tabs.
+  parent of all". A neutral pill with a cloud icon for Comfy Cloud, or the
+  custom deployment's status dot (blue with a halo and the minutes left while
+  building, green when ready, grey when asleep), the name cut at about 15
+  characters and shown in full on hover. The menu lists every project, with
+  its colour tile and where it runs. Picking one reloads into that project's
+  remembered tabs, or its drafts the first time.
 -->
 <template>
   <div
@@ -34,6 +35,10 @@
           <i
             v-if="project.isDrafts"
             class="icon-[lucide--user] size-3 text-muted-foreground"
+          />
+          <i
+            v-else-if="deployment.kind === 'comfy-cloud'"
+            class="icon-[lucide--cloud] size-3.5 text-muted-foreground"
           />
           <DeploymentStatusDot
             v-else

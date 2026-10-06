@@ -25,7 +25,7 @@ async function setup() {
 type Store = Awaited<ReturnType<typeof setup>>['store']
 
 function openWorkflowIn(store: Store, projectId: string) {
-  store.openWorkflow(projectId, 'Untitled workflow')
+  store.openWorkflow(projectId, { id: 'wf-new', name: 'Untitled workflow' })
   vi.advanceTimersByTime(RELOAD_MS)
 }
 
