@@ -11,9 +11,7 @@
     - The project switcher sits right after Home, before the workflow tabs
       (Custom Comfy Cloud:
       ../IA_Plan/wiki/decisions/project-switcher-in-tab-bar.md). The tabs to
-      its right are that project's tabs. Home is workspace-wide, so the
-      switcher hides while Home is active — except during a build, whose
-      lock screen offers it as the way out.
+      its right are that project's tabs.
     - Driven by the prototype tabsStore. Its workflow tabs show the real
       editor embedded in the dashboard (RealEditor). The real workflow tabs
       appear only on the standalone editor route (`/`).
@@ -187,10 +185,7 @@ const isHomeActive = computed(
   () => !isEditorRoute.value && tabsStore.activeTabId === HOME_TAB_ID
 )
 const showSwitcher = computed(
-  () =>
-    customCloud.isEnabled &&
-    !!customCloud.currentProject &&
-    (!isHomeActive.value || customCloud.isLocked)
+  () => customCloud.isEnabled && !!customCloud.currentProject
 )
 
 function isTabActive(id: string) {

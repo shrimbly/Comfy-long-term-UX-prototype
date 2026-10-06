@@ -1378,3 +1378,21 @@ Willie picked direction F from the design canvas "Tab bar: Home and project swit
 Open question: should Home show some neutral sign of the current project? Today a presenter on Home can't switch projects without opening a workflow.
 
 Promote? **maybe**: a small amendment to `decisions/project-switcher-in-tab-bar.md`, saying the switcher hides on Home.
+
+---
+
+## [2026-10-07] Flow 07: the pill is back on Home; a project switch opens its drafts
+
+This replaces two points in the entry above, "project pill in the tab bar, hidden on Home", after Willie reviewed it.
+
+- **Decision: the project pill shows on Home too.** The pill is how you see and change the project from anywhere, so hiding it on Home cost more than it gained.
+- **Decision: a project switch reloads into the editor.** The tabs are, in order of preference:
+  1. the tabs you left open in that project;
+  2. the first time, your drafts for the project (the workflows in My Workflows whose provenance is that project), newest first;
+  3. a blank workflow, if you have no drafts there.
+
+  A project switch no longer lands on the project page.
+
+- Drafts open as saved workflows. In the prototype, each one shows the default graph, except matte_pass.
+
+Promote? **yes**. Add it to `decisions/project-switcher-in-tab-bar.md` as "switching project restores its tabs, else opens your drafts for it". Relates to `decisions/drafts-as-default-private-project.md`.

@@ -78,6 +78,26 @@ export const usePrototypeTabsStore = defineStore('prototype-tabs', () => {
     activeTabId.value = id
   }
 
+  // Open several saved workflows at once, showing the first.
+  function openAll(labels: string[]) {
+    const tabs = labels.map((label) => ({
+      id: nextId(),
+      label,
+      kind: 'workflow' as const
+    }))
+    openTabs.value.push(...tabs)
+    if (tabs[0]) activeTabId.value = tabs[0].id
+  }
+
+  // Show a workflow: the active one, else the first open one, else a new
+  // blank workflow.
+  function focusWorkflow() {
+    const workflows = openTabs.value.filter((t) => t.kind === 'workflow')
+    if (workflows.some((t) => t.id === activeTabId.value)) return
+    if (workflows[0]) activeTabId.value = workflows[0].id
+    else addBlank()
+  }
+
   function setWorkflowPath(id: string, workflowPath: string) {
     const tab = openTabs.value.find((t) => t.id === id)
     if (tab) tab.workflowPath = workflowPath
@@ -130,6 +150,8 @@ export const usePrototypeTabsStore = defineStore('prototype-tabs', () => {
     select,
     addBlank,
     openWorkflow,
+    openAll,
+    focusWorkflow,
     setWorkflowPath,
     openMediaAssets,
     close,
