@@ -30,11 +30,6 @@
       class="relative my-auto flex w-full max-w-[640px] flex-col gap-6 rounded-2xl border border-border-default bg-base-background p-9 text-base-foreground shadow-2xl"
     >
       <header class="flex flex-col gap-2.5">
-        <span
-          class="text-xs font-medium tracking-widest text-muted-foreground uppercase"
-        >
-          {{ t('prototype.customCloud.lock.eyebrow') }}
-        </span>
         <h2 :id="titleId" class="m-0 text-2xl font-semibold">
           {{
             tText('prototype.customCloud.lock.title', { project: project.name })

@@ -7010,7 +7010,6 @@
         "ready": "When it is ready, it opens in Comfy Cloud in the project {project}."
       },
       "lock": {
-        "eyebrow": "Building",
         "title": "Building {project}",
         "minutesLeft": "Less than a minute left. | About 1 minute left. | About {count} minutes left.",
         "body": "{project} opens when it's ready, and we'll email you. Work in another project in the meantime.",
@@ -7054,7 +7053,6 @@
       "ready": {
         "title": "{project} is ready",
         "body": "{workflow} has every node and model it needs. It runs in {project} now.",
-        "run": "Run {workflow}",
         "dismiss": "Dismiss"
       },
       "demo": {

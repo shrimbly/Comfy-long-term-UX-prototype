@@ -71,9 +71,9 @@ Wiki: `../IA_Plan/wiki/concepts/custom-comfy-cloud.md`. Source: the 6 Oct "Custo
    - Optional: click **Switch to another project**. The project menu opens with its search field ready to type in, and the tab strip stays live. Press Esc to stay.
 7. **Ready: the flagged nodes are clear.**
    - The modal closes, the amber rings are gone, and the pill's dot turns green.
-   - A toast says "Matte R&D is ready" and offers **Run matte_pass**.
+   - A toast says "Matte R&D is ready".
 8. **Cold start.**
-   - Click **Run matte_pass** in the toast, or the editor's **Run** button.
+   - Click the editor's **Run** button.
    - A small note under Run says "Starting a worker. The first run takes a little longer: usually under 20 seconds." The editor also shows its own "Job queued" toast. Nothing actually runs.
    - There is no warm/cold indicator anywhere else.
 9. **Switch projects from the tab bar.**

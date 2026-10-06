@@ -412,19 +412,6 @@ export const usePrototypeCustomCloudStore = defineStore(
       else runRequested.value = true
     }
 
-    function runReadyWorkflow() {
-      const projectId = readyProjectId.value
-      readyProjectId.value = null
-      if (!projectId) return
-      switchProject(projectId, () => {
-        const tab = tabsStore.openTabs.find(
-          (t) => t.workflowKey === 'matte_pass'
-        )
-        if (tab) tabsStore.select(tab.id)
-        requestRun()
-      })
-    }
-
     // Another persona is another account: start it on its personal project
     // with no tabs open.
     watch(
@@ -475,8 +462,7 @@ export const usePrototypeCustomCloudStore = defineStore(
       openInProject,
       createProjectOn,
       buildAndDeploy,
-      requestRun,
-      runReadyWorkflow
+      requestRun
     }
   }
 )

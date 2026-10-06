@@ -4,7 +4,7 @@
              step 7: "all the red around the nodes is gone"
 
   Shown once a demo build is ready: the project now has every node and
-  model matte_pass needs, and Run works.
+  model matte_pass needs.
 -->
 <template>
   <div
@@ -28,18 +28,6 @@
           })
         }}
       </span>
-      <div class="mt-2">
-        <Button
-          variant="inverted"
-          size="md"
-          @click="customCloud.runReadyWorkflow()"
-        >
-          <i class="icon-[lucide--play] size-3.5" />
-          {{
-            t('prototype.customCloud.ready.run', { workflow: MATTE_PASS.name })
-          }}
-        </Button>
-      </div>
     </div>
     <Button
       variant="muted-textonly"
