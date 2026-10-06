@@ -1229,7 +1229,7 @@ export const adminFixture: PersonaFixture = {
       status: 'ready',
       gpu: 'RTX 5090',
       warmMinutes: 2,
-      nodePacks: ['comfyui-rmbg', 'acme-matte-tools', 'comfyui-impact-pack'],
+      nodePacks: ['comfyui-rmbg', 'acme-matte-tools', 'impact-pack'],
       models: ['flux1-dev-fp8', 'acme_hero_lora_v5', 'sdxl-base-1.0']
     },
     {

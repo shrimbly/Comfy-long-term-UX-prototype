@@ -58,7 +58,43 @@
       </div>
       <RealEditor />
 
-      <BuildReadyToast v-if="readyProject" :project="readyProject" />
+      <BuildReadyToast
+        v-if="readyProject"
+        :title="
+          tText('prototype.customCloud.ready.title', {
+            project: readyProject.name
+          })
+        "
+        :body="
+          tText('prototype.customCloud.ready.body', {
+            workflow: MATTE_PASS.name,
+            project: readyProject.name
+          })
+        "
+        @dismiss="customCloud.readyProjectId = null"
+      />
+      <BuildReadyToast
+        v-else-if="customNodes.ready"
+        :title="
+          tText('prototype.customNodes.ready.title', {
+            deployment: customNodes.ready.deploymentName,
+            release: customNodes.ready.release
+          })
+        "
+        :body="
+          tText(
+            customNodes.ready.kind === 'add'
+              ? 'prototype.customNodes.ready.bodyAdd'
+              : 'prototype.customNodes.ready.bodyChange',
+            {
+              pack: customNodes.ready.packName,
+              version: customNodes.ready.version,
+              deployment: customNodes.ready.deploymentName
+            }
+          )
+        "
+        @dismiss="customNodes.ready = null"
+      />
       <div
         v-if="isDraggingFile"
         class="pointer-events-none absolute inset-0 z-30 grid place-items-center border-2 border-dashed border-primary-background bg-primary-background/10"
@@ -77,6 +113,11 @@
 
     <WorkflowDragGhost />
     <RunTargetDialog v-if="customCloud.dialogStep" />
+    <CustomNodesDialog v-if="customNodes.isOpen" />
+    <CustomNodesRebuildDialog
+      v-if="customNodes.pendingChange"
+      :change="customNodes.pendingChange"
+    />
     <ProjectReloadOverlay v-if="reloadingProject" :project="reloadingProject" />
   </div>
 </template>
@@ -89,6 +130,8 @@ import { useI18n } from 'vue-i18n'
 
 import MediaAssetsView from '@/platform/assets/components/MediaAssetsView.vue'
 import BuildReadyToast from '../components/BuildReadyToast.vue'
+import CustomNodesDialog from '../components/CustomNodesDialog.vue'
+import CustomNodesRebuildDialog from '../components/CustomNodesRebuildDialog.vue'
 import DemoControls from '../components/DemoControls.vue'
 import LocalMediaView from '../components/LocalMediaView.vue'
 import ProjectReloadOverlay from '../components/ProjectReloadOverlay.vue'
@@ -96,7 +139,10 @@ import RealEditor from '../components/RealEditor.vue'
 import PrototypeSidebar from '../components/PrototypeSidebar.vue'
 import RunTargetDialog from '../components/RunTargetDialog.vue'
 import WorkflowDragGhost from '../components/WorkflowDragGhost.vue'
+import { useTextT } from '../composables/useTextT'
+import { MATTE_PASS } from '../fixtures/customCloud'
 import { usePrototypeCustomCloudStore } from '../stores/customCloudStore'
+import { usePrototypeCustomNodesStore } from '../stores/customNodesStore'
 import { usePrototypePersonaStore } from '../stores/personaStore'
 import { MEDIA_ASSETS_TAB_ID, usePrototypeTabsStore } from '../stores/tabsStore'
 import { usePrototypeUiStore } from '../stores/uiStore'
@@ -114,6 +160,8 @@ const uiStore = usePrototypeUiStore()
 const tabsStore = usePrototypeTabsStore()
 const personaStore = usePrototypePersonaStore()
 const customCloud = usePrototypeCustomCloudStore()
+const customNodes = usePrototypeCustomNodesStore()
+const tText = useTextT()
 const { activeView } = storeToRefs(uiStore)
 const { activeTabId, openTabs } = storeToRefs(tabsStore)
 const { fixture } = storeToRefs(personaStore)
