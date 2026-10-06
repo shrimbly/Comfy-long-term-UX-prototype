@@ -7055,8 +7055,9 @@
         "dismiss": "Dismiss"
       },
       "demo": {
-        "drop": "Demo: drop incompatible workflow",
-        "dropNothingRuns": "Demo: nothing runs it",
+        "menu": "Demo",
+        "drop": "Drop incompatible workflow",
+        "dropNothingRuns": "Drop it where nothing runs it",
         "reset": "Reset demo"
       }
     },

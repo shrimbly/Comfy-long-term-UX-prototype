@@ -71,11 +71,7 @@
       </div>
     </div>
 
-    <div
-      v-if="showPersonaSwitcher"
-      class="fixed right-4 bottom-4 z-50 flex items-center gap-2 rounded-lg border border-border-subtle bg-secondary-background p-2 shadow-lg"
-    >
-      <PersonaSwitcher />
+    <div v-if="showDemoControls" class="fixed bottom-4 left-64 z-50">
       <DemoControls />
     </div>
 
@@ -95,7 +91,6 @@ import MediaAssetsView from '@/platform/assets/components/MediaAssetsView.vue'
 import BuildReadyToast from '../components/BuildReadyToast.vue'
 import DemoControls from '../components/DemoControls.vue'
 import LocalMediaView from '../components/LocalMediaView.vue'
-import PersonaSwitcher from '../components/PersonaSwitcher.vue'
 import ProjectReloadOverlay from '../components/ProjectReloadOverlay.vue'
 import RealEditor from '../components/RealEditor.vue'
 import PrototypeSidebar from '../components/PrototypeSidebar.vue'
@@ -140,10 +135,10 @@ const reloadingProject = computed(() =>
   fixture.value.projects.find((p) => p.id === customCloud.reloadingToId)
 )
 
-// The persona toggle is a prototype affordance: surface it on the dev server
+// The demo controls are a prototype affordance: surface it on the dev server
 // and on the deployed prototype (Vercel, built with PROTOTYPE_DEPLOY=true),
 // but never in a real ComfyUI production build.
-const showPersonaSwitcher =
+const showDemoControls =
   import.meta.env.DEV || import.meta.env.VITE_PROTOTYPE_DEPLOY
 
 // Any file dropped on the app opens as the incompatible matte_pass workflow,

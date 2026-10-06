@@ -1567,3 +1567,11 @@ Supersedes "the build locks the project" in the entries above. Wiki: `decisions/
 - Code names (`drafts`, `isDrafts`, `saveToMyWorkflows`) are unchanged. One upstream ComfyUI string (`mediaAsset.actions.promoteToCloudFallbackDestination`) still says "My Workflows", because it sits outside the prototype.
 
 Wiki: `decisions/drafts-as-default-private-project.md` names the per-user project "Drafts". Promote? **yes**: settle the user-facing name as "Personal" there.
+
+---
+
+## [2026-10-07] Demo controls fold into one "Demo" pill
+
+The presenter bar (persona `<select>` + "Demo: drop incompatible workflow" + "Demo: nothing runs it" + "Reset demo") sat bottom-right as a wide strip, covering the editor's fit / zoom / minimap / links toolbar. It's now a single small **Demo · {persona}** pill bottom-left, just past the sidebar, opening a menu: personas as a checked list, then the two drop actions, then Reset demo. `PersonaSwitcher.vue` folded into `DemoControls.vue`. Still shown only on the dev server and the deployed prototype.
+
+Promote? **no** — presenter tooling; no IA change.
