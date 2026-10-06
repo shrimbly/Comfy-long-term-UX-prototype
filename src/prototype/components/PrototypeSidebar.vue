@@ -104,6 +104,11 @@
         @click="uiStore.go({ kind: 'settings' })"
       />
       <SidebarItem
+        :label="t('prototype.sidebar.developers')"
+        icon="icon-[lucide--code-xml]"
+        @click="openDevelopers"
+      />
+      <SidebarItem
         :label="t('prototype.sidebar.help')"
         icon="icon-[lucide--circle-help]"
         :active="customThumbnails"
@@ -143,6 +148,10 @@ const { fixture, currentWorkspace, draftsProject } = storeToRefs(personaStore)
 const { activeView, customThumbnails } = storeToRefs(uiStore)
 
 const showMediaAssetsNotice = ref(false)
+
+function openDevelopers() {
+  window.open('https://platform.comfy.org', '_blank', 'noopener,noreferrer')
+}
 
 const isLocalMode = computed(() => fixture.value.mode === 'local')
 const isCloudMode = computed(() => fixture.value.mode === 'cloud')

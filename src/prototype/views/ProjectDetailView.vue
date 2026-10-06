@@ -15,10 +15,14 @@
 -->
 <template>
   <div class="flex flex-col gap-6">
-    <PrototypeBreadcrumb :items="breadcrumbItems" @navigate="onBreadcrumb" />
+    <PrototypeBreadcrumb
+      :items="breadcrumbItems"
+      :drop-folder-ids="breadcrumbDropTargets"
+      @navigate="onBreadcrumb"
+    />
 
-    <header class="flex items-start justify-between gap-4">
-      <PageTitle>{{ project?.name }}</PageTitle>
+    <header class="flex items-end justify-between gap-4">
+      <PageTitle class="relative top-2">{{ project?.name }}</PageTitle>
       <div v-if="project" class="flex items-center gap-2">
         <button
           v-if="project.tier !== 'private'"
@@ -64,6 +68,23 @@
           </span>
         </button>
         <button
+          v-if="canViewUsage"
+          type="button"
+          :aria-pressed="activeTab === 'usage'"
+          :class="
+            cn(
+              'inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-lg px-3 text-sm transition-colors',
+              activeTab === 'usage'
+                ? 'bg-secondary-background-hover text-base-foreground'
+                : 'bg-secondary-background hover:bg-secondary-background-hover'
+            )
+          "
+          @click="toggleUsage"
+        >
+          <span class="icon-[lucide--chart-column] size-4" />
+          {{ t('prototype.views.project.tabs.usage') }}
+        </button>
+        <button
           type="button"
           class="inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-lg bg-secondary-background px-3 text-sm transition-colors hover:bg-secondary-background-hover"
           @click="onViewMediaAssets"
@@ -86,44 +107,24 @@
     </p>
 
     <template v-else>
-      <nav
-        v-if="visibleTabs.length > 1"
-        class="flex gap-1 border-b border-interface-stroke"
-        role="tablist"
-      >
-        <button
-          v-for="tab in visibleTabs"
-          :key="tab.id"
-          type="button"
-          role="tab"
-          :aria-selected="activeTab === tab.id"
-          :class="
-            cn(
-              'inline-flex h-10 cursor-pointer appearance-none items-center gap-2 border-0 border-b-2 bg-transparent px-3 text-sm transition-colors',
-              activeTab === tab.id
-                ? 'border-text-primary text-text-primary'
-                : 'border-transparent text-text-secondary hover:text-text-primary'
-            )
-          "
-          @click="activeTab = tab.id"
-        >
-          <span>{{ tab.label }}</span>
-          <span
-            v-if="tab.count"
-            class="rounded-full bg-secondary-background px-2 py-0.5 text-xs text-text-secondary"
-          >
-            {{ tab.count }}
-          </span>
-        </button>
-      </nav>
-
-      <div class="flex flex-col gap-6">
+      <div class="flex flex-col gap-6 border-t border-interface-stroke pt-3">
         <template v-if="activeTab === 'workflows'">
-          <section class="flex flex-col gap-3">
+          <section
+            :class="
+              cn(
+                'flex flex-col gap-3 rounded-xl',
+                dropTarget === 'published' &&
+                  'outline-2 outline-offset-8 outline-primary-background outline-dashed'
+              )
+            "
+            @dragover="onPublishedDragOver"
+            @dragleave="onSectionDragLeave"
+            @drop="onPublishedDrop"
+          >
             <div class="flex items-baseline justify-between">
               <div class="flex items-center gap-1.5">
                 <h2
-                  class="text-sm font-semibold tracking-wide text-muted-foreground uppercase"
+                  class="text-sm font-semibold tracking-wide text-base-foreground uppercase"
                 >
                   {{ t('prototype.views.project.workflowsHeading') }}
                 </h2>
@@ -166,7 +167,7 @@
 
             <div
               v-if="showFolders"
-              class="grid grid-cols-[repeat(auto-fill,minmax(13rem,1fr))] gap-3"
+              class="grid grid-cols-[repeat(auto-fill,minmax(14rem,1fr))] gap-6"
             >
               <FolderCard
                 v-for="f in folders"
@@ -219,11 +220,22 @@
             </div>
           </section>
 
-          <section class="flex flex-col gap-3">
+          <section
+            :class="
+              cn(
+                'flex flex-col gap-3 rounded-xl',
+                dropTarget === 'drafts' &&
+                  'outline-2 outline-offset-8 outline-primary-background outline-dashed'
+              )
+            "
+            @dragover="onDraftsDragOver"
+            @dragleave="onSectionDragLeave"
+            @drop="onDraftsDrop"
+          >
             <div class="flex items-baseline justify-between">
               <div class="flex items-center gap-1.5">
                 <h2
-                  class="text-sm font-semibold tracking-wide text-muted-foreground uppercase"
+                  class="text-sm font-semibold tracking-wide text-base-foreground uppercase"
                 >
                   {{ t('prototype.views.project.draftsHeading') }}
                 </h2>
@@ -259,9 +271,11 @@
                 :workflow="d.wf"
                 :draft-meta="d.meta"
                 actions="draft"
+                draggable
                 @open="onOpenDraft"
                 @publish="publishDraft"
                 @open-project="onOpenProject"
+                @dragstart="onDraftDragStart(d.wf.id, $event)"
               />
             </div>
             <div
@@ -344,10 +358,12 @@ import WorkflowCard from '../components/WorkflowCard.vue'
 import WorkflowEditorNoticeDialog from '../components/WorkflowEditorNoticeDialog.vue'
 import { useFolderBrowser } from '../composables/useFolderBrowser'
 import { useProjectAccess } from '../composables/useProjectAccess'
+import { useWorkflowDrag } from '../composables/useWorkflowDrag'
 import { useWorkflowPublish } from '../composables/useWorkflowPublish'
 import { usePrototypePersonaStore } from '../stores/personaStore'
 import { usePrototypeTabsStore } from '../stores/tabsStore'
 import { usePrototypeUiStore } from '../stores/uiStore'
+import type { Workflow } from '../types'
 import { deriveDraftMeta } from '../utils/draftMeta'
 
 type ProjectTabId = 'workflows' | 'usage'
@@ -445,25 +461,16 @@ const canViewUsage = computed(() => {
   )
 })
 
-const visibleTabs = computed(() => {
-  const tabs: Array<{ id: ProjectTabId; label: string; count?: number }> = [
-    {
-      id: 'workflows',
-      label: t('prototype.views.project.tabs.workflows')
-    }
-  ]
-  if (canViewUsage.value) {
-    tabs.push({
-      id: 'usage',
-      label: t('prototype.views.project.tabs.usage')
-    })
-  }
-  return tabs
-})
+// The header "Usage" button toggles the body between the workflows content
+// and the Owner/Admin-only usage view (no tab strip).
+function toggleUsage() {
+  activeTab.value = activeTab.value === 'usage' ? 'workflows' : 'usage'
+}
 
+// If the viewer loses usage access while viewing it, fall back to workflows.
 watchEffect(() => {
-  if (!visibleTabs.value.some((tab) => tab.id === activeTab.value)) {
-    activeTab.value = visibleTabs.value[0]?.id ?? 'workflows'
+  if (activeTab.value === 'usage' && !canViewUsage.value) {
+    activeTab.value = 'workflows'
   }
 })
 
@@ -474,6 +481,11 @@ const breadcrumbItems = computed(() => {
   if (currentFolder.value) items.push(currentFolder.value.name)
   return items
 })
+
+// The project-root crumb (index 1) accepts dropped workflows → project root.
+const breadcrumbDropTargets = computed(() =>
+  breadcrumbItems.value.map((_, i) => (i === 1 ? null : undefined))
+)
 
 function onBreadcrumb(index: number) {
   if (index === 0) uiStore.go({ kind: 'projects' })
@@ -581,6 +593,92 @@ const draftsEmptyMessage = computed(() =>
     ? t('prototype.views.project.draftsFolderEmpty')
     : t('prototype.views.project.draftsEmpty')
 )
+
+// Drag published↔draft. A published canonical dragged onto the Drafts section
+// is checked out (copy-on-access); a draft dragged onto the Published section
+// enters the publish flow. Reuses the shared drag state that also powers folder
+// drops + the collapsing ghost.
+const { draggingWorkflowIds, startDrag } = useWorkflowDrag()
+const dropTarget = ref<'published' | 'drafts' | null>(null)
+
+const draggedWorkflows = computed(() =>
+  draggingWorkflowIds.value
+    .map((id) => fixture.value.workflows.find((w) => w.id === id))
+    .filter((w): w is Workflow => !!w)
+)
+
+// Published canonicals of this project → checkoutable into Drafts.
+const draggedCanCheckOut = computed(
+  () =>
+    draggedWorkflows.value.length > 0 &&
+    draggedWorkflows.value.every(
+      (w) => !w.forkedFrom && w.projectId === projectId
+    )
+)
+
+// A single project draft → publishable up (publishDraft opens a dialog).
+const draggedCanPublish = computed(
+  () =>
+    draggedWorkflows.value.length === 1 &&
+    projectDrafts.value.some((d) => d.id === draggedWorkflows.value[0]?.id)
+)
+
+function onDraftDragStart(id: string, event: DragEvent) {
+  startDrag([id], event)
+}
+
+function onPublishedDragOver(event: DragEvent) {
+  if (!draggedCanPublish.value) return
+  event.preventDefault()
+  if (event.dataTransfer) event.dataTransfer.dropEffect = 'move'
+  dropTarget.value = 'published'
+}
+
+function onDraftsDragOver(event: DragEvent) {
+  if (!draggedCanCheckOut.value) return
+  event.preventDefault()
+  if (event.dataTransfer) event.dataTransfer.dropEffect = 'move'
+  dropTarget.value = 'drafts'
+}
+
+function onSectionDragLeave(event: DragEvent) {
+  const root = event.currentTarget as HTMLElement
+  if (!root.contains(event.relatedTarget as Node | null)) {
+    dropTarget.value = null
+  }
+}
+
+function onPublishedDrop(event: DragEvent) {
+  const id = draggedWorkflows.value[0]?.id
+  const publishable = draggedCanPublish.value
+  dropTarget.value = null
+  if (!publishable || !id) return
+  event.preventDefault()
+  publishDraft(id)
+}
+
+function onDraftsDrop(event: DragEvent) {
+  const ids = draggedWorkflows.value.map((w) => w.id)
+  const checkoutable = draggedCanCheckOut.value
+  const first = fixture.value.workflows.find((w) => w.id === ids[0])
+  dropTarget.value = null
+  if (!checkoutable) return
+  event.preventDefault()
+  let created = 0
+  for (const id of ids) if (personaStore.copyToMyWorkflows(id)) created++
+  if (!created) return
+  toast.add({
+    severity: 'success',
+    summary: t('prototype.workflowCard.copiedSummary'),
+    detail:
+      created === 1
+        ? t('prototype.workflowCard.copiedDetail', { name: first?.name ?? '' })
+        : t('prototype.views.project.checkedOutCountDetail', {
+            count: created
+          }),
+    life: 2800
+  })
+}
 
 function onViewMediaAssets() {
   uiStore.setProjectFilter(projectId)

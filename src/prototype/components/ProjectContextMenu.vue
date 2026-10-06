@@ -76,6 +76,7 @@ import Button from '@/components/ui/button/Button.vue'
 
 import ConfirmDialog from './ConfirmDialog.vue'
 import PromptDialog from './PromptDialog.vue'
+import { useActiveContextMenu } from '../composables/useActiveContextMenu'
 import { usePrototypePersonaStore } from '../stores/personaStore'
 import { usePrototypeTabsStore } from '../stores/tabsStore'
 import { usePrototypeUiStore } from '../stores/uiStore'
@@ -99,10 +100,10 @@ type ContextMenuHandle = {
 }
 const contextMenu = ref<ContextMenuHandle | null>(null)
 
-// Each card owns its own menu instance; track the open one at module scope so
-// opening a second dismisses the first (the card stops the contextmenu event
-// from reaching PrimeVue's outside-click dismissal).
-let closeActiveMenu: (() => void) | null = null
+// Each card owns its own menu instance; the shared coordinator dismisses
+// whichever menu was open before this one (the card stops the contextmenu
+// event from reaching PrimeVue's outside-click dismissal).
+const { activate, deactivate } = useActiveContextMenu()
 
 const viewerId = computed(() => personaStore.fixture.currentUser.id)
 const isOwner = computed(() => project.ownerUserId === viewerId.value)
@@ -268,13 +269,12 @@ function hide() {
 }
 
 function show(event: MouseEvent) {
-  if (closeActiveMenu && closeActiveMenu !== hide) closeActiveMenu()
-  closeActiveMenu = hide
+  activate(hide)
   contextMenu.value?.show(event)
 }
 
 function onHide() {
-  if (closeActiveMenu === hide) closeActiveMenu = null
+  deactivate(hide)
 }
 
 defineExpose({ show })

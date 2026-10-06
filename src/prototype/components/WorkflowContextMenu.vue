@@ -121,6 +121,7 @@ import ConfirmDialog from './ConfirmDialog.vue'
 import MoveToFolderDialog from './MoveToFolderDialog.vue'
 import PromoteToProjectDialog from './PromoteToProjectDialog.vue'
 import PromptDialog from './PromptDialog.vue'
+import { useActiveContextMenu } from '../composables/useActiveContextMenu'
 import { useWorkflowPublish } from '../composables/useWorkflowPublish'
 import { usePrototypePersonaStore } from '../stores/personaStore'
 import type { ViewerWorkflowRole } from '../composables/useViewerWorkflowRole'
@@ -154,11 +155,10 @@ type ContextMenuHandle = {
 }
 const contextMenu = ref<ContextMenuHandle | null>(null)
 
-// Each WorkflowCard owns its own menu instance, so opening one would
-// otherwise leave the others on screen (the card stops the contextmenu
-// event from reaching PrimeVue's outside-click dismissal). Track the
-// open menu at module scope and dismiss it before showing the next.
-let closeActiveMenu: (() => void) | null = null
+// Each WorkflowCard owns its own menu instance, and the card stops the
+// contextmenu event before it reaches PrimeVue's outside-click dismissal, so
+// a shared coordinator dismisses whichever menu was open before this one.
+const { activate, deactivate } = useActiveContextMenu()
 
 const isOwner = computed(() => viewerRole === 'owner')
 const isRunner = computed(() => viewerRole === 'runner')
@@ -174,6 +174,17 @@ const sourceProject = computed(() =>
 // no branching (that's for shared canonicals) and no "Save to My
 // Workflows" (it's already there). Per published-workflow-model.md.
 const isInDrafts = computed(() => !!sourceProject.value?.isDrafts)
+
+// A published canonical — a team workflow living in a real (non-Drafts)
+// project. Its editable-copy verb is "Check out" rather than "Save to My
+// Workflows", matching the published card's hover action and the shared
+// checkout mental model (published stays read-only; checkout forks a draft).
+const isPublishedCanonical = computed(
+  () =>
+    !workflow.forkedFrom &&
+    !!sourceProject.value &&
+    !sourceProject.value.isDrafts
+)
 
 // Foldering applies to workflows that live in a foldered container: a
 // project canonical, or a *personal* workflow in My Workflows (project-draft
@@ -216,13 +227,12 @@ function hide() {
 }
 
 function show(event: MouseEvent) {
-  if (closeActiveMenu && closeActiveMenu !== hide) closeActiveMenu()
-  closeActiveMenu = hide
+  activate(hide)
   contextMenu.value?.show(event)
 }
 
 function onHide() {
-  if (closeActiveMenu === hide) closeActiveMenu = null
+  deactivate(hide)
 }
 defineExpose({ show })
 
@@ -291,6 +301,22 @@ function onSaveCopy() {
   })
 }
 
+// Check out a published canonical: same copy-on-access as onSaveCopy, but the
+// draft lands in this project's "My drafts" (provenance-stamped by the store)
+// and the toast reflects the checkout framing.
+function onCheckOut() {
+  const newId = personaStore.copyToMyWorkflows(workflow.id)
+  if (!newId) return
+  toast.add({
+    severity: 'success',
+    summary: t('prototype.workflowCard.copiedSummary'),
+    detail: t('prototype.workflowCard.copiedDetail', {
+      name: workflow.name
+    }),
+    life: 2800
+  })
+}
+
 function onPromoteToProject() {
   openPublish(workflow.id)
 }
@@ -353,6 +379,16 @@ const items = computed<MenuItem[]>(() => {
     command: onOpen
   })
 
+  // Check out — the primary way to get an editable draft of a published
+  // canonical (published workflows are read-only in place).
+  if (isPublishedCanonical.value) {
+    out.push({
+      label: t('prototype.workflowMenu.checkOut'),
+      icon: 'icon-[lucide--copy]',
+      command: onCheckOut
+    })
+  }
+
   // Re-sync a behind copy to the canonical's current (pinned-else-latest)
   // version — replaces the copy's content.
   if (isBehind.value) {
@@ -381,7 +417,7 @@ const items = computed<MenuItem[]>(() => {
       icon: 'icon-[lucide--pencil]',
       command: onRename
     })
-    if (!isInDrafts.value) {
+    if (!isInDrafts.value && !isPublishedCanonical.value) {
       out.push({
         label: t('prototype.workflowMenu.saveToMyWorkflows'),
         icon: 'icon-[lucide--copy]',
@@ -410,8 +446,8 @@ const items = computed<MenuItem[]>(() => {
   }
 
   // Runner: Save a copy is the explicit way to get a working copy in My
-  // Workflows.
-  if (isRunner.value && !isInDrafts.value) {
+  // Workflows (a published canonical uses Check out above instead).
+  if (isRunner.value && !isInDrafts.value && !isPublishedCanonical.value) {
     out.push({ separator: true })
     out.push({
       label: t('prototype.workflowMenu.saveToMyWorkflows'),

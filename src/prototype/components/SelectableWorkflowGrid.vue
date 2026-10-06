@@ -38,6 +38,7 @@
           )
         }
       }"
+      @hide="onMenuHide"
     >
       <template #item="{ item, props }">
         <Button
@@ -86,6 +87,7 @@ import Button from '@/components/ui/button/Button.vue'
 
 import ConfirmDialog from './ConfirmDialog.vue'
 import MoveToFolderDialog from './MoveToFolderDialog.vue'
+import { useActiveContextMenu } from '../composables/useActiveContextMenu'
 import { useMarquee } from '../composables/useMarquee'
 import { useMultiSelect } from '../composables/useMultiSelect'
 import { useWorkflowDrag } from '../composables/useWorkflowDrag'
@@ -122,10 +124,18 @@ const { rect, onMouseDown } = useMarquee(containerRef, {
   onClickEmpty: clear
 })
 
-type MenuHandle = { show: (event: MouseEvent) => void }
+type MenuHandle = { show: (event: MouseEvent) => void; hide: () => void }
 const menuRef = ref<MenuHandle | null>(null)
+const { activate, deactivate } = useActiveContextMenu()
+function hideMenu() {
+  menuRef.value?.hide()
+}
 function onContextMenu(event: MouseEvent) {
+  activate(hideMenu)
   menuRef.value?.show(event)
+}
+function onMenuHide() {
+  deactivate(hideMenu)
 }
 
 // Dragging a selected card drags the whole selection; an unselected card

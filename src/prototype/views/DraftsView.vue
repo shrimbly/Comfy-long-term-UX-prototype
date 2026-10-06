@@ -16,6 +16,7 @@
     <PrototypeBreadcrumb
       v-if="currentFolder"
       :items="breadcrumbItems"
+      :drop-folder-ids="breadcrumbDropTargets"
       @navigate="onBreadcrumb"
     />
     <header class="flex items-end justify-between">
@@ -94,7 +95,7 @@
 
       <div
         v-if="showFolders"
-        class="grid grid-cols-[repeat(auto-fill,minmax(13rem,1fr))] gap-3"
+        class="grid grid-cols-[repeat(auto-fill,minmax(14rem,1fr))] gap-6"
       >
         <FolderCard
           v-for="f in folders"
@@ -312,6 +313,11 @@ const breadcrumbItems = computed(() => {
   if (currentFolder.value) items.push(currentFolder.value.name)
   return items
 })
+
+// The "My Workflows" root crumb (index 0) accepts dropped workflows → root.
+const breadcrumbDropTargets = computed(() =>
+  breadcrumbItems.value.map((_, i) => (i === 0 ? null : undefined))
+)
 
 function onBreadcrumb(index: number) {
   if (index === 0) goToRoot()

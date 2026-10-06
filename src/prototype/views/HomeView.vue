@@ -168,6 +168,22 @@
           />
         </div>
       </div>
+
+      <div
+        v-if="showGroup('templates') && matchedTemplates.length"
+        class="flex flex-col gap-3"
+      >
+        <h2 class="text-sm font-semibold">
+          {{ t('prototype.views.home.resultsTemplates') }}
+        </h2>
+        <div class="grid grid-cols-[repeat(auto-fill,minmax(13rem,1fr))] gap-4">
+          <TemplateCard
+            v-for="tpl in matchedTemplates"
+            :key="tpl.id"
+            :template="tpl"
+          />
+        </div>
+      </div>
     </section>
 
     <template v-else>
@@ -419,6 +435,15 @@ function folderWorkflowCount(folderId: string): number {
   return fixture.value.workflows.filter((w) => w.folderId === folderId).length
 }
 
+// Templates match on name + model (the gallery's defining fields).
+const matchedTemplates = computed(() =>
+  trimmedQuery.value
+    ? workflowTemplates.filter((tpl) =>
+        `${tpl.name} ${tpl.model}`.toLowerCase().includes(trimmedQuery.value)
+      )
+    : []
+)
+
 // Result types, in the order both the filter chips and the result groups use.
 type ResultType =
   | 'projects'
@@ -427,6 +452,7 @@ type ResultType =
   | 'drafts'
   | 'my-workflows'
   | 'media'
+  | 'templates'
 
 const resultGroups = computed<
   Array<{ type: ResultType; label: string; count: number }>
@@ -460,6 +486,11 @@ const resultGroups = computed<
     type: 'media',
     label: t('prototype.views.home.resultsAssets'),
     count: matchedAssets.value.length
+  },
+  {
+    type: 'templates',
+    label: t('prototype.views.home.resultsTemplates'),
+    count: matchedTemplates.value.length
   }
 ])
 

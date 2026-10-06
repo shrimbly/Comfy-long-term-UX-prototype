@@ -109,6 +109,7 @@ import Button from '@/components/ui/button/Button.vue'
 
 import ConfirmDialog from './ConfirmDialog.vue'
 import PromptDialog from './PromptDialog.vue'
+import { useActiveContextMenu } from '../composables/useActiveContextMenu'
 import { useWorkflowDrag } from '../composables/useWorkflowDrag'
 import { usePrototypePersonaStore } from '../stores/personaStore'
 import type { Folder } from '../types'
@@ -177,22 +178,21 @@ function onDrop(event: DragEvent) {
 type ContextMenuHandle = { show: (event: MouseEvent) => void; hide: () => void }
 const contextMenu = ref<ContextMenuHandle | null>(null)
 
-// Mirror the workflow/project cards: track the open menu at module scope so a
-// second one dismisses the first (the card stops the contextmenu event).
-let closeActiveMenu: (() => void) | null = null
+// Mirror the workflow/project cards: the shared coordinator dismisses whichever
+// menu was open before this one (the card stops the contextmenu event).
+const { activate, deactivate } = useActiveContextMenu()
 
 function hide() {
   contextMenu.value?.hide()
 }
 
 function openMenu(event: MouseEvent) {
-  if (closeActiveMenu && closeActiveMenu !== hide) closeActiveMenu()
-  closeActiveMenu = hide
+  activate(hide)
   contextMenu.value?.show(event)
 }
 
 function onHide() {
-  if (closeActiveMenu === hide) closeActiveMenu = null
+  deactivate(hide)
 }
 
 const dialog = ref<'rename' | 'delete' | null>(null)

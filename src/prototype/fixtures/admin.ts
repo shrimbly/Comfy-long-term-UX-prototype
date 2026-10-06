@@ -231,6 +231,17 @@ export const adminFixture: PersonaFixture = {
       projectId: myWorkflows.id,
       name: 'Experiments'
     },
+    { id: 'folder-mw-portraits', projectId: myWorkflows.id, name: 'Portraits' },
+    {
+      id: 'folder-mw-cleanup',
+      projectId: myWorkflows.id,
+      name: 'Cleanup & upscale'
+    },
+    {
+      id: 'folder-mw-style',
+      projectId: myWorkflows.id,
+      name: 'Style studies'
+    },
     { id: 'folder-mtx-bul', projectId: 'proj-the-matrix', name: 'BUL' },
     { id: 'folder-mtx-lob', projectId: 'proj-the-matrix', name: 'LOB' },
     { id: 'folder-mtx-run', projectId: 'proj-the-matrix', name: 'RUN' }
@@ -268,7 +279,8 @@ export const adminFixture: PersonaFixture = {
       kind: 'app',
       thumbnailUrl: '/wf-thumbs/app.png',
       updatedAt: '2026-06-15',
-      storage: 'cloud'
+      storage: 'cloud',
+      folderId: 'folder-mw-portraits'
     },
     {
       id: 'wf-mw-product-hero',
@@ -314,14 +326,16 @@ export const adminFixture: PersonaFixture = {
       projectId: myWorkflows.id,
       name: 'Upscale 4x (ESRGAN)',
       updatedAt: '2026-06-13',
-      storage: 'cloud'
+      storage: 'cloud',
+      folderId: 'folder-mw-cleanup'
     },
     {
       id: 'wf-mw-style-ghibli',
       projectId: myWorkflows.id,
       name: 'Style transfer — Ghibli',
       updatedAt: '2026-06-12',
-      storage: 'local'
+      storage: 'local',
+      folderId: 'folder-mw-style'
     },
     {
       id: 'wf-mw-bg-remove',
@@ -330,14 +344,16 @@ export const adminFixture: PersonaFixture = {
       kind: 'app',
       thumbnailUrl: '/wf-thumbs/app2.png',
       updatedAt: '2026-06-11',
-      storage: 'cloud'
+      storage: 'cloud',
+      folderId: 'folder-mw-cleanup'
     },
     {
       id: 'wf-mw-inpaint',
       projectId: myWorkflows.id,
       name: 'Inpaint cleanup',
       updatedAt: '2026-06-09',
-      storage: 'local'
+      storage: 'local',
+      folderId: 'folder-mw-cleanup'
     },
     {
       id: 'wf-mw-sdxl-refiner',
@@ -353,7 +369,8 @@ export const adminFixture: PersonaFixture = {
       kind: 'app',
       thumbnailUrl: '/wf-thumbs/app3.png',
       updatedAt: '2026-06-05',
-      storage: 'cloud'
+      storage: 'cloud',
+      folderId: 'folder-mw-portraits'
     },
     {
       id: 'wf-mw-controlnet-pose',
@@ -381,14 +398,16 @@ export const adminFixture: PersonaFixture = {
       kind: 'app',
       thumbnailUrl: '/wf-thumbs/app4.png',
       updatedAt: '2026-05-28',
-      storage: 'cloud'
+      storage: 'cloud',
+      folderId: 'folder-mw-portraits'
     },
     {
       id: 'wf-mw-sketch-render',
       projectId: myWorkflows.id,
       name: 'Sketch → render',
       updatedAt: '2026-05-25',
-      storage: 'local'
+      storage: 'local',
+      folderId: 'folder-mw-style'
     },
     {
       id: 'wf-mw-frame-interp',

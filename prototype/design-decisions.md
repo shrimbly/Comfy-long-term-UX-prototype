@@ -1212,3 +1212,25 @@ Built on the same-day "search returns Projects" change.
 Promote? **no** — search-results presentation; no IA change.
 
 **Chip styling (same day).** The Home search result-filter chips now use the shared `FilterPill` component (active = inverted, inactive = secondary, `size="md"`) — the same control the Templates page uses for its category row — rather than bespoke rounded pills, so the two filter rows read identically.
+
+**Templates in search (same day).** Home search gains a seventh result type — **Templates** (matched on name + model from the gallery fixture, rendered with `TemplateCard`) — placed last, below every other group, with its own `FilterPill` chip when more than one type matches.
+
+## [2026-06-25] Drag a workflow onto the breadcrumb to move it up
+
+Observed: a user inside a project folder dragged a workflow onto the breadcrumb to get it back to the project root. Now supported. `PrototypeBreadcrumb` takes an optional `dropFolderIds` array parallel to `items` (`null` = container root, a string = a folder, `undefined` = not a drop target); link segments with a defined target accept a workflow drop, highlight on drag-over, move every dragged id not already at that level, and toast a count. Wired so the **project-root crumb** (project detail) and the **My Workflows crumb** move dropped workflows to root. Reuses `useWorkflowDrag` + the existing folder move/toast strings.
+
+Promote? **no** — drag-interaction affordance; no IA change.
+
+---
+
+## [2026-07-07] Project page: checkout + publish reachable by drag and right-click
+
+From the Aaron Dabelow user interview (Fireflies `01KW3DKQH2VRRECNWRR1F54F4K`, "Comfy Teams Feedback"). He read the published↔draft model correctly only once it was explained, and reached for drag to move between the two sections ("I drag it up here and then that launches the publish"). Three changes to `ProjectDetailView`:
+
+- **"Check out" in the right-click menu.** `WorkflowContextMenu` now shows a **Check out** item as the primary action on a published canonical (a non-draft project workflow with no `forkedFrom`), replacing the mislabeled "Save to My Workflows" for that case only. Same `copyToMyWorkflows` op; the label + toast match the published card's hover button and the checkout mental model. Personal copies/drafts keep "Save to My Workflows". New i18n `workflowMenu.checkOut`.
+- **Drag published → Drafts = check out; drag draft → Published = publish.** The two sections are drop zones (dashed outline on drag-over). A published canonical of this project dropped on Drafts runs checkout (`copyToMyWorkflows`, multi-select aware); a single project draft dropped on Published enters the shared publish flow (`publishDraft` — same as the draft card's Publish button, so overwrite-vs-new confirm behaves identically). Draft cards are now `draggable`. Reuses `useWorkflowDrag` + the collapsing ghost.
+- **One context menu at a time.** New `useActiveContextMenu` singleton: opening any prototype right-click menu dismisses whichever was open. Replaces three duplicated module-scoped `closeActiveMenu` vars (WorkflowContextMenu, FolderCard, ProjectContextMenu — which only dismissed same-type menus) and closes the previously-uncoordinated `SelectableWorkflowGrid` bulk menu. Fixes stale menus when right-clicking a workflow then a folder (both coexist on this page). Unit-tested.
+
+The **checkout terminology** concern Aaron raised (reads as file-locking; suggested "snapshot"/"craft") is logged but **not** actioned here — that's a naming decision to settle separately. This change only makes the existing checkout action reachable/consistent.
+
+Promote? **no** — surfaces existing operations via new affordances; no IA change. Checkout-naming question remains open for the wiki.
