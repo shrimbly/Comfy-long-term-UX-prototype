@@ -21,7 +21,6 @@ import {
   watch,
   watchPostEffect
 } from 'vue'
-import { useRoute } from 'vue-router'
 
 import GlobalDialog from '@/components/dialog/GlobalDialog.vue'
 import { MODAL_Z_BASE, MODAL_Z_KEY } from '@/components/dialog/vRekaZIndex'
@@ -37,19 +36,12 @@ import { useWorkspaceStore } from '@/stores/workspaceStore'
 import { electronAPI } from '@/utils/envUtil'
 import { useConflictDetection } from '@/workbench/extensions/manager/composables/useConflictDetection'
 
-const route = useRoute()
-// Initial-load check: route.path is START_LOCATION ('/') during script setup,
-// so we read window.location.pathname for the sync guards. The reactive
-// version (route-based) still drives the template + post-mount behavior.
-const isPrototypePathOnLoad =
-  typeof window !== 'undefined' &&
-  window.location.pathname.startsWith('/prototype')
-const isPrototypeRoute = computed(
-  () => isPrototypePathOnLoad || route.path.startsWith('/prototype')
-)
+// Read the path, not the route: the route is not resolved yet during setup,
+// and App also mounts without a router.
+const isPrototypeRoute = window.location.pathname.startsWith('/prototype')
 
 const workspaceStore = useWorkspaceStore()
-if (!isPrototypePathOnLoad) {
+if (!isPrototypeRoute) {
   app.extensionManager = useWorkspaceStore()
 }
 
@@ -89,7 +81,7 @@ const showContextMenu = (event: MouseEvent) => {
 onMounted(() => {
   window['__COMFYUI_FRONTEND_VERSION__'] = config.app_version
 
-  if (isPrototypeRoute.value) {
+  if (isPrototypeRoute) {
     document.getElementById('splash-loader')?.remove()
     return
   }
