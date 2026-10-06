@@ -408,11 +408,6 @@
       "count": 1
     }
   },
-  "src/prototype/components/RunTargetDialog.vue": {
-    "comfy/no-primevue-imports": {
-      "count": 1
-    }
-  },
   "src/prototype/components/SelectableWorkflowGrid.vue": {
     "comfy/no-primevue-imports": {
       "count": 3
@@ -461,7 +456,7 @@
   },
   "src/prototype/stores/customCloudStore.ts": {
     "comfy/no-es2023-array-copy-method": {
-      "count": 2
+      "count": 1
     }
   },
   "src/prototype/stores/mediaReferenceStore.test.ts": {

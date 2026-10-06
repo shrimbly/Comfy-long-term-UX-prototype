@@ -23,9 +23,10 @@ export interface WorkflowNeeds {
   models: string[]
   // Models Platform can't fetch itself — the build uploads them.
   localOnlyModels: string[]
-  gpu: string
-  hourlyCostUsd: number
-  monthlyStorageUsd: number
+  // Size of the models the build pre-installs, for the storage estimate.
+  modelsGb: number
+  // Platform's estimate from deploy to ready, in minutes.
+  readyMinutes: [number, number]
 }
 
 export const MATTE_PASS: WorkflowNeeds = {
@@ -33,10 +34,34 @@ export const MATTE_PASS: WorkflowNeeds = {
   nodePacks: ['comfyui-rmbg', 'acme-matte-tools'],
   models: ['flux1-dev-fp8', 'acme_hero_lora_v5'],
   localOnlyModels: ['acme_hero_lora_v5'],
-  gpu: 'RTX 5090',
-  hourlyCostUsd: 0.89,
-  monthlyStorageUsd: 0.81
+  modelsGb: 12.2,
+  readyMinutes: [3, 6]
 }
+
+// What Platform suggests for a build made from a workflow. The demo build
+// shows these on its summary; changing one happens on Platform.
+export const BUILD_DEFAULTS = {
+  comfyVersion: 'v0.39.1',
+  runtime: 'CUDA 13.0 · Python 3.12 · Torch 2.12.1'
+}
+
+export interface PlatformGpu {
+  label: string
+  vramGb: number
+  pricePerHourUsd: number
+}
+
+// The GPUs Platform's deploy dialog offers, at its live prices (7 Oct 2026).
+export const PLATFORM_GPUS: PlatformGpu[] = [
+  { label: 'RTX PRO 6000', vramGb: 96, pricePerHourUsd: 4.54 },
+  { label: 'H100 SXM', vramGb: 80, pricePerHourUsd: 6.23 },
+  { label: 'H200 SXM', vramGb: 141, pricePerHourUsd: 7.71 },
+  { label: 'B200', vramGb: 180, pricePerHourUsd: 11.23 }
+]
+
+export const STORAGE_USD_PER_GB_MONTH = 0.2
+export const DEFAULT_MAX_WORKERS = 3
+export const MAX_WORKERS = 20
 
 export const DEFAULT_BUILD_PROJECT_NAME = 'Matte R&D'
 export const BUILD_PROJECT_COLOR = '#2f9e8f'

@@ -8,9 +8,10 @@
 //
 // Drives the Custom Comfy Cloud demo: which project the tab strip belongs
 // to, the reload when it switches, the "choose where it runs" dialog for
-// the incompatible matte_pass workflow, and the fast demo build that locks
-// the new project. Runs go through the real editor's queue; the in-browser
-// backend reports the run state, including the cold start.
+// the incompatible matte_pass workflow (where it runs, the build summary,
+// the deploy settings), and the fast demo build that locks the new
+// project. Runs go through the real editor's queue; the in-browser backend
+// reports the run state, including the cold start.
 
 import { useIntervalFn, useTimeoutFn } from '@vueuse/core'
 import { defineStore } from 'pinia'
@@ -18,11 +19,13 @@ import { computed, ref, shallowRef, watch } from 'vue'
 
 import {
   BUILD_PROJECT_COLOR,
+  COMFY_CLOUD,
   DEFAULT_BUILD_PROJECT_NAME,
   DEMO_BUILD_MS,
   MATTE_PASS,
   WARM_MINUTES
 } from '../fixtures/customCloud'
+import type { PlatformGpu } from '../fixtures/customCloud'
 import { onMockRunStateChange } from '../mockBackend'
 import type { MockRunState } from '../mockBackend'
 import type { Deployment, PersonaFixture, Project, Workflow } from '../types'
@@ -38,10 +41,9 @@ import { usePrototypePersonaStore } from './personaStore'
 import { HOME_TAB_ID, usePrototypeTabsStore } from './tabsStore'
 import { usePrototypeUiStore } from './uiStore'
 
-type DialogStep = 'choose' | 'review' | 'agent'
+type DialogStep = 'choose' | 'build' | 'agent' | 'deploy'
 
-// A target in the dialog: an existing project id, or a new project on a new
-// build.
+// Where a new project runs: an existing deployment's id, or a new deployment.
 export const NEW_BUILD_TARGET = 'new'
 
 // Long enough for the loading screen's wave to rise through the logo.
@@ -69,7 +71,10 @@ export const usePrototypeCustomCloudStore = defineStore(
     const reloadingToId = ref<string | null>(null)
     const switcherOpen = ref(false)
     const dialogStep = ref<DialogStep | null>(null)
-    const runTarget = ref<string>(NEW_BUILD_TARGET)
+    const deploymentTarget = ref<string>(NEW_BUILD_TARGET)
+    // Presenter control: hide the deployments that run matte_pass, to show
+    // the dialog for a workflow nothing runs yet.
+    const nothingRunsIt = ref(false)
     const newProjectName = ref(DEFAULT_BUILD_PROJECT_NAME)
     const build = shallowRef<ActiveBuild | null>(null)
     const now = ref(Date.now())
@@ -140,26 +145,58 @@ export const usePrototypeCustomCloudStore = defineStore(
         !runsWorkflow(currentDeployment.value, MATTE_PASS)
     )
 
-    // Projects that already run matte_pass first, then custom deployments,
-    // then Comfy Cloud — each with what it lacks.
-    const runTargets = computed(() =>
+    function runsMattePass(deployment: Deployment) {
+      return !nothingRunsIt.value && runsWorkflow(deployment, MATTE_PASS)
+    }
+
+    function byRunsThenCustom(
+      a: { runs: boolean; deployment: Deployment },
+      b: { runs: boolean; deployment: Deployment }
+    ) {
+      return (
+        Number(b.runs) - Number(a.runs) ||
+        Number(b.deployment.kind === 'custom') -
+          Number(a.deployment.kind === 'custom')
+      )
+    }
+
+    // Every deployment a new project could run on, those that already run
+    // matte_pass first, each with what it lacks.
+    const deploymentTargets = computed(() =>
+      [COMFY_CLOUD, ...deployments.value]
+        .filter((deployment) => deployment.status !== 'building')
+        .map((deployment) => ({
+          deployment,
+          runs: runsMattePass(deployment),
+          missing: missingFrom(deployment, MATTE_PASS)
+        }))
+        .sort(byRunsThenCustom)
+    )
+
+    // The projects matte_pass could open in, the same way round.
+    const projectTargets = computed(() =>
       switchableProjects.value
         .map((project) => {
           const deployment = deploymentOf(project.id)
           return {
             project,
             deployment,
-            runs: runsWorkflow(deployment, MATTE_PASS),
+            runs: runsMattePass(deployment),
             missing: missingFrom(deployment, MATTE_PASS)
           }
         })
-        .toSorted(
-          (a, b) =>
-            Number(b.runs) - Number(a.runs) ||
-            Number(b.deployment.kind === 'custom') -
-              Number(a.deployment.kind === 'custom')
-        )
+        .sort(byRunsThenCustom)
     )
+
+    // Which first step the dialog shows: a deployment already runs it; or
+    // none does, from a Comfy Cloud project (build one) or from a project on
+    // its own deployment (update that deployment).
+    const chooseMode = computed(() => {
+      if (deploymentTargets.value.some((target) => target.runs)) {
+        return 'existing'
+      }
+      return currentDeployment.value.kind === 'custom' ? 'update' : 'new'
+    })
 
     const progress = computed(() => {
       const active = build.value
@@ -256,16 +293,20 @@ export const usePrototypeCustomCloudStore = defineStore(
     }
 
     function openRunTargetDialog() {
-      runTarget.value =
-        runTargets.value.find((t) => t.runs)?.project.id ?? NEW_BUILD_TARGET
+      deploymentTarget.value =
+        deploymentTargets.value.find((target) => target.runs)?.deployment.id ??
+        NEW_BUILD_TARGET
       newProjectName.value = DEFAULT_BUILD_PROJECT_NAME
       dialogStep.value = 'choose'
     }
 
     // The presenter drops any file (or uses the demo trigger): it always
     // opens as matte_pass.
-    function dropIncompatibleWorkflow() {
+    function dropIncompatibleWorkflow({
+      nothingRuns = false
+    }: { nothingRuns?: boolean } = {}) {
       if (!isEnabled.value || isLocked.value) return
+      nothingRunsIt.value = nothingRuns
       const open = tabsStore.openTabs.find(
         (t) => t.workflowKey === 'matte_pass'
       )
@@ -293,7 +334,17 @@ export const usePrototypeCustomCloudStore = defineStore(
       if (progress.value?.done) finishBuild()
     }
 
-    function buildAndDeploy() {
+    // A new project on a deployment that already runs matte_pass: no build.
+    function createProjectOn(deploymentId: string) {
+      const name = newProjectName.value.trim() || DEFAULT_BUILD_PROJECT_NAME
+      const projectId = personaStore.createProject(name, 'restricted', [], {
+        deploymentId,
+        color: BUILD_PROJECT_COLOR
+      })
+      openInProject(projectId)
+    }
+
+    function buildAndDeploy(gpu: PlatformGpu) {
       const fixture = personaStore.fixture
       const name = newProjectName.value.trim() || DEFAULT_BUILD_PROJECT_NAME
       const deploymentId = `dep-build-${Date.now()}`
@@ -305,7 +356,7 @@ export const usePrototypeCustomCloudStore = defineStore(
           kind: 'custom',
           release: 'v1',
           status: 'building',
-          gpu: MATTE_PASS.gpu,
+          gpu: gpu.label,
           warmMinutes: WARM_MINUTES,
           nodePacks: [...MATTE_PASS.nodePacks],
           models: [...MATTE_PASS.models]
@@ -365,6 +416,7 @@ export const usePrototypeCustomCloudStore = defineStore(
         reloadingToId.value = null
         switcherOpen.value = false
         dialogStep.value = null
+        nothingRunsIt.value = false
         readyProjectId.value = null
         tabsStore.reset()
       }
@@ -382,9 +434,11 @@ export const usePrototypeCustomCloudStore = defineStore(
       reloadingToId,
       switcherOpen,
       dialogStep,
-      runTarget,
+      deploymentTarget,
       newProjectName,
-      runTargets,
+      deploymentTargets,
+      projectTargets,
+      chooseMode,
       progress,
       readyProjectId,
       runState,
@@ -396,6 +450,7 @@ export const usePrototypeCustomCloudStore = defineStore(
       openRunTargetDialog,
       dropIncompatibleWorkflow,
       openInProject,
+      createProjectOn,
       buildAndDeploy,
       requestRun,
       runReadyWorkflow

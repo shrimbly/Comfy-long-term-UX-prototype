@@ -226,7 +226,7 @@ function stageLabel(id: BuildStage['id'], state: string) {
   return t(state === 'done' ? done : inProgress, {
     model: MATTE_PASS.localOnlyModels.join(', '),
     packs: MATTE_PASS.nodePacks.join(', '),
-    gpu: MATTE_PASS.gpu
+    gpu: customCloud.currentDeployment.gpu
   })
 }
 
