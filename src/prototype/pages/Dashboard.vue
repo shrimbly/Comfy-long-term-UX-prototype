@@ -1,19 +1,5 @@
-<!--
-  Implements:
-    concept:   ../IA_Plan/wiki/concepts/personas-and-flows.md
-    decision:  ../IA_Plan/wiki/decisions/drafts-as-default-private-project.md
-    log:       ../IA_Plan/wiki/prototype-log.md#flow-01-dashboard
-
-  Dashboard shell. Content is driven by the active top-bar tab:
-    - Media-Assets tab active → real MediaAssetsView takes over the area
-      below PrototypeTabs (it owns its own sidebar).
-    - Home tab (and workflow tabs) → prototype dashboard with PrototypeSidebar
-      / LibrarySidebar based on uiStore.activeView.
--->
 <template>
-  <div class="relative flex h-screen w-full flex-col">
-    <PrototypeTabs />
-
+  <div class="relative flex size-full flex-col">
     <div v-if="isMediaAssetsTabActive" class="relative flex min-h-0 flex-1">
       <LocalMediaView v-if="isLocalMode" />
       <MediaAssetsView v-else />
@@ -57,7 +43,6 @@ import MediaAssetsView from '@/platform/assets/components/MediaAssetsView.vue'
 import LocalMediaView from '../components/LocalMediaView.vue'
 import PersonaSwitcher from '../components/PersonaSwitcher.vue'
 import PrototypeSidebar from '../components/PrototypeSidebar.vue'
-import PrototypeTabs from '../components/PrototypeTabs.vue'
 import WorkflowDragGhost from '../components/WorkflowDragGhost.vue'
 import { usePrototypePersonaStore } from '../stores/personaStore'
 import { MEDIA_ASSETS_TAB_ID, usePrototypeTabsStore } from '../stores/tabsStore'

@@ -56,6 +56,8 @@
       "userFallback": "User?"
     },
     "tabs": {
+      "navigation": "Home and workflows",
+      "editorUnavailable": "Could not open the editor. Check your ComfyUI connection and try again.",
       "home": "Home",
       "newTab": "New blank workflow",
       "closeTab": "Close tab",

@@ -10,9 +10,6 @@ import AppBuilder from '@/components/builder/AppBuilder.vue'
 import AppModeToolbar from '@/components/appMode/AppModeToolbar.vue'
 import ExtensionSlot from '@/components/common/ExtensionSlot.vue'
 import ErrorOverlay from '@/components/error/ErrorOverlay.vue'
-import TopbarBadges from '@/components/topbar/TopbarBadges.vue'
-import TopbarSubscribeButton from '@/components/topbar/TopbarSubscribeButton.vue'
-import WorkflowTabs from '@/components/topbar/WorkflowTabs.vue'
 import { useSettingStore } from '@/platform/settings/settingStore'
 import { cn } from '@comfyorg/tailwind-utils'
 import LinearControls from '@/renderer/extensions/linearMode/LinearControls.vue'
@@ -100,18 +97,9 @@ function dragDrop(e: DragEvent) {
 <template>
   <MobileDisplay v-if="mobileDisplay" />
   <div v-else class="absolute size-full" @dragover.prevent>
-    <div
-      class="workflow-tabs-container pointer-events-auto h-(--workflow-tabs-height) w-full border-b border-interface-stroke shadow-interface"
-    >
-      <div class="flex h-full items-center">
-        <WorkflowTabs />
-        <TopbarBadges />
-        <TopbarSubscribeButton />
-      </div>
-    </div>
     <Splitter
       :key="splitterKey"
-      class="bg-comfy-menu-secondary-bg h-[calc(100%-var(--workflow-tabs-height))] w-full border-none"
+      class="bg-comfy-menu-secondary-bg size-full border-none"
       @resizestart="$event.originalEvent.preventDefault()"
       @resizeend="onResizeEnd"
     >

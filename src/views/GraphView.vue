@@ -21,7 +21,7 @@
     <PrototypeProjectChip v-if="isDevPrototype" />
   </div>
 
-  <GlobalToast />
+  <GlobalToast v-if="route.name === 'GraphView'" />
   <InviteAcceptedToast />
   <RerouteMigrationToast />
   <ModelImportProgressDialog />
@@ -35,6 +35,7 @@
 <script setup lang="ts">
 import { useEventListener, useIntervalFn } from '@vueuse/core'
 import { storeToRefs } from 'pinia'
+import { useRoute } from 'vue-router'
 
 import {
   computed,
@@ -100,8 +101,11 @@ import LinearView from '@/views/LinearView.vue'
 import ManagerProgressToast from '@/workbench/extensions/manager/components/ManagerProgressToast.vue'
 
 import PrototypeProjectChip from '@/prototype/components/PrototypeProjectChip.vue'
+import { usePrototypeNavigationStore } from '@/prototype/stores/navigationStore'
 
 const isDevPrototype = true
+const route = useRoute()
+const navigationStore = usePrototypeNavigationStore()
 
 setupAutoQueueHandler()
 useProgressFavicon()
@@ -271,10 +275,14 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
+  navigationStore.editorReady = false
   executionStore.unbindExecutionEvents()
 })
 
-useEventListener(window, 'keydown', useKeybindingService().keybindHandler)
+const { keybindHandler } = useKeybindingService()
+useEventListener(window, 'keydown', (event) => {
+  if (route.name === 'GraphView') void keybindHandler(event)
+})
 
 const { wrapWithErrorHandling, wrapWithErrorHandlingAsync } = useErrorHandling()
 
@@ -289,6 +297,7 @@ void nextTick(() => {
 })
 
 const onGraphReady = () => {
+  navigationStore.editorReady = true
   runWhenGlobalIdle(() => {
     // Track user login when app is ready in graph view (cloud only)
     if (isCloud && authStore.isAuthenticated && !hasTrackedLogin) {

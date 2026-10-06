@@ -1,25 +1,18 @@
-// Prototype tabs store. Mirrors the open-workflow tab strip from
-// ComfyUI's workflow view, but holds plain fixture data so the
-// prototype dashboard can demo tab switching without the real
-// workflow plumbing.
-
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 
-type TabKind = 'workflow' | 'app' | 'builder' | 'media-assets'
+import { useWorkflowService } from '@/platform/workflow/core/services/workflowService'
+import { useWorkflowStore } from '@/platform/workflow/management/stores/workflowStore'
+import { blankGraph } from '@/scripts/defaultGraph'
+import { usePrototypeNavigationStore } from './navigationStore'
 
 interface OpenTab {
   id: string
   label: string
-  kind?: TabKind
-  isDirty?: boolean
 }
 
 export const HOME_TAB_ID = 'home'
 export const MEDIA_ASSETS_TAB_ID = 'media-assets'
-
-let counter = 0
-const nextId = () => `tab-${++counter}`
 
 export const usePrototypeTabsStore = defineStore('prototype-tabs', () => {
   const openTabs = ref<OpenTab[]>([])
@@ -31,24 +24,13 @@ export const usePrototypeTabsStore = defineStore('prototype-tabs', () => {
     }
   }
 
-  function addBlank() {
-    const id = nextId()
-    openTabs.value.push({
-      id,
-      label: `Untitled workflow ${counter}`,
-      kind: 'workflow',
-      isDirty: true
-    })
-    activeTabId.value = id
-  }
-
-  // Open a named workflow in a new tab and activate it (e.g. the project
-  // page's "+ Workflow" simulating the editor opening the freshly-created
-  // draft).
-  function openWorkflow(label: string) {
-    const id = nextId()
-    openTabs.value.push({ id, label, kind: 'workflow', isDirty: true })
-    activeTabId.value = id
+  async function openWorkflow(label: string) {
+    if (!(await usePrototypeNavigationStore().openEditor())) return
+    const workflow = useWorkflowStore().createTemporary(
+      `${label}.json`,
+      structuredClone(blankGraph)
+    )
+    await useWorkflowService().openWorkflow(workflow)
   }
 
   function openMediaAssets(label: string) {
@@ -56,8 +38,7 @@ export const usePrototypeTabsStore = defineStore('prototype-tabs', () => {
     if (!existing) {
       openTabs.value.push({
         id: MEDIA_ASSETS_TAB_ID,
-        label,
-        kind: 'media-assets'
+        label
       })
     } else if (existing.label !== label) {
       existing.label = label
@@ -78,7 +59,6 @@ export const usePrototypeTabsStore = defineStore('prototype-tabs', () => {
     openTabs,
     activeTabId,
     select,
-    addBlank,
     openWorkflow,
     openMediaAssets,
     close

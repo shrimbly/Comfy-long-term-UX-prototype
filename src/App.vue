@@ -37,20 +37,13 @@ import { parsePreloadError } from '@/utils/preloadErrorUtil'
 import { useConflictDetection } from '@/workbench/extensions/manager/composables/useConflictDetection'
 
 const route = useRoute()
-// Initial-load check: route.path is START_LOCATION ('/') during script setup,
-// so we read window.location.pathname for the sync guards. The reactive
-// version (route-based) still drives the template + post-mount behavior.
 const isPrototypePathOnLoad =
   typeof window !== 'undefined' &&
   window.location.pathname.startsWith('/prototype')
-const isPrototypeRoute = computed(
-  () => isPrototypePathOnLoad || route.path.startsWith('/prototype')
-)
+const isPrototypeRoute = computed(() => route.path.startsWith('/prototype'))
 
 const workspaceStore = useWorkspaceStore()
-if (!isPrototypePathOnLoad) {
-  app.extensionManager = useWorkspaceStore()
-}
+app.extensionManager = workspaceStore
 
 const conflictDetection = useConflictDetection()
 const isLoading = computed<boolean>(() => workspaceStore.spinner)
@@ -112,9 +105,8 @@ function handleResourceError(url: string, tagName: string) {
 onMounted(() => {
   window['__COMFYUI_FRONTEND_VERSION__'] = config.app_version
 
-  if (isPrototypeRoute.value) {
+  if (isPrototypePathOnLoad) {
     document.getElementById('splash-loader')?.remove()
-    return
   }
 
   if (isDesktop) {

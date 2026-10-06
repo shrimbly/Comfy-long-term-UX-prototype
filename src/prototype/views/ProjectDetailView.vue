@@ -301,11 +301,6 @@
       @close="isSharingOpen = false"
     />
 
-    <WorkflowEditorNoticeDialog
-      v-if="showEditorNotice"
-      @close="showEditorNotice = false"
-    />
-
     <PromoteToProjectDialog
       v-if="publishSourceId"
       :source-workflow-id="publishSourceId"
@@ -355,7 +350,6 @@ import PrototypeBreadcrumb from '../components/PrototypeBreadcrumb.vue'
 import PublishConfirmDialog from '../components/PublishConfirmDialog.vue'
 import SelectableWorkflowGrid from '../components/SelectableWorkflowGrid.vue'
 import WorkflowCard from '../components/WorkflowCard.vue'
-import WorkflowEditorNoticeDialog from '../components/WorkflowEditorNoticeDialog.vue'
 import { useFolderBrowser } from '../composables/useFolderBrowser'
 import { useProjectAccess } from '../composables/useProjectAccess'
 import { useWorkflowDrag } from '../composables/useWorkflowDrag'
@@ -390,7 +384,6 @@ const {
 } = useWorkflowPublish()
 
 const isSharingOpen = ref(false)
-const showEditorNotice = ref(false)
 const activeTab = ref<ProjectTabId>('workflows')
 
 onMounted(() => {
@@ -419,17 +412,12 @@ function onCopyWorkflow(workflowId: string) {
   })
 }
 
-// "+ Workflow" — create a fresh draft in the viewer's My Workflows tied to
-// this project (it lands in the "My drafts" section below), then open it in a
-// new editor tab. No editor in the prototype, so a placeholder notice stands
-// in for the editor while the tab strip shows the opened tab.
-function onNewWorkflow() {
+async function onNewWorkflow() {
   const newId = personaStore.createDraftInProject(projectId)
   if (!newId) return
   activeTab.value = 'workflows'
   const wf = fixture.value.workflows.find((w) => w.id === newId)
-  tabsStore.openWorkflow(wf?.name ?? 'Untitled workflow')
-  showEditorNotice.value = true
+  if (wf) await tabsStore.openWorkflow(wf.name)
 }
 
 // Draft primary action. No editor in the prototype — opening a draft toasts.
