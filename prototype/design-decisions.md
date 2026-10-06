@@ -1493,3 +1493,26 @@ Inside `/prototype`, the editor's left-sidebar **Workflows** tab is a prototype 
   - Refresh is also dropped, because there is no backend sync.
 
 Wiki is silent on the editor's workflow browser. Promote? **maybe**: an addition to `decisions/project-switcher-in-tab-bar.md` ("the editor's Workflows panel is scoped to the current project; other projects one step away").
+
+---
+
+## [2026-10-07] Flow 07: the incompatible-workflow dialog, redesigned on a canvas
+
+Willie explored the "choose where it runs" dialog on a design canvas, <https://claude.ai/artifact/PQby9iCSzrR7WMvbsqnY11>. It shows today's screens and the full new flow with its branches. Of four directions (one sheet, a side panel, a canvas banner, a table of who runs it), only the one-sheet modal was worth keeping. Willie then refined today's dialog one step at a time instead. Built in `components/RunTargetDialog.vue` and its step components.
+
+- **Decision: step 1 states the problem, then offers where to run it.**
+  - The title is "This workflow can't run on {deployment}", with no workflow name and no eyebrow.
+  - A compact table follows: "n missing node packs" and "n missing models", with the names.
+  - The pitch paragraph and the "Switching reloads the page" note are gone.
+- **Decision: step 1 has three states.**
+  - **A deployment already runs it.** The main action is "Create project", on that deployment, with no build. The "Create a new project that runs on" picker also offers "A new deployment" (the button then reads "Create deployment"). Deployments that lack something are listed but can't be picked. "Open in another project" is a quiet footer button with a project chooser styled like the project switcher. In the demo, Acme Studio pipeline runs `matte_pass`.
+  - **Nothing runs it, from a Comfy Cloud project.** The main action is "Create deployment", under "Create a new deployment for this workflow" and the three sell ticks. "Update an existing deployment ↗" is the quiet option, done on Platform.
+  - **Nothing runs it, from a project on its own deployment.** The main action is "Update on Platform ↗" (for example Matte tests v7 → v8, which adds the missing pack). The note says every project on that deployment gets the release. "Create a new deployment instead" is the quiet option.
+- **Decision: step 2 is Platform's build summary card.** It has "Suggested settings": Name, ComfyUI, Runtime, Open-source models, Partner models, Custom nodes, Python packages. The name edits in place. Every other row asks "Customise the build on Platform?" first, because the detail lives on Platform. The footer is Back, Build with your agent, and Next: deployment.
+- **Decision: step 3 is Platform's deploy dialog, copied from live Platform.** Live Platform is newer than the platform repo's code. It has the GPU list with prices (RTX PRO 6000 $4.54, H100 SXM $6.23, H200 SXM $7.71, B200 $11.23), always-warm and max workers, Location, ComfyUI startup flags, the estimated cost (idle and full load, storage at $0.20/GB/mo) and the estimated time. The picked GPU becomes the new deployment's GPU. The old $0.89 RTX 5090 figure is gone.
+- **Decision: a presenter control, "Demo: nothing runs it".** It drops `matte_pass` as if no deployment ran it, to show the two other step-1 states.
+- **Changed but not redesigned:** the lock modal's eyebrow no longer says "Step 3 of 3"; it says "Building". The lock and ready screens are the next to refine.
+
+Why: the dialog is the centrepiece of the 8 Oct customer demo. It should read as a choice with an obvious next action, and leave what Platform owns to Platform.
+
+Wiki: `decisions/missing-nodes-choose-where-it-runs.md` (step 1 order, review, agent secondary, "Customise on Platform"), and `decisions/project-runs-on-shared-deployment.md` (a new project on an existing deployment; updating a deployment updates every project on it). Open question `dropped-workflow-other-deployment`: working answer, update the project's own deployment on Platform or make a new one. Promote? **yes**: update the decision page for the three states, the deployment picker (not a project picker), and Platform's summary and deploy steps.
