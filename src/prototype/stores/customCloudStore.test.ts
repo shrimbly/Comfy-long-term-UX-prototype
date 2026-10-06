@@ -25,7 +25,7 @@ async function setup() {
 type Store = Awaited<ReturnType<typeof setup>>['store']
 
 function openWorkflowIn(store: Store, projectId: string) {
-  store.openWorkflow(projectId, 'Untitled workflow')
+  store.openWorkflow(projectId, { id: 'wf-new', name: 'Untitled workflow' })
   vi.advanceTimersByTime(RELOAD_MS)
 }
 
@@ -64,12 +64,33 @@ describe('customCloudStore', () => {
     expect(tabs.activeTabId).toBe(tabs.openTabs[0].id)
   })
 
+  it('switches between projects on the same deployment without a reload', async () => {
+    const { store, tabs } = await setup()
+    openWorkflowIn(store, 'proj-marketing')
+    store.switchProject('proj-brand')
+    expect(store.reloadingToId).toBeNull()
+    expect(store.currentProject?.id).toBe('proj-brand')
+    expect(tabs.openTabs.map((t) => t.kind)).toEqual(['workflow'])
+  })
+
   it('opens a blank workflow in a project with no drafts', async () => {
     const { store, tabs } = await setup()
     store.switchProject('proj-brand')
     vi.advanceTimersByTime(RELOAD_MS)
     expect(tabs.openTabs.map((t) => t.kind)).toEqual(['workflow'])
     expect(tabs.activeTabId).toBe(tabs.openTabs[0].id)
+  })
+
+  it('ranks the current project first in Recent, then the ones switched away from', async () => {
+    const { store } = await setup()
+    const startId = store.currentProject?.id
+    openWorkflowIn(store, 'proj-marketing')
+    openWorkflowIn(store, 'proj-cocacola')
+    expect(store.recentProjectIds).toEqual([
+      'proj-cocacola',
+      'proj-marketing',
+      startId
+    ])
   })
 
   it('opens the run-target dialog for matte_pass on Comfy Cloud, preselecting the project that runs it', async () => {
@@ -112,8 +133,8 @@ describe('customCloudStore', () => {
     expect(store.isLocked).toBe(true)
     expect(store.showsMissingNodes).toBe(true)
     expect(store.progress?.stages.map((s) => s.state)).toEqual([
-      'done',
       'active',
+      'pending',
       'pending',
       'pending',
       'pending',

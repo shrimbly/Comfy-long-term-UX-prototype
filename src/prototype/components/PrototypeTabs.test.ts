@@ -72,15 +72,15 @@ describe('shared prototype navigation', () => {
     expect(home).toHaveAttribute('aria-current', 'page')
 
     await router.push({ name: 'GraphView' })
-    const workflow = screen.getByRole('button', { name: 'Matte pass' })
+    const workflow = screen.getByRole('tab', { name: 'Matte pass' })
     await user.click(workflow)
     expect(router.currentRoute.value.name).toBe('PrototypeDashboard')
-    expect(workflow).toHaveAttribute('aria-pressed', 'true')
+    expect(workflow).toHaveAttribute('aria-selected', 'true')
     expect(home).not.toHaveAttribute('aria-current')
 
     await user.click(screen.getByRole('button', { name: 'Close tab' }))
     expect(
-      screen.queryByRole('button', { name: 'Matte pass' })
+      screen.queryByRole('tab', { name: 'Matte pass' })
     ).not.toBeInTheDocument()
     expect(home).toHaveAttribute('aria-current', 'page')
   })

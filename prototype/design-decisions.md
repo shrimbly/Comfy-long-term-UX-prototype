@@ -1425,6 +1425,77 @@ The fork last synced with upstream on 2026-05-07. Willie wants the current upstr
 
 ---
 
+## [2026-10-07] Tab bar: upstream tab styling, a cloud icon for Comfy Cloud, Recents open the editor
+
+- **Decision: workflow tabs use upstream's tab components.** They use the same `Tabs` components and classes as the real editor's `WorkflowTab`, so hover, active state, the unsaved dot and the close button match. Home and the project pill keep the prototype's own design.
+- **Decision: Comfy Cloud projects show a cloud icon in the pill.** It replaces the status dot. Comfy Cloud is always up, so a green dot said nothing. The dot stays for custom deployments (building, ready, asleep). The personal project keeps its person icon.
+- **Decision: clicking a workflow card on Home opens it in the editor.** This covers Recents and search results. A draft opens in its provenance project, and any other workflow in its own project. The project switch works as before: the project's remembered tabs, else its drafts. A workflow that's already open reuses its tab.
+
+Wiki is silent on what opening a recent does across projects. Promote? **maybe**, with the project-switch entry above.
+
+---
+
+## [2026-10-07] Project switch: the loading screen looks like ComfyUI's own
+
+- **Decision: the project-switch transition is still a fake reload, styled as ComfyUI's real loading screen.** It uses the palette background and upstream's `LogoComfyWaveLoader` at the real splash size, so the Comfy logo fills with a rising wave. A muted "Opening {project}" caption stays under the logo, so the audience knows which project is loading.
+- **The switch now lasts 2.4 s instead of 0.9 s.** Before about 1.2 s, the wave hasn't reached the logo, so a shorter screen showed only an outline. The demo build's clock starts when the switch ends, so the lock screen still opens at the start of the build.
+
+---
+
+## [2026-10-07] Project switch: no reload between projects on the same deployment
+
+- **Decision: switching between projects on the same deployment is instant.** That includes every switch between two Comfy Cloud projects. The reload only exists because a deployment can load different frontend extensions. Moving to a project on a different deployment still shows the loading screen. Examples: Comfy Cloud to Coca-Cola Ad's Acme Studio, custom to custom, or into a new build.
+- The rule is "same deployment", not "both on Comfy Cloud". So two projects sharing one custom deployment (`decisions/project-runs-on-shared-deployment.md`) also switch instantly. The demo data has no such pair yet.
+
+---
+
+## [2026-10-07] Project switcher menu: search, recent first
+
+Willie picked direction H from the design canvas "Project switcher menu: search and cleanup" (https://claude.ai/artifact/PUXMPpzcUU8dJjRVmhmr9j), with two changes: the tick takes the place of the row's glyph instead of its own column, and the search field's corners nest inside the menu's.
+
+- **Decision: the menu opens on a search field.** You can type at once. The search matches any part of a project's name and ignores case. The arrow keys move, Enter switches and Esc closes. When nothing matches, the menu says "No projects match “…”" and keeps **All projects** below.
+- **Decision: recent projects first, then the rest A–Z.** Recent holds up to three projects, in this order:
+  1. the current project;
+  2. the projects you switched away from this session, newest first;
+  3. the projects of your latest workflow edits. A draft counts for its provenance project.
+
+  While you search, the two sections become one list, recent first.
+
+- **Decision: one-line rows with no colour tile.** Each row leads with the pill's glyph: a person for My Workflows, a cloud for Comfy Cloud, or the deployment's status dot (blue with a halo while building, green when ready, grey when asleep). The current project shows a tick there instead. A custom deployment's row names the deployment on the right, or shows "Building · N min" while it builds. A Comfy Cloud row shows nothing more, because the cloud says it.
+- **Decision: no current-project header.** The pill and the tick already show which project you are in.
+- The menu follows upstream's menus and search field: `bg-base-background`, `searchInputVariants` at size md, and one highlight colour for hover and the keyboard. The corners nest: the menu is 12px, and the search field and rows are 8px at a 4px inset.
+- When the menu opens, the current project's row is highlighted as well as ticked, because reka's listbox highlights the selected option. So ↓ then Enter takes you back to your last project.
+- **Escape over the editor:** the reported bug did not reproduce on this base (`16432a5`). Escape closed both the old and the new menu in 11 headless Chromium cases, including the build lock screen and a canvas-focused open. The menu now also closes on Escape from its own keydown, as upstream's `NodeSearchTypeFilterPopover` does, so an editor listener on the document or window cannot swallow the key.
+- Built with reka-ui `Listbox` and `ListboxFilter` inside the existing `PopoverContent`. Upstream's `SearchInput` wraps its own `Combobox`, so it cannot drive the list's arrow keys.
+- The pill is unchanged.
+
+Wiki: `decisions/project-switcher-in-tab-bar.md` says "The menu lists projects with where each runs"; this keeps that. The wiki says nothing about search or what "recent" means. Promote? **maybe**: add "search, recent first" to that decision.
+
+---
+
+## [2026-10-07] Editor Workflows sidebar is about the current project
+
+Inside `/prototype`, the editor's left-sidebar **Workflows** tab is a prototype panel (`components/sidebar/ProjectWorkflowsSidebarTab.vue`). It replaces upstream's tab in place, with the same id, icon and toolbar position, while the prototype editor is mounted. Outside `/prototype` the real editor is unchanged.
+
+- **Decision: sections and labels.** Willie chose the labels.
+  - **Workflows:** your drafts for this project (the workflows in My Workflows whose provenance is this project). Flat, newest first.
+  - **Project templates:** the project's published workflows. They keep the project's folders, as on the project page.
+  - In **My Workflows**, there is one **Workflows** section: its own workflows, with folders. A draft whose provenance is another visible project shows under that project, not here. My Workflows has no Project templates section.
+  - The wiki calls these sections "My drafts" and "Published" (`entities/project.md` §"Project surface (MVP)"), and the project page says "Drafts" and "Project templates".
+- **Decision: other projects sit under "Other projects", collapsed by default.** It's a quiet disclosure with the count of workflows behind it. Opened, each other visible project is a folder holding its Workflows and Project templates; empty projects are left out. Copy options considered: "Show hidden", "Show other projects", "Workflows in other projects", "Browse other projects", "From other projects".
+- **Decision: search covers other projects too, but their matches stay collapsed.** This project's sections show their matches; a section with none drops out. The "Other projects" count becomes the number of matches elsewhere, so "No matches in this project · Other projects 2" says where to look.
+- **Decision: opening.** A workflow opens in the project it's listed under, using the same rule as Home's cards. A workflow from another project switches project, with the reload, and then opens it. A workflow already open reuses its tab. The active tab's workflow is highlighted.
+- **Decision: a project switch resets the panel.** The search clears, Other projects collapses and folders close, as a real reload would.
+- **Decision: upstream's sections are dropped.**
+  - **Open:** the prototype tab bar already lists this project's open workflows.
+  - **Bookmarks:** these are upstream file-path bookmarks, which the IA has no equivalent for.
+  - **Browse:** the in-browser backend's `/userdata` is empty; the project sections replace it.
+  - Refresh is also dropped, because there is no backend sync.
+
+Wiki is silent on the editor's workflow browser. Promote? **maybe**: an addition to `decisions/project-switcher-in-tab-bar.md` ("the editor's Workflows panel is scoped to the current project; other projects one step away").
+
+---
+
 ## [2026-10-07] Project page: three header variants, environment on the page, settings → Projects
 
 Scope is the dashboard only. Flows where a dropped workflow does not fit the project stay as they are.

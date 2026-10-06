@@ -25,7 +25,7 @@ import {
 } from '../fixtures/customCloud'
 import { onMockRunStateChange } from '../mockBackend'
 import type { MockRunState } from '../mockBackend'
-import type { Deployment, PersonaFixture, Project } from '../types'
+import type { Deployment, PersonaFixture, Project, Workflow } from '../types'
 import {
   buildProgress,
   missingFrom,
@@ -33,6 +33,7 @@ import {
   runsWorkflow,
   simulatedSeconds
 } from '../utils/deployment'
+import { rankRecentProjectIds } from '../utils/projectSwitcher'
 import { usePrototypePersonaStore } from './personaStore'
 import { HOME_TAB_ID, usePrototypeTabsStore } from './tabsStore'
 import { usePrototypeUiStore } from './uiStore'
@@ -43,7 +44,8 @@ type DialogStep = 'choose' | 'review' | 'agent'
 // build.
 export const NEW_BUILD_TARGET = 'new'
 
-export const RELOAD_MS = 900
+// Long enough for the loading screen's wave to rise through the logo.
+export const RELOAD_MS = 2400
 
 // The build keeps the fixture it started in, so it still finishes there if
 // the presenter flips persona mid-build.
@@ -62,6 +64,8 @@ export const usePrototypeCustomCloudStore = defineStore(
     const uiStore = usePrototypeUiStore()
 
     const selectedProjectId = ref<string | null>(null)
+    // Projects switched away from this session, newest first.
+    const visitedProjectIds = ref<string[]>([])
     const reloadingToId = ref<string | null>(null)
     const switcherOpen = ref(false)
     const dialogStep = ref<DialogStep | null>(null)
@@ -96,6 +100,21 @@ export const usePrototypeCustomCloudStore = defineStore(
         switchableProjects.value.find(
           (p) => p.id === selectedProjectId.value
         ) ?? switchableProjects.value[0]
+    )
+
+    // The switcher's Recent: the current project, the ones you switched
+    // away from, then the projects of your latest workflow edits.
+    const recentProjectIds = computed(() =>
+      rankRecentProjectIds(
+        [
+          ...(currentProject.value ? [currentProject.value.id] : []),
+          ...visitedProjectIds.value,
+          ...personaStore.recentWorkflows.map(
+            (w) => w.provenanceProjectId ?? w.projectId
+          )
+        ],
+        switchableProjects.value.map((p) => p.id)
+      )
     )
 
     function deploymentOf(projectId: string | undefined): Deployment {
@@ -151,34 +170,41 @@ export const usePrototypeCustomCloudStore = defineStore(
     })
 
     // The viewer's drafts for a project, newest first.
-    function draftNames(projectId: string) {
+    function draftsOf(projectId: string) {
       const draftsId = personaStore.draftsProject?.id
       return personaStore.fixture.workflows
         .filter(
           (w) => w.projectId === draftsId && w.provenanceProjectId === projectId
         )
         .toSorted((a, b) => b.updatedAt.localeCompare(a.updatedAt))
-        .map((w) => w.name)
     }
 
-    // A full reload lands in the editor: the project's remembered tabs, or
-    // its drafts the first time, or a blank workflow if it has none.
-    const reload = useTimeoutFn(
-      (fromId: string, toId: string, afterSwitch?: () => void) => {
-        tabsStore.swapProject(fromId, toId)
-        if (!tabsStore.openTabs.length) tabsStore.openAll(draftNames(toId))
-        selectedProjectId.value = toId
-        reloadingToId.value = null
-        uiStore.goHome()
-        afterSwitch?.()
-        tabsStore.focusWorkflow()
-      },
-      RELOAD_MS,
-      { immediate: false }
-    )
+    // Entering a project lands in the editor: its remembered tabs, or its
+    // drafts the first time, or a blank workflow if it has none.
+    function enterProject(
+      fromId: string,
+      toId: string,
+      afterSwitch?: () => void
+    ) {
+      tabsStore.swapProject(fromId, toId)
+      if (!tabsStore.openTabs.length) tabsStore.openSaved(draftsOf(toId))
+      visitedProjectIds.value = [
+        fromId,
+        ...visitedProjectIds.value.filter((id) => id !== fromId)
+      ]
+      selectedProjectId.value = toId
+      reloadingToId.value = null
+      uiStore.goHome()
+      afterSwitch?.()
+      tabsStore.focusWorkflow()
+    }
 
-    // Projects can load different frontend extensions, so switching is a
-    // full reload for now: a brief transition, then that project's tabs.
+    const reload = useTimeoutFn(enterProject, RELOAD_MS, { immediate: false })
+
+    // A deployment can load different frontend extensions, so moving to a
+    // project on another deployment is a full reload for now: the loading
+    // screen, then that project. Projects on the same deployment (every
+    // Comfy Cloud project) switch at once.
     function switchProject(projectId: string, afterSwitch?: () => void) {
       const fromId = currentProject.value?.id
       if (!fromId || projectId === fromId) {
@@ -187,6 +213,10 @@ export const usePrototypeCustomCloudStore = defineStore(
       }
       dialogStep.value = null
       runState.value = 'idle'
+      if (deploymentOf(fromId).id === deploymentOf(projectId).id) {
+        enterProject(fromId, projectId, afterSwitch)
+        return
+      }
       reloadingToId.value = projectId
       reload.start(fromId, projectId, afterSwitch)
     }
@@ -217,8 +247,12 @@ export const usePrototypeCustomCloudStore = defineStore(
       uiStore.goHome()
     }
 
-    function openWorkflow(projectId: string, label: string) {
-      switchProject(projectId, () => tabsStore.openWorkflow(label))
+    // A saved workflow opens in its project, in its tab if already open.
+    function openWorkflow(
+      projectId: string,
+      workflow: Pick<Workflow, 'id' | 'name'>
+    ) {
+      switchProject(projectId, () => tabsStore.openSaved([workflow]))
     }
 
     function openRunTargetDialog() {
@@ -281,7 +315,9 @@ export const usePrototypeCustomCloudStore = defineStore(
         deploymentId,
         color: BUILD_PROJECT_COLOR
       })
-      build.value = { projectId, deploymentId, startedAt: Date.now(), fixture }
+      // The build clock starts once the reload into the project ends.
+      const startedAt = Date.now() + RELOAD_MS
+      build.value = { projectId, deploymentId, startedAt, fixture }
       now.value = Date.now()
       ticker.resume()
       openInProject(projectId)
@@ -325,6 +361,7 @@ export const usePrototypeCustomCloudStore = defineStore(
       () => {
         reload.stop()
         selectedProjectId.value = null
+        visitedProjectIds.value = []
         reloadingToId.value = null
         switcherOpen.value = false
         dialogStep.value = null
@@ -336,6 +373,7 @@ export const usePrototypeCustomCloudStore = defineStore(
     return {
       isEnabled,
       switchableProjects,
+      recentProjectIds,
       currentProject,
       currentDeployment,
       deploymentOf,

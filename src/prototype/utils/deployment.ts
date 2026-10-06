@@ -63,7 +63,10 @@ const TOTAL_SECONDS = BUILD_STAGES.reduce((sum, s) => sum + s.seconds, 0)
 // Map real elapsed time onto the simulated ~19 minute build so the demo
 // finishes in `durationMs`.
 export function simulatedSeconds(elapsedMs: number, durationMs: number) {
-  return Math.min(TOTAL_SECONDS, (elapsedMs / durationMs) * TOTAL_SECONDS)
+  return Math.min(
+    TOTAL_SECONDS,
+    (Math.max(0, elapsedMs) / durationMs) * TOTAL_SECONDS
+  )
 }
 
 function phaseProgress(phase: BuildPhase, simSeconds: number): PhaseProgress {

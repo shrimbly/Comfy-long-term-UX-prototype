@@ -390,12 +390,12 @@ function onNewWorkflow() {
   if (!newId) return
   activeTab.value = 'workflows'
   const wf = fixture.value.workflows.find((w) => w.id === newId)
-  customCloud.openWorkflow(projectId, wf?.name ?? 'Untitled workflow')
+  if (wf) customCloud.openWorkflow(projectId, wf)
 }
 
 function onOpenDraft(workflowId: string) {
   const wf = fixture.value.workflows.find((w) => w.id === workflowId)
-  if (wf) customCloud.openWorkflow(projectId, wf.name)
+  if (wf) customCloud.openWorkflow(projectId, wf)
 }
 
 const project = computed(() =>

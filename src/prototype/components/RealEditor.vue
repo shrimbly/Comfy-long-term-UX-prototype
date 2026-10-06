@@ -65,6 +65,7 @@ import { useCommandStore } from '@/stores/commandStore'
 import { useExecutionErrorStore } from '@/stores/executionErrorStore'
 import GraphView from '@/views/GraphView.vue'
 
+import { useProjectWorkflowsSidebarTab } from '../composables/useProjectWorkflowsSidebarTab'
 import { MATTE_PASS_GRAPH } from '../fixtures/mattePassGraph'
 import { setMockDeployment } from '../mockBackend'
 import { objectInfo, PACK_NODE_TYPES } from '../mockBackend/nodeDefs'
@@ -82,6 +83,8 @@ const tabsStore = usePrototypeTabsStore()
 const policies = usePrototypePolicyStore()
 const workflowStore = useWorkflowStore()
 const executionErrorStore = useExecutionErrorStore()
+
+useProjectWorkflowsSidebarTab()
 
 // Missing nodes lead to "choose where it runs", never the Errors overlay.
 watch(
