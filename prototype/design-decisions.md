@@ -1470,3 +1470,26 @@ Willie picked direction H from the design canvas "Project switcher menu: search 
 - The pill is unchanged.
 
 Wiki: `decisions/project-switcher-in-tab-bar.md` says "The menu lists projects with where each runs"; this keeps that. The wiki says nothing about search or what "recent" means. Promote? **maybe**: add "search, recent first" to that decision.
+
+---
+
+## [2026-10-07] Editor Workflows sidebar is about the current project
+
+Inside `/prototype`, the editor's left-sidebar **Workflows** tab is a prototype panel (`components/sidebar/ProjectWorkflowsSidebarTab.vue`). It replaces upstream's tab in place, with the same id, icon and toolbar position, while the prototype editor is mounted. Outside `/prototype` the real editor is unchanged.
+
+- **Decision: sections and labels.** Willie chose the labels.
+  - **Workflows:** your drafts for this project (the workflows in My Workflows whose provenance is this project). Flat, newest first.
+  - **Project templates:** the project's published workflows. They keep the project's folders, as on the project page.
+  - In **My Workflows**, there is one **Workflows** section: its own workflows, with folders. A draft whose provenance is another visible project shows under that project, not here. My Workflows has no Project templates section.
+  - The wiki calls these sections "My drafts" and "Published" (`entities/project.md` §"Project surface (MVP)"), and the project page says "Drafts" and "Project templates".
+- **Decision: other projects sit under "Other projects", collapsed by default.** It's a quiet disclosure with the count of workflows behind it. Opened, each other visible project is a folder holding its Workflows and Project templates; empty projects are left out. Copy options considered: "Show hidden", "Show other projects", "Workflows in other projects", "Browse other projects", "From other projects".
+- **Decision: search covers other projects too, but their matches stay collapsed.** This project's sections show their matches; a section with none drops out. The "Other projects" count becomes the number of matches elsewhere, so "No matches in this project · Other projects 2" says where to look.
+- **Decision: opening.** A workflow opens in the project it's listed under, using the same rule as Home's cards. A workflow from another project switches project, with the reload, and then opens it. A workflow already open reuses its tab. The active tab's workflow is highlighted.
+- **Decision: a project switch resets the panel.** The search clears, Other projects collapses and folders close, as a real reload would.
+- **Decision: upstream's sections are dropped.**
+  - **Open:** the prototype tab bar already lists this project's open workflows.
+  - **Bookmarks:** these are upstream file-path bookmarks, which the IA has no equivalent for.
+  - **Browse:** the in-browser backend's `/userdata` is empty; the project sections replace it.
+  - Refresh is also dropped, because there is no backend sync.
+
+Wiki is silent on the editor's workflow browser. Promote? **maybe**: an addition to `decisions/project-switcher-in-tab-bar.md` ("the editor's Workflows panel is scoped to the current project; other projects one step away").
