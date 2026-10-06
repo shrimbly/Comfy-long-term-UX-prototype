@@ -6317,6 +6317,18 @@
         "demoMyWorkflows": "My Workflows"
       }
     },
+    "editorWorkflows": {
+      "sections": {
+        "workflows": "Workflows",
+        "templates": "Project templates"
+      },
+      "empty": {
+        "workflows": "No workflows yet",
+        "templates": "No templates yet"
+      },
+      "noMatches": "No matches in this project",
+      "otherProjects": "Other projects"
+    },
     "views": {
       "home": {
         "greeting": {
