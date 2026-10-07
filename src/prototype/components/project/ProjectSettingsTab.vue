@@ -79,7 +79,7 @@
               type="button"
               class="inline-flex cursor-pointer items-center gap-1.5 rounded-md text-base-foreground transition-colors hover:text-muted-foreground active:scale-[0.96]"
               :aria-label="t('prototype.projectPage.environmentSheet.open')"
-              @click="isEnvironmentOpen = true"
+              @click="emit('environment')"
             >
               <ProjectEnvironmentChip :deployment />
               <i class="icon-[lucide--chevron-right] size-3.5" />
@@ -210,12 +210,6 @@
       </div>
     </section>
 
-    <ProjectEnvironmentSheet
-      v-if="isEnvironmentOpen"
-      :deployment
-      :project-id="project.id"
-      @close="isEnvironmentOpen = false"
-    />
     <ProjectEnvironmentPicker
       v-if="isPickerOpen"
       :project
@@ -240,7 +234,6 @@ import { workflowThumbnail } from '../../utils/thumbnail'
 import TierDropdown from '../TierDropdown.vue'
 import ProjectEnvironmentChip from './ProjectEnvironmentChip.vue'
 import ProjectEnvironmentPicker from './ProjectEnvironmentPicker.vue'
-import ProjectEnvironmentSheet from './ProjectEnvironmentSheet.vue'
 import ProjectSettingsRow from './ProjectSettingsRow.vue'
 
 const { project } = defineProps<{
@@ -249,6 +242,7 @@ const { project } = defineProps<{
 
 const emit = defineEmits<{
   members: []
+  environment: []
 }>()
 
 const sectionClass =
@@ -265,7 +259,6 @@ const personaStore = usePrototypePersonaStore()
 const customCloud = usePrototypeCustomCloudStore()
 
 const deployment = computed(() => customCloud.deploymentOf(project.id))
-const isEnvironmentOpen = ref(false)
 const isPickerOpen = ref(false)
 
 const canManage = computed(

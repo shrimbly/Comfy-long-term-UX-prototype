@@ -18,7 +18,8 @@
         <button
           type="button"
           class="relative top-2 inline-flex h-7 cursor-pointer items-center rounded-full border border-border-subtle px-2.5 text-xs text-base-foreground transition-colors hover:bg-secondary-background"
-          @click="emit('update:activeTab', 'settings')"
+          :aria-label="t('prototype.projectPage.environmentSheet.open')"
+          @click="emit('environment')"
         >
           <ProjectEnvironmentChip :deployment />
         </button>
@@ -133,6 +134,7 @@ const emit = defineEmits<{
   'update:activeTab': [tab: ProjectPageTab]
   share: []
   media: []
+  environment: []
   'new-workflow': []
 }>()
 

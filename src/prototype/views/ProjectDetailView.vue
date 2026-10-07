@@ -31,6 +31,7 @@
       :can-view-usage="canViewUsage"
       @share="isSharingOpen = true"
       @media="onViewMediaAssets"
+      @environment="isEnvironmentOpen = true"
       @new-workflow="onNewWorkflow"
     />
 
@@ -225,6 +226,7 @@
           v-else-if="activeTab === 'settings'"
           :project
           @members="activeTab = 'members'"
+          @environment="isEnvironmentOpen = true"
         />
 
         <ProjectSharing
@@ -235,6 +237,12 @@
       </div>
     </template>
 
+    <ProjectEnvironmentSheet
+      v-if="isEnvironmentOpen && project"
+      :deployment="customCloud.deploymentOf(project.id)"
+      :project-id="project.id"
+      @close="isEnvironmentOpen = false"
+    />
     <ProjectSharingDialog
       v-if="isSharingOpen && project && project.tier !== 'private'"
       :project="project"
@@ -280,6 +288,7 @@ import Button from '@/components/ui/button/Button.vue'
 
 import FolderCard from '../components/FolderCard.vue'
 import InfoTooltip from '../components/InfoTooltip.vue'
+import ProjectEnvironmentSheet from '../components/project/ProjectEnvironmentSheet.vue'
 import ProjectPageHeader from '../components/project/ProjectPageHeader.vue'
 import ProjectSettingsTab from '../components/project/ProjectSettingsTab.vue'
 import ProjectSharing from '../components/ProjectSharing.vue'
@@ -324,6 +333,7 @@ const {
 
 const isSharingOpen = ref(false)
 const activeTab = ref<ProjectPageTab>('workflows')
+const isEnvironmentOpen = ref(false)
 
 onMounted(() => {
   // A project just created via workflow promotion asks to open its share
