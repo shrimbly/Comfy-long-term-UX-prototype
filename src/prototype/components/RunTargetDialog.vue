@@ -63,6 +63,8 @@
           @customise="customising = $event"
         />
         <RunTargetAgent v-else-if="step === 'agent'" :title-id="titleId" />
+        <RunTargetEditItems v-else-if="step === 'items'" :title-id="titleId" />
+        <RunTargetImpact v-else-if="step === 'impact'" :title-id="titleId" />
         <RunTargetBuilding
           v-else-if="step === 'building' && building"
           :title-id="titleId"
@@ -108,6 +110,8 @@ import RunTargetBuilding from './RunTargetBuilding.vue'
 import RunTargetBuildSummary from './RunTargetBuildSummary.vue'
 import RunTargetChoose from './RunTargetChoose.vue'
 import RunTargetDeploy from './RunTargetDeploy.vue'
+import RunTargetEditItems from './RunTargetEditItems.vue'
+import RunTargetImpact from './RunTargetImpact.vue'
 import RunTargetProject from './RunTargetProject.vue'
 
 const { t } = useI18n()

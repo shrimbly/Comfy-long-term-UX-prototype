@@ -6942,7 +6942,8 @@
           "openPlatform": "Open Platform",
           "customiseToastDetail": "Customising a build isn't in this prototype.",
           "editTitle": "Edit deployment",
-          "currentSettings": "Current settings"
+          "currentSettings": "Current settings",
+          "usedByProjects": "No projects use it | 1 project uses it | {count} projects use it"
         },
         "agentTitle": "Hand the build to your coding agent",
         "agentIntro": "Paste this into your agent on the machine where {workflow} runs.",
@@ -6990,6 +6991,34 @@
           "create": "Create deployment",
           "saveRebuild": "Save and rebuild",
           "editTitle": "Deploy: {name} {release}"
+        },
+        "items": {
+          "hint": "Only what the workspace allows. Removing one breaks the workflows that use it.",
+          "addNodes": "Add a node pack",
+          "addModels": "Add a model",
+          "noMatches": "Nothing the workspace allows matches.",
+          "remove": "Remove {name}",
+          "empty": "None pinned.",
+          "allowedNote": "Changes apply when the deployment rebuilds.",
+          "done": "Done",
+          "allAdded": "Everything the workspace allows is already here."
+        },
+        "impact": {
+          "title": "Update {name}?",
+          "affects": "No projects run on it yet. | 1 project runs on it. It gets the new release when the build is done. | {count} projects run on it. All of them get the new release when the build is done.",
+          "thisProject": "this project",
+          "changes": "Changes",
+          "release": "Release {from} → {to}",
+          "version": "ComfyUI {from} → {to}",
+          "gpu": "GPU {from} → {to}",
+          "packsAdded": "{count} pack added: {items} | {count} packs added: {items}",
+          "packsRemoved": "{count} pack removed: {items} | {count} packs removed: {items}",
+          "modelsAdded": "{count} model added: {items} | {count} models added: {items}",
+          "modelsRemoved": "{count} model removed: {items} | {count} models removed: {items}",
+          "cancel": "Cancel",
+          "fork": "Create a new deployment instead",
+          "forkHint": "Only {project} moves to it. The others stay on {name}.",
+          "update": "Update deployment"
         }
       },
       "agentPrompt": {
@@ -7042,7 +7071,8 @@
         "platformToastDetail": "The build log and releases live there.",
         "keepWorking": "Keep working",
         "chip": "Building {deployment} · {minutes} min",
-        "rebuildBody": "Every project on it runs the new release when it's done."
+        "rebuildBody": "Every project on it runs the new release when it's done.",
+        "forkBody": "This project moves to it when it's done. The others stay where they are."
       },
       "ready": {
         "title": "{project} is ready",

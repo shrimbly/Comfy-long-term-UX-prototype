@@ -22,13 +22,7 @@
     </h2>
     <p class="m-0 text-sm text-muted-foreground">
       {{ timeLeft }}
-      {{
-        t(
-          customCloud.editingDeployment
-            ? 'prototype.customCloud.lock.rebuildBody'
-            : 'prototype.customCloud.lock.body'
-        )
-      }}
+      {{ body }}
     </p>
   </header>
 
@@ -140,6 +134,17 @@ function clock(seconds: number) {
   const whole = Math.floor(seconds)
   return `${Math.floor(whole / 60)}:${String(whole % 60).padStart(2, '0')}`
 }
+
+const body = computed(() => {
+  switch (customCloud.buildKind) {
+    case 'update':
+      return t('prototype.customCloud.lock.rebuildBody')
+    case 'fork':
+      return t('prototype.customCloud.lock.forkBody')
+    default:
+      return t('prototype.customCloud.lock.body')
+  }
+})
 
 const timeLeft = computed(() =>
   t(

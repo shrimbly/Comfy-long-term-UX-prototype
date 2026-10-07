@@ -213,6 +213,7 @@
     <ProjectEnvironmentSheet
       v-if="isEnvironmentOpen"
       :deployment
+      :project-id="project.id"
       @close="isEnvironmentOpen = false"
     />
     <ProjectEnvironmentPicker

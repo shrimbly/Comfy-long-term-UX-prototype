@@ -197,8 +197,9 @@ import type { Deployment } from '../../types'
 import DeploymentStatusDot from '../DeploymentStatusDot.vue'
 import ProjectSettingsRow from './ProjectSettingsRow.vue'
 
-const { deployment } = defineProps<{
+const { deployment, projectId } = defineProps<{
   deployment: Deployment
+  projectId?: string
 }>()
 
 const emit = defineEmits<{
@@ -268,7 +269,7 @@ function openPolicies() {
 // The build steps are the dialog the editor uses for a new deployment.
 function onEdit() {
   emit('close')
-  customCloud.openEditDeployment(deployment.id)
+  customCloud.openEditDeployment(deployment.id, projectId)
 }
 
 function openEnvironments() {

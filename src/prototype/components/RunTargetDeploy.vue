@@ -418,7 +418,10 @@ const costTiles = computed(() => {
 })
 
 function onCreate() {
-  if (selectedGpu.value) customCloud.buildAndDeploy(selectedGpu.value)
+  if (!selectedGpu.value) return
+  if (customCloud.editingDeployment)
+    customCloud.requestSaveEdit(selectedGpu.value)
+  else customCloud.buildAndDeploy(selectedGpu.value)
 }
 
 function onPlatform() {

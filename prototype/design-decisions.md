@@ -1701,3 +1701,17 @@ Promote? **maybe**: the "media as a dashboard view" shape, once Willie has seen 
 Wiki link: `concepts/custom-comfy-cloud.md`, `decisions/build-locks-project-until-ready.md`.
 
 Promote? **maybe**, together with the environment sheet.
+
+---
+
+## [2026-10-07] Edit deployment end to end: items, impact, update or fork
+
+- **Decision: models and custom nodes are edited inside the build summary.** The two rows open a list: remove with the x, add from what the workspace policies allow. Projects inherit the workspace allowlists and can only narrow them, so nothing outside them can be added. The ComfyUI version is a select in the same summary. Nothing applies until the deployment rebuilds.
+- **Decision: an impact step before any rebuild.** It names the projects on the deployment and lists the changes (release, version, GPU, packs and models added or removed), then offers three ways out: Update deployment, Create a new deployment instead, Cancel.
+- **Decision: "Create a new deployment instead" forks.** A new deployment with the edits and release 1, and only the project the edit was opened from moves to it. The others stay on the original.
+- Reason: one deployment backs many projects, so a studio admin needs to see the blast radius before cutting a release, and a way to try a change on one project without touching the rest.
+- Fixture: the Acme pack and model ids now match the policy catalog, so the picker's names line up.
+
+Wiki link: `decisions/project-runs-on-shared-deployment.md`, `decisions/custom-nodes-as-configuration.md`. Open question: `open-questions.md#dropped-workflow-other-deployment` asked "update or branch"; this gives both at the same step.
+
+Promote? **maybe**: the impact step and the fork rule.

@@ -18,6 +18,7 @@ import { defineStore } from 'pinia'
 import { computed, ref, shallowRef, watch } from 'vue'
 
 import {
+  BUILD_DEFAULTS,
   BUILD_PROJECT_COLOR,
   COMFY_CLOUD,
   DEFAULT_BUILD_PROJECT_NAME,
@@ -55,6 +56,8 @@ type DialogStep =
   | 'agent'
   | 'deploy'
   | 'building'
+  | 'items'
+  | 'impact'
 
 // Where a new project runs: an existing deployment's id, or a new deployment.
 export const NEW_BUILD_TARGET = 'new'
@@ -94,8 +97,15 @@ export const usePrototypeCustomCloudStore = defineStore(
     const newProjectTier = ref<ProjectTier>('workspace-wide')
     const newProjectCollaborators = ref<string[]>([])
     const newDeploymentName = ref(DEFAULT_BUILD_PROJECT_NAME)
-    // The deployment "Edit deployment" opened the build steps for.
+    // The deployment "Edit deployment" opened the build steps for, the
+    // project it was opened from, and the edits pending until it rebuilds.
     const editingDeploymentId = ref<string | null>(null)
+    const editingFromProjectId = ref<string | null>(null)
+    const editingNodePacks = ref<string[]>([])
+    const editingModels = ref<string[]>([])
+    const editingComfyVersion = ref(BUILD_DEFAULTS.comfyVersion)
+    const editingGpu = ref<PlatformGpu | null>(null)
+    const editingItemsKind = ref<'nodes' | 'models'>('nodes')
     const build = shallowRef<ActiveBuild | null>(null)
     // The deployment just built: its project, once named, opens with the
     // "ready" toast.
@@ -384,15 +394,116 @@ export const usePrototypeCustomCloudStore = defineStore(
       deployments.value.find((d) => d.id === editingDeploymentId.value)
     )
 
+    const editingProjects = computed(() =>
+      personaStore.visibleProjects.filter(
+        (p) => p.deploymentId === editingDeploymentId.value
+      )
+    )
+
+    function difference(before: string[], after: string[]) {
+      return after.filter((item) => !before.includes(item))
+    }
+
+    // What the pending edits change against the deployment as it is.
+    const editingChanges = computed(() => {
+      const before = editingDeployment.value
+      const comfyBefore = before?.comfyVersion ?? BUILD_DEFAULTS.comfyVersion
+      return {
+        addedPacks: difference(before?.nodePacks ?? [], editingNodePacks.value),
+        removedPacks: difference(
+          editingNodePacks.value,
+          before?.nodePacks ?? []
+        ),
+        addedModels: difference(before?.models ?? [], editingModels.value),
+        removedModels: difference(editingModels.value, before?.models ?? []),
+        comfyVersion:
+          comfyBefore === editingComfyVersion.value
+            ? null
+            : { from: comfyBefore, to: editingComfyVersion.value },
+        gpu:
+          !editingGpu.value || editingGpu.value.label === before?.gpu
+            ? null
+            : { from: before?.gpu ?? '', to: editingGpu.value.label }
+      }
+    })
+
     // Edit deployment: Platform's build summary and deploy dialog for an
-    // existing deployment, which rebuilds it as the next release.
-    function openEditDeployment(deploymentId: string) {
+    // existing deployment, then the impact step, which rebuilds it as the
+    // next release or forks it.
+    function openEditDeployment(deploymentId: string, fromProjectId?: string) {
       const target = deployments.value.find((d) => d.id === deploymentId)
       if (!target || build.value) return
       editingDeploymentId.value = deploymentId
+      editingFromProjectId.value = fromProjectId ?? null
+      editingNodePacks.value = [...target.nodePacks]
+      editingModels.value = [...target.models]
+      editingComfyVersion.value =
+        target.comfyVersion ?? BUILD_DEFAULTS.comfyVersion
+      editingGpu.value = null
       newDeploymentName.value = target.name
       dialogStep.value = 'build'
     }
+
+    function cancelEdit() {
+      editingDeploymentId.value = null
+      editingFromProjectId.value = null
+      dialogStep.value = null
+    }
+
+    // The deploy step's save: show who the change reaches before it runs.
+    function requestSaveEdit(gpu: PlatformGpu) {
+      editingGpu.value = gpu
+      dialogStep.value = 'impact'
+    }
+
+    function confirmUpdate() {
+      if (editingGpu.value) buildAndDeploy(editingGpu.value)
+    }
+
+    // A new deployment with these edits, for this project only. The others
+    // stay on the one being edited.
+    function forkDeployment() {
+      const fixture = personaStore.fixture
+      const source = editingDeployment.value
+      const gpu = editingGpu.value
+      const fromProjectId = editingFromProjectId.value
+      if (!source || !gpu || !fromProjectId || build.value) return
+      const name = newDeploymentName.value.trim() || source.name
+      const deploymentId = `dep-build-${Date.now()}`
+      fixture.deployments = [
+        ...deployments.value,
+        {
+          ...source,
+          id: deploymentId,
+          name: name === source.name ? `${name} 2` : name,
+          release: 'v1',
+          status: 'building',
+          gpu: gpu.label,
+          comfyVersion: editingComfyVersion.value,
+          nodePacks: [...editingNodePacks.value],
+          models: [...editingModels.value]
+        }
+      ]
+      personaStore.setProjectDeployment(fromProjectId, deploymentId)
+      editingDeploymentId.value = null
+      editingFromProjectId.value = null
+      build.value = {
+        deploymentId,
+        startedAt: Date.now(),
+        fixture,
+        rebuild: true
+      }
+      now.value = Date.now()
+      ticker.resume()
+      dialogStep.value = 'building'
+    }
+
+    // A rebuild or a fork already has its project; a new build asks for one.
+    const buildKind = computed(() => {
+      if (!build.value) return null
+      if (!build.value.rebuild) return 'new'
+      return editingDeploymentId.value ? 'update' : 'fork'
+    })
 
     // The deployment being built, for the tab strip's "Building" chip.
     const buildingDeployment = computed(() =>
@@ -412,6 +523,9 @@ export const usePrototypeCustomCloudStore = defineStore(
                 ...d,
                 name,
                 gpu: gpu.label,
+                comfyVersion: editingComfyVersion.value,
+                nodePacks: [...editingNodePacks.value],
+                models: [...editingModels.value],
                 release: nextRelease(d.release),
                 status: 'building' as const
               }
@@ -466,6 +580,7 @@ export const usePrototypeCustomCloudStore = defineStore(
       build.value = null
       if (active.rebuild) {
         editingDeploymentId.value = null
+        editingFromProjectId.value = null
         if (dialogStep.value === 'building') dialogStep.value = null
         return
       }
@@ -502,6 +617,7 @@ export const usePrototypeCustomCloudStore = defineStore(
         readyProjectId.value = null
         builtDeploymentId.value = null
         editingDeploymentId.value = null
+        editingFromProjectId.value = null
         tabsStore.reset()
       }
     )
@@ -523,11 +639,23 @@ export const usePrototypeCustomCloudStore = defineStore(
       newProjectCollaborators,
       newDeploymentName,
       editingDeployment,
+      editingFromProjectId,
+      editingNodePacks,
+      editingModels,
+      editingComfyVersion,
+      editingItemsKind,
+      editingProjects,
+      editingChanges,
       openEditDeployment,
+      cancelEdit,
+      requestSaveEdit,
+      confirmUpdate,
+      forkDeployment,
       deploymentTargets,
       projectTargets,
       chooseMode,
       progress,
+      buildKind,
       buildingDeployment,
       builtDeploymentId,
       readyProjectId,
