@@ -49,8 +49,15 @@
     />
     <BuildingChip
       v-if="customCloud.buildingDeployment && customCloud.progress"
-      :deployment="customCloud.buildingDeployment"
+      :name="customCloud.buildingDeployment.name"
       :remaining-seconds="customCloud.progress.remainingSeconds"
+      @open="customCloud.dialogStep = 'building'"
+    />
+    <BuildingChip
+      v-if="customNodes.rebuildChipName && customNodes.progress"
+      :name="customNodes.rebuildChipName"
+      :remaining-seconds="customNodes.progress.remainingSeconds"
+      @open="customNodes.open()"
     />
     <div
       class="flex h-full min-w-0 flex-auto flex-row gap-1 overflow-hidden px-1"
@@ -168,6 +175,7 @@ import TabsTrigger from '@/components/ui/tabs/TabsTrigger.vue'
 import BuildingChip from './BuildingChip.vue'
 import ProjectSwitcher from './ProjectSwitcher.vue'
 import { usePrototypeCustomCloudStore } from '../stores/customCloudStore'
+import { usePrototypeCustomNodesStore } from '../stores/customNodesStore'
 import { usePrototypeNavigationStore } from '../stores/navigationStore'
 import { HOME_TAB_ID, usePrototypeTabsStore } from '../stores/tabsStore'
 import { usePrototypeUiStore } from '../stores/uiStore'
@@ -178,6 +186,7 @@ const router = useRouter()
 const navigationStore = usePrototypeNavigationStore()
 const tabsStore = usePrototypeTabsStore()
 const customCloud = usePrototypeCustomCloudStore()
+const customNodes = usePrototypeCustomNodesStore()
 const uiStore = usePrototypeUiStore()
 const isEditorRoute = computed(() => route.name === 'GraphView')
 const isHomeActive = computed(

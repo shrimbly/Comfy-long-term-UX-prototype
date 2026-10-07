@@ -1240,7 +1240,7 @@ export const adminFixture: PersonaFixture = {
       warmMinutes: 2,
       comfyVersion: 'v0.39.1',
       runtime: 'CUDA 13.0 · Python 3.12 · Torch 2.12.1',
-      nodePacks: ['comfyui-rmbg', 'acme-matte-tools', 'comfyui-impact-pack'],
+      nodePacks: ['comfyui-rmbg', 'acme-matte-tools', 'impact-pack'],
       models: ['flux1-dev-fp8', 'acme_hero_lora_v5', 'sdxl-base-1.0']
     },
     {

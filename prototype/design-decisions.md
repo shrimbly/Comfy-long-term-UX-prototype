@@ -1701,3 +1701,21 @@ Promote? **maybe**: the "media as a dashboard view" shape, once Willie has seen 
 Wiki link: `concepts/custom-comfy-cloud.md`, `decisions/build-locks-project-until-ready.md`.
 
 Promote? **maybe**, together with the environment sheet.
+
+---
+
+## [2026-10-07] Custom nodes modal: Platform's table, with pinned versions
+
+- **Decision: the editor's extensions button opens a Custom nodes modal for the current project's deployment.** Its table follows Platform's Builder custom nodes step (Comfy-Org/platform `pages/profile/builds/new.vue`): pack (linked to its GitHub repo), publisher, installs, GitHub stars, version, then status or action. Counts read like the registry's ("4.5M", "1.9k"). A private pack shows a Private badge and "—" for installs and stars.
+  - Installed packs come first, then the ones the deployment can add, then a collapsed "Not allowed in {workspace}" group from Settings › Policies. Section headers for installed and available were dropped at the operator's request.
+  - **Versions:** every pack has a picker. **Follow latest** takes the newest release at each rebuild. Picking a release **pins** it. Badges are uncoloured: "latest", or "pinned" with a pin icon.
+  - **Installing a pack or changing an installed pack's version is a new release of the shared deployment.** A confirm says "Adds" or "Changes", v3 → v4, and lists every project on the deployment. Rebuild builds in the background. The tab strip shows "Building Acme Studio pipeline v4", the modal reads "Adding in v4" or "Changing in v4", runs stay on v3, and a toast says when v4 is ready.
+  - **Members** see "Ask an admin" in place of Install (open question: who can install). **Comfy Cloud projects** see the list read-only, with a note that packs can't be added to a shared deployment.
+- Not built from the canvas: the V2 (list + detail) and V3 (tabs, batched changes) variations, pinning a commit hash, and a full build-progress dialog for a rebuild.
+- Fixture fix: Acme Studio pipeline listed `comfyui-impact-pack`, but the policy catalog calls the pack `impact-pack`, so the editor treated Impact Pack as not allowed. It now uses `impact-pack`.
+
+Canvas: <https://claude.ai/artifact/PQby9iCSzrR7WMvbsqnY11>, section "Custom nodes modal: three variations" (V1). Wiki: silent on pack versions, pinning and stars; `decisions/custom-nodes-as-configuration.md` (packs are allowlist configuration); `decisions/project-runs-on-shared-deployment.md` (updating a deployment updates every project on it). Open: does "Follow latest" rebuild by itself when a pack releases? Built: no. Promote? **maybe**: record that a pack version change is a release of the deployment.
+
+Update (same day): **packs install in batches.** Each row ends in a checkbox (an installed pack shows a plain check, a blocked one a lock). The footer's **Install N packs** button asks once and builds every ticked pack into one release. Members get **Ask an admin for N packs**. A version change on an installed pack still confirms on its own. Notes under a pack's name show "8.29.1 available", "Adding in v4 · about 16 min" or "Requested from admins".
+
+Update (same day): **the table now matches Platform's layout.** Search sits next to Status, License and Sort dropdowns. The columns are Pack Name, Publisher, Installs, Stars, Version, License and Install, in a bordered table with a shaded header. Packs sort by one key (installs by default) with no groups, and blocked packs show dimmed in place with a lock. A version shows a pin icon when pinned, and an up arrow when a newer release is out. The "Review policies" link was dropped; the lock's tooltip points to Settings › Policies.

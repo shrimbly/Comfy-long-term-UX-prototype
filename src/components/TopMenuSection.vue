@@ -72,12 +72,19 @@
               />
               <LoginButton v-else-if="!isIntegratedTabBar" />
               <Button
-                v-if="managerState.shouldShowExtensionsButton.value"
+                v-if="
+                  managerState.shouldShowExtensionsButton.value ||
+                  isPrototypeCustomNodes
+                "
                 v-tooltip.bottom="customNodesManagerTooltipConfig"
                 variant="secondary"
                 size="icon"
-                :aria-label="t('menu.manageExtensions')"
-                @click="openCustomNodeManager"
+                :aria-label="customNodesButtonLabel"
+                @click="
+                  isPrototypeCustomNodes
+                    ? prototypeCustomNodes.open()
+                    : openCustomNodeManager()
+                "
               >
                 <i class="icon-[comfy--extensions-blocks] size-4" />
                 <span
@@ -204,6 +211,8 @@ import { useManagerState } from '@/workbench/extensions/manager/composables/useM
 import { useManagerSurveyDialog } from '@/workbench/extensions/manager/composables/useManagerSurveyDialog'
 import { ManagerTab } from '@/workbench/extensions/manager/types/comfyManagerTypes'
 import { cn } from '@comfyorg/tailwind-utils'
+import { usePrototypeCustomCloudStore } from '@/prototype/stores/customCloudStore'
+import { usePrototypeCustomNodesStore } from '@/prototype/stores/customNodesStore'
 
 const settingStore = useSettingStore()
 const workspaceStore = useWorkspaceStore()
@@ -214,6 +223,12 @@ const isActionBarsHidden = computed(
 )
 const managerState = useManagerState()
 const managerSurveyDialog = useManagerSurveyDialog()
+// In the prototype's embedded editor the button opens its Custom nodes modal.
+const prototypeCustomCloud = usePrototypeCustomCloudStore()
+const prototypeCustomNodes = usePrototypeCustomNodesStore()
+const isPrototypeCustomNodes = computed(
+  () => prototypeCustomCloud.editorMounted && prototypeCustomCloud.isEnabled
+)
 const { flags } = useFeatureFlags()
 const { isLoggedIn } = useCurrentUser()
 const { t } = useI18n()
@@ -244,6 +259,7 @@ const hasDockedButtons = computed(() => {
   if (hasLegacyContent.value) return true
   if (!isIntegratedTabBar.value) return true
   if (managerState.shouldShowExtensionsButton.value) return true
+  if (isPrototypeCustomNodes.value) return true
   if (isCloud && flags.workflowSharingEnabled) return true
   if (!isRightSidePanelOpen.value) return true
   return false
@@ -279,8 +295,13 @@ const inlineProgressSummaryTarget = computed(() => {
 const shouldHideInlineProgressSummary = computed(
   () => isQueueProgressOverlayEnabled.value && isQueueOverlayExpanded.value
 )
+const customNodesButtonLabel = computed(() =>
+  isPrototypeCustomNodes.value
+    ? t('prototype.customNodes.openButton')
+    : t('menu.manageExtensions')
+)
 const customNodesManagerTooltipConfig = computed(() =>
-  buildTooltipConfig(t('menu.manageExtensions'))
+  buildTooltipConfig(customNodesButtonLabel.value)
 )
 const shareTooltipConfig = computed(() =>
   buildTooltipConfig(t('actionbar.shareTooltip'))

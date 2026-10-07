@@ -7334,6 +7334,102 @@
         "asleep": "Sleeping",
         "building": "Building"
       }
+    },
+    "customNodes": {
+      "title": "Custom nodes",
+      "openButton": "Custom nodes",
+      "runsOn": "{project} runs on {deployment} · {release}",
+      "runsOnCloud": "{project} runs on Comfy Cloud",
+      "building": "{deployment} {release} is building · runs stay on {current} until then",
+      "search": "Search or filter…",
+      "sort": {
+        "installs": "Installs",
+        "stars": "Stars",
+        "name": "Name"
+      },
+      "column": {
+        "pack": "Pack Name",
+        "publisher": "Publisher",
+        "installs": "Installs",
+        "stars": "Stars",
+        "version": "Version",
+        "license": "License",
+        "install": "Install"
+      },
+      "private": "Private",
+      "privateStars": "Private repository: no public stars",
+      "openRepo": "{pack} on GitHub",
+      "stars": "{count} GitHub stars",
+      "status": {
+        "installed": "Installed",
+        "newer": "{version} available",
+        "requested": "Requested from admins",
+        "notAllowed": "Not allowed",
+        "adding": "Adding in {release} · {minutes}",
+        "changing": "Changing in {release} · {minutes}",
+        "minutes": "less than a minute | about 1 min | about {count} min",
+        "select": "Install {pack}",
+        "filter": {
+          "all": "All",
+          "installed": "Installed",
+          "available": "Available",
+          "blocked": "Not allowed"
+        },
+        "blockedHint": "Not allowed in this workspace. Owners and admins change the custom node allowlist in Settings › Policies."
+      },
+      "version": {
+        "label": "{pack}: version",
+        "pinned": "pinned",
+        "followLatest": "Follow latest ({version})",
+        "release": "{version} · {date}"
+      },
+      "noMatch": "No node packs match.",
+      "cloud": {
+        "title": "Comfy Cloud is shared, so packs can't be added to it",
+        "body": "Move this project to its own deployment to add packs."
+      },
+      "footer": {
+        "custom": "Installing packs or changing a version makes a new release of {deployment}.",
+        "member": "Workspace admins add packs and change versions, because every project on {deployment} gets the new release.",
+        "building": "You can add packs or change versions once {release} is ready.",
+        "cloud": "Built-in Comfy nodes remain available."
+      },
+      "rebuild": {
+        "titleAdd": "Rebuild to add {pack}?",
+        "titleChange": "Rebuild to change {pack}?",
+        "adds": "Adds",
+        "changes": "Changes",
+        "newRelease": "New release",
+        "takes": "Takes",
+        "takesValue": "About 20 min to build and deploy",
+        "addValue": "{pack} {version}",
+        "changeValue": "{pack} {from} → {to}",
+        "latest": "{version} · latest",
+        "pinned": "{version} · pinned",
+        "projectsLead": "Every project on {deployment} gets the new release.",
+        "thisProject": "this project",
+        "keepWorking": "You can keep working. Runs stay on {release} until {next} is ready.",
+        "notNow": "Not now",
+        "confirm": "Rebuild",
+        "titleAddMany": "Rebuild to add {count} packs?"
+      },
+      "ready": {
+        "title": "{deployment} {release} is ready",
+        "bodyAdd": "Installed {pack}. The new nodes are in the node library in every project on {deployment}.",
+        "bodyChange": "{pack} is on {version} in every project on {deployment}."
+      },
+      "actions": {
+        "install": "Install | Install 1 pack | Install {count} packs",
+        "askAdmin": "Ask an admin | Ask an admin for 1 pack | Ask an admin for {count} packs",
+        "selected": "No packs selected | 1 pack selected | {count} packs selected",
+        "clear": "Clear"
+      },
+      "toolbar": {
+        "status": "Status:",
+        "license": "License:",
+        "sort": "Sort:",
+        "all": "All"
+      }
     }
   },
   "mediaAssets": {
