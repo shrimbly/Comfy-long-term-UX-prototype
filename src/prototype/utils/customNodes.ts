@@ -12,6 +12,8 @@ import type { PolicyItem } from '../fixtures/policyCatalog'
 import type { NodePackDetails, PackRelease } from '../fixtures/nodePacks'
 import type { Deployment } from '../types'
 
+const PRIVATE_LICENSE = 'Private'
+
 // A version change or a new pack, made by rebuilding the deployment.
 // `to: null` follows the latest release.
 export type PackChange =
@@ -31,6 +33,8 @@ export interface PackRow {
   releases: PackRelease[]
   latest: string
   state: PackState
+  // Not on the public registry: the workspace's own pack.
+  private: boolean
   // The version the row shows: installed, or what Install would add.
   version: string
   pinned: boolean
@@ -90,6 +94,7 @@ export function packRows(input: RowInput): PackRow[] {
         repoUrl: details.repo && `https://github.com/${details.repo}`,
         releases: details.releases,
         latest,
+        private: item.license === PRIVATE_LICENSE,
         state: buildsThis
           ? installed
             ? 'changing'
@@ -133,17 +138,17 @@ export function filterRows(rows: PackRow[], filter: RowFilter): PackRow[] {
   )
 }
 
-// Installed packs first, then the rest; each by the chosen column, most
-// first (names A to Z).
+// Installed packs first, then the workspace's own private packs, then the
+// rest; each by the chosen column, most first (names A to Z).
 export function sortRows(rows: PackRow[], sort: PackSort): PackRow[] {
   const by: Record<PackSort, (a: PackRow, b: PackRow) => number> = {
     installs: (a, b) => b.installs - a.installs,
     stars: (a, b) => (b.stars ?? -1) - (a.stars ?? -1),
     name: (a, b) => a.name.localeCompare(b.name)
   }
-  const installedFirst = (a: PackRow, b: PackRow) =>
-    Number(statusOf(b) === 'installed') - Number(statusOf(a) === 'installed')
-  return [...rows].sort((a, b) => installedFirst(a, b) || by[sort](a, b))
+  const rank = (row: PackRow) =>
+    statusOf(row) === 'installed' ? 0 : row.private ? 1 : 2
+  return [...rows].sort((a, b) => rank(a) - rank(b) || by[sort](a, b))
 }
 
 // The deployment's pins once its changes are built.
@@ -155,4 +160,81 @@ export function pinsAfter(
     const rest = omit(next, [change.packId])
     return change.to ? { ...rest, [change.packId]: change.to } : rest
   }, pins)
+}
+
+// A private pack the workspace imports itself: a GitHub repository at a
+// branch or tag, or an uploaded .zip.
+export type PrivatePackSource =
+  | { kind: 'github'; url: string; ref: string }
+  | { kind: 'zip'; fileName: string }
+
+export interface PrivatePack {
+  item: PolicyItem
+  details: NodePackDetails
+}
+
+const GITHUB_REPO =
+  /^(?:https?:\/\/)?(?:www\.)?github\.com\/([\w.-]+)\/([\w.-]+?)(?:\.git)?\/?$/i
+
+// "owner/repo" from a GitHub repository URL, or undefined if it isn't one.
+export function parseGithubRepo(url: string): string | undefined {
+  const match = GITHUB_REPO.exec(url.trim())
+  return match ? `${match[1]}/${match[2]}` : undefined
+}
+
+function packId(name: string) {
+  return `private-${name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`
+}
+
+// The catalog entry and details a private import adds. A repository's
+// owner publishes it at the chosen ref; an upload is the workspace's own,
+// versioned by the day it was uploaded.
+export function privatePack(
+  source: PrivatePackSource,
+  { workspace, today }: { workspace: string; today: string }
+): PrivatePack | undefined {
+  if (source.kind === 'zip') {
+    const name = source.fileName.replace(/\.zip$/i, '')
+    return name
+      ? privateEntry({ name, publisher: workspace, version: today, today })
+      : undefined
+  }
+  const repo = parseGithubRepo(source.url)
+  if (!repo) return undefined
+  const [owner, name] = repo.split('/')
+  return privateEntry({
+    name,
+    publisher: owner,
+    version: source.ref.trim() || 'main',
+    today,
+    repo
+  })
+}
+
+function privateEntry({
+  name,
+  publisher,
+  version,
+  today,
+  repo
+}: {
+  name: string
+  publisher: string
+  version: string
+  today: string
+  repo?: string
+}): PrivatePack {
+  return {
+    item: {
+      id: packId(name),
+      kind: 'nodes',
+      name,
+      publisher,
+      license: PRIVATE_LICENSE,
+      version,
+      installs: 0,
+      allowed: true
+    },
+    details: { repo, releases: [{ version, date: today }] }
+  }
 }

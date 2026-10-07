@@ -7,7 +7,9 @@ import {
   filterRows,
   formatCount,
   packRows,
+  parseGithubRepo,
   pinsAfter,
+  privatePack,
   sortRows
 } from './customNodes'
 import type { PackChange } from './customNodes'
@@ -183,6 +185,18 @@ describe('sortRows', () => {
       expect(sortRows(rows(), sort).map((r) => r.id)).toEqual(expected)
     }
   )
+
+  it('puts the workspace’s own private packs after installed ones', () => {
+    const withPrivate = rows().map((row) =>
+      row.id === 'kj' ? { ...row, private: true } : row
+    )
+    expect(sortRows(withPrivate, 'installs').map((r) => r.id)).toEqual([
+      'impact',
+      'rmbg',
+      'kj',
+      'blocked'
+    ])
+  })
 })
 
 describe('pinsAfter', () => {
@@ -222,5 +236,57 @@ describe('pinsAfter', () => {
         { kind: 'change', packId: 'impact', from: '8.28.3', to: null }
       ])
     ).toEqual({ kj: '1.4.2' })
+  })
+})
+
+describe('private packs', () => {
+  it.for([
+    ['https://github.com/acme/comfyui-matte', 'acme/comfyui-matte'],
+    ['github.com/acme/comfyui-matte.git', 'acme/comfyui-matte'],
+    ['https://www.github.com/acme/comfyui-matte/', 'acme/comfyui-matte'],
+    ['https://gitlab.com/acme/comfyui-matte', undefined],
+    ['https://github.com/acme', undefined]
+  ] as const)('reads %s as %s', ([url, repo]) => {
+    expect(parseGithubRepo(url)).toBe(repo)
+  })
+
+  const context = { workspace: 'Acme Studio', today: '2026-10-08' }
+
+  it('imports a GitHub repository at its ref, published by its owner', () => {
+    const pack = privatePack(
+      { kind: 'github', url: 'github.com/acme/comfyui-matte', ref: 'v2.1' },
+      context
+    )
+    expect(pack?.item).toMatchObject({
+      id: 'private-comfyui-matte',
+      name: 'comfyui-matte',
+      publisher: 'acme',
+      license: 'Private',
+      version: 'v2.1'
+    })
+    expect(pack?.details.repo).toBe('acme/comfyui-matte')
+  })
+
+  it('imports a .zip as the workspace’s own, versioned by upload day', () => {
+    const pack = privatePack(
+      { kind: 'zip', fileName: 'Acme Grade Tools.zip' },
+      context
+    )
+    expect(pack?.item).toMatchObject({
+      id: 'private-acme-grade-tools',
+      name: 'Acme Grade Tools',
+      publisher: 'Acme Studio',
+      version: '2026-10-08'
+    })
+    expect(pack?.details.repo).toBeUndefined()
+  })
+
+  it('refuses a URL that isn’t a GitHub repository', () => {
+    expect(
+      privatePack(
+        { kind: 'github', url: 'https://example.com/x', ref: '' },
+        context
+      )
+    ).toBeUndefined()
   })
 })

@@ -27,9 +27,16 @@ import {
   filterRows,
   packRows,
   pinsAfter,
+  privatePack,
   sortRows
 } from '../utils/customNodes'
-import type { PackChange, PackSort, PackStatus } from '../utils/customNodes'
+import type {
+  PackChange,
+  PackSort,
+  PackStatus,
+  PrivatePack,
+  PrivatePackSource
+} from '../utils/customNodes'
 import {
   buildProgress,
   nextRelease,
@@ -56,10 +63,6 @@ interface ReadyRelease {
   version: string
 }
 
-function packName(packId: string) {
-  return policyCatalog.find((item) => item.id === packId)?.name ?? packId
-}
-
 export const usePrototypeCustomNodesStore = defineStore(
   'prototype-custom-nodes',
   () => {
@@ -83,6 +86,35 @@ export const usePrototypeCustomNodesStore = defineStore(
     const rebuild = shallowRef<Rebuild | null>(null)
     const ready = ref<ReadyRelease | null>(null)
     const now = ref(Date.now())
+    // Private packs each workspace imported: a GitHub repository or a .zip.
+    const privatePacksByWorkspace = ref<Record<string, PrivatePack[]>>({})
+    const workspaceId = computed(() => personaStore.fixture.currentWorkspaceId)
+    const privatePacks = computed(
+      () => privatePacksByWorkspace.value[workspaceId.value] ?? []
+    )
+
+    const catalog = computed(() => [
+      ...policyCatalog,
+      ...privatePacks.value.map((pack) => pack.item)
+    ])
+    const details = computed(() => ({
+      ...NODE_PACK_DETAILS,
+      ...Object.fromEntries(
+        privatePacks.value.map((pack) => [pack.item.id, pack.details])
+      )
+    }))
+
+    function packName(packId: string) {
+      return catalog.value.find((item) => item.id === packId)?.name ?? packId
+    }
+
+    // The workspace's own packs need no allowlist entry.
+    function isAllowed(packId: string) {
+      return (
+        privatePacks.value.some((pack) => pack.item.id === packId) ||
+        policies.isAllowed(packId)
+      )
+    }
 
     const deployment = computed(() => customCloud.currentDeployment)
     const isCustom = computed(() => deployment.value.kind === 'custom')
@@ -98,12 +130,12 @@ export const usePrototypeCustomNodesStore = defineStore(
 
     const rows = computed(() =>
       packRows({
-        catalog: policyCatalog,
-        details: NODE_PACK_DETAILS,
+        catalog: catalog.value,
+        details: details.value,
         deployment: deployment.value,
         pins: pins.value,
         drafts: drafts.value,
-        isAllowed: policies.isAllowed,
+        isAllowed,
         building: rebuildHere.value?.changes
       })
     )
@@ -192,6 +224,27 @@ export const usePrototypeCustomNodesStore = defineStore(
       pendingChanges.value = [{ kind: 'change', packId, from, to }]
     }
 
+    // Adds the pack to the list, ticked, ready to install like any other.
+    // Importing the same pack again just ticks it.
+    function importPrivatePack(source: PrivatePackSource) {
+      const pack = privatePack(source, {
+        workspace: personaStore.currentWorkspace?.name ?? '',
+        today: new Date().toLocaleDateString('en-CA')
+      })
+      if (!pack) return false
+      if (!catalog.value.some((item) => item.id === pack.item.id)) {
+        privatePacksByWorkspace.value = {
+          ...privatePacksByWorkspace.value,
+          [workspaceId.value]: [...privatePacks.value, pack]
+        }
+      }
+      query.value = ''
+      status.value = 'all'
+      license.value = ANY_LICENSE
+      setSelected(pack.item.id, true)
+      return true
+    }
+
     function askAdmin() {
       requested.value = [...new Set([...requested.value, ...selected.value])]
       selected.value = []
@@ -252,7 +305,7 @@ export const usePrototypeCustomNodesStore = defineStore(
         packNames: packIds.map(packName),
         version: changeTarget(
           first,
-          NODE_PACK_DETAILS[first.packId]?.releases[0]?.version ?? ''
+          details.value[first.packId]?.releases[0]?.version ?? ''
         )
       }
       rebuild.value = null
@@ -270,6 +323,7 @@ export const usePrototypeCustomNodesStore = defineStore(
         ready.value = null
         drafts.value = {}
         requested.value = []
+        privatePacksByWorkspace.value = {}
         pinsByDeployment.value = structuredClone(SEEDED_PINS)
       }
     )
@@ -298,6 +352,7 @@ export const usePrototypeCustomNodesStore = defineStore(
       close,
       pickDraftVersion,
       setSelected,
+      importPrivatePack,
       requestInstall,
       requestVersion,
       askAdmin,
