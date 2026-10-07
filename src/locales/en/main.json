@@ -7116,7 +7116,9 @@
         "toConfig": "Back: configuration",
         "reviewCount": "Review {count} change | Review {count} changes",
         "noChanges": "Nothing changed yet",
-        "changed": "Changed"
+        "changed": "Changed",
+        "cloudHint": "Or run this project on Comfy Cloud. No build needed.",
+        "cloudSwitch": "Switch to Comfy Cloud"
       }
     },
     "settings": {

@@ -94,6 +94,24 @@
           <EditDeploymentConfig v-if="step === 'config'" />
           <EditDeploymentMachine v-else />
 
+          <div
+            v-if="customCloud.editingFromProjectId"
+            class="-mt-2 flex items-center justify-between gap-3 text-sm"
+          >
+            <span class="flex items-center gap-2 text-muted-foreground">
+              <i class="icon-[lucide--cloud] size-4" />
+              {{ t('prototype.customCloud.edit.cloudHint') }}
+            </span>
+            <Button
+              variant="link"
+              size="sm"
+              class="h-auto p-0"
+              @click="customCloud.moveEditingProjectToCloud()"
+            >
+              {{ t('prototype.customCloud.edit.cloudSwitch') }}
+            </Button>
+          </div>
+
           <footer class="flex items-center gap-2.5">
             <Button
               variant="muted-textonly"

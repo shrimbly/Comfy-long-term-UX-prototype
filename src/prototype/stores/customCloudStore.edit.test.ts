@@ -102,4 +102,17 @@ describe('editing a deployment', () => {
       personas.fixture.deployments?.find((d) => d.id === ACME)?.release
     ).toBe('v3')
   })
+
+  it('switching to Comfy Cloud moves the project off the deployment and closes', async () => {
+    const { store, personas } = await setup()
+    store.openEditDeployment(ACME, COKE)
+    store.moveEditingProjectToCloud()
+    expect(
+      personas.fixture.projects.find((p) => p.id === COKE)?.deploymentId
+    ).toBeUndefined()
+    expect(store.editStep).toBeNull()
+    expect(
+      personas.fixture.deployments?.find((d) => d.id === ACME)
+    ).toMatchObject({ release: 'v3', status: 'ready' })
+  })
 })

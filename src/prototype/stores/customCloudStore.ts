@@ -477,6 +477,15 @@ export const usePrototypeCustomCloudStore = defineStore(
       editStep.value = null
     }
 
+    // The way out of a custom deployment: this project goes back to the
+    // shared default, with no build to wait for.
+    function moveEditingProjectToCloud() {
+      const projectId = editingFromProjectId.value
+      if (!projectId) return
+      personaStore.setProjectDeployment(projectId, undefined)
+      cancelEdit()
+    }
+
     // Show who the change reaches before it runs.
     function reviewEdit() {
       if (editingChangeCount.value > 0) editStep.value = 'impact'
@@ -685,6 +694,7 @@ export const usePrototypeCustomCloudStore = defineStore(
       editingChangeCount,
       openEditDeployment,
       cancelEdit,
+      moveEditingProjectToCloud,
       reviewEdit,
       confirmUpdate,
       forkDeployment,
