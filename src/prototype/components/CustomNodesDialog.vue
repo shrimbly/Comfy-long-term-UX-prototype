@@ -6,10 +6,10 @@
     decision: prototype/design-decisions.md — 2026-10-07 "Custom nodes
               modal: Platform's table, with pinned versions"
 
-  The Custom nodes modal the editor's extensions button opens. Its table
-  follows Platform's builder: pack (linked to GitHub), publisher, installs,
-  stars, version, then a status or action. Installed packs come first, then
-  what the deployment can add, then the packs the workspace policy blocks.
+  The Custom nodes modal the editor's extensions button opens, laid out
+  like Platform's builder table: search with Status, License and Sort
+  filters, then pack, publisher, installs, stars, version, license and an
+  Install checkbox. The footer installs every ticked pack in one release.
 -->
 <template>
   <Dialog :open="true" @update:open="(open) => !open && store.close()">
@@ -17,13 +17,13 @@
       <DialogOverlay />
       <DialogContent
         size="xl"
-        class="max-h-[88vh] overflow-hidden"
+        class="h-[min(88vh,52rem)] overflow-hidden"
         @pointer-down-outside="
           (event) => store.pendingChanges && event.preventDefault()
         "
         @focus-outside.prevent
       >
-        <DialogHeader class="flex-col items-stretch gap-3 px-6 pt-5 pb-2">
+        <DialogHeader class="flex-col items-stretch gap-4 px-6 pt-5 pb-4">
           <div class="flex flex-col gap-1">
             <div class="flex items-center gap-2">
               <DialogTitle class="flex-1 text-xl">
@@ -57,39 +57,46 @@
               </span>
             </span>
           </div>
-          <div class="flex items-center gap-2.5">
+          <div class="flex items-center gap-2">
             <SearchInput
               v-model="store.query"
               class="flex-1"
               :placeholder="t('prototype.customNodes.search')"
               :aria-label="t('prototype.customNodes.search')"
             />
-            <ToggleGroup
-              v-model="store.filter"
-              type="single"
-              variant="outline"
-              :aria-label="t('prototype.customNodes.filter.label')"
-              class="rounded-lg border border-border-default p-0.5"
-            >
-              <ToggleGroupItem
-                v-for="option in FILTERS"
-                :key="option"
-                :value="option"
-                size="sm"
-                class="border-none px-3"
-              >
-                {{ t(`prototype.customNodes.filter.${option}`) }}
-              </ToggleGroupItem>
-            </ToggleGroup>
+            <ToolbarSelect
+              v-model="store.status"
+              :options="statusOptions"
+              :label="t('prototype.customNodes.toolbar.status')"
+              :aria-label="t('prototype.customNodes.toolbar.status')"
+            />
+            <ToolbarSelect
+              v-model="store.license"
+              :options="licenseOptions"
+              :label="t('prototype.customNodes.toolbar.license')"
+              :aria-label="t('prototype.customNodes.toolbar.license')"
+            />
+            <ToolbarSelect
+              v-model="store.sort"
+              :options="sortOptions"
+              :label="t('prototype.customNodes.toolbar.sort')"
+              :aria-label="t('prototype.customNodes.toolbar.sort')"
+            />
           </div>
         </DialogHeader>
 
-        <div class="min-h-0 flex-1 overflow-y-auto px-6 pb-2">
-          <div role="table" class="flex flex-col text-sm">
+        <div class="flex min-h-0 flex-1 flex-col px-6 pb-4">
+          <div
+            role="table"
+            class="flex max-h-full min-h-0 flex-col overflow-hidden rounded-lg border border-border-subtle text-sm"
+          >
             <div
               role="row"
               :class="
-                cn(GRID, 'min-h-9 text-xs font-medium text-muted-foreground')
+                cn(
+                  GRID,
+                  'h-10 shrink-0 bg-secondary-background/60 px-4 text-base-foreground'
+                )
               "
             >
               <span role="columnheader">
@@ -98,87 +105,36 @@
               <span role="columnheader">
                 {{ t('prototype.customNodes.column.publisher') }}
               </span>
-              <span role="columnheader" class="text-right">
+              <span role="columnheader">
                 {{ t('prototype.customNodes.column.installs') }}
               </span>
-              <span role="columnheader" class="text-right">
+              <span role="columnheader">
                 {{ t('prototype.customNodes.column.stars') }}
               </span>
-              <span role="columnheader" class="pl-2.5">
+              <span role="columnheader">
                 {{ t('prototype.customNodes.column.version') }}
               </span>
-              <span role="columnheader" class="sr-only">
-                {{ t('prototype.customNodes.column.select') }}
+              <span role="columnheader">
+                {{ t('prototype.customNodes.column.license') }}
+              </span>
+              <span role="columnheader" class="text-right">
+                {{ t('prototype.customNodes.column.install') }}
               </span>
             </div>
-
-            <CustomNodesRow
-              v-for="row in listedRows"
-              :key="row.id"
-              :row
-              :grid="GRID"
-            />
-
-            <div
-              v-if="blockedRows.length"
-              class="flex min-h-9 items-center justify-between border-t border-border-subtle text-xs font-medium text-muted-foreground"
-            >
-              <span class="flex items-center gap-1.5">
-                <i class="icon-[lucide--lock] size-3" aria-hidden="true" />
-                {{
-                  tText('prototype.customNodes.blocked', {
-                    workspace: workspaceName,
-                    count: blockedRows.length
-                  })
-                }}
-              </span>
-              <span class="flex items-center gap-1">
-                <Button
-                  v-if="store.showBlocked && canReviewPolicies"
-                  variant="muted-textonly"
-                  size="sm"
-                  @click="reviewPolicies"
-                >
-                  {{ t('prototype.customNodes.reviewPolicies') }}
-                </Button>
-                <Button
-                  variant="muted-textonly"
-                  size="sm"
-                  :aria-expanded="store.showBlocked"
-                  @click="store.showBlocked = !store.showBlocked"
-                >
-                  {{
-                    store.showBlocked
-                      ? t('prototype.customNodes.hide')
-                      : t('prototype.customNodes.show')
-                  }}
-                  <i
-                    :class="
-                      cn(
-                        'icon-[lucide--chevron-down] size-3.5',
-                        store.showBlocked && 'rotate-180'
-                      )
-                    "
-                    aria-hidden="true"
-                  />
-                </Button>
-              </span>
-            </div>
-            <template v-if="store.showBlocked">
+            <div class="min-h-0 overflow-y-auto">
               <CustomNodesRow
-                v-for="row in blockedRows"
+                v-for="row in store.visibleRows"
                 :key="row.id"
                 :row
                 :grid="GRID"
               />
-            </template>
-
-            <p
-              v-if="!store.visibleRows.length"
-              class="m-0 border-t border-border-subtle py-6 text-center text-muted-foreground"
-            >
-              {{ t('prototype.customNodes.noMatch') }}
-            </p>
+              <p
+                v-if="!store.visibleRows.length"
+                class="m-0 border-t border-border-subtle py-8 text-center text-muted-foreground"
+              >
+                {{ t('prototype.customNodes.noMatch') }}
+              </p>
+            </div>
           </div>
         </div>
 
@@ -242,44 +198,45 @@ import DialogOverlay from '@/components/ui/dialog/DialogOverlay.vue'
 import DialogPortal from '@/components/ui/dialog/DialogPortal.vue'
 import DialogTitle from '@/components/ui/dialog/DialogTitle.vue'
 import SearchInput from '@/components/ui/search-input/SearchInput.vue'
-import ToggleGroup from '@/components/ui/toggle-group/ToggleGroup.vue'
-import ToggleGroupItem from '@/components/ui/toggle-group/ToggleGroupItem.vue'
 
 import { useTextT } from '../composables/useTextT'
 import { usePrototypeCustomCloudStore } from '../stores/customCloudStore'
 import { usePrototypeCustomNodesStore } from '../stores/customNodesStore'
-import type { PackFilter } from '../stores/customNodesStore'
-import { usePrototypePersonaStore } from '../stores/personaStore'
-import { usePrototypePolicyStore } from '../stores/policyStore'
-import { HOME_TAB_ID, usePrototypeTabsStore } from '../stores/tabsStore'
-import { usePrototypeUiStore } from '../stores/uiStore'
+import { ANY_LICENSE } from '../utils/customNodes'
+import type { PackSort, PackStatus } from '../utils/customNodes'
 
 import CustomNodesRow from './CustomNodesRow.vue'
 import DeploymentStatusDot from './DeploymentStatusDot.vue'
+import ToolbarSelect from './ToolbarSelect.vue'
 
-const FILTERS: PackFilter[] = ['all', 'installed', 'available']
 const GRID =
-  'grid grid-cols-[minmax(0,1fr)_8rem_4.5rem_4.5rem_11.5rem_1.5rem] items-center gap-x-4'
+  'grid grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)_4.5rem_4rem_9.5rem_6.5rem_3.5rem] items-center gap-x-4'
+const STATUSES: PackStatus[] = ['all', 'installed', 'available', 'blocked']
+const SORTS: PackSort[] = ['installs', 'stars', 'name']
 
 const { t } = useI18n()
 const tText = useTextT()
 const store = usePrototypeCustomNodesStore()
 const customCloud = usePrototypeCustomCloudStore()
-const personaStore = usePrototypePersonaStore()
-const policies = usePrototypePolicyStore()
-const tabsStore = usePrototypeTabsStore()
-const uiStore = usePrototypeUiStore()
 
 const deployment = computed(() => store.deployment)
-const workspaceName = computed(() => personaStore.currentWorkspace?.name ?? '')
-const canReviewPolicies = computed(() => policies.canEdit)
-
-const listedRows = computed(() =>
-  store.visibleRows.filter((row) => row.state !== 'blocked')
-)
 const selectedCount = computed(() => store.selected.length)
-const blockedRows = computed(() =>
-  store.visibleRows.filter((row) => row.state === 'blocked')
+
+const statusOptions = computed(() =>
+  STATUSES.map((value) => ({
+    value,
+    label: t(`prototype.customNodes.status.filter.${value}`)
+  }))
+)
+const licenseOptions = computed(() => [
+  { value: ANY_LICENSE, label: t('prototype.customNodes.toolbar.all') },
+  ...store.licenses.map((value) => ({ value, label: value }))
+])
+const sortOptions = computed(() =>
+  SORTS.map((value) => ({
+    value,
+    label: t(`prototype.customNodes.sort.${value}`)
+  }))
 )
 
 const whereLine = computed(() => {
@@ -310,10 +267,4 @@ const footer = computed(() => {
     deployment: deployment.value.name
   })
 })
-
-function reviewPolicies() {
-  store.close()
-  tabsStore.select(HOME_TAB_ID)
-  uiStore.openSettings('policies')
-}
 </script>

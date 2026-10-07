@@ -21,8 +21,15 @@ import { DEMO_BUILD_MS } from '../fixtures/customCloud'
 import { NODE_PACK_DETAILS, SEEDED_PINS } from '../fixtures/nodePacks'
 import { policyCatalog } from '../fixtures/policyCatalog'
 import type { PersonaFixture } from '../types'
-import { changeTarget, packRows, pinsAfter } from '../utils/customNodes'
-import type { PackChange } from '../utils/customNodes'
+import {
+  ANY_LICENSE,
+  changeTarget,
+  filterRows,
+  packRows,
+  pinsAfter,
+  sortRows
+} from '../utils/customNodes'
+import type { PackChange, PackSort, PackStatus } from '../utils/customNodes'
 import {
   buildProgress,
   nextRelease,
@@ -31,8 +38,6 @@ import {
 import { usePrototypeCustomCloudStore } from './customCloudStore'
 import { usePrototypePersonaStore } from './personaStore'
 import { usePrototypePolicyStore } from './policyStore'
-
-export type PackFilter = 'all' | 'installed' | 'available'
 
 interface Rebuild {
   deploymentId: string
@@ -63,9 +68,10 @@ export const usePrototypeCustomNodesStore = defineStore(
     const policies = usePrototypePolicyStore()
 
     const isOpen = ref(false)
-    const filter = ref<PackFilter>('all')
     const query = ref('')
-    const showBlocked = ref(false)
+    const status = ref<PackStatus>('all')
+    const license = ref(ANY_LICENSE)
+    const sort = ref<PackSort>('installs')
     const pinsByDeployment = ref<Record<string, Record<string, string>>>(
       structuredClone(SEEDED_PINS)
     )
@@ -102,21 +108,20 @@ export const usePrototypeCustomNodesStore = defineStore(
       })
     )
 
-    const visibleRows = computed(() => {
-      const needle = query.value.trim().toLowerCase()
-      return rows.value.filter((row) => {
-        if (
-          needle &&
-          !`${row.name} ${row.publisher}`.toLowerCase().includes(needle)
-        )
-          return false
-        if (row.state === 'blocked') return filter.value !== 'installed'
-        const installed = row.state === 'installed' || row.state === 'changing'
-        if (filter.value === 'installed') return installed
-        if (filter.value === 'available') return !installed
-        return true
-      })
-    })
+    const visibleRows = computed(() =>
+      sortRows(
+        filterRows(rows.value, {
+          query: query.value,
+          status: status.value,
+          license: license.value
+        }),
+        sort.value
+      )
+    )
+
+    const licenses = computed(() =>
+      [...new Set(rows.value.map((row) => row.license))].sort()
+    )
 
     const progress = computed(() => {
       const active = rebuild.value
@@ -147,9 +152,10 @@ export const usePrototypeCustomNodesStore = defineStore(
     )
 
     function open() {
-      filter.value = 'all'
       query.value = ''
-      showBlocked.value = false
+      status.value = 'all'
+      license.value = ANY_LICENSE
+      sort.value = 'installs'
       selected.value = []
       isOpen.value = true
     }
@@ -270,9 +276,11 @@ export const usePrototypeCustomNodesStore = defineStore(
 
     return {
       isOpen,
-      filter,
       query,
-      showBlocked,
+      status,
+      license,
+      sort,
+      licenses,
       deployment,
       isCustom,
       canInstall,

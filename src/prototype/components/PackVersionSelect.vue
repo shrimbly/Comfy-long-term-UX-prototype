@@ -4,8 +4,8 @@
               modal: Platform's table, with pinned versions"
 
   A node pack's version in the Custom nodes table, as Platform's builder
-  picks one: follow the latest release, or pin a published one. The badge
-  says which, without colour.
+  picks one: follow the latest release, or pin a published one. A pin icon
+  marks a pinned pack, an up arrow a newer release than its pin.
 -->
 <template>
   <Select
@@ -15,29 +15,29 @@
   >
     <SelectTrigger
       size="md"
-      class="gap-2 px-2.5"
+      class="gap-2 border border-border-default bg-transparent px-2.5 hover:bg-secondary-background/40"
       :aria-label="
         tText('prototype.customNodes.version.label', { pack: row.name })
       "
     >
-      <span class="flex min-w-0 items-center gap-2">
-        <span class="font-mono text-xs">{{ row.version }}</span>
-        <Badge
-          variant="compact"
-          severity="secondary"
-          class="text-muted-foreground"
-        >
-          <i
-            v-if="row.pinned"
-            class="icon-[lucide--pin] size-3"
-            aria-hidden="true"
-          />
-          {{
-            row.pinned
-              ? t('prototype.customNodes.version.pinned')
-              : t('prototype.customNodes.version.latest')
-          }}
-        </Badge>
+      <span class="flex min-w-0 items-center gap-1.5 text-muted-foreground">
+        <span class="truncate font-mono text-xs">{{ row.version }}</span>
+        <i
+          v-if="row.pinned"
+          class="icon-[lucide--pin] size-3 shrink-0"
+          :aria-label="t('prototype.customNodes.version.pinned')"
+          :title="t('prototype.customNodes.version.pinned')"
+        />
+        <i
+          v-if="row.newer"
+          class="icon-[lucide--circle-arrow-up] size-3 shrink-0"
+          :aria-label="
+            t('prototype.customNodes.status.newer', { version: row.newer })
+          "
+          :title="
+            t('prototype.customNodes.status.newer', { version: row.newer })
+          "
+        />
       </span>
     </SelectTrigger>
     <SelectContent class="min-w-56">
@@ -69,7 +69,6 @@
 import type { AcceptableValue } from 'reka-ui'
 import { useI18n } from 'vue-i18n'
 
-import Badge from '@/components/ui/badge/Badge.vue'
 import Select from '@/components/ui/select/Select.vue'
 import SelectContent from '@/components/ui/select/SelectContent.vue'
 import SelectItem from '@/components/ui/select/SelectItem.vue'

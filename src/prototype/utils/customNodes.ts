@@ -29,6 +29,7 @@ export interface PackRow {
   id: string
   name: string
   publisher: string
+  license: string
   installs: number
   stars?: number
   repoUrl?: string
@@ -72,11 +73,10 @@ interface RowInput {
   building?: PackChange[]
 }
 
-// Installed packs first, then the ones the deployment can add, then the
-// ones the workspace policy blocks; most installs first within each.
+// Every node pack in the catalog, as the table shows it on this deployment.
 export function packRows(input: RowInput): PackRow[] {
   const { deployment, pins, drafts, building } = input
-  const rows = input.catalog
+  return input.catalog
     .filter((item) => item.kind === 'nodes')
     .map((item): PackRow => {
       const details = input.details[item.id] ?? { releases: [] }
@@ -89,6 +89,7 @@ export function packRows(input: RowInput): PackRow[] {
         id: item.id,
         name: item.name,
         publisher: item.publisher,
+        license: item.license,
         installs: item.installs,
         stars: details.stars,
         repoUrl: details.repo && `https://github.com/${details.repo}`,
@@ -108,13 +109,43 @@ export function packRows(input: RowInput): PackRow[] {
         newer: installed && pin && pin !== latest ? latest : undefined
       }
     })
-  const order = (row: PackRow) =>
-    row.state === 'blocked'
-      ? 2
-      : row.state === 'available' || row.state === 'adding'
-        ? 1
-        : 0
-  return rows.sort((a, b) => order(a) - order(b) || b.installs - a.installs)
+}
+
+export type PackStatus = 'all' | 'installed' | 'available' | 'blocked'
+export type PackSort = 'installs' | 'stars' | 'name'
+
+export const ANY_LICENSE = 'all'
+
+interface RowFilter {
+  query: string
+  status: PackStatus
+  license: string
+}
+
+function statusOf(row: PackRow): Exclude<PackStatus, 'all'> {
+  if (row.state === 'installed' || row.state === 'changing') return 'installed'
+  return row.state === 'blocked' ? 'blocked' : 'available'
+}
+
+export function filterRows(rows: PackRow[], filter: RowFilter): PackRow[] {
+  const needle = filter.query.trim().toLowerCase()
+  return rows.filter(
+    (row) =>
+      (!needle ||
+        `${row.name} ${row.publisher}`.toLowerCase().includes(needle)) &&
+      (filter.status === 'all' || statusOf(row) === filter.status) &&
+      (filter.license === ANY_LICENSE || row.license === filter.license)
+  )
+}
+
+// Platform's order: by the chosen column, most first (names A to Z).
+export function sortRows(rows: PackRow[], sort: PackSort): PackRow[] {
+  const by: Record<PackSort, (a: PackRow, b: PackRow) => number> = {
+    installs: (a, b) => b.installs - a.installs,
+    stars: (a, b) => (b.stars ?? -1) - (a.stars ?? -1),
+    name: (a, b) => a.name.localeCompare(b.name)
+  }
+  return [...rows].sort(by[sort])
 }
 
 // The deployment's pins once its changes are built.

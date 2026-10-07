@@ -7246,21 +7246,20 @@
       "runsOn": "{project} runs on {deployment} · {release}",
       "runsOnCloud": "{project} runs on Comfy Cloud",
       "building": "{deployment} {release} is building · runs stay on {current} until then",
-      "search": "Search node packs",
-      "filter": {
-        "label": "Show",
-        "all": "All",
-        "installed": "Installed",
-        "available": "Available"
+      "search": "Search or filter…",
+      "sort": {
+        "installs": "Installs",
+        "stars": "Stars",
+        "name": "Name"
       },
-      "sort": "Most installs",
       "column": {
-        "pack": "Pack",
+        "pack": "Pack Name",
         "publisher": "Publisher",
         "installs": "Installs",
         "stars": "Stars",
         "version": "Version",
-        "select": "Select"
+        "license": "License",
+        "install": "Install"
       },
       "private": "Private",
       "privateStars": "Private repository: no public stars",
@@ -7274,19 +7273,21 @@
         "adding": "Adding in {release} · {minutes}",
         "changing": "Changing in {release} · {minutes}",
         "minutes": "less than a minute | about 1 min | about {count} min",
-        "select": "Install {pack}"
+        "select": "Install {pack}",
+        "filter": {
+          "all": "All",
+          "installed": "Installed",
+          "available": "Available",
+          "blocked": "Not allowed"
+        },
+        "blockedHint": "Not allowed in this workspace. Owners and admins change the custom node allowlist in Settings › Policies."
       },
       "version": {
         "label": "{pack}: version",
-        "latest": "latest",
         "pinned": "pinned",
         "followLatest": "Follow latest ({version})",
         "release": "{version} · {date}"
       },
-      "blocked": "Not allowed in {workspace} · {count}",
-      "show": "Show",
-      "hide": "Hide",
-      "reviewPolicies": "Review policies",
       "noMatch": "No node packs match.",
       "cloud": {
         "title": "Comfy Cloud is shared, so packs can't be added to it",
@@ -7327,6 +7328,12 @@
         "askAdmin": "Ask an admin | Ask an admin for 1 pack | Ask an admin for {count} packs",
         "selected": "No packs selected | 1 pack selected | {count} packs selected",
         "clear": "Clear"
+      },
+      "toolbar": {
+        "status": "Status:",
+        "license": "License:",
+        "sort": "Sort:",
+        "all": "All"
       }
     }
   },

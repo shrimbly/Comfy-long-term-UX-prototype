@@ -3,7 +3,13 @@ import { describe, expect, it } from 'vitest'
 import type { NodePackDetails } from '../fixtures/nodePacks'
 import type { PolicyItem } from '../fixtures/policyCatalog'
 import type { Deployment } from '../types'
-import { formatCount, packRows, pinsAfter } from './customNodes'
+import {
+  filterRows,
+  formatCount,
+  packRows,
+  pinsAfter,
+  sortRows
+} from './customNodes'
 import type { PackChange } from './customNodes'
 
 function pack(id: string, installs: number): PolicyItem {
@@ -79,17 +85,17 @@ describe('formatCount', () => {
 })
 
 describe('packRows', () => {
-  it('lists installed packs, then available, then blocked, by installs', () => {
+  it('lists every node pack with its state on the deployment', () => {
     expect(rows().map((r) => [r.id, r.state])).toEqual([
-      ['impact', 'installed'],
       ['rmbg', 'installed'],
+      ['impact', 'installed'],
       ['kj', 'available'],
       ['blocked', 'blocked']
     ])
   })
 
   it('shows a pinned pack at its pin, with the newer release beside it', () => {
-    expect(rows()[0]).toMatchObject({
+    expect(rows().find((r) => r.id === 'impact')).toMatchObject({
       version: '8.28.3',
       pinned: true,
       newer: '8.29.1',
@@ -99,7 +105,7 @@ describe('packRows', () => {
   })
 
   it('shows an unpinned pack at its latest release', () => {
-    const impact = rows({ pins: {} })[0]
+    const impact = rows({ pins: {} }).find((r) => r.id === 'impact')!
     expect(impact).toMatchObject({ version: '8.29.1', pinned: false })
     expect(impact.newer).toBeUndefined()
   })
@@ -126,6 +132,55 @@ describe('packRows', () => {
       expect(
         rows({ building: [building] }).find((r) => r.id === id)?.state
       ).toBe(state)
+    }
+  )
+})
+
+describe('filterRows', () => {
+  const ids = (filter: Partial<Parameters<typeof filterRows>[1]>) =>
+    filterRows(rows(), {
+      query: '',
+      status: 'all',
+      license: 'all',
+      ...filter
+    }).map((r) => r.id)
+
+  it.for([
+    {
+      case: 'everything',
+      filter: {},
+      expected: ['rmbg', 'impact', 'kj', 'blocked']
+    },
+    {
+      case: 'installed',
+      filter: { status: 'installed' },
+      expected: ['rmbg', 'impact']
+    },
+    { case: 'available', filter: { status: 'available' }, expected: ['kj'] },
+    {
+      case: 'not allowed',
+      filter: { status: 'blocked' },
+      expected: ['blocked']
+    },
+    { case: 'a search', filter: { query: 'IMP' }, expected: ['impact'] }
+  ] satisfies {
+    case: string
+    filter: Partial<Parameters<typeof filterRows>[1]>
+    expected: string[]
+  }[])('shows $case', ({ filter, expected }) => {
+    expect(ids(filter)).toEqual(expected)
+  })
+})
+
+describe('sortRows', () => {
+  it.for([
+    { sort: 'installs', expected: ['blocked', 'kj', 'impact', 'rmbg'] },
+    { sort: 'stars', expected: ['impact', 'rmbg', 'kj', 'blocked'] },
+    { sort: 'name', expected: ['blocked', 'impact', 'kj', 'rmbg'] }
+  ] satisfies { sort: 'installs' | 'stars' | 'name'; expected: string[] }[])(
+    'by $sort',
+    ({ sort, expected }) => {
+      expect(sortRows(rows(), sort).map((r) => r.id)).toEqual(expected)
     }
   )
 })
