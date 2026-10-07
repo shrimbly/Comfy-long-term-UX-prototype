@@ -7328,7 +7328,14 @@
         "alwaysOn": "The shared default. Always on.",
         "manage": "Manage environments",
         "none": "None allowed",
-        "edit": "Edit deployment"
+        "edit": "Edit deployment",
+        "cloudIntro": "Comfy Cloud comes with over 80 custom node packs and hundreds of models, ready to run.",
+        "cloudSupported": "See what Comfy Cloud supports",
+        "restrictionsTitle": "Restrictions in {workspace}",
+        "restrictionsSome": "The workspace policies narrow what this project can use.",
+        "restrictionsNone": "The workspace allows everything Comfy Cloud supports.",
+        "allowedCount": "{count} allowed",
+        "allAllowed": "All allowed"
       },
       "environmentPicker": {
         "title": "Change environment",
