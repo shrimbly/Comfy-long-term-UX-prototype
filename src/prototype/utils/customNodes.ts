@@ -18,12 +18,7 @@ export type PackChange =
   | { kind: 'add'; packId: string; to: string | null }
   | { kind: 'change'; packId: string; from: string; to: string | null }
 
-export type PackState =
-  | 'installed'
-  | 'available'
-  | 'blocked'
-  | 'adding'
-  | 'changing'
+type PackState = 'installed' | 'available' | 'blocked' | 'adding' | 'changing'
 
 export interface PackRow {
   id: string
