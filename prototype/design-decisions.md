@@ -1752,3 +1752,12 @@ Wiki link: `decisions/project-runs-on-shared-deployment.md`. Promote? **maybe**:
 - **Decision: Edit deployment on a Comfy Cloud project opens a modal (`EditCloudDialog.vue`), not the policies page.** It reads like the custom one but nothing in it rebuilds: ComfyUI is "Latest stable · Managed by Comfy", custom nodes and models show "7 of 11" / "All" from the workspace policies, GPU is "Picked for each run".
 - Its buttons are the ways out: **Edit workspace policies** (the only knobs Comfy Cloud has) and **Change environment** (the picker: an existing custom deployment or a new one).
 - Reason: the button is called Edit deployment everywhere, so it should always open a dialog; jumping to a settings page read as a broken link.
+
+---
+
+## [2026-10-07] Switching between Comfy Cloud and a custom deployment: a summary first
+
+- **Decision: both Edit deployment dialogs carry one card for the other way to run the project.** On a custom deployment: "Comfy Cloud · Shared machines, no build. Uses what the workspace allows. · Switch". On Comfy Cloud: "Custom deployment · Pinned nodes and models on a GPU you choose. Needs a build. · Choose".
+- **Decision: nothing moves until a summary step is confirmed.** To Comfy Cloud: GPU picked per run, no build, what the workspace allows, and which pinned packs or models are not on Comfy Cloud (warning), plus "{deployment} is kept for the other N projects". To a custom deployment: choose one (or create one), then GPU, pinned packs, pinned models, and when the first run happens (right away, wakes the worker, when the build is done).
+- Reason: switching changes what a project's workflows can run; a one-click link applied it with no warning.
+- Fixture: the admin deployments now carry a `workspaceId`, so one with no project on it still lists.

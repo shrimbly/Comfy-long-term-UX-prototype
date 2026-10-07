@@ -94,23 +94,14 @@
           <EditDeploymentConfig v-if="step === 'config'" />
           <EditDeploymentMachine v-else />
 
-          <div
+          <EnvironmentSwitchCard
             v-if="customCloud.editingFromProjectId"
-            class="-mt-2 flex items-center justify-between gap-3 text-sm"
-          >
-            <span class="flex items-center gap-2 text-muted-foreground">
-              <i class="icon-[lucide--cloud] size-4" />
-              {{ t('prototype.customCloud.edit.cloudHint') }}
-            </span>
-            <Button
-              variant="link"
-              size="sm"
-              class="h-auto p-0"
-              @click="customCloud.moveEditingProjectToCloud()"
-            >
-              {{ t('prototype.customCloud.edit.cloudSwitch') }}
-            </Button>
-          </div>
+            icon="icon-[lucide--cloud]"
+            :title="t('prototype.customCloud.switch.cloudTitle')"
+            :body="t('prototype.customCloud.switch.cloudBody')"
+            :action="t('prototype.customCloud.switch.cloudAction')"
+            @switch="customCloud.editStep = 'cloud'"
+          />
 
           <footer class="flex items-center gap-2.5">
             <Button
@@ -152,6 +143,10 @@
         </template>
 
         <RunTargetEditItems v-else-if="step === 'items'" :title-id="titleId" />
+        <EditDeploymentCloudSwitch
+          v-else-if="step === 'cloud'"
+          :title-id="titleId"
+        />
         <RunTargetImpact v-else-if="step === 'impact'" :title-id="titleId" />
       </div>
     </div>
@@ -167,8 +162,10 @@ import Button from '@/components/ui/button/Button.vue'
 
 import { usePrototypeCustomCloudStore } from '../stores/customCloudStore'
 
+import EditDeploymentCloudSwitch from './EditDeploymentCloudSwitch.vue'
 import EditDeploymentConfig from './EditDeploymentConfig.vue'
 import EditDeploymentMachine from './EditDeploymentMachine.vue'
+import EnvironmentSwitchCard from './EnvironmentSwitchCard.vue'
 import RunTargetEditItems from './RunTargetEditItems.vue'
 import RunTargetImpact from './RunTargetImpact.vue'
 

@@ -1232,6 +1232,7 @@ export const adminFixture: PersonaFixture = {
   deployments: [
     {
       id: 'dep-acme-studio',
+      workspaceId: comfyOrg.id,
       name: 'Acme Studio pipeline',
       kind: 'custom',
       release: 'v3',
@@ -1245,6 +1246,7 @@ export const adminFixture: PersonaFixture = {
     },
     {
       id: 'dep-matte-tests',
+      workspaceId: comfyOrg.id,
       name: 'Matte tests',
       kind: 'custom',
       release: 'v7',

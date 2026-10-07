@@ -60,7 +60,7 @@ type DialogStep =
 
 // The Edit deployment dialog: configuration, its item lists, the machine,
 // then the impact of the change.
-export type EditStep = 'config' | 'items' | 'machine' | 'impact'
+export type EditStep = 'config' | 'items' | 'machine' | 'impact' | 'cloud'
 
 // Where a new project runs: an existing deployment's id, or a new deployment.
 export const NEW_BUILD_TARGET = 'new'
@@ -487,13 +487,17 @@ export const usePrototypeCustomCloudStore = defineStore(
       editStep.value = null
     }
 
-    // The way out of a custom deployment: this project goes back to the
-    // shared default, with no build to wait for.
+    // Where a project runs is its own setting; moving it leaves every
+    // deployment as it is. Comfy Cloud is "no deployment".
+    function moveProjectTo(projectId: string, deploymentId?: string) {
+      personaStore.setProjectDeployment(projectId, deploymentId)
+      cancelEdit()
+      closeEditCloud()
+    }
+
     function moveEditingProjectToCloud() {
       const projectId = editingFromProjectId.value
-      if (!projectId) return
-      personaStore.setProjectDeployment(projectId, undefined)
-      cancelEdit()
+      if (projectId) moveProjectTo(projectId)
     }
 
     // Show who the change reaches before it runs.
@@ -523,6 +527,7 @@ export const usePrototypeCustomCloudStore = defineStore(
         {
           ...source,
           id: deploymentId,
+          workspaceId: fixture.currentWorkspaceId,
           name: name === source.name ? `${name} 2` : name,
           release: 'v1',
           status: 'building',
@@ -708,6 +713,7 @@ export const usePrototypeCustomCloudStore = defineStore(
       editingChangeCount,
       openEditDeployment,
       cancelEdit,
+      moveProjectTo,
       moveEditingProjectToCloud,
       reviewEdit,
       confirmUpdate,

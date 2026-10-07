@@ -7116,17 +7116,41 @@
         "toConfig": "Back: configuration",
         "reviewCount": "Review {count} change | Review {count} changes",
         "noChanges": "Nothing changed yet",
-        "changed": "Changed",
-        "cloudHint": "Or run this project on Comfy Cloud. No build needed.",
-        "cloudSwitch": "Switch to Comfy Cloud"
+        "changed": "Changed"
       },
       "editCloud": {
         "latest": "Latest stable",
         "managedByComfy": "Managed by Comfy",
         "fromPolicies": "From workspace policies",
-        "managed": "Comfy Cloud has no settings of its own. Change what projects can use in Workspace policies, or move this project to a custom deployment.",
-        "policies": "Edit workspace policies",
-        "change": "Change environment"
+        "policies": "Edit workspace policies"
+      },
+      "switch": {
+        "cloudTitle": "Comfy Cloud",
+        "cloudBody": "Shared machines, no build. Uses what the workspace allows.",
+        "cloudAction": "Switch",
+        "customTitle": "Custom deployment",
+        "customBody": "Pinned nodes and models on a GPU you choose. Needs a build.",
+        "customAction": "Choose",
+        "toCloudTitle": "Move {project} to Comfy Cloud?",
+        "toCloudHint": "Here is what changes for this project.",
+        "build": "Build",
+        "noBuild": "None. Runs right away.",
+        "allowedByWorkspace": "{count} allowed by the workspace",
+        "allAllowed": "Everything Comfy Cloud supports",
+        "lost": "Not on Comfy Cloud: {items}",
+        "deploymentStays": "{name} is kept. No other project uses it. | {name} is kept for the other project. | {name} is kept for the other {count} projects.",
+        "toCloudConfirm": "Move to Comfy Cloud",
+        "chooseTitle": "Choose a deployment",
+        "chooseHint": "This project moves to it. Other projects are not affected.",
+        "toCustomTitle": "Move {project} to {name}?",
+        "toCustomHint": "Here is what changes for this project.",
+        "firstRun": "First run",
+        "firstRunBy": {
+          "ready": "Right away",
+          "asleep": "Wakes the worker, under a minute",
+          "building": "When the build is done"
+        },
+        "toCustomConfirm": "Move to {name}"
       }
     },
     "settings": {
