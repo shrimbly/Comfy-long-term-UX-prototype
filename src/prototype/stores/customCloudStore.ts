@@ -24,7 +24,8 @@ import {
   DEFAULT_BUILD_PROJECT_NAME,
   DEMO_BUILD_MS,
   MATTE_PASS,
-  WARM_MINUTES
+  WARM_MINUTES,
+  PLATFORM_GPUS
 } from '../fixtures/customCloud'
 import type { PlatformGpu } from '../fixtures/customCloud'
 import { onMockRunStateChange } from '../mockBackend'
@@ -56,8 +57,10 @@ type DialogStep =
   | 'agent'
   | 'deploy'
   | 'building'
-  | 'items'
-  | 'impact'
+
+// The Edit deployment dialog: configuration, its item lists, the machine,
+// then the impact of the change.
+export type EditStep = 'config' | 'items' | 'machine' | 'impact'
 
 // Where a new project runs: an existing deployment's id, or a new deployment.
 export const NEW_BUILD_TARGET = 'new'
@@ -105,7 +108,9 @@ export const usePrototypeCustomCloudStore = defineStore(
     const editingModels = ref<string[]>([])
     const editingComfyVersion = ref(BUILD_DEFAULTS.comfyVersion)
     const editingGpu = ref<PlatformGpu | null>(null)
+    const editingWarmMinutes = ref(WARM_MINUTES)
     const editingItemsKind = ref<'nodes' | 'models'>('nodes')
+    const editStep = ref<EditStep | null>(null)
     const build = shallowRef<ActiveBuild | null>(null)
     // The deployment just built: its project, once named, opens with the
     // "ready" toast.
@@ -408,7 +413,17 @@ export const usePrototypeCustomCloudStore = defineStore(
     const editingChanges = computed(() => {
       const before = editingDeployment.value
       const comfyBefore = before?.comfyVersion ?? BUILD_DEFAULTS.comfyVersion
+      const name = newDeploymentName.value.trim()
+      const warmBefore = before?.warmMinutes ?? WARM_MINUTES
       return {
+        name:
+          !before || !name || name === before.name
+            ? null
+            : { from: before.name, to: name },
+        warmMinutes:
+          warmBefore === editingWarmMinutes.value
+            ? null
+            : { from: warmBefore, to: editingWarmMinutes.value },
         addedPacks: difference(before?.nodePacks ?? [], editingNodePacks.value),
         removedPacks: difference(
           editingNodePacks.value,
@@ -427,9 +442,19 @@ export const usePrototypeCustomCloudStore = defineStore(
       }
     })
 
-    // Edit deployment: Platform's build summary and deploy dialog for an
-    // existing deployment, then the impact step, which rebuilds it as the
-    // next release or forks it.
+    const editingChangeCount = computed(() => {
+      const c = editingChanges.value
+      return (
+        [c.name, c.comfyVersion, c.gpu, c.warmMinutes].filter(Boolean).length +
+        [c.addedPacks, c.removedPacks, c.addedModels, c.removedModels].filter(
+          (items) => items.length
+        ).length
+      )
+    })
+
+    // Edit deployment: the prototype's own dialog over the deployment's
+    // configuration and machine, then the impact step, which rebuilds it as
+    // the next release or forks it.
     function openEditDeployment(deploymentId: string, fromProjectId?: string) {
       const target = deployments.value.find((d) => d.id === deploymentId)
       if (!target || build.value) return
@@ -439,25 +464,28 @@ export const usePrototypeCustomCloudStore = defineStore(
       editingModels.value = [...target.models]
       editingComfyVersion.value =
         target.comfyVersion ?? BUILD_DEFAULTS.comfyVersion
-      editingGpu.value = null
+      editingGpu.value =
+        PLATFORM_GPUS.find((gpu) => gpu.label === target.gpu) ?? null
+      editingWarmMinutes.value = target.warmMinutes ?? WARM_MINUTES
       newDeploymentName.value = target.name
-      dialogStep.value = 'build'
+      editStep.value = 'config'
     }
 
     function cancelEdit() {
       editingDeploymentId.value = null
       editingFromProjectId.value = null
-      dialogStep.value = null
+      editStep.value = null
     }
 
-    // The deploy step's save: show who the change reaches before it runs.
-    function requestSaveEdit(gpu: PlatformGpu) {
-      editingGpu.value = gpu
-      dialogStep.value = 'impact'
+    // Show who the change reaches before it runs.
+    function reviewEdit() {
+      if (editingChangeCount.value > 0) editStep.value = 'impact'
     }
 
     function confirmUpdate() {
-      if (editingGpu.value) buildAndDeploy(editingGpu.value)
+      if (!editingGpu.value || !editingChangeCount.value) return
+      editStep.value = null
+      buildAndDeploy(editingGpu.value)
     }
 
     // A new deployment with these edits, for this project only. The others
@@ -468,6 +496,7 @@ export const usePrototypeCustomCloudStore = defineStore(
       const gpu = editingGpu.value
       const fromProjectId = editingFromProjectId.value
       if (!source || !gpu || !fromProjectId || build.value) return
+      if (!editingChangeCount.value) return
       const name = newDeploymentName.value.trim() || source.name
       const deploymentId = `dep-build-${Date.now()}`
       fixture.deployments = [
@@ -479,6 +508,7 @@ export const usePrototypeCustomCloudStore = defineStore(
           release: 'v1',
           status: 'building',
           gpu: gpu.label,
+          warmMinutes: editingWarmMinutes.value,
           comfyVersion: editingComfyVersion.value,
           nodePacks: [...editingNodePacks.value],
           models: [...editingModels.value]
@@ -487,6 +517,7 @@ export const usePrototypeCustomCloudStore = defineStore(
       personaStore.setProjectDeployment(fromProjectId, deploymentId)
       editingDeploymentId.value = null
       editingFromProjectId.value = null
+      editStep.value = null
       build.value = {
         deploymentId,
         startedAt: Date.now(),
@@ -523,6 +554,7 @@ export const usePrototypeCustomCloudStore = defineStore(
                 ...d,
                 name,
                 gpu: gpu.label,
+                warmMinutes: editingWarmMinutes.value,
                 comfyVersion: editingComfyVersion.value,
                 nodePacks: [...editingNodePacks.value],
                 models: [...editingModels.value],
@@ -618,6 +650,7 @@ export const usePrototypeCustomCloudStore = defineStore(
         builtDeploymentId.value = null
         editingDeploymentId.value = null
         editingFromProjectId.value = null
+        editStep.value = null
         tabsStore.reset()
       }
     )
@@ -643,12 +676,16 @@ export const usePrototypeCustomCloudStore = defineStore(
       editingNodePacks,
       editingModels,
       editingComfyVersion,
+      editingGpu,
+      editingWarmMinutes,
       editingItemsKind,
+      editStep,
       editingProjects,
       editingChanges,
+      editingChangeCount,
       openEditDeployment,
       cancelEdit,
-      requestSaveEdit,
+      reviewEdit,
       confirmUpdate,
       forkDeployment,
       deploymentTargets,

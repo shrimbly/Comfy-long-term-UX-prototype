@@ -31,14 +31,6 @@
       <span v-if="editing?.release" class="text-muted-foreground">
         {{ editing.release }}
       </span>
-      <span v-if="editing" class="ml-auto text-xs text-muted-foreground">
-        {{
-          t(
-            'prototype.customCloud.dialog.build.usedByProjects',
-            customCloud.editingProjects.length
-          )
-        }}
-      </span>
     </span>
     <span
       class="px-3 pt-2 pb-1.5 text-xs font-medium tracking-widest text-muted-foreground uppercase"
@@ -66,38 +58,13 @@
         <i class="icon-[lucide--pencil] size-3.5 text-muted-foreground" />
       </span>
     </label>
-    <label
-      v-if="editing"
-      class="flex h-11.5 items-center justify-between gap-3 border-t border-border-subtle px-3 text-sm"
-    >
-      <span class="text-muted-foreground">
-        {{ t('prototype.customCloud.dialog.build.comfyui') }}
-      </span>
-      <span class="flex items-center gap-2">
-        <select
-          v-model="customCloud.editingComfyVersion"
-          class="border-0 bg-transparent p-0 text-right text-sm text-base-foreground outline-none"
-        >
-          <option v-for="version in COMFY_VERSIONS" :key="version">
-            {{ version }}
-          </option>
-        </select>
-        <span
-          v-if="customCloud.editingComfyVersion === COMFY_VERSIONS[0]"
-          class="text-xs text-muted-foreground"
-        >
-          {{ t('prototype.customCloud.dialog.build.latestStable') }}
-        </span>
-        <i class="icon-[lucide--pencil] size-3.5 text-muted-foreground" />
-      </span>
-    </label>
     <Button
       v-for="row in rows"
       :key="row.label"
       variant="textonly"
       size="unset"
       class="h-11.5 w-full justify-between gap-3 rounded-none border-t border-border-subtle px-3 text-sm font-normal"
-      @click="onRow(row)"
+      @click="emit('customise', row.label)"
     >
       <span class="text-muted-foreground">{{ row.label }}</span>
       <span class="flex min-w-0 items-center gap-2">
@@ -140,11 +107,7 @@ import { useI18n } from 'vue-i18n'
 
 import Button from '@/components/ui/button/Button.vue'
 
-import {
-  BUILD_DEFAULTS,
-  COMFY_VERSIONS,
-  MATTE_PASS
-} from '../fixtures/customCloud'
+import { BUILD_DEFAULTS, MATTE_PASS } from '../fixtures/customCloud'
 import { usePrototypeCustomCloudStore } from '../stores/customCloudStore'
 
 const { titleId } = defineProps<{
@@ -165,10 +128,10 @@ const source = computed(() =>
   editing.value
     ? {
         name: editing.value.name,
-        comfyVersion: customCloud.editingComfyVersion,
+        comfyVersion: editing.value.comfyVersion ?? BUILD_DEFAULTS.comfyVersion,
         runtime: editing.value.runtime ?? BUILD_DEFAULTS.runtime,
-        models: customCloud.editingModels,
-        nodePacks: customCloud.editingNodePacks
+        models: editing.value.models,
+        nodePacks: editing.value.nodePacks
       }
     : {
         name: MATTE_PASS.name,
@@ -179,23 +142,15 @@ const source = computed(() =>
       }
 )
 
-interface Row {
-  label: string
-  value: string
-  detail?: string
-  kind?: 'nodes' | 'models'
-}
-
-const rows = computed<Row[]>(() => [
-  ...(editing.value
-    ? []
-    : [
-        {
-          label: t('prototype.customCloud.dialog.build.comfyui'),
-          value: source.value.comfyVersion,
-          detail: t('prototype.customCloud.dialog.build.latestStable')
-        }
-      ]),
+const rows = computed(() => [
+  {
+    label: t('prototype.customCloud.dialog.build.comfyui'),
+    value: source.value.comfyVersion,
+    detail:
+      source.value.comfyVersion === BUILD_DEFAULTS.comfyVersion
+        ? t('prototype.customCloud.dialog.build.latestStable')
+        : undefined
+  },
   {
     label: t('prototype.customCloud.dialog.build.runtime'),
     value: source.value.runtime
@@ -206,8 +161,7 @@ const rows = computed<Row[]>(() => [
     detail: t(
       'prototype.customCloud.dialog.build.preInstalled',
       source.value.models.length
-    ),
-    kind: 'models'
+    )
   },
   {
     label: t('prototype.customCloud.dialog.build.partnerModels'),
@@ -218,24 +172,13 @@ const rows = computed<Row[]>(() => [
     value: t(
       'prototype.customCloud.dialog.build.packs',
       source.value.nodePacks.length
-    ),
-    kind: 'nodes'
+    )
   },
   {
     label: t('prototype.customCloud.dialog.build.pythonPackages'),
     value: t('prototype.customCloud.dialog.build.nonePinned')
   }
 ])
-
-// Editing changes models and packs here; a new build sends them to Platform.
-function onRow(row: Row) {
-  if (editing.value && row.kind) {
-    customCloud.editingItemsKind = row.kind
-    customCloud.dialogStep = 'items'
-    return
-  }
-  emit('customise', row.label)
-}
 
 // Editing starts here, so Back closes; a new build goes back to the choice.
 function onBack() {

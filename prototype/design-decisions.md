@@ -1733,3 +1733,14 @@ Update (same day): **the table now matches Platform's layout.** Search sits next
 Wiki link: `decisions/project-runs-on-shared-deployment.md`, `decisions/custom-nodes-as-configuration.md`. Open question: `open-questions.md#dropped-workflow-other-deployment` asked "update or branch"; this gives both at the same step.
 
 Promote? **maybe**: the impact step and the fork rule.
+
+---
+
+## [2026-10-07] Edit deployment: its own dialog, two modes, a change counter
+
+- **Decision: Edit deployment is its own dialog (`EditDeploymentDialog.vue`), apart from the editor's "Create a deployment" steps.** The create flow's copy ("Next: deployment", "Create deployment") described creating, and the two flows need to change on their own.
+- **Decision: two modes, switched at the top: Configuration (name, ComfyUI version, models, custom nodes) and Machine (GPU, keep warm).** Each segment counts its pending changes. A changed row carries a "Changed" badge.
+- **Decision: the primary CTA is off until something differs from the live deployment.** It reads "Nothing changed yet", then "Review N changes". Review shows the projects on the deployment and the diff, then: Cancel · Create a new deployment and use it for this project · Update the existing deployment.
+- Alternatives, mocked at `/prototype/design/edit-deployment` (`pages/EditDeploymentOptions.vue`): A a three-step stepper, B one page with both cards, C "What do you want to change?" tiles first. D (segmented) is built. Notes: <https://claude.ai/code/artifact/e813e766-0bcc-4a57-9968-ff2ee122f792>.
+
+Wiki link: `decisions/project-runs-on-shared-deployment.md`. Promote? **maybe**: the review step's three ways out.

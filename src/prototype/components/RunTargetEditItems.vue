@@ -104,7 +104,7 @@
     <Button
       variant="inverted"
       size="lg"
-      @click="customCloud.dialogStep = 'build'"
+      @click="customCloud.editStep = 'config'"
     >
       {{ t('prototype.customCloud.dialog.items.done') }}
     </Button>

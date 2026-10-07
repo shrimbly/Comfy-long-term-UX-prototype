@@ -116,6 +116,14 @@ const changes = computed(() => {
       to: nextRelease(editing.release)
     })
   ]
+  if (diff.name) {
+    lines.push(
+      t('prototype.customCloud.dialog.impact.name', {
+        from: diff.name.from,
+        to: diff.name.to
+      })
+    )
+  }
   if (diff.comfyVersion) {
     lines.push(
       t('prototype.customCloud.dialog.impact.version', {
@@ -129,6 +137,14 @@ const changes = computed(() => {
       t('prototype.customCloud.dialog.impact.gpu', {
         from: diff.gpu.from,
         to: diff.gpu.to
+      })
+    )
+  }
+  if (diff.warmMinutes) {
+    lines.push(
+      t('prototype.customCloud.dialog.impact.warm', {
+        from: diff.warmMinutes.from,
+        to: diff.warmMinutes.to
       })
     )
   }

@@ -25,7 +25,8 @@ describe('editing a deployment', () => {
   it('opens the build summary with the deployment’s own settings', async () => {
     const { store } = await setup()
     store.openEditDeployment(ACME, COKE)
-    expect(store.dialogStep).toBe('build')
+    expect(store.editStep).toBe('config')
+    expect(store.editingChangeCount).toBe(0)
     expect(store.newDeploymentName).toBe('Acme Studio pipeline')
     expect(store.editingNodePacks).toEqual([
       'comfyui-rmbg',
@@ -41,8 +42,10 @@ describe('editing a deployment', () => {
     store.editingNodePacks = ['comfyui-rmbg', 'acme-matte-tools']
     store.editingModels = [...store.editingModels, 'z-image']
     store.editingComfyVersion = 'v0.38.4'
-    store.requestSaveEdit(PLATFORM_GPUS[1])
-    expect(store.dialogStep).toBe('impact')
+    store.editingGpu = PLATFORM_GPUS[1]
+    store.reviewEdit()
+    expect(store.editStep).toBe('impact')
+    expect(store.editingChangeCount).toBe(4)
     expect(store.editingChanges.removedPacks).toEqual(['impact-pack'])
     expect(store.editingChanges.addedModels).toEqual(['z-image'])
 
@@ -69,7 +72,7 @@ describe('editing a deployment', () => {
     const { store, personas } = await setup()
     store.openEditDeployment(ACME, COKE)
     store.editingModels = [...store.editingModels, 'z-image']
-    store.requestSaveEdit(PLATFORM_GPUS[0])
+    store.reviewEdit()
     store.forkDeployment()
 
     const coke = personas.fixture.projects.find((p) => p.id === COKE)
@@ -88,12 +91,13 @@ describe('editing a deployment', () => {
     expect(store.dialogStep).toBe('building')
   })
 
-  it('cancel leaves the deployment and closes the dialog', async () => {
+  it('review needs a change; cancel leaves the deployment and closes the dialog', async () => {
     const { store, personas } = await setup()
     store.openEditDeployment(ACME, COKE)
-    store.requestSaveEdit(PLATFORM_GPUS[0])
+    store.reviewEdit()
+    expect(store.editStep).toBe('config')
     store.cancelEdit()
-    expect(store.dialogStep).toBeNull()
+    expect(store.editStep).toBeNull()
     expect(
       personas.fixture.deployments?.find((d) => d.id === ACME)?.release
     ).toBe('v3')

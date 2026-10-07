@@ -6945,8 +6945,7 @@
           "openPlatform": "Open Platform",
           "customiseToastDetail": "Customising a build isn't in this prototype.",
           "editTitle": "Edit deployment",
-          "currentSettings": "Current settings",
-          "usedByProjects": "No projects use it | 1 project uses it | {count} projects use it"
+          "currentSettings": "Current settings"
         },
         "agentTitle": "Hand the build to your coding agent",
         "agentIntro": "Paste this into your agent on the machine where {workflow} runs.",
@@ -6991,9 +6990,7 @@
           "minutes": "{min}–{max} min",
           "timeNote": "Counted until the deployment is ready. A first request can still wait for a worker to start.",
           "cancel": "Cancel",
-          "create": "Create deployment",
-          "saveRebuild": "Save and rebuild",
-          "editTitle": "Deploy: {name} {release}"
+          "create": "Create deployment"
         },
         "items": {
           "hint": "Only what the workspace allows. Removing one breaks the workflows that use it.",
@@ -7007,7 +7004,7 @@
           "allAdded": "Everything the workspace allows is already here."
         },
         "impact": {
-          "title": "Update {name}?",
+          "title": "Review changes to {name}",
           "affects": "No projects run on it yet. | 1 project runs on it. It gets the new release when the build is done. | {count} projects run on it. All of them get the new release when the build is done.",
           "thisProject": "this project",
           "changes": "Changes",
@@ -7019,9 +7016,11 @@
           "modelsAdded": "{count} model added: {items} | {count} models added: {items}",
           "modelsRemoved": "{count} model removed: {items} | {count} models removed: {items}",
           "cancel": "Cancel",
-          "fork": "Create a new deployment instead",
+          "fork": "Create a new deployment and use it for this project",
           "forkHint": "Only {project} moves to it. The others stay on {name}.",
-          "update": "Update deployment"
+          "update": "Update the existing deployment",
+          "warm": "Keep warm {from} min → {to} min",
+          "name": "Name {from} → {to}"
         }
       },
       "agentPrompt": {
@@ -7087,6 +7086,37 @@
         "drop": "Drop incompatible workflow",
         "dropNothingRuns": "Drop it where nothing runs it",
         "reset": "Reset demo"
+      },
+      "edit": {
+        "title": "Edit deployment",
+        "usedBy": "No projects use it | Used by 1 project | Used by {count} projects",
+        "modeConfig": "Configuration",
+        "modeConfigHint": "ComfyUI, custom nodes, models",
+        "modeMachine": "Machine",
+        "modeMachineHint": "GPU, keep warm",
+        "name": "Name",
+        "comfyui": "ComfyUI",
+        "latestStable": "Latest stable",
+        "runtime": "Runtime",
+        "runtimeLocked": "Set by the ComfyUI version",
+        "models": "Models",
+        "customNodes": "Custom nodes",
+        "modelsCount": "{count} pinned | {count} pinned",
+        "packsCount": "{count} pack | {count} packs",
+        "gpu": "GPU",
+        "vram": "VRAM",
+        "pricePerHour": "Price/hr",
+        "vramValue": "{gb} GB",
+        "keepWarm": "Keep warm after a run",
+        "keepWarmHint": "A warm worker answers the next run at once. Idle time is billed.",
+        "minutes": "{count} min | {count} min",
+        "cancel": "Cancel",
+        "toMachine": "Next: machine",
+        "toConfig": "Back: configuration",
+        "review": "Review changes",
+        "reviewCount": "Review {count} change | Review {count} changes",
+        "noChanges": "Nothing changed yet",
+        "changed": "Changed"
       }
     },
     "settings": {

@@ -92,22 +92,24 @@ Then click **Reset demo** and run it again.
 
 ## Edit a deployment from a project
 
-From a project's Settings, click the **Runs on** chip, then **Edit deployment** (admins only, custom deployments only).
+From a project page, click the environment chip beside the title (or the **Runs on** chip in Settings), then **Edit deployment** (admins only).
 
-1. **Edit deployment** opens on the build summary with the deployment's own settings and "1 project uses it". ComfyUI is a version select. **Open-source models** and **Custom nodes** open a list: remove with the x, or add from what the workspace policies allow. **Done** returns to the summary.
-2. **Next: deployment** shows the deploy step for the next release (v3 → v4). Pick a GPU and click **Save and rebuild**.
-3. **Update Acme Studio pipeline?** lists the projects on it and the changes (release, version, GPU, packs and models added or removed). Three ways out:
-   - **Update deployment**: every project on it gets v4 when the build is done.
-   - **Create a new deployment instead**: a fork, "Acme Studio pipeline 2" at v1 with the edits. Only this project moves to it.
+1. **Edit deployment** opens on **Configuration**: name and ComfyUI version edit in place; **Models** and **Custom nodes** open a list where you remove with the x or add from what the workspace policies allow. The primary button reads "Nothing changed yet" until something differs.
+2. Switch to **Machine** at the top (or **Next: machine**): pick a GPU, set how long a worker stays warm. Each segment counts its changes; changed rows carry a "Changed" badge.
+3. **Review N changes** lists the projects on the deployment and the diff (release, version, GPU, keep warm, packs and models added or removed). Three ways out:
+   - **Update the existing deployment**: every project on it gets the new release when the build is done.
+   - **Create a new deployment and use it for this project**: a fork at v1 with the edits. Only this project moves to it.
    - **Cancel**: nothing changes.
-4. The dialog turns into the build's progress; the project chip reads "building" until it is ready.
+4. The build's progress takes over; the project chip reads "building" until it is ready.
+
+On Comfy Cloud the same button opens Workspace policies, since its contents are whatever the workspace allows.
 
 ## Surfaces touched
 
 - Projects page → project cards (`views/ProjectsView.vue`, `components/ProjectCard.vue`)
 - Project page → header variants and settings rows (`views/ProjectDetailView.vue`, `components/project/*.vue`); workspace settings → Projects (`components/settings/ProjectsSettings.vue`)
 - Tab strip → project switcher (`components/PrototypeTabs.vue`, `components/ProjectSwitcher.vue`, `components/ProjectSwitcherMenu.vue`)
-- The real editor (`components/RealEditor.vue` around `src/views/GraphView.vue`, served by `mockBackend/`), run-target dialog (`components/RunTargetDialog.vue` with `RunTargetChoose.vue`, `RunTargetDeploymentPicker.vue`, `RunTargetProjectChooser.vue`, `RunTargetBuildSummary.vue`, `RunTargetEditItems.vue`, `RunTargetAgent.vue`, `RunTargetDeploy.vue`, `RunTargetImpact.vue`), build lock (`components/BuildLockModal.vue`), ready toast, reload screen
+- The real editor (`components/RealEditor.vue` around `src/views/GraphView.vue`, served by `mockBackend/`), run-target dialog (`components/RunTargetDialog.vue` with `RunTargetChoose.vue`, `RunTargetDeploymentPicker.vue`, `RunTargetProjectChooser.vue`, `RunTargetBuildSummary.vue`, `RunTargetAgent.vue`, `RunTargetDeploy.vue`), edit-deployment dialog (`components/EditDeploymentDialog.vue` with `EditDeploymentConfig.vue`, `EditDeploymentMachine.vue`, `RunTargetEditItems.vue`, `RunTargetImpact.vue`), build lock (`components/BuildLockModal.vue`), ready toast, reload screen
 - State: `stores/customCloudStore.ts`, tabs per project in `stores/tabsStore.ts`, data in `fixtures/customCloud.ts` + `fixtures/admin.ts`
 
 ## Editor approach
