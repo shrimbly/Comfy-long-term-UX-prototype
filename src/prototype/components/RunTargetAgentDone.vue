@@ -38,13 +38,18 @@
     />
   </div>
 
-  <footer class="flex justify-end">
-    <Button variant="inverted" size="lg" @click="onCreate">
-      {{
-        newDeploymentPicked
-          ? t('prototype.customCloud.dialog.createDeployment')
-          : t('prototype.customCloud.dialog.createProject')
-      }}
+  <RunTargetAgentChoice
+    v-if="newDeploymentPicked"
+    @agent="customCloud.dialogStep = 'agent'"
+    @here="customCloud.dialogStep = 'build'"
+  />
+  <footer v-else class="flex justify-end">
+    <Button
+      variant="inverted"
+      size="lg"
+      @click="customCloud.dialogStep = 'project'"
+    >
+      {{ t('prototype.customCloud.dialog.createProject') }}
     </Button>
   </footer>
 </template>
@@ -62,6 +67,7 @@ import {
   usePrototypeCustomCloudStore
 } from '../stores/customCloudStore'
 
+import RunTargetAgentChoice from './RunTargetAgentChoice.vue'
 import RunTargetDeploymentPicker from './RunTargetDeploymentPicker.vue'
 
 const { titleId } = defineProps<{
@@ -81,8 +87,4 @@ const built = computed(
 const newDeploymentPicked = computed(
   () => customCloud.deploymentTarget === NEW_BUILD_TARGET
 )
-
-function onCreate() {
-  customCloud.dialogStep = newDeploymentPicked.value ? 'build' : 'project'
-}
 </script>

@@ -33,7 +33,7 @@ async function setup(projectId: string, options?: { nothingRuns: boolean }) {
 }
 
 describe('RunTargetDialog', () => {
-  it('offers a new project on the deployment that runs the workflow, or a new deployment', async () => {
+  it('offers a new project on the deployment that runs the workflow, or a new deployment from the coding agent or built here', async () => {
     const { store, user } = await setup('proj-marketing')
 
     expect(
@@ -51,7 +51,13 @@ describe('RunTargetDialog', () => {
     await user.click(
       screen.getByRole('option', { name: /Create a new deployment/ })
     )
-    await user.click(screen.getByRole('button', { name: 'Create deployment' }))
+    expect(
+      screen.getByRole('button', { name: 'Use your coding agent' })
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: 'Not now' })
+    ).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Build it here' }))
 
     expect(store.dialogStep).toBe('build')
     expect(

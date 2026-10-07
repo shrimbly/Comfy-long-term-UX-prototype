@@ -1735,3 +1735,5 @@ Why: Eric Sun, replying to the demo in Slack (#C0BD6BR53QX, p1791326140895409), 
 Wiki link: **reverses** `decisions/missing-nodes-choose-where-it-runs.md` ("Secondary only: Build with your agent"; Willie, 36:53: "less people will have coding agents"). Also strains `concepts/custom-comfy-cloud.md`: its user "doesn't write software" and the experience is cloud-first. Validate with customers, as Eric asked.
 
 Canvas: <https://claude.ai/artifact/PQby9iCSzrR7WMvbsqnY11>, section "Agent-first: build with your coding agent (Eric's ask)". Promote? **yes, if customers validate it**: revise the missing-nodes decision so the agent leads for the MVP.
+
+Update (same day): **picking "Create a new deployment" offers the same two ways.** When a deployment already runs the workflow (1A) and the presenter picks a new deployment in the picker, the footer (Open in another project, Not now, Create deployment) gives way to "Use your coding agent" and "Build it here". The agent's "Your agent deployed …" step does the same if a new deployment is picked there. Operator's ask, from the running prototype.

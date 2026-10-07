@@ -14,8 +14,9 @@
 
   Step 1 of "choose where it runs", in one of three states:
     - existing: a deployment already runs the workflow. A new project on it
-      is the main action; a new deployment is in the same picker; opening it
-      in a project that runs it is the quiet option.
+      is the main action; a new deployment is in the same picker, and picking
+      it offers the coding agent or building it here; opening it in a project
+      that runs it is the quiet option.
     - new: nothing runs it, from a Comfy Cloud project. A new deployment,
       built by the user's coding agent or here.
     - update: nothing runs it, from a project on its own deployment. A new
@@ -36,7 +37,12 @@
         :targets="customCloud.deploymentTargets"
       />
     </div>
-    <footer class="flex items-center gap-2.5">
+    <RunTargetAgentChoice
+      v-if="newDeploymentPicked"
+      @agent="customCloud.dialogStep = 'agent'"
+      @here="customCloud.dialogStep = 'build'"
+    />
+    <footer v-else class="flex items-center gap-2.5">
       <RunTargetProjectChooser
         :targets="customCloud.projectTargets"
         :current-project-id="customCloud.currentProject?.id"
@@ -46,12 +52,12 @@
       <Button variant="muted-textonly" size="lg" @click="emit('close')">
         {{ t('prototype.customCloud.dialog.notNow') }}
       </Button>
-      <Button variant="inverted" size="lg" @click="onCreate">
-        {{
-          newDeploymentPicked
-            ? t('prototype.customCloud.dialog.createDeployment')
-            : t('prototype.customCloud.dialog.createProject')
-        }}
+      <Button
+        variant="inverted"
+        size="lg"
+        @click="customCloud.dialogStep = 'project'"
+      >
+        {{ t('prototype.customCloud.dialog.createProject') }}
       </Button>
     </footer>
   </template>
@@ -153,10 +159,6 @@ const title = computed(() =>
     deployment: deployment.value.name
   })
 )
-
-function onCreate() {
-  customCloud.dialogStep = newDeploymentPicked.value ? 'build' : 'project'
-}
 
 // Building the new release here is the Install flow's rebuild: its
 // confirmation, then the release builds behind the Building chip.

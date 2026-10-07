@@ -6902,7 +6902,6 @@
         "projectsMissing": "Missing nodes or models",
         "thisProject": "{name} · this project",
         "createProject": "Create project",
-        "createDeployment": "Create deployment",
         "newLead": "Create a new deployment to run your workflow",
         "newDetail": "Your coding agent builds and deploys it from the ComfyUI install on your machine, where these nodes and models already are. Or build it here on Comfy Cloud.",
         "useAgent": "Use your coding agent",

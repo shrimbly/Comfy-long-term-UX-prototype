@@ -55,7 +55,7 @@ Wiki: `../IA_Plan/wiki/concepts/custom-comfy-cloud.md`. Source: the 6 Oct "Custo
    - Step 1. The title reads "This workflow can't run on Comfy Cloud". A short table lists what is missing: 2 missing node packs, 2 missing models.
    - "Create a new project that runs on" shows **Acme Studio pipeline · Ready now**: that deployment already has everything.
    - Open the field. It works like the project switcher: a search field, then one list. Acme Studio pipeline is ticked and marked "Ready". Matte tests ("Missing 1 node pack") and Comfy Cloud ("Missing 2 packs, 2 models") are greyed out. Below the list is **+ Create a new deployment · About 20 min**.
-   - Say: one deployment already runs it, but we make a new one anyway. Pick **Create a new deployment**. The main button changes to **Create deployment**. Click it.
+   - Say: one deployment already runs it, but we make a new one anyway. Pick **Create a new deployment**. The footer turns into **Use your coding agent**, then **Build it here**, as below in "Shortcut and alternative". Click **Build it here**.
    - Step 2 · the build summary, as Platform shows it. Under "Suggested settings": Name (the deployment's name, Matte R&D, editable in place), ComfyUI v0.39.1, Runtime (CUDA 13.0 · Python 3.12 · Torch 2.12.1), Open-source models (all allowed, 2 pre-installed), Partner models, Custom nodes (2 packs), Python packages.
    - Optional: click any setting except the name. A confirmation asks, for example, "Change Runtime on Platform?". Click **Cancel**.
    - Click **Next: deployment**.
