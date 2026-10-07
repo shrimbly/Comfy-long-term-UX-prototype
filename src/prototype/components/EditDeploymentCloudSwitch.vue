@@ -92,7 +92,6 @@ import Button from '@/components/ui/button/Button.vue'
 
 import { useTextT } from '../composables/useTextT'
 import { useWorkspaceAllowlist } from '../composables/useWorkspaceAllowlist'
-import { policyCatalog } from '../fixtures/policyCatalog'
 import { usePrototypeCustomCloudStore } from '../stores/customCloudStore'
 import { usePrototypePersonaStore } from '../stores/personaStore'
 import { usePrototypePolicyStore } from '../stores/policyStore'
@@ -118,7 +117,7 @@ const project = computed(
 const others = computed(() => customCloud.editingProjects.length - 1)
 
 function nameOf(id: string) {
-  return policyCatalog.find((item) => item.id === id)?.name ?? id
+  return policies.catalog.find((item) => item.id === id)?.name ?? id
 }
 
 // Pinned items the workspace does not allow stop working on Comfy Cloud.

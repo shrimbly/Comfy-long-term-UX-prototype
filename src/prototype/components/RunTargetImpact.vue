@@ -93,8 +93,8 @@ import { useI18n } from 'vue-i18n'
 import Button from '@/components/ui/button/Button.vue'
 
 import { useTextT } from '../composables/useTextT'
-import { policyCatalog } from '../fixtures/policyCatalog'
 import { usePrototypeCustomCloudStore } from '../stores/customCloudStore'
+import { usePrototypePolicyStore } from '../stores/policyStore'
 import { nextRelease } from '../utils/deployment'
 
 const { titleId } = defineProps<{
@@ -104,13 +104,14 @@ const { titleId } = defineProps<{
 const { t } = useI18n()
 const tText = useTextT()
 const customCloud = usePrototypeCustomCloudStore()
+const policies = usePrototypePolicyStore()
 
 const name = computed(() => customCloud.newDeploymentName.trim())
 const projects = computed(() => customCloud.editingProjects)
 
 function names(ids: string[]) {
   return ids
-    .map((id) => policyCatalog.find((item) => item.id === id)?.name ?? id)
+    .map((id) => policies.catalog.find((item) => item.id === id)?.name ?? id)
     .join(', ')
 }
 

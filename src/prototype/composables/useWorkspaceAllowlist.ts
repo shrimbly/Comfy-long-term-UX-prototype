@@ -5,7 +5,6 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 
-import { policyCatalog } from '../fixtures/policyCatalog'
 import { usePrototypePolicyStore } from '../stores/policyStore'
 
 // Comfy Cloud runs everything it supports unless the workspace policies
@@ -16,7 +15,7 @@ export function useWorkspaceAllowlist() {
 
   return computed(() =>
     (['nodes', 'models'] as const).map((kind) => {
-      const items = policyCatalog.filter((item) => item.kind === kind)
+      const items = policies.catalog.filter((item) => item.kind === kind)
       const allowed = items
         .filter((item) => policies.isAllowed(item.id))
         .map((item) => item.name)

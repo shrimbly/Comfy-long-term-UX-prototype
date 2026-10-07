@@ -117,7 +117,6 @@ import { useI18n } from 'vue-i18n'
 
 import Button from '@/components/ui/button/Button.vue'
 
-import { policyCatalog } from '../fixtures/policyCatalog'
 import { usePrototypeCustomCloudStore } from '../stores/customCloudStore'
 import { usePrototypePolicyStore } from '../stores/policyStore'
 
@@ -155,7 +154,7 @@ const ids = computed(() =>
 )
 
 function nameOf(id: string) {
-  return policyCatalog.find((item) => item.id === id)?.name ?? id
+  return policies.catalog.find((item) => item.id === id)?.name ?? id
 }
 
 const items = computed(() => ids.value.map((id) => ({ id, name: nameOf(id) })))
@@ -163,7 +162,7 @@ const items = computed(() => ids.value.map((id) => ({ id, name: nameOf(id) })))
 // What the workspace allows, minus what is already pinned.
 const candidates = computed(() => {
   const needle = query.value.trim().toLowerCase()
-  return policyCatalog
+  return policies.catalog
     .filter(
       (item) =>
         item.kind === kind.value &&

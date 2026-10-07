@@ -7285,7 +7285,25 @@
         "builtIn": "Built-in Comfy nodes remain available.",
         "saved": "Policy updated for all projects.",
         "runBlocked": "This workflow uses items outside the workspace allowlist.",
-        "review": "Review policies"
+        "review": "Review policies",
+        "import": {
+          "button": "Import private pack",
+          "title": "Import a private pack",
+          "hint": "For packs that are not in the registry. Only {workspace} sees it. It is allowed for all projects right away.",
+          "zip": "Upload a zip",
+          "zipHint": "The pack folder, zipped",
+          "zipLabel": "Zip file",
+          "zipDrop": "Choose a .zip file",
+          "repo": "Link a repo",
+          "repoShort": "A git URL, public or private",
+          "repoLabel": "Repository URL",
+          "repoHint": "Private repos need a deploy key. We ask for it on the first build.",
+          "nameLabel": "Name",
+          "submit": "Import",
+          "private": "Private",
+          "done": "{name} is imported and allowed for all projects.",
+          "repoPlaceholder": "https://github.com/acme/ComfyUI-Acme-Nodes"
+        }
       },
       "usage": {
         "period": "Usage period",
@@ -7299,7 +7317,6 @@
         "runs": "Runs",
         "share": "Share",
         "spent": "Credits used",
-        "activeProjects": "Active projects",
         "empty": "No credit use in this period.",
         "unattributed": "API keys / unattributed"
       },
