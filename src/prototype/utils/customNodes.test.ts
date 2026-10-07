@@ -174,11 +174,11 @@ describe('filterRows', () => {
 
 describe('sortRows', () => {
   it.for([
-    { sort: 'installs', expected: ['blocked', 'kj', 'impact', 'rmbg'] },
+    { sort: 'installs', expected: ['impact', 'rmbg', 'blocked', 'kj'] },
     { sort: 'stars', expected: ['impact', 'rmbg', 'kj', 'blocked'] },
-    { sort: 'name', expected: ['blocked', 'impact', 'kj', 'rmbg'] }
+    { sort: 'name', expected: ['impact', 'rmbg', 'blocked', 'kj'] }
   ] satisfies { sort: 'installs' | 'stars' | 'name'; expected: string[] }[])(
-    'by $sort',
+    'puts installed packs first, then sorts by $sort',
     ({ sort, expected }) => {
       expect(sortRows(rows(), sort).map((r) => r.id)).toEqual(expected)
     }

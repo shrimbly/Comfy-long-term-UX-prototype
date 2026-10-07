@@ -138,14 +138,17 @@ export function filterRows(rows: PackRow[], filter: RowFilter): PackRow[] {
   )
 }
 
-// Platform's order: by the chosen column, most first (names A to Z).
+// Installed packs first, then the rest; each by the chosen column, most
+// first (names A to Z).
 export function sortRows(rows: PackRow[], sort: PackSort): PackRow[] {
   const by: Record<PackSort, (a: PackRow, b: PackRow) => number> = {
     installs: (a, b) => b.installs - a.installs,
     stars: (a, b) => (b.stars ?? -1) - (a.stars ?? -1),
     name: (a, b) => a.name.localeCompare(b.name)
   }
-  return [...rows].sort(by[sort])
+  const installedFirst = (a: PackRow, b: PackRow) =>
+    Number(statusOf(b) === 'installed') - Number(statusOf(a) === 'installed')
+  return [...rows].sort((a, b) => installedFirst(a, b) || by[sort](a, b))
 }
 
 // The deployment's pins once its changes are built.
