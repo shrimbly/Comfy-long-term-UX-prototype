@@ -119,6 +119,8 @@
 
     <WorkflowDragGhost />
     <RunTargetDialog v-if="customCloud.dialogStep" />
+    <EditDeploymentDialog v-if="customCloud.editStep" />
+    <EditCloudDialog v-if="customCloud.editCloudProjectId" />
     <CustomNodesDialog v-if="customNodes.isOpen" />
     <CustomNodesRebuildDialog
       v-if="customNodes.pendingChanges"
@@ -143,6 +145,8 @@ import LocalMediaView from '../components/LocalMediaView.vue'
 import ProjectReloadOverlay from '../components/ProjectReloadOverlay.vue'
 import RealEditor from '../components/RealEditor.vue'
 import PrototypeSidebar from '../components/PrototypeSidebar.vue'
+import EditCloudDialog from '../components/EditCloudDialog.vue'
+import EditDeploymentDialog from '../components/EditDeploymentDialog.vue'
 import RunTargetDialog from '../components/RunTargetDialog.vue'
 import WorkflowDragGhost from '../components/WorkflowDragGhost.vue'
 import { useTextT } from '../composables/useTextT'

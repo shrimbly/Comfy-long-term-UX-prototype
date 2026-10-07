@@ -15,9 +15,7 @@
   project's remembered tabs, or its drafts the first time.
 -->
 <template>
-  <div
-    class="flex shrink-0 items-center border-r border-(--border-color) pr-2 pl-0.5"
-  >
+  <div class="flex shrink-0 items-center pr-2 pl-0.5">
     <PopoverRoot v-model:open="customCloud.switcherOpen">
       <PopoverTrigger as-child>
         <Button

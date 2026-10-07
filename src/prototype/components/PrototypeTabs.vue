@@ -28,9 +28,8 @@
       size="icon"
       :class="
         cn(
-          'relative aspect-square h-full w-auto shrink-0 rounded-none border-interface-stroke',
-          isHomeActive && 'text-base-foreground',
-          !showSwitcher && 'border-r'
+          'relative h-full w-14 shrink-0 rounded-none border-r border-(--border-color)',
+          isHomeActive && 'text-base-foreground'
         )
       "
       :aria-label="t('prototype.tabs.home')"

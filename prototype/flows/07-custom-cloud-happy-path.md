@@ -95,12 +95,26 @@ Then click **Reset demo** and run it again.
   - **Build it here** is the custom nodes rebuild: "Rebuild to add Acme Matte Tools?", then the Building chip, then the ready toast.
 - Close the dialog with its close button (or **Not now** in step 5). The nodes stay flagged, and pressing **Run** reopens the dialog.
 
+## Edit a deployment from a project
+
+From a project page, click the deployment chip beside the title (or the **Runs on** chip in Settings), then **Edit deployment** (admins only).
+
+1. **Edit deployment** opens on **Configuration**: name and ComfyUI version edit in place; **Models** and **Custom nodes** open a list where you remove with the x or add from what the workspace policies allow. The primary button reads "Nothing changed yet" until something differs.
+2. Switch to **Machine** at the top (or **Next: machine**): pick a GPU, set how long a worker stays warm. Each segment counts its changes; changed rows carry a "Changed" badge.
+3. **Review N changes** lists the projects on the deployment and the diff (release, version, GPU, keep warm, packs and models added or removed). Three ways out:
+   - **Update the existing deployment**: every project on it gets the new release when the build is done.
+   - **Create a new deployment and use it for this project**: a fork at v1 with the edits. Only this project moves to it.
+   - **Cancel**: nothing changes.
+4. The build's progress takes over; the project chip reads "building" until it is ready.
+
+On Comfy Cloud the same button opens Workspace policies, since its contents are whatever the workspace allows.
+
 ## Surfaces touched
 
 - Projects page → project cards (`views/ProjectsView.vue`, `components/ProjectCard.vue`)
 - Project page → header variants and settings rows (`views/ProjectDetailView.vue`, `components/project/*.vue`); workspace settings → Projects (`components/settings/ProjectsSettings.vue`)
 - Tab strip → project switcher (`components/PrototypeTabs.vue`, `components/ProjectSwitcher.vue`, `components/ProjectSwitcherMenu.vue`)
-- The real editor (`components/RealEditor.vue` around `src/views/GraphView.vue`, served by `mockBackend/`), run-target dialog (`components/RunTargetDialog.vue` with `RunTargetChoose.vue`, `RunTargetDeploymentPicker.vue`, `RunTargetProjectChooser.vue`, `RunTargetBuildSummary.vue`, `RunTargetAgentChoice.vue`, `RunTargetAgent.vue`, `RunTargetAgentDone.vue`, `RunTargetDeploy.vue`), build lock (`components/BuildLockModal.vue`), ready toast, reload screen
+- The real editor (`components/RealEditor.vue` around `src/views/GraphView.vue`, served by `mockBackend/`), run-target dialog (`components/RunTargetDialog.vue` with `RunTargetChoose.vue`, `RunTargetDeploymentPicker.vue`, `RunTargetProjectChooser.vue`, `RunTargetBuildSummary.vue`, `RunTargetAgentChoice.vue`, `RunTargetAgent.vue`, `RunTargetAgentDone.vue`, `RunTargetDeploy.vue`), edit-deployment dialog (`components/EditDeploymentDialog.vue` with `EditDeploymentConfig.vue`, `EditDeploymentMachine.vue`, `RunTargetEditItems.vue`, `RunTargetImpact.vue`), build lock (`components/BuildLockModal.vue`), ready toast, reload screen
 - State: `stores/customCloudStore.ts`, tabs per project in `stores/tabsStore.ts`, data in `fixtures/customCloud.ts` + `fixtures/admin.ts`
 
 ## Editor approach

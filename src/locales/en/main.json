@@ -5982,7 +5982,10 @@
       "unfavorite": "Remove from favorites",
       "noProject": "No project",
       "count": "No assets | 1 asset | {count} assets",
-      "empty": "No assets match these filters."
+      "empty": "No assets match these filters.",
+      "devSimulateFolder": "Simulate folder moved (dev)",
+      "add": "Add media",
+      "missingBanner": "{count} linked file is missing | {count} linked files are missing"
     },
     "relinkDialog": {
       "title": "Relink file",
@@ -6865,7 +6868,8 @@
         "otherProjects": "Other projects",
         "noMatch": "No projects match “{query}”",
         "allProjects": "All projects",
-        "building": "Building · {minutes} min"
+        "building": "Building · {minutes} min",
+        "settingsFor": "Settings for {project}"
       },
       "reload": {
         "opening": "Opening {project}"
@@ -6996,6 +7000,37 @@
           "saveRebuild": "Save and rebuild",
           "editTitle": "Deploy: {name} {release}"
         },
+        "items": {
+          "hint": "Only what the workspace allows. Removing one breaks the workflows that use it.",
+          "addNodes": "Add a node pack",
+          "addModels": "Add a model",
+          "noMatches": "Nothing the workspace allows matches.",
+          "remove": "Remove {name}",
+          "empty": "None pinned.",
+          "allowedNote": "Changes apply when the deployment rebuilds.",
+          "done": "Done",
+          "allAdded": "Everything the workspace allows is already here."
+        },
+        "impact": {
+          "title": "Review changes to {name}",
+          "affects": "No projects run on it yet. | 1 project runs on it. It gets the new release when the build is done. | {count} projects run on it. All of them get the new release when the build is done.",
+          "thisProject": "this project",
+          "changes": "Changes",
+          "release": "Release {from} → {to}",
+          "version": "ComfyUI {from} → {to}",
+          "gpu": "GPU {from} → {to}",
+          "packsAdded": "{count} pack added: {items} | {count} packs added: {items}",
+          "packsRemoved": "{count} pack removed: {items} | {count} packs removed: {items}",
+          "modelsAdded": "{count} model added: {items} | {count} models added: {items}",
+          "modelsRemoved": "{count} model removed: {items} | {count} models removed: {items}",
+          "cancel": "Cancel",
+          "fork": "Fork for this project",
+          "forkHint": "A new deployment with these changes. Only {project} moves to it. The others stay on {name}.",
+          "update": "Update",
+          "warm": "Keep warm {from} min → {to} min",
+          "name": "Name {from} → {to}",
+          "back": "Back"
+        },
         "packsTitle": "Create a new deployment",
         "chosenPacks": "{count} node pack | {count} node packs",
         "packsLead": "A new deployment with the packs you picked",
@@ -7069,7 +7104,8 @@
         "platformToastDetail": "The build log and releases live there.",
         "keepWorking": "Keep working",
         "chip": "Building {deployment} · {minutes} min",
-        "rebuildBody": "Every project on it runs the new release when it's done."
+        "rebuildBody": "Every project on it runs the new release when it's done.",
+        "forkBody": "This project moves to it when it's done. The others stay where they are."
       },
       "ready": {
         "title": "{project} is ready",
@@ -7083,6 +7119,70 @@
         "dropNothingRuns": "Drop it where nothing runs it",
         "reset": "Reset demo",
         "finishAgent": "Finish the agent's build"
+      },
+      "edit": {
+        "title": "Edit deployment",
+        "usedBy": "No projects use it | Used by 1 project | Used by {count} projects",
+        "modeConfig": "Configuration",
+        "modeConfigHint": "ComfyUI, custom nodes, models",
+        "modeMachine": "Machine",
+        "modeMachineHint": "GPU, keep warm",
+        "name": "Name",
+        "comfyui": "ComfyUI",
+        "latestStable": "Latest stable",
+        "runtime": "Runtime",
+        "runtimeLocked": "Set by the ComfyUI version",
+        "models": "Models",
+        "customNodes": "Custom nodes",
+        "modelsCount": "{count} pinned | {count} pinned",
+        "packsCount": "{count} pack | {count} packs",
+        "gpu": "GPU",
+        "vram": "VRAM",
+        "pricePerHour": "Price/hr",
+        "vramValue": "{gb} GB",
+        "keepWarm": "Keep warm after a run",
+        "keepWarmHint": "A warm worker answers the next run at once. Idle time is billed.",
+        "minutes": "{count} min | {count} min",
+        "cancel": "Cancel",
+        "toMachine": "Next: machine",
+        "toConfig": "Back: configuration",
+        "reviewCount": "Review {count} change | Review {count} changes",
+        "noChanges": "Nothing changed yet",
+        "changed": "Changed"
+      },
+      "editCloud": {
+        "latest": "Latest stable",
+        "managedByComfy": "Managed by Comfy",
+        "fromPolicies": "From workspace policies",
+        "policies": "Edit workspace policies"
+      },
+      "switch": {
+        "cloudTitle": "Comfy Cloud",
+        "cloudBody": "Shared machines, no build. Uses what the workspace allows.",
+        "cloudAction": "Switch",
+        "customTitle": "Custom deployment",
+        "customBody": "Pinned nodes and models on a GPU you choose. Needs a build.",
+        "customAction": "Choose",
+        "toCloudTitle": "Move {project} to Comfy Cloud?",
+        "toCloudHint": "Here is what changes for this project.",
+        "build": "Build",
+        "noBuild": "None. Runs right away.",
+        "allowedByWorkspace": "{count} allowed by the workspace",
+        "allAllowed": "Everything Comfy Cloud supports",
+        "lost": "Not on Comfy Cloud: {items}",
+        "deploymentStays": "{name} is kept. No other project uses it. | {name} is kept for the other project. | {name} is kept for the other {count} projects.",
+        "toCloudConfirm": "Move to Comfy Cloud",
+        "chooseTitle": "Choose a deployment",
+        "chooseHint": "This project moves to it. Other projects are not affected.",
+        "toCustomTitle": "Move {project} to {name}?",
+        "toCustomHint": "Here is what changes for this project.",
+        "firstRun": "First run",
+        "firstRunBy": {
+          "ready": "Right away",
+          "asleep": "Wakes the worker, under a minute",
+          "building": "When the build is done"
+        },
+        "toCustomConfirm": "Move to {name}"
       }
     },
     "settings": {
@@ -7192,7 +7292,6 @@
         "modelsHeading": "Model allowlist",
         "scope": "Only allowed items can run in {workspace}.",
         "info": "These rules apply to every project in this workspace. Removed items cannot run, even in existing workflows. Owners and admins can change these rules.",
-        "allProjects": "All projects",
         "readOnly": "Only workspace owners and admins can change policies.",
         "search": "Search by name or publisher…",
         "status": "Status",
@@ -7217,7 +7316,25 @@
         "builtIn": "Built-in Comfy nodes remain available.",
         "saved": "Policy updated for all projects.",
         "runBlocked": "This workflow uses items outside the workspace allowlist.",
-        "review": "Review policies"
+        "review": "Review policies",
+        "import": {
+          "button": "Import private pack",
+          "title": "Import a private pack",
+          "hint": "For packs that are not in the registry. Only {workspace} sees it. It is allowed for all projects right away.",
+          "zip": "Upload a zip",
+          "zipHint": "The pack folder, zipped",
+          "zipLabel": "Zip file",
+          "zipDrop": "Choose a .zip file",
+          "repo": "Link a repo",
+          "repoShort": "A git URL, public or private",
+          "repoLabel": "Repository URL",
+          "repoHint": "Private repos need a deploy key. We ask for it on the first build.",
+          "nameLabel": "Name",
+          "submit": "Import",
+          "private": "Private",
+          "done": "{name} is imported and allowed for all projects.",
+          "repoPlaceholder": "https://github.com/acme/ComfyUI-Acme-Nodes"
+        }
       },
       "usage": {
         "period": "Usage period",
@@ -7231,7 +7348,6 @@
         "runs": "Runs",
         "share": "Share",
         "spent": "Credits used",
-        "activeProjects": "Active projects",
         "empty": "No credit use in this period.",
         "unattributed": "API keys / unattributed"
       },
@@ -7266,7 +7382,7 @@
         "openProject": "Open project",
         "general": "General",
         "name": "Name",
-        "environment": "Environment",
+        "environment": "Deployment",
         "environmentHint": "Where every workflow in this project runs.",
         "generalAccess": "General access",
         "people": "People",
@@ -7308,7 +7424,7 @@
         "creditsSpent": "credits spent"
       },
       "environmentSheet": {
-        "open": "Open environment",
+        "open": "Open deployment",
         "contents": "Contents",
         "status": "Status",
         "inherit": "Projects inherit the workspace policies. A project can only narrow them.",
@@ -7322,18 +7438,28 @@
         "warmValue": "{minutes} min after a run",
         "usedBy": "Used by",
         "alwaysOn": "The shared default. Always on.",
-        "manage": "Manage environments",
+        "manage": "Manage deployments",
         "none": "None allowed",
-        "edit": "Edit deployment"
+        "edit": "Edit deployment",
+        "cloudSupported": "See what Comfy Cloud supports",
+        "cloudNodesValue": "80+",
+        "cloudNodesLabel": "custom node packs",
+        "cloudModelsValue": "Hundreds",
+        "cloudModelsLabel": "of models",
+        "allowedTitle": "Allowed in {workspace}",
+        "allowedOf": "{count} of {total}",
+        "allowedAll": "All",
+        "more": "+{count} more",
+        "seeAllPolicies": "See all workspace policies"
       },
       "environmentPicker": {
-        "title": "Change environment",
+        "title": "Change deployment",
         "hint": "Every workflow in this project will run there. Open workflows reload.",
         "switch": "Switch"
       }
     },
     "environments": {
-      "title": "Environments",
+      "title": "Deployments",
       "description": "Custom deployments for this workspace.",
       "new": "New deployment",
       "search": "Search deployments…",

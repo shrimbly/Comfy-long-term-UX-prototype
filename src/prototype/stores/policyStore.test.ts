@@ -30,4 +30,30 @@ describe('workspace policies', () => {
     expect(policies.setAllowed('flux1-dev-fp8', false)).toBe(false)
     expect(policies.allowedIds).toEqual(before)
   })
+
+  it('imports a private pack for this workspace only, allowed at once', () => {
+    const personas = usePrototypePersonaStore()
+    const policies = usePrototypePolicyStore()
+    const workspace = personas.fixture.currentWorkspaceId
+    expect(
+      policies.importPrivatePack('Acme Roto Tools', {
+        kind: 'repo',
+        label: 'https://github.com/acme/ComfyUI-Acme-Roto'
+      })
+    ).toBe(true)
+    expect(policies.isAllowed('private-acme-roto-tools')).toBe(true)
+    expect(
+      policies.catalog.find((p) => p.id === 'private-acme-roto-tools')
+    ).toMatchObject({ kind: 'nodes', license: 'Private', private: true })
+    expect(
+      policies.importPrivatePack('Acme Roto Tools', {
+        kind: 'zip',
+        label: 'x.zip'
+      })
+    ).toBe(false)
+    personas.setCurrentWorkspace('ws-personal')
+    expect(policies.privatePacks).toEqual([])
+    personas.setCurrentWorkspace(workspace)
+    expect(policies.privatePacks).toHaveLength(1)
+  })
 })

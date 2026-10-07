@@ -10,6 +10,8 @@ export interface PolicyItem {
   installs: number
   allowed: boolean
   files?: string[]
+  // Imported by the workspace, not from the registry.
+  private?: boolean
 }
 
 export const policyCatalog: PolicyItem[] = [

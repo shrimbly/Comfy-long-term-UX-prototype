@@ -5,6 +5,7 @@ import type { RouteRecordRaw } from 'vue-router'
 
 const PrototypeLayout = () => import('./layouts/PrototypeLayout.vue')
 const Dashboard = () => import('./pages/Dashboard.vue')
+const EditDeploymentOptions = () => import('./pages/EditDeploymentOptions.vue')
 
 export const prototypeRoutes: RouteRecordRaw[] = [
   {
@@ -16,6 +17,11 @@ export const prototypeRoutes: RouteRecordRaw[] = [
         path: 'dashboard',
         name: 'PrototypeDashboard',
         component: Dashboard
+      },
+      {
+        path: 'design/edit-deployment',
+        name: 'PrototypeEditDeploymentOptions',
+        component: EditDeploymentOptions
       }
     ]
   }

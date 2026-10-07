@@ -1,159 +1,154 @@
 <template>
-  <div class="flex w-full max-w-4xl flex-col gap-10">
-    <SettingsPanel
-      :title="t('prototype.views.settings.general.heading')"
-      :description="t('prototype.views.settings.general.description')"
-    >
-      <div class="flex flex-col gap-1">
-        <label class="text-xs text-muted-foreground" :for="nameInputId">
-          {{ t('prototype.views.settings.general.nameLabel') }}
-        </label>
-        <input
-          :id="nameInputId"
-          :value="workspace?.name ?? ''"
-          :disabled="!canEditIdentity"
-          type="text"
-          :class="cn(inputClass, 'max-w-md')"
-          @change="onNameChange(($event.target as HTMLInputElement).value)"
-        />
+  <div class="flex w-full flex-col gap-4">
+    <section :class="cardClass">
+      <div>
+        <h2 :class="headingClass">
+          {{ t('prototype.views.settings.general.heading') }}
+        </h2>
+        <p :class="hintClass">
+          {{ t('prototype.views.settings.general.description') }}
+        </p>
       </div>
-
-      <div class="flex flex-col gap-1">
-        <label class="text-xs text-muted-foreground" :for="descInputId">
-          {{ t('prototype.views.settings.general.descriptionLabel') }}
-        </label>
-        <textarea
-          :id="descInputId"
-          :value="workspace?.description ?? ''"
-          :disabled="!canEditIdentity"
-          :placeholder="
-            t('prototype.views.settings.general.descriptionPlaceholder')
-          "
-          rows="2"
-          :class="cn(inputClass, 'h-auto max-w-md resize-y py-2')"
-          @change="
-            onDescriptionChange(($event.target as HTMLTextAreaElement).value)
-          "
-        />
-      </div>
-
-      <dl class="grid grid-cols-2 gap-4 text-sm">
-        <div class="flex flex-col gap-0.5">
-          <dt class="text-xs text-muted-foreground">
-            {{ t('prototype.views.settings.general.typeLabel') }}
-          </dt>
-          <dd class="m-0">
-            <span
-              class="inline-flex h-6 items-center rounded-full bg-secondary-background-hover px-2 text-xs text-base-foreground"
-            >
-              {{ tierLabel }}
-            </span>
-          </dd>
-        </div>
-        <div class="flex flex-col gap-0.5">
-          <dt class="text-xs text-muted-foreground">
-            {{ t('prototype.views.settings.general.ownerLabel') }}
-          </dt>
-          <dd class="m-0 text-sm text-base-foreground">{{ ownerLabel }}</dd>
-        </div>
+      <dl class="m-0 flex flex-col">
+        <ProjectSettingsRow
+          :label="t('prototype.views.settings.general.nameLabel')"
+        >
+          <input
+            v-if="canEditIdentity"
+            :value="workspace?.name ?? ''"
+            type="text"
+            :aria-label="t('prototype.views.settings.general.nameLabel')"
+            :class="inputClass"
+            @change="onNameChange(($event.target as HTMLInputElement).value)"
+          />
+          <span v-else>{{ workspace?.name }}</span>
+        </ProjectSettingsRow>
+        <ProjectSettingsRow
+          :label="t('prototype.views.settings.general.descriptionLabel')"
+        >
+          <textarea
+            v-if="canEditIdentity"
+            :value="workspace?.description ?? ''"
+            :placeholder="
+              t('prototype.views.settings.general.descriptionPlaceholder')
+            "
+            :aria-label="t('prototype.views.settings.general.descriptionLabel')"
+            rows="2"
+            :class="cn(inputClass, 'h-auto resize-y py-2 text-left')"
+            @change="
+              onDescriptionChange(($event.target as HTMLTextAreaElement).value)
+            "
+          />
+          <span v-else class="text-right">{{ workspace?.description }}</span>
+        </ProjectSettingsRow>
+        <ProjectSettingsRow
+          :label="t('prototype.views.settings.general.typeLabel')"
+        >
+          <span
+            class="inline-flex h-6 items-center rounded-full bg-secondary-background-hover px-2 text-xs"
+          >
+            {{ tierLabel }}
+          </span>
+        </ProjectSettingsRow>
+        <ProjectSettingsRow
+          :label="t('prototype.views.settings.general.ownerLabel')"
+        >
+          <span>{{ ownerLabel }}</span>
+        </ProjectSettingsRow>
       </dl>
-
-      <p
-        v-if="!canEditIdentity"
-        class="m-0 text-xs text-muted-foreground italic"
-      >
+      <p v-if="!canEditIdentity" class="m-0 text-xs text-muted-foreground">
         {{ t('prototype.views.settings.general.readOnly') }}
       </p>
-    </SettingsPanel>
-    <details
-      v-if="canDeleteWorkspace"
-      class="rounded-lg border border-border-subtle p-5"
-    >
-      <summary class="cursor-pointer text-sm text-muted-foreground">
-        {{ t('prototype.views.settings.tabs.dangerZone') }}
-      </summary>
-      <div class="pt-6">
-        <div class="flex max-w-4xl flex-col gap-8">
-          <SettingsPanel
-            v-if="canTransferOwnership"
-            :title="t('prototype.views.settings.ownership.heading')"
-            :description="t('prototype.views.settings.ownership.description')"
-          >
-            <div class="flex items-center gap-2">
-              <select
-                v-model="transferTargetId"
-                :class="cn(inputClass, 'flex-1')"
-              >
-                <option value="" disabled>
-                  {{
-                    t('prototype.views.settings.ownership.selectPlaceholder')
-                  }}
-                </option>
-                <option
-                  v-for="admin in otherAdmins"
-                  :key="admin.id"
-                  :value="admin.id"
-                >
-                  {{ admin.name }} ({{ admin.email }})
-                </option>
-              </select>
-              <Button
-                variant="inverted"
-                size="lg"
-                :disabled="!transferTargetId"
-                @click="onTransferOwnership"
-              >
-                {{ t('prototype.views.settings.ownership.transfer') }}
-              </Button>
-            </div>
-            <p
-              v-if="!otherAdmins.length"
-              class="m-0 text-xs text-muted-foreground italic"
-            >
-              {{ t('prototype.views.settings.ownership.noTargets') }}
-            </p>
-            <p class="m-0 text-xs text-muted-foreground italic">
-              {{ t('prototype.views.settings.ownership.billingNote') }}
-            </p>
-          </SettingsPanel>
+    </section>
 
-          <SettingsPanel
-            v-if="canDeleteWorkspace"
-            :title="t('prototype.views.settings.danger.heading')"
-            :description="t('prototype.views.settings.danger.description')"
-          >
-            <div>
-              <Button variant="destructive" size="lg" @click="onDelete">
-                {{ t('prototype.views.settings.danger.deleteButton') }}
-              </Button>
-            </div>
-          </SettingsPanel>
-        </div>
+    <section v-if="canTransferOwnership" :class="cardClass">
+      <div>
+        <h2 :class="headingClass">
+          {{ t('prototype.views.settings.ownership.heading') }}
+        </h2>
+        <p :class="hintClass">
+          {{ t('prototype.views.settings.ownership.description') }}
+        </p>
       </div>
-    </details>
+      <dl class="m-0 flex flex-col">
+        <ProjectSettingsRow
+          :label="t('prototype.views.settings.ownership.transfer')"
+          :detail="
+            otherAdmins.length
+              ? t('prototype.views.settings.ownership.billingNote')
+              : t('prototype.views.settings.ownership.noTargets')
+          "
+        >
+          <span class="flex items-center gap-2">
+            <select
+              v-model="transferTargetId"
+              :aria-label="t('prototype.views.settings.ownership.transfer')"
+              :disabled="!otherAdmins.length"
+              :class="inputClass"
+            >
+              <option value="" disabled>
+                {{ t('prototype.views.settings.ownership.selectPlaceholder') }}
+              </option>
+              <option
+                v-for="admin in otherAdmins"
+                :key="admin.id"
+                :value="admin.id"
+              >
+                {{ admin.name }}
+              </option>
+            </select>
+            <Button
+              variant="secondary"
+              size="md"
+              :disabled="!transferTargetId"
+              @click="onTransferOwnership"
+            >
+              {{ t('prototype.views.settings.ownership.transfer') }}
+            </Button>
+          </span>
+        </ProjectSettingsRow>
+      </dl>
+    </section>
+
+    <section v-if="canDeleteWorkspace" :class="cardClass">
+      <div>
+        <h2 :class="headingClass">
+          {{ t('prototype.views.settings.danger.deleteButton') }}
+        </h2>
+        <p :class="hintClass">
+          {{ t('prototype.views.settings.danger.description') }}
+        </p>
+      </div>
+      <div>
+        <Button variant="destructive" size="md" @click="onDelete">
+          {{ t('prototype.views.settings.danger.deleteButton') }}
+        </Button>
+      </div>
+    </section>
   </div>
 </template>
 <script setup lang="ts">
 import { cn } from '@comfyorg/tailwind-utils'
 import { storeToRefs } from 'pinia'
-import { computed, ref, useId } from 'vue'
+import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import Button from '@/components/ui/button/Button.vue'
 
-import SettingsPanel from '../components/settings/SettingsPanel.vue'
+import ProjectSettingsRow from '../components/project/ProjectSettingsRow.vue'
 import { usePrototypePersonaStore } from '../stores/personaStore'
 import type { WorkspaceRole } from '../types'
 
+const cardClass =
+  'flex flex-col gap-4 rounded-2xl border border-border-subtle bg-secondary-background/40 p-6'
+const headingClass = 'm-0 text-sm font-medium'
+const hintClass = 'mt-1 mb-0 text-sm text-muted-foreground'
 const inputClass =
-  'h-10 rounded-lg border border-border-subtle bg-base-background px-3 text-sm text-base-foreground outline-none focus:border-base-foreground disabled:cursor-not-allowed disabled:opacity-60'
+  'h-9 w-72 rounded-lg border border-border-subtle bg-base-background px-3 text-sm text-base-foreground outline-none focus:border-base-foreground disabled:cursor-not-allowed disabled:opacity-60'
 
 const { t } = useI18n()
 const personaStore = usePrototypePersonaStore()
 const { fixture, currentWorkspace } = storeToRefs(personaStore)
-
-const nameInputId = useId()
-const descInputId = useId()
 
 const viewerRole = computed<WorkspaceRole>(
   () => currentWorkspace.value?.currentUserRole ?? 'member'

@@ -45,10 +45,17 @@
             }}
           </p>
         </div>
-        <span
-          class="rounded-full border border-border-subtle px-3 py-1.5 text-xs text-muted-foreground"
-          >{{ t('prototype.settings.policies.allProjects') }}</span
-        >
+        <div class="flex items-center gap-3">
+          <Button
+            v-if="kind === 'nodes' && store.canEdit"
+            variant="secondary"
+            size="md"
+            @click="isImporting = true"
+          >
+            <i class="icon-[lucide--plus] size-4" />
+            {{ t('prototype.settings.policies.import.button') }}
+          </Button>
+        </div>
       </div>
       <div
         v-if="!store.canEdit"
@@ -146,9 +153,16 @@
               class="h-14 hover:bg-secondary-background/30"
             >
               <TableCell class="font-medium"
-                ><span class="block truncate" :title="item.name">{{
-                  item.name
-                }}</span></TableCell
+                ><span class="flex items-center gap-2"
+                  ><span class="truncate" :title="item.name">{{
+                    item.name
+                  }}</span
+                  ><span
+                    v-if="item.private"
+                    class="shrink-0 rounded-full border border-border-subtle px-1.5 text-[10px] font-medium tracking-wide text-muted-foreground uppercase"
+                    >{{ t('prototype.settings.policies.import.private') }}</span
+                  ></span
+                ></TableCell
               >
               <TableCell class="text-muted-foreground"
                 ><span class="block truncate">{{
@@ -253,6 +267,18 @@
         >
       </div>
       <div
+        v-if="imported"
+        role="status"
+        class="flex items-center justify-between rounded-lg border border-border-subtle bg-secondary-background/40 px-4 py-2 text-sm"
+      >
+        <span>{{
+          textT('prototype.settings.policies.import.done', { name: imported })
+        }}</span
+        ><Button variant="muted-textonly" @click="imported = null">{{
+          t('g.close')
+        }}</Button>
+      </div>
+      <div
         v-if="lastChange"
         role="status"
         class="flex items-center justify-between rounded-lg border border-border-subtle bg-secondary-background/40 px-4 py-2 text-sm"
@@ -264,6 +290,11 @@
       </div>
     </TabsContent>
   </Tabs>
+  <ImportPrivatePackDialog
+    v-if="isImporting"
+    @close="isImporting = false"
+    @imported="onImported"
+  />
 </template>
 <script setup lang="ts">
 import { cn } from '@comfyorg/tailwind-utils'
@@ -284,9 +315,10 @@ import TableBody from '@/components/ui/table/TableBody.vue'
 import TableRow from '@/components/ui/table/TableRow.vue'
 import TableCell from '@/components/ui/table/TableCell.vue'
 import { useTextT } from '../../composables/useTextT'
-import { policyCatalog } from '../../fixtures/policyCatalog'
 import { usePrototypePolicyStore } from '../../stores/policyStore'
 import { usePrototypePersonaStore } from '../../stores/personaStore'
+
+import ImportPrivatePackDialog from './ImportPrivatePackDialog.vue'
 const { t } = useI18n()
 const textT = useTextT()
 const store = usePrototypePolicyStore()
@@ -298,6 +330,8 @@ const license = ref('all')
 const sort = ref('installs')
 const page = ref(1)
 const lastChange = ref<{ id: string; allowed: boolean } | null>(null)
+const isImporting = ref(false)
+const imported = ref<string | null>(null)
 const compact = new Intl.NumberFormat('en', {
   notation: 'compact',
   maximumFractionDigits: 1
@@ -305,14 +339,14 @@ const compact = new Intl.NumberFormat('en', {
 const licenses = computed(() =>
   [
     ...new Set(
-      policyCatalog
+      store.catalog
         .filter((item) => item.kind === kind.value)
         .map((item) => item.license)
     )
   ].sort()
 )
 const filtered = computed(() =>
-  policyCatalog
+  store.catalog
     .filter(
       (item) =>
         item.kind === kind.value &&
@@ -341,7 +375,7 @@ watch(pages, (total) => {
 })
 watch(kind, clearFilters)
 function countAllowed(category: string) {
-  return policyCatalog.filter(
+  return store.catalog.filter(
     (item) => item.kind === category && store.isAllowed(item.id)
   ).length
 }
@@ -354,6 +388,12 @@ function change(id: string, allowed: boolean) {
   const previous = store.isAllowed(id)
   if (store.setAllowed(id, allowed))
     lastChange.value = { id, allowed: previous }
+}
+function onImported(name: string) {
+  clearFilters()
+  sort.value = 'name'
+  search.value = name
+  imported.value = name
 }
 function undo() {
   if (!lastChange.value) return

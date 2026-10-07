@@ -45,6 +45,9 @@ export const BUILD_DEFAULTS = {
   runtime: 'CUDA 13.0 · Python 3.12 · Torch 2.12.1'
 }
 
+// Newest first; the first one is the latest stable.
+export const COMFY_VERSIONS = ['v0.39.1', 'v0.38.4', 'v0.37.2']
+
 export interface PlatformGpu {
   label: string
   vramGb: number

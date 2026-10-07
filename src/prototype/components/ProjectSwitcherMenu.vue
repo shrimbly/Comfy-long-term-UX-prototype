@@ -71,7 +71,7 @@
           v-for="p in section.projects"
           :key="p.id"
           :value="p.id"
-          class="flex h-8 shrink-0 cursor-pointer items-center gap-2 rounded-lg px-2 text-sm outline-none data-highlighted:bg-secondary-background-hover"
+          class="group flex h-8 shrink-0 cursor-pointer items-center gap-2 rounded-lg px-2 text-sm outline-none data-highlighted:bg-secondary-background-hover"
           @select="onPick(p.id)"
         >
           <span
@@ -100,10 +100,26 @@
           <span class="min-w-0 flex-1 truncate">{{ p.name }}</span>
           <span
             v-if="p.deployment.kind === 'custom'"
-            class="max-w-33 truncate text-xs text-muted-foreground"
+            class="max-w-33 truncate text-xs text-muted-foreground group-hover:hidden group-data-highlighted:hidden"
           >
             {{ whereItRuns(p.deployment) }}
           </span>
+          <Button
+            v-if="!p.isDrafts"
+            variant="muted-textonly"
+            size="icon-sm"
+            tabindex="-1"
+            class="hidden size-6 shrink-0 group-hover:inline-flex group-data-highlighted:inline-flex"
+            :aria-label="
+              textT('prototype.customCloud.switcher.settingsFor', {
+                project: p.name
+              })
+            "
+            @mousedown.prevent
+            @click.stop="onSettings(p.id)"
+          >
+            <i class="icon-[lucide--settings] size-3.5" />
+          </Button>
         </ListboxItem>
       </ListboxGroup>
       <p
@@ -150,6 +166,7 @@ import {
   searchInputVariants
 } from '@/components/ui/search-input/searchInput.variants'
 
+import { useTextT } from '../composables/useTextT'
 import { usePrototypeCustomCloudStore } from '../stores/customCloudStore'
 import { HOME_TAB_ID, usePrototypeTabsStore } from '../stores/tabsStore'
 import { usePrototypeUiStore } from '../stores/uiStore'
@@ -170,6 +187,7 @@ const SECTION_LABELS = {
 const searchSize = searchInputSizeConfig.md
 
 const { t } = useI18n()
+const textT = useTextT()
 const router = useRouter()
 const customCloud = usePrototypeCustomCloudStore()
 const tabsStore = usePrototypeTabsStore()
@@ -205,6 +223,15 @@ async function onPick(projectId: string) {
   customCloud.switcherOpen = false
   await router.push({ name: 'PrototypeDashboard' })
   customCloud.switchProject(projectId)
+}
+
+// Home → that project → Settings, without switching the editor's project.
+async function onSettings(projectId: string) {
+  customCloud.switcherOpen = false
+  tabsStore.select(HOME_TAB_ID)
+  uiStore.requestProjectTab(projectId, 'settings')
+  uiStore.go({ kind: 'project', projectId })
+  await router.push({ name: 'PrototypeDashboard' })
 }
 
 async function onAllProjects() {

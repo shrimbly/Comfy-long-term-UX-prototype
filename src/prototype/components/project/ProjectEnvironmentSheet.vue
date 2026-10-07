@@ -7,8 +7,9 @@
               sheet; projects inherit workspace policies and only narrow)
 
   Right-hand sheet for a project's environment. Contents lists the custom
-  nodes and models the build pins, or, on Comfy Cloud, everything the
-  workspace policies allow. Status shows whether it is up, the build, the
+  nodes and models a custom build pins. Comfy Cloud supports far more than
+  fits a list, so it links to what is supported and says whether the
+  workspace policies narrow it. Status shows whether it is up, the build, the
   GPU, how long it stays warm, and which projects use it.
 -->
 <template>
@@ -34,7 +35,10 @@
           </div>
           <div class="flex shrink-0 items-center gap-1">
             <Button
-              v-if="environments.canManage && deployment.kind === 'custom'"
+              v-if="
+                environments.canManage &&
+                (deployment.kind === 'custom' || projectId)
+              "
               variant="secondary"
               size="sm"
               @click="onEdit"
@@ -66,39 +70,141 @@
           </TabsList>
 
           <TabsContent value="contents" class="flex flex-col gap-6">
-            <p class="m-0 text-sm text-muted-foreground">
-              {{ t('prototype.projectPage.environmentSheet.inherit') }}
-            </p>
-
-            <section
-              v-for="group in contents"
-              :key="group.id"
-              class="flex flex-col gap-2"
-            >
-              <h3 class="m-0 flex items-center gap-2 text-sm font-medium">
-                {{ group.label }}
-                <span
-                  class="rounded-full bg-secondary-background px-2 py-0.5 text-xs text-muted-foreground tabular-nums"
-                >
-                  {{ group.count }}
-                </span>
-              </h3>
-              <ul
-                v-if="group.items.length"
-                class="m-0 flex list-none flex-col divide-y divide-border-subtle rounded-lg border border-border-subtle p-0 text-sm"
+            <template v-if="deployment.kind === 'comfy-cloud'">
+              <section
+                class="flex flex-col gap-4 rounded-xl bg-secondary-background/40 p-4"
               >
-                <li
-                  v-for="item in group.items"
-                  :key="item"
-                  class="px-3 py-2 font-mono text-xs"
+                <div class="grid grid-cols-2 gap-4">
+                  <div
+                    v-for="stat in cloudStats"
+                    :key="stat.label"
+                    class="flex items-center gap-3"
+                  >
+                    <i
+                      :class="
+                        cn(stat.icon, 'size-5 shrink-0 text-muted-foreground')
+                      "
+                    />
+                    <span class="flex flex-col leading-tight">
+                      <span class="text-lg font-semibold">{{
+                        stat.value
+                      }}</span>
+                      <span class="text-xs text-muted-foreground">
+                        {{ stat.label }}
+                      </span>
+                    </span>
+                  </div>
+                </div>
+                <Button
+                  as="a"
+                  href="https://docs.comfy.org/cloud"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  variant="link"
+                  size="sm"
+                  class="h-auto self-start p-0 no-underline"
                 >
-                  {{ item }}
-                </li>
-              </ul>
-              <p v-else class="m-0 text-sm text-muted-foreground">
-                {{ t('prototype.projectPage.environmentSheet.none') }}
+                  {{
+                    t('prototype.projectPage.environmentSheet.cloudSupported')
+                  }}
+                  <i class="icon-[lucide--arrow-up-right] size-3.5" />
+                </Button>
+              </section>
+
+              <section class="flex flex-col gap-4">
+                <h3 class="m-0 text-sm font-medium">
+                  {{
+                    t('prototype.projectPage.environmentSheet.allowedTitle', {
+                      workspace: workspaceName
+                    })
+                  }}
+                </h3>
+                <div
+                  v-for="group in restrictions"
+                  :key="group.id"
+                  class="flex flex-col gap-2"
+                >
+                  <div
+                    class="flex items-baseline justify-between gap-3 text-sm"
+                  >
+                    <span>{{ group.label }}</span>
+                    <span class="text-xs text-muted-foreground tabular-nums">
+                      {{
+                        group.restricted
+                          ? t(
+                              'prototype.projectPage.environmentSheet.allowedOf',
+                              {
+                                count: group.allowed.length,
+                                total: group.total
+                              }
+                            )
+                          : t(
+                              'prototype.projectPage.environmentSheet.allowedAll'
+                            )
+                      }}
+                    </span>
+                  </div>
+                  <ul
+                    v-if="group.restricted"
+                    class="m-0 flex list-none flex-wrap gap-1.5 p-0"
+                  >
+                    <li
+                      v-for="name in group.allowed.slice(0, PREVIEW_ROWS)"
+                      :key="name"
+                      class="rounded-md border border-border-subtle px-2 py-0.5 text-xs"
+                    >
+                      {{ name }}
+                    </li>
+                    <li
+                      v-if="group.allowed.length > PREVIEW_ROWS"
+                      class="px-1 py-0.5 text-xs text-muted-foreground"
+                    >
+                      {{
+                        t('prototype.projectPage.environmentSheet.more', {
+                          count: group.allowed.length - PREVIEW_ROWS
+                        })
+                      }}
+                    </li>
+                  </ul>
+                </div>
+              </section>
+            </template>
+
+            <template v-else>
+              <p class="m-0 text-sm text-muted-foreground">
+                {{ t('prototype.projectPage.environmentSheet.inherit') }}
               </p>
-            </section>
+
+              <section
+                v-for="group in contents"
+                :key="group.id"
+                class="flex flex-col gap-2"
+              >
+                <h3 class="m-0 flex items-center gap-2 text-sm font-medium">
+                  {{ group.label }}
+                  <span
+                    class="rounded-full bg-secondary-background px-2 py-0.5 text-xs text-muted-foreground tabular-nums"
+                  >
+                    {{ group.count }}
+                  </span>
+                </h3>
+                <ul
+                  v-if="group.items.length"
+                  class="m-0 flex list-none flex-col divide-y divide-border-subtle rounded-lg border border-border-subtle p-0 text-sm"
+                >
+                  <li
+                    v-for="item in group.items"
+                    :key="item"
+                    class="px-3 py-2 font-mono text-xs"
+                  >
+                    {{ item }}
+                  </li>
+                </ul>
+                <p v-else class="m-0 text-sm text-muted-foreground">
+                  {{ t('prototype.projectPage.environmentSheet.none') }}
+                </p>
+              </section>
+            </template>
 
             <Button
               variant="link"
@@ -106,7 +212,13 @@
               class="h-auto self-start p-0"
               @click="openPolicies"
             >
-              {{ t('prototype.projectPage.settings.workspacePolicies') }}
+              {{
+                t(
+                  deployment.kind === 'comfy-cloud'
+                    ? 'prototype.projectPage.environmentSheet.seeAllPolicies'
+                    : 'prototype.projectPage.settings.workspacePolicies'
+                )
+              }}
               <i class="icon-[lucide--arrow-right] size-3.5" />
             </Button>
           </TabsContent>
@@ -177,6 +289,7 @@
 </template>
 
 <script setup lang="ts">
+import { cn } from '@comfyorg/tailwind-utils'
 import { onKeyStroke } from '@vueuse/core'
 import { computed, ref, useId } from 'vue'
 import { useI18n } from 'vue-i18n'
@@ -187,18 +300,18 @@ import TabsContent from '@/components/ui/tabs/TabsContent.vue'
 import TabsList from '@/components/ui/tabs/TabsList.vue'
 import TabsTrigger from '@/components/ui/tabs/TabsTrigger.vue'
 
-import { policyCatalog } from '../../fixtures/policyCatalog'
+import { useWorkspaceAllowlist } from '../../composables/useWorkspaceAllowlist'
 import { usePrototypeCustomCloudStore } from '../../stores/customCloudStore'
 import { usePrototypeEnvironmentStore } from '../../stores/environmentStore'
 import { usePrototypePersonaStore } from '../../stores/personaStore'
-import { usePrototypePolicyStore } from '../../stores/policyStore'
 import { usePrototypeUiStore } from '../../stores/uiStore'
 import type { Deployment } from '../../types'
 import DeploymentStatusDot from '../DeploymentStatusDot.vue'
 import ProjectSettingsRow from './ProjectSettingsRow.vue'
 
-const { deployment } = defineProps<{
+const { deployment, projectId } = defineProps<{
   deployment: Deployment
+  projectId?: string
 }>()
 
 const emit = defineEmits<{
@@ -211,7 +324,6 @@ const triggerClass =
 const { t } = useI18n()
 const ui = usePrototypeUiStore()
 const personaStore = usePrototypePersonaStore()
-const policies = usePrototypePolicyStore()
 const environments = usePrototypeEnvironmentStore()
 const customCloud = usePrototypeCustomCloudStore()
 const titleId = useId()
@@ -222,33 +334,40 @@ const subtitle = computed(() =>
   [deployment.release, deployment.gpu].filter(Boolean).join(' · ')
 )
 
-function allowedNames(kind: 'nodes' | 'models') {
-  return policyCatalog
-    .filter((item) => item.kind === kind && policies.isAllowed(item.id))
-    .map((item) => item.name)
-}
+const workspaceName = computed(() => personaStore.currentWorkspace?.name ?? '')
 
-// A custom build pins its packs and models. Comfy Cloud runs whatever the
-// workspace policies allow.
-const contents = computed(() => {
-  const pinned = deployment.kind === 'custom'
-  const nodes = pinned ? deployment.nodePacks : allowedNames('nodes')
-  const models = pinned ? deployment.models : allowedNames('models')
-  return [
-    {
-      id: 'nodes',
-      label: t('prototype.projectPage.environmentSheet.customNodes'),
-      items: nodes,
-      count: nodes.length
-    },
-    {
-      id: 'models',
-      label: t('prototype.projectPage.environmentSheet.models'),
-      items: models,
-      count: models.length
-    }
-  ]
-})
+const PREVIEW_ROWS = 5
+
+const cloudStats = [
+  {
+    icon: 'icon-[lucide--blocks]',
+    value: t('prototype.projectPage.environmentSheet.cloudNodesValue'),
+    label: t('prototype.projectPage.environmentSheet.cloudNodesLabel')
+  },
+  {
+    icon: 'icon-[lucide--box]',
+    value: t('prototype.projectPage.environmentSheet.cloudModelsValue'),
+    label: t('prototype.projectPage.environmentSheet.cloudModelsLabel')
+  }
+]
+
+const restrictions = useWorkspaceAllowlist()
+
+// A custom build pins its packs and models.
+const contents = computed(() => [
+  {
+    id: 'nodes',
+    label: t('prototype.projectPage.environmentSheet.customNodes'),
+    items: deployment.nodePacks,
+    count: deployment.nodePacks.length
+  },
+  {
+    id: 'models',
+    label: t('prototype.projectPage.environmentSheet.models'),
+    items: deployment.models,
+    count: deployment.models.length
+  }
+])
 
 const usedBy = computed(() =>
   personaStore.visibleProjects
@@ -265,10 +384,13 @@ function openPolicies() {
   ui.openSettings('policies')
 }
 
-// The build steps are the dialog the editor uses for a new deployment.
 function onEdit() {
   emit('close')
-  customCloud.openEditDeployment(deployment.id)
+  if (deployment.kind === 'comfy-cloud') {
+    if (projectId) customCloud.openEditCloud(projectId)
+    return
+  }
+  customCloud.openEditDeployment(deployment.id, projectId)
 }
 
 function openEnvironments() {

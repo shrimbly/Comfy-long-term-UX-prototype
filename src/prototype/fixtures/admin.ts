@@ -1232,6 +1232,7 @@ export const adminFixture: PersonaFixture = {
   deployments: [
     {
       id: 'dep-acme-studio',
+      workspaceId: comfyOrg.id,
       name: 'Acme Studio pipeline',
       kind: 'custom',
       release: 'v3',
@@ -1241,10 +1242,11 @@ export const adminFixture: PersonaFixture = {
       comfyVersion: 'v0.39.1',
       runtime: 'CUDA 13.0 · Python 3.12 · Torch 2.12.1',
       nodePacks: ['comfyui-rmbg', 'acme-matte-tools', 'impact-pack'],
-      models: ['flux1-dev-fp8', 'acme_hero_lora_v5', 'sdxl-base-1.0']
+      models: ['flux1-dev-fp8', 'acme_hero_lora_v5', 'sdxl']
     },
     {
       id: 'dep-matte-tests',
+      workspaceId: comfyOrg.id,
       name: 'Matte tests',
       kind: 'custom',
       release: 'v7',

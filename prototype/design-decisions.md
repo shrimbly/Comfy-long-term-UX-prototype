@@ -1768,3 +1768,47 @@ What happens to an imported pack:
 Why: Pablo, in Slack (2026-10-08): "can you also add here a way to import your private custom node? maybe link to github repo or drop a zip file?"
 
 Wiki link: `decisions/custom-nodes-as-configuration.md` (packs are configuration, not assets, so a private pack is a workspace config item, not a shareable asset). The wiki is silent on private pack sources, on GitHub authorisation, and on whether a workspace policy can restrict private imports. Working answers: the two sources Pablo named; GitHub access is asked for on first use; private imports bypass the allowlist. Promote? **no**: check against Platform's custom node upload (DPLAT-2345) first.
+
+---
+
+---
+
+## [2026-10-07] Edit deployment end to end: items, impact, update or fork
+
+- **Decision: models and custom nodes are edited inside the build summary.** The two rows open a list: remove with the x, add from what the workspace policies allow. Projects inherit the workspace allowlists and can only narrow them, so nothing outside them can be added. The ComfyUI version is a select in the same summary. Nothing applies until the deployment rebuilds.
+- **Decision: an impact step before any rebuild.** It names the projects on the deployment and lists the changes (release, version, GPU, packs and models added or removed), then offers three ways out: Update deployment, Create a new deployment instead, Cancel.
+- **Decision: "Create a new deployment instead" forks.** A new deployment with the edits and release 1, and only the project the edit was opened from moves to it. The others stay on the original.
+- Reason: one deployment backs many projects, so a studio admin needs to see the blast radius before cutting a release, and a way to try a change on one project without touching the rest.
+- Fixture: the Acme pack and model ids now match the policy catalog, so the picker's names line up.
+
+Wiki link: `decisions/project-runs-on-shared-deployment.md`, `decisions/custom-nodes-as-configuration.md`. Open question: `open-questions.md#dropped-workflow-other-deployment` asked "update or branch"; this gives both at the same step.
+
+Promote? **maybe**: the impact step and the fork rule.
+
+---
+
+## [2026-10-07] Edit deployment: its own dialog, two modes, a change counter
+
+- **Decision: Edit deployment is its own dialog (`EditDeploymentDialog.vue`), apart from the editor's "Create a deployment" steps.** The create flow's copy ("Next: deployment", "Create deployment") described creating, and the two flows need to change on their own.
+- **Decision: two modes, switched at the top: Configuration (name, ComfyUI version, models, custom nodes) and Machine (GPU, keep warm).** Each segment counts its pending changes. A changed row carries a "Changed" badge.
+- **Decision: the primary CTA is off until something differs from the live deployment.** It reads "Nothing changed yet", then "Review N changes". Review shows the projects on the deployment and the diff, then: Cancel · Create a new deployment and use it for this project · Update the existing deployment.
+- Alternatives, mocked at `/prototype/design/edit-deployment` (`pages/EditDeploymentOptions.vue`): A a three-step stepper, B one page with both cards, C "What do you want to change?" tiles first. D (segmented) is built and was picked on 2026-10-07. Notes: <https://claude.ai/code/artifact/e813e766-0bcc-4a57-9968-ff2ee122f792>.
+
+Wiki link: `decisions/project-runs-on-shared-deployment.md`. Promote? **maybe**: the review step's three ways out.
+
+---
+
+## [2026-10-07] Edit deployment on Comfy Cloud: the same modal, read-only, with the ways out
+
+- **Decision: Edit deployment on a Comfy Cloud project opens a modal (`EditCloudDialog.vue`), not the policies page.** It reads like the custom one but nothing in it rebuilds: ComfyUI is "Latest stable · Managed by Comfy", custom nodes and models show "7 of 11" / "All" from the workspace policies, GPU is "Picked for each run".
+- Its buttons are the ways out: **Edit workspace policies** (the only knobs Comfy Cloud has) and **Change environment** (the picker: an existing custom deployment or a new one).
+- Reason: the button is called Edit deployment everywhere, so it should always open a dialog; jumping to a settings page read as a broken link.
+
+---
+
+## [2026-10-07] Switching between Comfy Cloud and a custom deployment: a summary first
+
+- **Decision: both Edit deployment dialogs carry one card for the other way to run the project.** On a custom deployment: "Comfy Cloud · Shared machines, no build. Uses what the workspace allows. · Switch". On Comfy Cloud: "Custom deployment · Pinned nodes and models on a GPU you choose. Needs a build. · Choose".
+- **Decision: nothing moves until a summary step is confirmed.** To Comfy Cloud: GPU picked per run, no build, what the workspace allows, and which pinned packs or models are not on Comfy Cloud (warning), plus "{deployment} is kept for the other N projects". To a custom deployment: choose one (or create one), then GPU, pinned packs, pinned models, and when the first run happens (right away, wakes the worker, when the build is done).
+- Reason: switching changes what a project's workflows can run; a one-click link applied it with no warning.
+- Fixture: the admin deployments now carry a `workspaceId`, so one with no project on it still lists.

@@ -12,17 +12,13 @@
         v-model:to="customTo"
       />
     </div>
-    <div class="grid gap-4 sm:grid-cols-3">
-      <div
-        v-for="metric in metrics"
-        :key="metric.label"
-        class="rounded-xl border border-border-subtle bg-secondary-background/20 p-5"
-      >
-        <p class="m-0 text-sm text-muted-foreground">{{ metric.label }}</p>
-        <p class="mt-3 mb-0 text-2xl font-semibold tabular-nums">
-          {{ metric.value.toLocaleString() }}
-        </p>
-      </div>
+    <div>
+      <p class="m-0 text-sm text-muted-foreground">
+        {{ t('prototype.settings.usage.spent') }}
+      </p>
+      <p class="mt-1 mb-0 text-4xl font-semibold tabular-nums">
+        {{ total.toLocaleString() }}
+      </p>
     </div>
     <Tabs v-model="group" class="gap-5">
       <TabsList
@@ -198,21 +194,6 @@ const rows = computed(() =>
 const total = computed(() =>
   rows.value.reduce((sum, row) => sum + row.credits, 0)
 )
-const metrics = computed(() => [
-  { label: t('prototype.settings.usage.spent'), value: total.value },
-  {
-    label: t('prototype.settings.usage.runs'),
-    value: rows.value.reduce((sum, row) => sum + row.runs, 0)
-  },
-  {
-    label: t('prototype.settings.usage.activeProjects'),
-    value: new Set(
-      records.value
-        .filter((record) => record.credits > 0)
-        .map((record) => record.projectId)
-    ).size
-  }
-])
 function exportCsv() {
   const headers = [
     t(`prototype.settings.usage.${group.value}`),
