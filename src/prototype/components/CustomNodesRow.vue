@@ -16,7 +16,8 @@
     :class="
       cn(
         grid,
-        'group h-11 border-t border-border-subtle px-4 hover:bg-secondary-background/30'
+        'group h-11 border-t border-l-2 border-t-border-subtle border-l-transparent px-4 hover:bg-secondary-background/30',
+        isInstalled && 'border-l-base-foreground'
       )
     "
   >
@@ -112,7 +113,7 @@
       />
       <i
         v-else-if="row.state === 'installed'"
-        class="icon-[lucide--check] size-4 text-muted-foreground"
+        class="icon-[lucide--check] size-4 text-base-foreground"
         :aria-label="t('prototype.customNodes.status.installed')"
         :title="t('prototype.customNodes.status.installed')"
       />
@@ -120,6 +121,7 @@
         v-else
         :model-value="isRequested || store.selected.includes(row.id)"
         :disabled="!selectable"
+        class="border-base-foreground data-[state=checked]:border-base-foreground data-[state=checked]:bg-base-foreground"
         :aria-label="checkboxLabel"
         :title="checkboxLabel"
         @update:model-value="(on) => store.setSelected(row.id, on === true)"
@@ -155,6 +157,9 @@ const store = usePrototypeCustomNodesStore()
 const dimmed = computed(() => row.state === 'blocked')
 const isBuilding = computed(
   () => row.state === 'adding' || row.state === 'changing'
+)
+const isInstalled = computed(
+  () => row.state === 'installed' || row.state === 'changing'
 )
 const isRequested = computed(() => store.requested.includes(row.id))
 const selectable = computed(

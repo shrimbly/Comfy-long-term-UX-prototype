@@ -95,7 +95,7 @@
               :class="
                 cn(
                   GRID,
-                  'h-10 shrink-0 bg-secondary-background/60 px-4 text-base-foreground'
+                  'h-10 shrink-0 border-l-2 border-l-transparent bg-secondary-background/60 px-4 text-base-foreground'
                 )
               "
             >
