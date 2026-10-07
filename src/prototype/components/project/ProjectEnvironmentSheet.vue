@@ -68,64 +68,102 @@
 
           <TabsContent value="contents" class="flex flex-col gap-6">
             <template v-if="deployment.kind === 'comfy-cloud'">
-              <p class="m-0 text-sm text-muted-foreground">
-                {{ t('prototype.projectPage.environmentSheet.cloudIntro') }}
-              </p>
-              <Button
-                as="a"
-                href="https://docs.comfy.org/cloud"
-                target="_blank"
-                rel="noopener noreferrer"
-                variant="secondary"
-                size="sm"
-                class="self-start no-underline"
+              <section
+                class="flex flex-col gap-4 rounded-xl bg-secondary-background/40 p-4"
               >
-                {{ t('prototype.projectPage.environmentSheet.cloudSupported') }}
-                <i class="icon-[lucide--arrow-up-right] size-3.5" />
-              </Button>
+                <div class="grid grid-cols-2 gap-4">
+                  <div
+                    v-for="stat in cloudStats"
+                    :key="stat.label"
+                    class="flex items-center gap-3"
+                  >
+                    <i
+                      :class="
+                        cn(stat.icon, 'size-5 shrink-0 text-muted-foreground')
+                      "
+                    />
+                    <span class="flex flex-col leading-tight">
+                      <span class="text-lg font-semibold">{{
+                        stat.value
+                      }}</span>
+                      <span class="text-xs text-muted-foreground">
+                        {{ stat.label }}
+                      </span>
+                    </span>
+                  </div>
+                </div>
+                <Button
+                  as="a"
+                  href="https://docs.comfy.org/cloud"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  variant="link"
+                  size="sm"
+                  class="h-auto self-start p-0 no-underline"
+                >
+                  {{
+                    t('prototype.projectPage.environmentSheet.cloudSupported')
+                  }}
+                  <i class="icon-[lucide--arrow-up-right] size-3.5" />
+                </Button>
+              </section>
 
-              <section class="flex flex-col gap-2">
+              <section class="flex flex-col gap-4">
                 <h3 class="m-0 text-sm font-medium">
                   {{
-                    t(
-                      'prototype.projectPage.environmentSheet.restrictionsTitle',
-                      {
-                        workspace: workspaceName
-                      }
-                    )
+                    t('prototype.projectPage.environmentSheet.allowedTitle', {
+                      workspace: workspaceName
+                    })
                   }}
                 </h3>
-                <p class="m-0 text-sm text-muted-foreground">
-                  {{
-                    t(
-                      restrictions.some((r) => r.restricted)
-                        ? 'prototype.projectPage.environmentSheet.restrictionsSome'
-                        : 'prototype.projectPage.environmentSheet.restrictionsNone'
-                    )
-                  }}
-                </p>
-                <dl class="m-0 flex flex-col divide-y divide-border-subtle">
-                  <ProjectSettingsRow
-                    v-for="row in restrictions"
-                    :key="row.id"
-                    :label="row.label"
+                <div
+                  v-for="group in restrictions"
+                  :key="group.id"
+                  class="flex flex-col gap-2"
+                >
+                  <div
+                    class="flex items-baseline justify-between gap-3 text-sm"
                   >
-                    <span
-                      :class="cn(!row.restricted && 'text-muted-foreground')"
-                    >
+                    <span>{{ group.label }}</span>
+                    <span class="text-xs text-muted-foreground tabular-nums">
                       {{
-                        row.restricted
+                        group.restricted
                           ? t(
-                              'prototype.projectPage.environmentSheet.allowedCount',
-                              row.count
+                              'prototype.projectPage.environmentSheet.allowedOf',
+                              {
+                                count: group.allowed.length,
+                                total: group.total
+                              }
                             )
                           : t(
-                              'prototype.projectPage.environmentSheet.allAllowed'
+                              'prototype.projectPage.environmentSheet.allowedAll'
                             )
                       }}
                     </span>
-                  </ProjectSettingsRow>
-                </dl>
+                  </div>
+                  <ul
+                    v-if="group.restricted"
+                    class="m-0 flex list-none flex-wrap gap-1.5 p-0"
+                  >
+                    <li
+                      v-for="name in group.allowed.slice(0, PREVIEW_ROWS)"
+                      :key="name"
+                      class="rounded-md border border-border-subtle px-2 py-0.5 text-xs"
+                    >
+                      {{ name }}
+                    </li>
+                    <li
+                      v-if="group.allowed.length > PREVIEW_ROWS"
+                      class="px-1 py-0.5 text-xs text-muted-foreground"
+                    >
+                      {{
+                        t('prototype.projectPage.environmentSheet.more', {
+                          count: group.allowed.length - PREVIEW_ROWS
+                        })
+                      }}
+                    </li>
+                  </ul>
+                </div>
               </section>
             </template>
 
@@ -171,7 +209,13 @@
               class="h-auto self-start p-0"
               @click="openPolicies"
             >
-              {{ t('prototype.projectPage.settings.workspacePolicies') }}
+              {{
+                t(
+                  deployment.kind === 'comfy-cloud'
+                    ? 'prototype.projectPage.environmentSheet.seeAllPolicies'
+                    : 'prototype.projectPage.settings.workspacePolicies'
+                )
+              }}
               <i class="icon-[lucide--arrow-right] size-3.5" />
             </Button>
           </TabsContent>
@@ -291,12 +335,29 @@ const subtitle = computed(() =>
 
 const workspaceName = computed(() => personaStore.currentWorkspace?.name ?? '')
 
+const PREVIEW_ROWS = 5
+
+const cloudStats = [
+  {
+    icon: 'icon-[lucide--blocks]',
+    value: t('prototype.projectPage.environmentSheet.cloudNodesValue'),
+    label: t('prototype.projectPage.environmentSheet.cloudNodesLabel')
+  },
+  {
+    icon: 'icon-[lucide--box]',
+    value: t('prototype.projectPage.environmentSheet.cloudModelsValue'),
+    label: t('prototype.projectPage.environmentSheet.cloudModelsLabel')
+  }
+]
+
 // Comfy Cloud runs everything it supports unless the workspace policies
 // narrow it: a kind is restricted when any catalog item is not allowed.
 const restrictions = computed(() =>
   (['nodes', 'models'] as const).map((kind) => {
     const items = policyCatalog.filter((item) => item.kind === kind)
-    const allowed = items.filter((item) => policies.isAllowed(item.id))
+    const allowed = items
+      .filter((item) => policies.isAllowed(item.id))
+      .map((item) => item.name)
     return {
       id: kind,
       label: t(
@@ -305,7 +366,8 @@ const restrictions = computed(() =>
           : 'prototype.projectPage.environmentSheet.models'
       ),
       restricted: allowed.length < items.length,
-      count: allowed.length
+      allowed,
+      total: items.length
     }
   })
 )
