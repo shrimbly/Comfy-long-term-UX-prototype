@@ -92,7 +92,7 @@ Then click **Reset demo** and run it again.
 
 ## Edit a deployment from a project
 
-From a project page, click the environment chip beside the title (or the **Runs on** chip in Settings), then **Edit deployment** (admins only).
+From a project page, click the deployment chip beside the title (or the **Runs on** chip in Settings), then **Edit deployment** (admins only).
 
 1. **Edit deployment** opens on **Configuration**: name and ComfyUI version edit in place; **Models** and **Custom nodes** open a list where you remove with the x or add from what the workspace policies allow. The primary button reads "Nothing changed yet" until something differs.
 2. Switch to **Machine** at the top (or **Next: machine**): pick a GPU, set how long a worker stays warm. Each segment counts its changes; changed rows carry a "Changed" badge.

@@ -7334,7 +7334,7 @@
         "openProject": "Open project",
         "general": "General",
         "name": "Name",
-        "environment": "Environment",
+        "environment": "Deployment",
         "environmentHint": "Where every workflow in this project runs.",
         "generalAccess": "General access",
         "people": "People",
@@ -7376,7 +7376,7 @@
         "creditsSpent": "credits spent"
       },
       "environmentSheet": {
-        "open": "Open environment",
+        "open": "Open deployment",
         "contents": "Contents",
         "status": "Status",
         "inherit": "Projects inherit the workspace policies. A project can only narrow them.",
@@ -7390,7 +7390,7 @@
         "warmValue": "{minutes} min after a run",
         "usedBy": "Used by",
         "alwaysOn": "The shared default. Always on.",
-        "manage": "Manage environments",
+        "manage": "Manage deployments",
         "none": "None allowed",
         "edit": "Edit deployment",
         "cloudSupported": "See what Comfy Cloud supports",
@@ -7405,13 +7405,13 @@
         "seeAllPolicies": "See all workspace policies"
       },
       "environmentPicker": {
-        "title": "Change environment",
+        "title": "Change deployment",
         "hint": "Every workflow in this project will run there. Open workflows reload.",
         "switch": "Switch"
       }
     },
     "environments": {
-      "title": "Environments",
+      "title": "Deployments",
       "description": "Custom deployments for this workspace.",
       "new": "New deployment",
       "search": "Search deployments…",
