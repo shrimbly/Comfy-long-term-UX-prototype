@@ -28,7 +28,7 @@
       size="icon"
       :class="
         cn(
-          'relative h-full w-14 shrink-0 rounded-none border-r border-interface-stroke',
+          'relative h-full w-14 shrink-0 rounded-none border-r border-(--border-color)',
           isHomeActive && 'text-base-foreground'
         )
       "
