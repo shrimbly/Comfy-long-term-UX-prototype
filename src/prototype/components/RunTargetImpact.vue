@@ -58,6 +58,14 @@
     <Button
       variant="muted-textonly"
       size="lg"
+      @click="customCloud.editStep = 'config'"
+    >
+      <i class="icon-[lucide--arrow-left] size-4" />
+      {{ t('prototype.customCloud.dialog.impact.back') }}
+    </Button>
+    <Button
+      variant="muted-textonly"
+      size="lg"
       class="mr-auto"
       @click="customCloud.cancelEdit()"
     >

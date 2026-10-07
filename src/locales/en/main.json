@@ -7020,7 +7020,8 @@
           "forkHint": "A new deployment with these changes. Only {project} moves to it. The others stay on {name}.",
           "update": "Update",
           "warm": "Keep warm {from} min → {to} min",
-          "name": "Name {from} → {to}"
+          "name": "Name {from} → {to}",
+          "back": "Back"
         }
       },
       "agentPrompt": {
