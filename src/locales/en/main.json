@@ -7113,7 +7113,6 @@
         "cancel": "Cancel",
         "toMachine": "Next: machine",
         "toConfig": "Back: configuration",
-        "review": "Review changes",
         "reviewCount": "Review {count} change | Review {count} changes",
         "noChanges": "Nothing changed yet",
         "changed": "Changed"
