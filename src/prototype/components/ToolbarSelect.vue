@@ -14,6 +14,9 @@
       :aria-expanded="isOpen"
       @click="isOpen = !isOpen"
     >
+      <span v-if="label" class="font-normal text-muted-foreground">
+        {{ label }}
+      </span>
       <span>{{ selectedLabel }}</span>
       <i class="icon-[lucide--chevron-down] size-3.5 text-muted-foreground" />
     </Button>
@@ -45,9 +48,11 @@ import { computed, ref, useTemplateRef } from 'vue'
 
 import Button from '@/components/ui/button/Button.vue'
 
-const { options, ariaLabel } = defineProps<{
+const { options, ariaLabel, label } = defineProps<{
   options: Array<{ value: T; label: string }>
   ariaLabel?: string
+  // Shown muted before the value, as in "Status: All".
+  label?: string
 }>()
 
 const model = defineModel<T>({ required: true })
