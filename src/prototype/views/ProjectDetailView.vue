@@ -339,10 +339,11 @@ onMounted(() => {
   // A project just created via workflow promotion asks to open its share
   // settings on arrival.
   if (uiStore.consumeShareIntent(projectId)) isSharingOpen.value = true
-  // The projects-list "View usage" action requests the Usage tab on arrival.
-  if (uiStore.consumeProjectTab(projectId) === 'usage' && canViewUsage.value) {
-    activeTab.value = 'usage'
-  }
+  // The projects list's "View usage" and the switcher's settings button
+  // request a tab on arrival.
+  const requested = uiStore.consumeProjectTab(projectId)
+  if (requested === 'usage' && canViewUsage.value) activeTab.value = 'usage'
+  if (requested === 'settings') activeTab.value = 'settings'
 })
 
 // Published card primary action: take a personal copy into My Workflows

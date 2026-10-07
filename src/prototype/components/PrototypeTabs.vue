@@ -28,7 +28,7 @@
       size="icon"
       :class="
         cn(
-          'relative aspect-square h-full w-auto shrink-0 rounded-none border-interface-stroke',
+          'relative h-full w-14 shrink-0 rounded-none border-interface-stroke',
           isHomeActive && 'text-base-foreground',
           !showSwitcher && 'border-r'
         )

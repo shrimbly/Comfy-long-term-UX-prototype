@@ -6868,7 +6868,8 @@
         "otherProjects": "Other projects",
         "noMatch": "No projects match “{query}”",
         "allProjects": "All projects",
-        "building": "Building · {minutes} min"
+        "building": "Building · {minutes} min",
+        "settingsFor": "Settings for {project}"
       },
       "reload": {
         "opening": "Opening {project}"
