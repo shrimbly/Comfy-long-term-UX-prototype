@@ -6902,24 +6902,18 @@
         "projectsMissing": "Missing nodes or models",
         "thisProject": "{name} · this project",
         "createProject": "Create project",
-        "createDeployment": "Create deployment",
+        "newLead": "Create a new deployment to run your workflow",
+        "newDetail": "Your coding agent builds and deploys it from the ComfyUI install on your machine, where these nodes and models already are. Or build it here on Comfy Cloud.",
+        "useAgent": "Use your coding agent",
+        "or": "or",
+        "buildHere": "Build it here",
         "project": {
           "title": "New project",
           "runsOn": "Runs on {deployment}"
         },
-        "newLabel": "Create a new deployment for this workflow",
-        "benefits": {
-          "pinned": "Every node and model it needs, pinned to your versions",
-          "ownProject": "Its own project in Comfy Cloud",
-          "builtForYou": "Built and deployed for you in about 20 minutes"
-        },
-        "updateExisting": "Update an existing deployment",
         "updateLabel": "Update this project's deployment to run it",
         "updateRelease": "{from} → {to} · adds {items}",
-        "updateNote": "Every project on {deployment} gets the new release.",
-        "createInstead": "Create a new deployment instead",
-        "updateOnPlatform": "Update on Platform",
-        "platformToastDetail": "Updating a deployment isn't in this prototype.",
+        "updateNote": "A new release. Every project on {deployment} gets it.",
         "build": {
           "title": "Create a deployment",
           "settings": "Suggested settings",
@@ -6935,7 +6929,6 @@
           "packs": "{count} pack | {count} packs",
           "pythonPackages": "Python packages",
           "nonePinned": "None pinned",
-          "withAgent": "Build with your agent",
           "next": "Next: deployment",
           "customiseTitle": "Change {setting} on Platform?",
           "customiseBody": "The build opens there with these settings filled in.",
@@ -6944,11 +6937,21 @@
           "editTitle": "Edit deployment",
           "currentSettings": "Current settings"
         },
-        "agentTitle": "Hand the build to your coding agent",
-        "agentIntro": "Paste this into your agent on the machine where {workflow} runs.",
-        "backToSummary": "Back to the summary",
-        "copyPrompt": "Copy prompt",
-        "copied": "Copied",
+        "agent": {
+          "title": "Build it with your coding agent",
+          "updateTitle": "Update {deployment} with your coding agent",
+          "intro": "Copy this prompt and paste it into your coding agent on the machine where {workflow} runs.",
+          "updateIntro": "Paste this into your coding agent on the machine where {workflow} runs. It carries the deployment id.",
+          "copy": "Copy prompt",
+          "copied": "Prompt copied",
+          "handedOff": "That's it here",
+          "handedOffNew": "Your agent builds and deploys it on your machine. When it finishes, create a new project for the deployment on Comfy Cloud.",
+          "handedOffUpdate": "Your agent builds and deploys {release} on your machine. When it finishes, {workflow} runs here on {release}."
+        },
+        "agentDone": {
+          "title": "Your agent deployed {deployment}",
+          "body": "It has every node and model {workflow} needs: {items}."
+        },
         "deploy": {
           "title": "Deploy: {name} release 1",
           "gpu": "GPU",
@@ -6993,13 +6996,27 @@
         }
       },
       "agentPrompt": {
-        "goal": "Build a Comfy Cloud deployment that runs the workflow {workflow}.",
-        "lacks": "Comfy Cloud lacks these. Find them in my local ComfyUI install:",
+        "title": "# Build and deploy {workflow} on Comfy Cloud",
+        "goal": "Make a Comfy Cloud deployment that runs the workflow {workflow}, and deploy it. Run this on the machine that holds my ComfyUI install.",
+        "lacksTitle": "## What Comfy Cloud lacks",
+        "lacks": "Find these in my local ComfyUI install:",
         "nodes": "- custom nodes: {packs}",
         "models": "- models: {models} ({local} is only on this machine)",
-        "skill": "Read the skill first: {command}",
-        "build": "Then create the build from the workflow:",
-        "ready": "When it is ready, Comfy Cloud asks me to name a project on it."
+        "skillsTitle": "## Read the skills, then follow them",
+        "build": "Create the build from the workflow:",
+        "readyTitle": "## When it is deployed",
+        "ready": "Tell me it is ready, so I can make a project on it in Comfy Cloud.",
+        "updateTitle": "# Add {packs} to the {deployment} deployment",
+        "updateGoal": "The workflow {workflow} needs what the Comfy Cloud deployment {deployment} lacks. Add it as a new release and deploy it.",
+        "deploymentTitle": "## This deployment",
+        "deploymentId": "- Deployment id: {id}",
+        "release": "- Release now: {from}. Make {to}.",
+        "everyProject": "- Every project on {deployment} moves to {to}.",
+        "updateLacksTitle": "## What it lacks",
+        "updateLacks": "- custom nodes: {packs} (in my local ComfyUI install)",
+        "updateModels": "- models: {models} (in my local ComfyUI install)",
+        "updateReadyTitle": "## When {release} is deployed",
+        "updateReady": "Tell me it is ready. Comfy Cloud then runs {workflow} on {release}."
       },
       "lock": {
         "title": "Building {deployment}",
@@ -7053,7 +7070,8 @@
         "menu": "Demo",
         "drop": "Drop incompatible workflow",
         "dropNothingRuns": "Drop it where nothing runs it",
-        "reset": "Reset demo"
+        "reset": "Reset demo",
+        "finishAgent": "Finish the agent's build"
       }
     },
     "settings": {

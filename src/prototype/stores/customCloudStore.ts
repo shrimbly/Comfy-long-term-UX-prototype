@@ -9,9 +9,10 @@
 // Drives the Custom Comfy Cloud demo: which project the tab strip belongs
 // to, the reload when it switches, the "choose where it runs" dialog for
 // the incompatible matte_pass workflow (where it runs, the build summary,
-// the deploy settings), and the fast demo build that locks the new
-// project. Runs go through the real editor's queue; the in-browser backend
-// reports the run state, including the cold start.
+// the deploy settings), the fast demo build that locks the new project,
+// and the hand-off to the user's own coding agent. Runs go through the real
+// editor's queue; the in-browser backend reports the run state, including
+// the cold start.
 
 import { useIntervalFn, useTimeoutFn } from '@vueuse/core'
 import { defineStore } from 'pinia'
@@ -23,6 +24,7 @@ import {
   DEFAULT_BUILD_PROJECT_NAME,
   DEMO_BUILD_MS,
   MATTE_PASS,
+  PLATFORM_GPUS,
   WARM_MINUTES
 } from '../fixtures/customCloud'
 import type { PlatformGpu } from '../fixtures/customCloud'
@@ -53,6 +55,7 @@ type DialogStep =
   | 'project'
   | 'build'
   | 'agent'
+  | 'agent-done'
   | 'deploy'
   | 'building'
 
@@ -71,6 +74,16 @@ interface ActiveBuild {
   // A rebuild of an existing deployment ends quietly; a new one goes on to
   // name its project.
   rebuild: boolean
+}
+
+// The agent builds and deploys on the user's machine, out of Comfy Cloud's
+// sight: no progress, no lock, no failures here. Only its finish arrives.
+interface AgentHandoff {
+  // The deployment it adds a release to, or null for a new deployment.
+  updatesDeploymentId: string | null
+  projectId: string | undefined
+  name: string
+  fixture: PersonaFixture
 }
 
 export const usePrototypeCustomCloudStore = defineStore(
@@ -97,6 +110,7 @@ export const usePrototypeCustomCloudStore = defineStore(
     // The deployment "Edit deployment" opened the build steps for.
     const editingDeploymentId = ref<string | null>(null)
     const build = shallowRef<ActiveBuild | null>(null)
+    const agentHandoff = shallowRef<AgentHandoff | null>(null)
     // The deployment just built: its project, once named, opens with the
     // "ready" toast.
     const builtDeploymentId = ref<string | null>(null)
@@ -402,6 +416,7 @@ export const usePrototypeCustomCloudStore = defineStore(
     )
 
     function buildAndDeploy(gpu: PlatformGpu) {
+      cancelAgentHandoff()
       const fixture = personaStore.fixture
       const name = newDeploymentName.value.trim() || DEFAULT_BUILD_PROJECT_NAME
       const editing = editingDeploymentId.value
@@ -481,6 +496,78 @@ export const usePrototypeCustomCloudStore = defineStore(
       dialogStep.value = 'project'
     }
 
+    const agentTimer = useTimeoutFn(finishAgentBuild, DEMO_BUILD_MS, {
+      immediate: false
+    })
+    const agentWorking = computed(() => agentHandoff.value !== null)
+
+    // The prompt is copied: the agent takes it from here.
+    function handOffToAgent() {
+      if (agentHandoff.value) return
+      agentHandoff.value = {
+        updatesDeploymentId:
+          chooseMode.value === 'update' ? currentDeployment.value.id : null,
+        projectId: currentProject.value?.id,
+        name: newDeploymentName.value.trim() || DEFAULT_BUILD_PROJECT_NAME,
+        fixture: personaStore.fixture
+      }
+      agentTimer.start()
+    }
+
+    function cancelAgentHandoff() {
+      agentTimer.stop()
+      agentHandoff.value = null
+    }
+
+    // An update lands as the next release with what matte_pass lacked; a new
+    // deployment asks for a project to run on it.
+    function finishAgentBuild() {
+      const handoff = agentHandoff.value
+      if (!handoff) return
+      cancelAgentHandoff()
+      const { fixture } = handoff
+      const updatesId = handoff.updatesDeploymentId
+      if (updatesId) {
+        fixture.deployments = (fixture.deployments ?? []).map((d) =>
+          d.id === updatesId
+            ? {
+                ...d,
+                release: nextRelease(d.release),
+                nodePacks: [
+                  ...new Set([...d.nodePacks, ...MATTE_PASS.nodePacks])
+                ],
+                models: [...new Set([...d.models, ...MATTE_PASS.models])]
+              }
+            : d
+        )
+        readyProjectId.value = handoff.projectId ?? null
+        return
+      }
+      const deploymentId = `dep-agent-${Date.now()}`
+      fixture.deployments = [
+        ...(fixture.deployments ?? []),
+        {
+          id: deploymentId,
+          workspaceId: fixture.currentWorkspaceId,
+          name: handoff.name,
+          kind: 'custom',
+          release: 'v1',
+          status: 'ready',
+          gpu: PLATFORM_GPUS[0].label,
+          warmMinutes: WARM_MINUTES,
+          nodePacks: [...MATTE_PASS.nodePacks],
+          models: [...MATTE_PASS.models]
+        }
+      ]
+      builtDeploymentId.value = deploymentId
+      deploymentTarget.value = deploymentId
+      nothingRunsIt.value = false
+      newProjectName.value = handoff.name
+      newProjectTier.value = 'workspace-wide'
+      newProjectCollaborators.value = []
+      dialogStep.value = 'agent-done'
+    }
+
     // Run with missing nodes is another way into "choose where it runs".
     function requestRun() {
       if (showsMissingNodes.value) openRunTargetDialog()
@@ -502,6 +589,7 @@ export const usePrototypeCustomCloudStore = defineStore(
         readyProjectId.value = null
         builtDeploymentId.value = null
         editingDeploymentId.value = null
+        cancelAgentHandoff()
         tabsStore.reset()
       }
     )
@@ -542,6 +630,10 @@ export const usePrototypeCustomCloudStore = defineStore(
       openInProject,
       createProjectOn,
       buildAndDeploy,
+      agentWorking,
+      handOffToAgent,
+      cancelAgentHandoff,
+      finishAgentBuild,
       requestRun
     }
   }

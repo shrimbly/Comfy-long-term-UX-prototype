@@ -15,6 +15,7 @@ Wiki: `../IA_Plan/wiki/concepts/custom-comfy-cloud.md`. Source: the 6 Oct "Custo
 - The presenter controls sit at the bottom right, beside the persona toggle:
   - **Demo: drop incompatible workflow** opens `matte_pass` without a real file drop.
   - **Demo: nothing runs it** opens `matte_pass` as if no deployment ran it yet, to show step 1's other two states.
+  - **Demo: finish the agent's build** shows while a prompt has been handed to a coding agent. It stands in for the agent finishing; otherwise the demo finishes it after about 18 seconds.
   - **Reset demo** reloads the page. Every store is in memory, so a reload restores the seed data. Use it between run-throughs.
 - Have any file ready to drag in, e.g. a `.json` on the desktop. Every file dropped on the app opens as `matte_pass`.
 - The tab strip starts in **Personal**, the personal project every user has.
@@ -54,10 +55,9 @@ Wiki: `../IA_Plan/wiki/concepts/custom-comfy-cloud.md`. Source: the 6 Oct "Custo
    - Step 1. The title reads "This workflow can't run on Comfy Cloud". A short table lists what is missing: 2 missing node packs, 2 missing models.
    - "Create a new project that runs on" shows **Acme Studio pipeline · Ready now**: that deployment already has everything.
    - Open the field. It works like the project switcher: a search field, then one list. Acme Studio pipeline is ticked and marked "Ready". Matte tests ("Missing 1 node pack") and Comfy Cloud ("Missing 2 packs, 2 models") are greyed out. Below the list is **+ Create a new deployment · About 20 min**.
-   - Say: one deployment already runs it, but we make a new one anyway. Pick **Create a new deployment**. The main button changes to **Create deployment**. Click it.
+   - Say: one deployment already runs it, but we make a new one anyway. Pick **Create a new deployment**. The footer turns into **Use your coding agent**, then **Build it here**, as below in "Shortcut and alternative". Click **Build it here**.
    - Step 2 · the build summary, as Platform shows it. Under "Suggested settings": Name (the deployment's name, Matte R&D, editable in place), ComfyUI v0.39.1, Runtime (CUDA 13.0 · Python 3.12 · Torch 2.12.1), Open-source models (all allowed, 2 pre-installed), Partner models, Custom nodes (2 packs), Python packages.
    - Optional: click any setting except the name. A confirmation asks, for example, "Change Runtime on Platform?". Click **Cancel**.
-   - Optional: click **Build with your agent** to show the prompt (`comfy skills show comfy-build`, `comfy build from-workflow …`), then **Back to the summary**. It is secondary on purpose.
    - Click **Next: deployment**.
    - Step 3 · Platform's deploy dialog, as it is live: GPU (RTX PRO 6000, H100 SXM, H200 SXM, B200, with VRAM and price an hour), always-warm workers 0, max workers 3, Location, and ComfyUI startup flags. On the right: the estimated cost and, once a GPU is picked, the estimated time.
    - Pick **RTX PRO 6000**. GPU time shows $0.00 an hour idle and $13.62 at full load; model storage is $2.44 a month. Click **Create deployment**.
@@ -86,16 +86,21 @@ Then click **Reset demo** and run it again.
 - **Demo: drop incompatible workflow** does the same as step 4's drop, in whatever project is current. From a fresh reset that is Personal, which runs on Comfy Cloud.
 - In step 5, keep **Acme Studio pipeline** and click **Create project**. The New project step shows "● Runs on Acme Studio pipeline": name it and choose its access, then **Create project**. The app reloads into it and `matte_pass` runs there with no build.
 - In step 5, click **Open in another project** and pick **Coca-Cola Ad**. `matte_pass` moves into Coca-Cola Ad and runs there.
-- **Demo: nothing runs it** from a Comfy Cloud project: the title reads "This workflow can't run on Comfy Cloud". It shows the three ticks and **Create deployment**, which goes to step 2. **Update an existing deployment ↗** is the quiet option; it opens on Platform.
-- **Demo: nothing runs it** from Personal R&D (on Matte tests): the title reads "This workflow can't run on Matte tests" and the table lists only acme-matte-tools. The main action is **Update on Platform ↗** (Matte tests v7 → v8; every project on it gets the release). **Create a new deployment instead** goes to step 2.
-- Close the dialog with **Not now**. The nodes stay flagged, and pressing **Run** reopens the dialog.
+- **Demo: nothing runs it** from a Comfy Cloud project: the title reads "This workflow can't run on Comfy Cloud", then "Create a new deployment to run your workflow". **Use your coding agent** leads, with **Build it here** under it.
+  - **Use your coding agent** shows a prompt for the user's own coding agent (Claude Code, Codex, OpenCode). **Copy prompt** turns into **Prompt copied** and a note says that's it here: the agent builds and deploys on the user's machine. Close the dialog. No Building chip, no lock, no progress: nothing shows until the agent finishes.
+  - Click **Demo: finish the agent's build**, or wait about 18 seconds. The dialog comes back: "Your agent deployed Matte R&D", with Matte R&D picked under "Create a new project that runs on". **Create project** goes to the New project step, as in step 7.
+  - **Build it here** goes to step 2.
+- **Demo: nothing runs it** from Personal R&D (on Matte tests): the title reads "This workflow can't run on Matte tests" and the table lists only acme-matte-tools. "Update this project's deployment to run it" shows Matte tests v7 → v8; every project on it gets the release. The same two buttons follow.
+  - **Use your coding agent** shows a prompt that carries the deployment id. When the agent finishes, Matte tests is on v8 and a toast says Personal R&D is ready.
+  - **Build it here** is the custom nodes rebuild: "Rebuild to add Acme Matte Tools?", then the Building chip, then the ready toast.
+- Close the dialog with its close button (or **Not now** in step 5). The nodes stay flagged, and pressing **Run** reopens the dialog.
 
 ## Surfaces touched
 
 - Projects page → project cards (`views/ProjectsView.vue`, `components/ProjectCard.vue`)
 - Project page → header variants and settings rows (`views/ProjectDetailView.vue`, `components/project/*.vue`); workspace settings → Projects (`components/settings/ProjectsSettings.vue`)
 - Tab strip → project switcher (`components/PrototypeTabs.vue`, `components/ProjectSwitcher.vue`, `components/ProjectSwitcherMenu.vue`)
-- The real editor (`components/RealEditor.vue` around `src/views/GraphView.vue`, served by `mockBackend/`), run-target dialog (`components/RunTargetDialog.vue` with `RunTargetChoose.vue`, `RunTargetDeploymentPicker.vue`, `RunTargetProjectChooser.vue`, `RunTargetBuildSummary.vue`, `RunTargetAgent.vue`, `RunTargetDeploy.vue`), build lock (`components/BuildLockModal.vue`), ready toast, reload screen
+- The real editor (`components/RealEditor.vue` around `src/views/GraphView.vue`, served by `mockBackend/`), run-target dialog (`components/RunTargetDialog.vue` with `RunTargetChoose.vue`, `RunTargetDeploymentPicker.vue`, `RunTargetProjectChooser.vue`, `RunTargetBuildSummary.vue`, `RunTargetAgentChoice.vue`, `RunTargetAgent.vue`, `RunTargetAgentDone.vue`, `RunTargetDeploy.vue`), build lock (`components/BuildLockModal.vue`), ready toast, reload screen
 - State: `stores/customCloudStore.ts`, tabs per project in `stores/tabsStore.ts`, data in `fixtures/customCloud.ts` + `fixtures/admin.ts`
 
 ## Editor approach

@@ -8,8 +8,8 @@
 
   Step 2: the build summary card Platform shows for a workflow ("Suggested
   settings"). The name edits in place; every other setting is changed on
-  Platform, so its row asks first. The agent is the alternative to deploying
-  from here.
+  Platform, so its row asks first. The coding agent is offered a step
+  earlier, as the first way to a deployment.
 -->
 <template>
   <h2 :id="titleId" class="m-0 pr-8 text-2xl font-semibold">
@@ -82,14 +82,6 @@
   <footer class="flex items-center gap-2.5">
     <Button variant="muted-textonly" size="lg" class="mr-auto" @click="onBack">
       {{ t('prototype.customCloud.dialog.back') }}
-    </Button>
-    <Button
-      variant="outline"
-      size="lg"
-      @click="customCloud.dialogStep = 'agent'"
-    >
-      <i class="icon-[lucide--bot] size-4" />
-      {{ t('prototype.customCloud.dialog.build.withAgent') }}
     </Button>
     <Button
       variant="inverted"
