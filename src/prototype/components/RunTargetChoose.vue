@@ -18,14 +18,15 @@
       it offers the coding agent or building it here; opening it in a project
       that runs it is the quiet option.
     - new: nothing runs it, from a Comfy Cloud project. A new deployment,
-      built by the user's coding agent or here.
+      built by the user's coding agent or here. Packs picked in the Custom
+      nodes modal of a Comfy Cloud project open this state too.
     - update: nothing runs it, from a project on its own deployment. A new
       release of that deployment, built by the coding agent or here.
 -->
 <template>
   <h2 :id="titleId" class="m-0 pr-8 text-2xl font-semibold">{{ title }}</h2>
 
-  <MissingItemsTable :missing="missing" />
+  <MissingItemsTable :missing="missing" :picked="customCloud.forPacks" />
 
   <template v-if="mode === 'existing'">
     <div class="flex flex-col gap-2">
@@ -64,12 +65,26 @@
 
   <template v-else-if="mode === 'new'">
     <div class="flex flex-col gap-1.5 text-sm">
-      <span class="font-medium">
-        {{ t('prototype.customCloud.dialog.newLead') }}
-      </span>
-      <span class="text-muted-foreground">
-        {{ t('prototype.customCloud.dialog.newDetail') }}
-      </span>
+      <template v-if="customCloud.forPacks">
+        <span class="font-medium">
+          {{ t('prototype.customCloud.dialog.packsLead') }}
+        </span>
+        <span class="text-muted-foreground">
+          {{
+            tText('prototype.customCloud.dialog.packsDetail', {
+              project: customCloud.currentProject?.name ?? ''
+            })
+          }}
+        </span>
+      </template>
+      <template v-else>
+        <span class="font-medium">
+          {{ t('prototype.customCloud.dialog.newLead') }}
+        </span>
+        <span class="text-muted-foreground">
+          {{ t('prototype.customCloud.dialog.newDetail') }}
+        </span>
+      </template>
     </div>
     <RunTargetAgentChoice
       @agent="customCloud.dialogStep = 'agent'"
@@ -119,7 +134,6 @@ import { useI18n } from 'vue-i18n'
 import Button from '@/components/ui/button/Button.vue'
 
 import { useTextT } from '../composables/useTextT'
-import { MATTE_PASS } from '../fixtures/customCloud'
 import {
   NEW_BUILD_TARGET,
   usePrototypeCustomCloudStore
@@ -149,15 +163,17 @@ const customNodes = usePrototypeCustomNodesStore()
 
 const mode = computed(() => customCloud.chooseMode)
 const deployment = computed(() => customCloud.currentDeployment)
-const missing = computed(() => missingFrom(deployment.value, MATTE_PASS))
+const missing = computed(() => missingFrom(deployment.value, customCloud.needs))
 const newDeploymentPicked = computed(
   () => customCloud.deploymentTarget === NEW_BUILD_TARGET
 )
 
 const title = computed(() =>
-  tText('prototype.customCloud.dialog.cantRunOn', {
-    deployment: deployment.value.name
-  })
+  customCloud.forPacks
+    ? t('prototype.customCloud.dialog.packsTitle')
+    : tText('prototype.customCloud.dialog.cantRunOn', {
+        deployment: deployment.value.name
+      })
 )
 
 // Building the new release here is the Install flow's rebuild: its

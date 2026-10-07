@@ -224,6 +224,31 @@ describe('customCloudStore', () => {
     expect(store.showsMissingNodes).toBe(false)
   })
 
+  it('builds a new deployment for packs picked on a Comfy Cloud project, then opens a project on it', async () => {
+    const { store, tabs } = await setup()
+    openWorkflowIn(store, 'proj-marketing')
+    store.openNewDeploymentFor(['comfyui-kjnodes', 'rgthree-comfy'])
+
+    expect(store.dialogStep).toBe('choose')
+    expect(store.chooseMode).toBe('new')
+    expect(store.deploymentTarget).toBe(NEW_BUILD_TARGET)
+
+    store.handOffToAgent()
+    vi.advanceTimersByTime(DEMO_BUILD_MS)
+    expect(store.dialogStep).toBe('agent-done')
+
+    store.createProjectOn(store.deploymentTarget)
+    vi.advanceTimersByTime(RELOAD_MS)
+    expect(store.currentProject?.name).toBe('Node R&D')
+    expect(store.currentDeployment.nodePacks).toEqual([
+      'comfyui-kjnodes',
+      'rgthree-comfy'
+    ])
+    expect(tabs.openTabs.some((t) => t.workflowKey === 'matte_pass')).toBe(
+      false
+    )
+  })
+
   it('takes the next release of the project’s deployment from the coding agent, then runs the workflow there', async () => {
     const { store } = await setup()
     openWorkflowIn(store, 'proj-personal-rnd')

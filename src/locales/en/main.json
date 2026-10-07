@@ -6946,11 +6946,13 @@
           "copied": "Prompt copied",
           "handedOff": "That's it here",
           "handedOffNew": "Your agent builds and deploys it on your machine. When it finishes, create a new project for the deployment on Comfy Cloud.",
-          "handedOffUpdate": "Your agent builds and deploys {release} on your machine. When it finishes, {workflow} runs here on {release}."
+          "handedOffUpdate": "Your agent builds and deploys {release} on your machine. When it finishes, {workflow} runs here on {release}.",
+          "packsIntro": "Copy this prompt and paste it into your coding agent on the machine with your ComfyUI install."
         },
         "agentDone": {
           "title": "Your agent deployed {deployment}",
-          "body": "It has every node and model {workflow} needs: {items}."
+          "body": "It has every node and model {workflow} needs: {items}.",
+          "packsBody": "It has the custom nodes you picked: {items}."
         },
         "deploy": {
           "title": "Deploy: {name} release 1",
@@ -6993,7 +6995,11 @@
           "create": "Create deployment",
           "saveRebuild": "Save and rebuild",
           "editTitle": "Deploy: {name} {release}"
-        }
+        },
+        "packsTitle": "Create a new deployment",
+        "chosenPacks": "{count} node pack | {count} node packs",
+        "packsLead": "A new deployment with the packs you picked",
+        "packsDetail": "Your coding agent builds and deploys it from the ComfyUI install on your machine. Or build it here on Comfy Cloud. Then make a project on it; {project} stays on Comfy Cloud."
       },
       "agentPrompt": {
         "title": "# Build and deploy {workflow} on Comfy Cloud",
@@ -7016,7 +7022,11 @@
         "updateLacks": "- custom nodes: {packs} (in my local ComfyUI install)",
         "updateModels": "- models: {models} (in my local ComfyUI install)",
         "updateReadyTitle": "## When {release} is deployed",
-        "updateReady": "Tell me it is ready. Comfy Cloud then runs {workflow} on {release}."
+        "updateReady": "Tell me it is ready. Comfy Cloud then runs {workflow} on {release}.",
+        "packsTitle": "# Build and deploy a Comfy Cloud deployment with {packs}",
+        "packsGoal": "Make a Comfy Cloud deployment with these custom nodes, and deploy it. Run this on the machine that holds my ComfyUI install.",
+        "packsNodesTitle": "## Custom nodes",
+        "packsBuild": "Create the build with these custom nodes:"
       },
       "lock": {
         "title": "Building {deployment}",
@@ -7064,7 +7074,8 @@
       "ready": {
         "title": "{project} is ready",
         "body": "{workflow} has every node and model it needs. It runs in {project} now.",
-        "dismiss": "Dismiss"
+        "dismiss": "Dismiss",
+        "packsBody": "It has {packs}. Workflows in {project} can use them now."
       },
       "demo": {
         "menu": "Demo",
@@ -7404,7 +7415,7 @@
       "noMatch": "No node packs match.",
       "cloud": {
         "title": "Comfy Cloud is shared, so packs can't be added to it",
-        "body": "Move this project to its own deployment to add packs."
+        "body": "Pick packs and create a new deployment that has them."
       },
       "footer": {
         "custom": "Installing packs or changing a version makes a new release of {deployment}.",
@@ -7440,7 +7451,8 @@
         "install": "Install | Install 1 pack | Install {count} packs",
         "askAdmin": "Ask an admin | Ask an admin for 1 pack | Ask an admin for {count} packs",
         "selected": "No packs selected | 1 pack selected | {count} packs selected",
-        "clear": "Clear"
+        "clear": "Clear",
+        "createDeployment": "Create a new deployment"
       },
       "toolbar": {
         "status": "Status:",

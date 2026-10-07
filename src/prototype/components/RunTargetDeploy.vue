@@ -232,7 +232,7 @@
             <span class="text-xs text-muted-foreground">
               {{
                 t('prototype.customCloud.dialog.deploy.storageDetail', {
-                  gb: MATTE_PASS.modelsGb,
+                  gb: customCloud.needs.modelsGb,
                   rate: usd(STORAGE_USD_PER_GB_MONTH)
                 })
               }}
@@ -240,7 +240,7 @@
           </span>
           <span class="flex flex-col items-end gap-0.5">
             <span class="text-sm font-semibold tabular-nums">
-              {{ usd(MATTE_PASS.modelsGb * STORAGE_USD_PER_GB_MONTH) }}
+              {{ usd(customCloud.needs.modelsGb * STORAGE_USD_PER_GB_MONTH) }}
             </span>
             <span class="text-xs text-muted-foreground">
               {{ t('prototype.customCloud.dialog.deploy.perMonth') }}
@@ -269,7 +269,7 @@
             <span class="text-xs text-muted-foreground">
               {{
                 t('prototype.customCloud.dialog.deploy.toDownload', {
-                  gb: MATTE_PASS.modelsGb
+                  gb: customCloud.needs.modelsGb
                 })
               }}
             </span>
@@ -277,8 +277,8 @@
           <span class="text-sm font-semibold tabular-nums">
             {{
               t('prototype.customCloud.dialog.deploy.minutes', {
-                min: MATTE_PASS.readyMinutes[0],
-                max: MATTE_PASS.readyMinutes[1]
+                min: customCloud.needs.readyMinutes[0],
+                max: customCloud.needs.readyMinutes[1]
               })
             }}
           </span>
@@ -322,7 +322,6 @@ import { useToastStore } from '@/platform/updates/common/toastStore'
 import { useTextT } from '../composables/useTextT'
 import {
   DEFAULT_MAX_WORKERS,
-  MATTE_PASS,
   MAX_WORKERS,
   PLATFORM_GPUS,
   STORAGE_USD_PER_GB_MONTH

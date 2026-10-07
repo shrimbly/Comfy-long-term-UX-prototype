@@ -99,7 +99,7 @@ import { useI18n } from 'vue-i18n'
 
 import Button from '@/components/ui/button/Button.vue'
 
-import { BUILD_DEFAULTS, MATTE_PASS } from '../fixtures/customCloud'
+import { BUILD_DEFAULTS } from '../fixtures/customCloud'
 import { usePrototypeCustomCloudStore } from '../stores/customCloudStore'
 
 const { titleId } = defineProps<{
@@ -126,11 +126,11 @@ const source = computed(() =>
         nodePacks: editing.value.nodePacks
       }
     : {
-        name: MATTE_PASS.name,
+        name: customCloud.needs.name,
         comfyVersion: BUILD_DEFAULTS.comfyVersion,
         runtime: BUILD_DEFAULTS.runtime,
-        models: MATTE_PASS.models,
-        nodePacks: MATTE_PASS.nodePacks
+        models: customCloud.needs.models,
+        nodePacks: customCloud.needs.nodePacks
       }
 )
 

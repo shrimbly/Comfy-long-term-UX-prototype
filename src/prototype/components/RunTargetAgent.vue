@@ -82,7 +82,7 @@ import { useI18n } from 'vue-i18n'
 import Button from '@/components/ui/button/Button.vue'
 
 import { useTextT } from '../composables/useTextT'
-import { DEFAULT_BUILD_PROJECT_NAME, MATTE_PASS } from '../fixtures/customCloud'
+import { DEFAULT_BUILD_PROJECT_NAME } from '../fixtures/customCloud'
 import { usePrototypeCustomCloudStore } from '../stores/customCloudStore'
 import { missingFrom, nextRelease } from '../utils/deployment'
 
@@ -99,7 +99,8 @@ const tText = useTextT()
 const customCloud = usePrototypeCustomCloudStore()
 const { copy } = useClipboard({ legacy: true })
 
-const workflow = MATTE_PASS.name
+const needs = computed(() => customCloud.needs)
+const workflow = computed(() => needs.value.name)
 const deployment = computed(() => customCloud.currentDeployment)
 const updating = computed(() => customCloud.chooseMode === 'update')
 const release = computed(() => nextRelease(deployment.value.release))
@@ -111,19 +112,21 @@ const title = computed(() =>
       })
     : t('prototype.customCloud.dialog.agent.title')
 )
-const intro = computed(() =>
-  t(
+const intro = computed(() => {
+  if (customCloud.forPacks)
+    return t('prototype.customCloud.dialog.agent.packsIntro')
+  return t(
     updating.value
       ? 'prototype.customCloud.dialog.agent.updateIntro'
       : 'prototype.customCloud.dialog.agent.intro',
-    { workflow }
+    { workflow: workflow.value }
   )
-)
+})
 const handedOffDetail = computed(() =>
   updating.value
     ? t('prototype.customCloud.dialog.agent.handedOffUpdate', {
         release: release.value,
-        workflow
+        workflow: workflow.value
       })
     : t('prototype.customCloud.dialog.agent.handedOffNew')
 )
@@ -134,29 +137,56 @@ const skillCommands = [
   'comfy skills show comfy-deploy'
 ]
 
-function newDeploymentPrompt() {
-  const name =
-    customCloud.newDeploymentName.trim() || DEFAULT_BUILD_PROJECT_NAME
+function deploymentName() {
+  return customCloud.newDeploymentName.trim() || DEFAULT_BUILD_PROJECT_NAME
+}
+
+function packsPrompt() {
+  const packs = needs.value.nodePacks.join(', ')
   return [
-    tText('prototype.customCloud.agentPrompt.title', { workflow }),
+    tText('prototype.customCloud.agentPrompt.packsTitle', { packs }),
     '',
-    tText('prototype.customCloud.agentPrompt.goal', { workflow }),
+    t('prototype.customCloud.agentPrompt.packsGoal'),
+    '',
+    t('prototype.customCloud.agentPrompt.packsNodesTitle'),
+    ...needs.value.nodePacks.map((pack) => `- ${pack}`),
+    '',
+    t('prototype.customCloud.agentPrompt.skillsTitle'),
+    ...skillCommands,
+    '',
+    t('prototype.customCloud.agentPrompt.packsBuild'),
+    `comfy build init --nodes ${needs.value.nodePacks.join(',')} --name "${deploymentName()}"`,
+    '',
+    t('prototype.customCloud.agentPrompt.readyTitle'),
+    t('prototype.customCloud.agentPrompt.ready')
+  ]
+}
+
+function newDeploymentPrompt() {
+  const name = deploymentName()
+  const workflowName = workflow.value
+  return [
+    tText('prototype.customCloud.agentPrompt.title', {
+      workflow: workflowName
+    }),
+    '',
+    tText('prototype.customCloud.agentPrompt.goal', { workflow: workflowName }),
     '',
     t('prototype.customCloud.agentPrompt.lacksTitle'),
     t('prototype.customCloud.agentPrompt.lacks'),
     tText('prototype.customCloud.agentPrompt.nodes', {
-      packs: MATTE_PASS.nodePacks.join(', ')
+      packs: needs.value.nodePacks.join(', ')
     }),
     tText('prototype.customCloud.agentPrompt.models', {
-      models: MATTE_PASS.models.join(', '),
-      local: MATTE_PASS.localOnlyModels.join(', ')
+      models: needs.value.models.join(', '),
+      local: needs.value.localOnlyModels.join(', ')
     }),
     '',
     t('prototype.customCloud.agentPrompt.skillsTitle'),
     ...skillCommands,
     '',
     t('prototype.customCloud.agentPrompt.build'),
-    `comfy build from-workflow --from ${workflow}.json --name "${name}"`,
+    `comfy build from-workflow --from ${workflowName}.json --name "${name}"`,
     '',
     t('prototype.customCloud.agentPrompt.readyTitle'),
     t('prototype.customCloud.agentPrompt.ready')
@@ -165,7 +195,7 @@ function newDeploymentPrompt() {
 
 function updatePrompt() {
   const { id, name, release: from } = deployment.value
-  const missing = missingFrom(deployment.value, MATTE_PASS)
+  const missing = missingFrom(deployment.value, needs.value)
   const packs = missing.nodePacks.join(', ')
   return [
     tText('prototype.customCloud.agentPrompt.updateTitle', {
@@ -174,7 +204,7 @@ function updatePrompt() {
     }),
     '',
     tText('prototype.customCloud.agentPrompt.updateGoal', {
-      workflow,
+      workflow: workflow.value,
       deployment: name
     }),
     '',
@@ -209,15 +239,16 @@ function updatePrompt() {
       release: release.value
     }),
     tText('prototype.customCloud.agentPrompt.updateReady', {
-      workflow,
+      workflow: workflow.value,
       release: release.value
     })
   ]
 }
 
-const agentPrompt = computed(() =>
-  (updating.value ? updatePrompt() : newDeploymentPrompt()).join('\n')
-)
+const agentPrompt = computed(() => {
+  if (customCloud.forPacks) return packsPrompt().join('\n')
+  return (updating.value ? updatePrompt() : newDeploymentPrompt()).join('\n')
+})
 
 async function onCopy() {
   await copy(agentPrompt.value)

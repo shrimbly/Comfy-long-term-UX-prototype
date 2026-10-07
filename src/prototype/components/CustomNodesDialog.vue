@@ -9,7 +9,9 @@
   The Custom nodes modal the editor's extensions button opens, laid out
   like Platform's builder table: search with Status, License and Sort
   filters, then pack, publisher, installs, stars, version, license and an
-  Install checkbox. The footer installs every ticked pack in one release.
+  Install checkbox. The footer installs every ticked pack in one release;
+  on Comfy Cloud, which can't add packs, it creates a new deployment with
+  them instead.
 -->
 <template>
   <Dialog :open="true" @update:open="(open) => !open && store.close()">
@@ -144,7 +146,7 @@
           <span class="min-w-0 flex-1 text-xs text-muted-foreground">
             {{ footer }}
           </span>
-          <template v-if="store.isCustom && !store.rebuild">
+          <template v-if="!store.rebuild">
             <span
               v-if="store.selected.length"
               class="shrink-0 text-xs text-muted-foreground"
@@ -160,7 +162,16 @@
               {{ t('prototype.customNodes.actions.clear') }}
             </Button>
             <Button
-              v-if="store.canInstall"
+              v-if="!store.isCustom"
+              variant="inverted"
+              size="lg"
+              :disabled="!selectedCount"
+              @click="createDeployment"
+            >
+              {{ t('prototype.customNodes.actions.createDeployment') }}
+            </Button>
+            <Button
+              v-else-if="store.canInstall"
               variant="inverted"
               size="lg"
               :disabled="!selectedCount"
@@ -255,6 +266,14 @@ const whereLine = computed(() => {
     release: deployment.value.release ?? ''
   })
 })
+
+// Comfy Cloud is shared, so its packs never change: the picked packs go to
+// a new deployment, built by the user's coding agent or here.
+function createDeployment() {
+  const packIds = store.selected
+  store.close()
+  customCloud.openNewDeploymentFor(packIds)
+}
 
 const footer = computed(() => {
   if (!store.isCustom) return t('prototype.customNodes.footer.cloud')

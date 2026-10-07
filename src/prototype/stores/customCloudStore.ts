@@ -22,12 +22,13 @@ import {
   BUILD_PROJECT_COLOR,
   COMFY_CLOUD,
   DEFAULT_BUILD_PROJECT_NAME,
+  DEFAULT_PACKS_BUILD_NAME,
   DEMO_BUILD_MS,
   MATTE_PASS,
   PLATFORM_GPUS,
   WARM_MINUTES
 } from '../fixtures/customCloud'
-import type { PlatformGpu } from '../fixtures/customCloud'
+import type { PlatformGpu, WorkflowNeeds } from '../fixtures/customCloud'
 import { onMockRunStateChange } from '../mockBackend'
 import type { MockRunState } from '../mockBackend'
 import type {
@@ -103,6 +104,9 @@ export const usePrototypeCustomCloudStore = defineStore(
     // Presenter control: hide the deployments that run matte_pass, to show
     // the dialog for a workflow nothing runs yet.
     const nothingRunsIt = ref(false)
+    // Packs picked in the Custom nodes modal of a Comfy Cloud project: the
+    // dialog then builds a new deployment for them instead of matte_pass.
+    const pickedPacks = ref<string[] | null>(null)
     const newProjectName = ref(DEFAULT_BUILD_PROJECT_NAME)
     const newProjectTier = ref<ProjectTier>('workspace-wide')
     const newProjectCollaborators = ref<string[]>([])
@@ -170,6 +174,22 @@ export const usePrototypeCustomCloudStore = defineStore(
       deploymentOf(currentProject.value?.id)
     )
 
+    const forPacks = computed(() => pickedPacks.value !== null)
+
+    // What the dialog builds for: matte_pass, or the picked packs.
+    const needs = computed<WorkflowNeeds>(() =>
+      pickedPacks.value
+        ? {
+            name: currentProject.value?.name ?? '',
+            nodePacks: pickedPacks.value,
+            models: [],
+            localOnlyModels: [],
+            modelsGb: 0,
+            readyMinutes: MATTE_PASS.readyMinutes
+          }
+        : MATTE_PASS
+    )
+
     const activeTab = computed(() =>
       tabsStore.openTabs.find((t) => t.id === tabsStore.activeTabId)
     )
@@ -179,8 +199,8 @@ export const usePrototypeCustomCloudStore = defineStore(
         !runsWorkflow(currentDeployment.value, MATTE_PASS)
     )
 
-    function runsMattePass(deployment: Deployment) {
-      return !nothingRunsIt.value && runsWorkflow(deployment, MATTE_PASS)
+    function runsNeeds(deployment: Deployment) {
+      return !nothingRunsIt.value && runsWorkflow(deployment, needs.value)
     }
 
     function byRunsThenCustom(
@@ -201,8 +221,8 @@ export const usePrototypeCustomCloudStore = defineStore(
         .filter((deployment) => deployment.status !== 'building')
         .map((deployment) => ({
           deployment,
-          runs: runsMattePass(deployment),
-          missing: missingFrom(deployment, MATTE_PASS)
+          runs: runsNeeds(deployment),
+          missing: missingFrom(deployment, needs.value)
         }))
         .sort(byRunsThenCustom)
     )
@@ -215,8 +235,8 @@ export const usePrototypeCustomCloudStore = defineStore(
           return {
             project,
             deployment,
-            runs: runsMattePass(deployment),
-            missing: missingFrom(deployment, MATTE_PASS)
+            runs: runsNeeds(deployment),
+            missing: missingFrom(deployment, needs.value)
           }
         })
         .sort(byRunsThenCustom)
@@ -226,6 +246,7 @@ export const usePrototypeCustomCloudStore = defineStore(
     // none does, from a Comfy Cloud project (build one) or from a project on
     // its own deployment (update that deployment).
     const chooseMode = computed(() => {
+      if (forPacks.value) return 'new'
       if (deploymentTargets.value.some((target) => target.runs)) {
         return 'existing'
       }
@@ -327,11 +348,27 @@ export const usePrototypeCustomCloudStore = defineStore(
     }
 
     function openRunTargetDialog() {
+      pickedPacks.value = null
+      resetRunTarget()
+    }
+
+    // "Create a new deployment" from the Custom nodes modal of a project on
+    // Comfy Cloud, which can't add packs: a new deployment that has them.
+    function openNewDeploymentFor(packIds: string[]) {
+      if (!packIds.length) return
+      pickedPacks.value = [...packIds]
+      resetRunTarget()
+    }
+
+    function resetRunTarget() {
       deploymentTarget.value =
         deploymentTargets.value.find((target) => target.runs)?.deployment.id ??
         NEW_BUILD_TARGET
-      newProjectName.value = DEFAULT_BUILD_PROJECT_NAME
-      newDeploymentName.value = DEFAULT_BUILD_PROJECT_NAME
+      const name = forPacks.value
+        ? DEFAULT_PACKS_BUILD_NAME
+        : DEFAULT_BUILD_PROJECT_NAME
+      newProjectName.value = name
+      newDeploymentName.value = name
       newProjectTier.value = 'workspace-wide'
       newProjectCollaborators.value = []
       dialogStep.value = 'choose'
@@ -356,6 +393,11 @@ export const usePrototypeCustomCloudStore = defineStore(
     // Move matte_pass, with its graph, out of the current project and into
     // another one.
     function openInProject(projectId: string) {
+      if (forPacks.value) {
+        dialogStep.value = null
+        switchProject(projectId)
+        return
+      }
       const tab = tabsStore.openTabs.find((t) => t.workflowKey === 'matte_pass')
       if (tab) tabsStore.close(tab.id)
       dialogStep.value = null
@@ -455,8 +497,8 @@ export const usePrototypeCustomCloudStore = defineStore(
           status: 'building',
           gpu: gpu.label,
           warmMinutes: WARM_MINUTES,
-          nodePacks: [...MATTE_PASS.nodePacks],
-          models: [...MATTE_PASS.models]
+          nodePacks: [...needs.value.nodePacks],
+          models: [...needs.value.models]
         }
       ]
       build.value = {
@@ -534,9 +576,9 @@ export const usePrototypeCustomCloudStore = defineStore(
                 ...d,
                 release: nextRelease(d.release),
                 nodePacks: [
-                  ...new Set([...d.nodePacks, ...MATTE_PASS.nodePacks])
+                  ...new Set([...d.nodePacks, ...needs.value.nodePacks])
                 ],
-                models: [...new Set([...d.models, ...MATTE_PASS.models])]
+                models: [...new Set([...d.models, ...needs.value.models])]
               }
             : d
         )
@@ -555,8 +597,8 @@ export const usePrototypeCustomCloudStore = defineStore(
           status: 'ready',
           gpu: PLATFORM_GPUS[0].label,
           warmMinutes: WARM_MINUTES,
-          nodePacks: [...MATTE_PASS.nodePacks],
-          models: [...MATTE_PASS.models]
+          nodePacks: [...needs.value.nodePacks],
+          models: [...needs.value.models]
         }
       ]
       builtDeploymentId.value = deploymentId
@@ -586,6 +628,7 @@ export const usePrototypeCustomCloudStore = defineStore(
         switcherOpen.value = false
         dialogStep.value = null
         nothingRunsIt.value = false
+        pickedPacks.value = null
         readyProjectId.value = null
         builtDeploymentId.value = null
         editingDeploymentId.value = null
@@ -602,6 +645,8 @@ export const usePrototypeCustomCloudStore = defineStore(
       currentDeployment,
       deploymentOf,
       showsMissingNodes,
+      needs,
+      forPacks,
       reloadingToId,
       switcherOpen,
       dialogStep,
@@ -626,6 +671,7 @@ export const usePrototypeCustomCloudStore = defineStore(
       switchWorkspace,
       openWorkflow,
       openRunTargetDialog,
+      openNewDeploymentFor,
       dropIncompatibleWorkflow,
       openInProject,
       createProjectOn,

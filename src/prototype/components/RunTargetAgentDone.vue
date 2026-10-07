@@ -20,10 +20,18 @@
     </h2>
     <p class="m-0 text-sm text-muted-foreground">
       {{
-        t('prototype.customCloud.dialog.agentDone.body', {
-          workflow: MATTE_PASS.name,
-          items: [...MATTE_PASS.nodePacks, ...MATTE_PASS.models].join(', ')
-        })
+        t(
+          customCloud.forPacks
+            ? 'prototype.customCloud.dialog.agentDone.packsBody'
+            : 'prototype.customCloud.dialog.agentDone.body',
+          {
+            workflow: customCloud.needs.name,
+            items: [
+              ...customCloud.needs.nodePacks,
+              ...customCloud.needs.models
+            ].join(', ')
+          }
+        )
       }}
     </p>
   </header>
@@ -61,7 +69,6 @@ import { useI18n } from 'vue-i18n'
 import Button from '@/components/ui/button/Button.vue'
 
 import { useTextT } from '../composables/useTextT'
-import { MATTE_PASS } from '../fixtures/customCloud'
 import {
   NEW_BUILD_TARGET,
   usePrototypeCustomCloudStore

@@ -1737,3 +1737,16 @@ Wiki link: **reverses** `decisions/missing-nodes-choose-where-it-runs.md` ("Seco
 Canvas: <https://claude.ai/artifact/PQby9iCSzrR7WMvbsqnY11>, section "Agent-first: build with your coding agent (Eric's ask)". Promote? **yes, if customers validate it**: revise the missing-nodes decision so the agent leads for the MVP.
 
 Update (same day): **picking "Create a new deployment" offers the same two ways.** When a deployment already runs the workflow (1A) and the presenter picks a new deployment in the picker, the footer (Open in another project, Not now, Create deployment) gives way to "Use your coding agent" and "Build it here". The agent's "Your agent deployed …" step does the same if a new deployment is picked there. Operator's ask, from the running prototype.
+
+## [2026-10-08] Custom nodes on a Comfy Cloud project: pick packs, then create a new deployment
+
+**Decision:** on a project that runs on Comfy Cloud, the Custom nodes modal no longer dead-ends.
+
+- Packs can be ticked, and a version picked, the same as on a project's own deployment. Comfy Cloud's installed packs stay locked.
+- The footer button is **"Create a new deployment"**. It opens "choose where it runs" in its `new` state, titled "Create a new deployment", listing the picked packs in place of missing ones.
+- The user picks how to build it: **"Use your coding agent"** (a prompt that lists the packs and asks for a new deployment) or **"Build it here"** (Platform's build summary, then deploy).
+- When the build finishes, the usual New project step names a project on the new deployment and opens it. The current project stays on Comfy Cloud. The default name is "Node R&D".
+
+Why: the operator, from the running prototype: users on a Comfy Cloud project who open the extensions button had no path to add custom nodes. Comfy Cloud is shared, so packs can't be added to it.
+
+Wiki link: `decisions/project-runs-on-shared-deployment.md` (a project runs on one deployment, so new packs mean a deployment that has them) and `decisions/missing-nodes-choose-where-it-runs.md` (same dialog, agent first, as in the entry above). The wiki is silent on whether the current project should move to the new deployment instead of getting a new project. Working answer: a new project, as in the incompatible-workflow flow. Promote? **no**, not yet: it depends on whether a project can change deployment.
