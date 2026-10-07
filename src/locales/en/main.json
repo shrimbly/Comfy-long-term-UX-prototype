@@ -7016,9 +7016,9 @@
           "modelsAdded": "{count} model added: {items} | {count} models added: {items}",
           "modelsRemoved": "{count} model removed: {items} | {count} models removed: {items}",
           "cancel": "Cancel",
-          "fork": "Create a new deployment and use it for this project",
-          "forkHint": "Only {project} moves to it. The others stay on {name}.",
-          "update": "Update the existing deployment",
+          "fork": "Fork for this project",
+          "forkHint": "A new deployment with these changes. Only {project} moves to it. The others stay on {name}.",
+          "update": "Update",
           "warm": "Keep warm {from} min → {to} min",
           "name": "Name {from} → {to}"
         }
