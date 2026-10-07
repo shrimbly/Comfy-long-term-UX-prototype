@@ -34,7 +34,7 @@
           </div>
           <div class="flex shrink-0 items-center gap-1">
             <Button
-              v-if="environments.canManage && deployment.kind === 'custom'"
+              v-if="environments.canManage"
               variant="secondary"
               size="sm"
               @click="onEdit"
@@ -266,8 +266,13 @@ function openPolicies() {
   ui.openSettings('policies')
 }
 
-// The build steps are the dialog the editor uses for a new deployment.
+// A custom build edits through the build steps. Comfy Cloud runs whatever
+// the workspace allows, so editing it is editing the policies.
 function onEdit() {
+  if (deployment.kind === 'comfy-cloud') {
+    openPolicies()
+    return
+  }
   emit('close')
   customCloud.openEditDeployment(deployment.id, projectId)
 }
