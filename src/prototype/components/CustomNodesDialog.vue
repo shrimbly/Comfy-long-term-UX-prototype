@@ -19,23 +19,27 @@
         size="xl"
         class="max-h-[88vh] overflow-hidden"
         @pointer-down-outside="
-          (event) => store.pendingChange && event.preventDefault()
+          (event) => store.pendingChanges && event.preventDefault()
         "
         @focus-outside.prevent
       >
-        <DialogHeader class="flex-col items-stretch gap-3 px-6 pt-5 pb-3">
-          <div class="flex items-center gap-2">
-            <DialogTitle class="flex-1 text-xl">
-              {{ t('prototype.customNodes.title') }}
-            </DialogTitle>
-            <DialogClose />
+        <DialogHeader class="flex-col items-stretch gap-3 px-6 pt-5 pb-2">
+          <div class="flex flex-col gap-1">
+            <div class="flex items-center gap-2">
+              <DialogTitle class="flex-1 text-xl">
+                {{ t('prototype.customNodes.title') }}
+              </DialogTitle>
+              <DialogClose />
+            </div>
+            <p
+              class="m-0 flex items-center gap-2 text-sm text-muted-foreground"
+            >
+              <DeploymentStatusDot
+                :status="store.rebuild ? 'building' : deployment.status"
+              />
+              <span>{{ whereLine }}</span>
+            </p>
           </div>
-          <p class="m-0 flex items-center gap-2 text-sm text-muted-foreground">
-            <DeploymentStatusDot
-              :status="store.rebuild ? 'building' : deployment.status"
-            />
-            <span>{{ whereLine }}</span>
-          </p>
           <div
             v-if="!store.isCustom"
             class="flex gap-2.5 rounded-lg border border-border-default bg-secondary-background/40 px-3 py-2.5 text-sm"
@@ -100,11 +104,11 @@
               <span role="columnheader" class="text-right">
                 {{ t('prototype.customNodes.column.stars') }}
               </span>
-              <span role="columnheader">
+              <span role="columnheader" class="pl-2.5">
                 {{ t('prototype.customNodes.column.version') }}
               </span>
-              <span role="columnheader" class="text-right">
-                {{ t('prototype.customNodes.column.status') }}
+              <span role="columnheader" class="sr-only">
+                {{ t('prototype.customNodes.column.select') }}
               </span>
             </div>
 
@@ -179,9 +183,45 @@
         </div>
 
         <footer
-          class="border-t border-border-subtle px-6 py-3 text-xs text-muted-foreground"
+          class="flex items-center gap-4 border-t border-border-subtle px-6 py-3"
         >
-          {{ footer }}
+          <span class="min-w-0 flex-1 text-xs text-muted-foreground">
+            {{ footer }}
+          </span>
+          <template v-if="store.isCustom && !store.rebuild">
+            <span
+              v-if="store.selected.length"
+              class="shrink-0 text-xs text-muted-foreground"
+            >
+              {{ t('prototype.customNodes.actions.selected', selectedCount) }}
+            </span>
+            <Button
+              v-if="store.selected.length"
+              variant="muted-textonly"
+              size="md"
+              @click="store.selected = []"
+            >
+              {{ t('prototype.customNodes.actions.clear') }}
+            </Button>
+            <Button
+              v-if="store.canInstall"
+              variant="inverted"
+              size="lg"
+              :disabled="!selectedCount"
+              @click="store.requestInstall()"
+            >
+              {{ t('prototype.customNodes.actions.install', selectedCount) }}
+            </Button>
+            <Button
+              v-else
+              variant="inverted"
+              size="lg"
+              :disabled="!selectedCount"
+              @click="store.askAdmin()"
+            >
+              {{ t('prototype.customNodes.actions.askAdmin', selectedCount) }}
+            </Button>
+          </template>
         </footer>
       </DialogContent>
     </DialogPortal>
@@ -219,7 +259,7 @@ import DeploymentStatusDot from './DeploymentStatusDot.vue'
 
 const FILTERS: PackFilter[] = ['all', 'installed', 'available']
 const GRID =
-  'grid grid-cols-[minmax(0,1fr)_7rem_4.5rem_4.5rem_11rem_9.5rem] items-center gap-x-2.5'
+  'grid grid-cols-[minmax(0,1fr)_8rem_4.5rem_4.5rem_11.5rem_1.5rem] items-center gap-x-4'
 
 const { t } = useI18n()
 const tText = useTextT()
@@ -237,6 +277,7 @@ const canReviewPolicies = computed(() => policies.canEdit)
 const listedRows = computed(() =>
   store.visibleRows.filter((row) => row.state !== 'blocked')
 )
+const selectedCount = computed(() => store.selected.length)
 const blockedRows = computed(() =>
   store.visibleRows.filter((row) => row.state === 'blocked')
 )

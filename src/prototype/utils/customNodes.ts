@@ -4,7 +4,7 @@
 //             modal: Platform's table, with pinned versions"
 //
 // Pure helpers for the editor's Custom nodes modal: the rows of its table,
-// and the change a version pick or an Install makes to a deployment.
+// and the changes a version pick or an Install makes to a deployment.
 
 import { omit } from 'es-toolkit'
 
@@ -68,8 +68,8 @@ interface RowInput {
   // Versions picked for packs not installed yet.
   drafts: Record<string, string | null>
   isAllowed: (id: string) => boolean
-  // The change the deployment's next release is building.
-  building?: PackChange
+  // The changes the deployment's next release is building.
+  building?: PackChange[]
 }
 
 // Installed packs first, then the ones the deployment can add, then the
@@ -84,7 +84,7 @@ export function packRows(input: RowInput): PackRow[] {
       const installed = deployment.nodePacks.includes(item.id)
       const pin = installed ? pins[item.id] : drafts[item.id]
       const version = pin ?? latest
-      const buildsThis = building?.packId === item.id
+      const buildsThis = !!building?.some((c) => c.packId === item.id)
       return {
         id: item.id,
         name: item.name,
@@ -117,11 +117,13 @@ export function packRows(input: RowInput): PackRow[] {
   return rows.sort((a, b) => order(a) - order(b) || b.installs - a.installs)
 }
 
-// The deployment's pins once a change is built.
+// The deployment's pins once its changes are built.
 export function pinsAfter(
   pins: Record<string, string>,
-  change: PackChange
+  changes: PackChange[]
 ): Record<string, string> {
-  const rest = omit(pins, [change.packId])
-  return change.to ? { ...rest, [change.packId]: change.to } : rest
+  return changes.reduce((next, change) => {
+    const rest = omit(next, [change.packId])
+    return change.to ? { ...rest, [change.packId]: change.to } : rest
+  }, pins)
 }

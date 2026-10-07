@@ -7260,7 +7260,7 @@
         "installs": "Installs",
         "stars": "Stars",
         "version": "Version",
-        "status": "Status"
+        "select": "Select"
       },
       "private": "Private",
       "privateStars": "Private repository: no public stars",
@@ -7269,13 +7269,12 @@
       "status": {
         "installed": "Installed",
         "newer": "{version} available",
-        "install": "Install",
-        "askAdmin": "Ask an admin",
-        "requested": "Requested",
+        "requested": "Requested from admins",
         "notAllowed": "Not allowed",
-        "adding": "Adding in {release}",
-        "changing": "Changing in {release}",
-        "minutes": "less than a minute | about 1 min | about {count} min"
+        "adding": "Adding in {release} · {minutes}",
+        "changing": "Changing in {release} · {minutes}",
+        "minutes": "less than a minute | about 1 min | about {count} min",
+        "select": "Install {pack}"
       },
       "version": {
         "label": "{pack}: version",
@@ -7294,7 +7293,7 @@
         "body": "Move this project to its own deployment to add packs."
       },
       "footer": {
-        "custom": "Installing a pack or changing a version makes a new release of {deployment}. Every project on it gets the release.",
+        "custom": "Installing packs or changing a version makes a new release of {deployment}.",
         "member": "Workspace admins add packs and change versions, because every project on {deployment} gets the new release.",
         "building": "You can add packs or change versions once {release} is ready.",
         "cloud": "Built-in Comfy nodes remain available."
@@ -7315,12 +7314,19 @@
         "thisProject": "this project",
         "keepWorking": "You can keep working. Runs stay on {release} until {next} is ready.",
         "notNow": "Not now",
-        "confirm": "Rebuild"
+        "confirm": "Rebuild",
+        "titleAddMany": "Rebuild to add {count} packs?"
       },
       "ready": {
         "title": "{deployment} {release} is ready",
-        "bodyAdd": "{pack} is installed. Its nodes are in the node library in every project on {deployment}.",
+        "bodyAdd": "Installed {pack}. The new nodes are in the node library in every project on {deployment}.",
         "bodyChange": "{pack} is on {version} in every project on {deployment}."
+      },
+      "actions": {
+        "install": "Install | Install 1 pack | Install {count} packs",
+        "askAdmin": "Ask an admin | Ask an admin for 1 pack | Ask an admin for {count} packs",
+        "selected": "No packs selected | 1 pack selected | {count} packs selected",
+        "clear": "Clear"
       }
     }
   },

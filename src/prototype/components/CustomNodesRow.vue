@@ -5,7 +5,8 @@
 
   One node pack in the Custom nodes table: its name links to GitHub (a
   private pack has a Private badge instead), then publisher, installs,
-  stars, its version picker, and what you can do with it.
+  stars and its version picker. The last column ticks packs to install
+  together; an installed pack shows a plain check there.
 -->
 <template>
   <div
@@ -14,33 +15,46 @@
   >
     <span
       role="cell"
-      :class="cn('flex min-w-0 items-center gap-2', dimmed && 'opacity-50')"
+      :class="cn('flex min-w-0 flex-col gap-0.5', dimmed && 'opacity-50')"
     >
-      <a
-        v-if="row.repoUrl"
-        :href="row.repoUrl"
-        target="_blank"
-        rel="noopener noreferrer"
-        class="flex min-w-0 items-center gap-1.5 font-medium text-base-foreground no-underline hover:underline"
-        :title="tText('prototype.customNodes.openRepo', { pack: row.name })"
+      <span class="flex min-w-0 items-center gap-2">
+        <a
+          v-if="row.repoUrl"
+          :href="row.repoUrl"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="flex min-w-0 items-center gap-1.5 font-medium text-base-foreground no-underline hover:underline"
+          :title="tText('prototype.customNodes.openRepo', { pack: row.name })"
+        >
+          <span class="truncate">{{ row.name }}</span>
+          <i
+            class="icon-[lucide--external-link] size-3 shrink-0 text-muted-foreground"
+            aria-hidden="true"
+          />
+        </a>
+        <template v-else>
+          <span class="truncate font-medium">{{ row.name }}</span>
+          <Badge
+            variant="compact"
+            severity="secondary"
+            class="text-muted-foreground"
+          >
+            <i class="icon-[lucide--lock] size-2.5" aria-hidden="true" />
+            {{ t('prototype.customNodes.private') }}
+          </Badge>
+        </template>
+      </span>
+      <span
+        v-if="note"
+        class="flex items-center gap-1.5 text-xs text-muted-foreground"
       >
-        <span class="truncate">{{ row.name }}</span>
         <i
-          class="icon-[lucide--external-link] size-3 shrink-0 text-muted-foreground"
+          v-if="isBuilding"
+          class="icon-[lucide--loader-circle] size-3 animate-spin"
           aria-hidden="true"
         />
-      </a>
-      <template v-else>
-        <span class="truncate font-medium">{{ row.name }}</span>
-        <Badge
-          variant="compact"
-          severity="secondary"
-          class="text-muted-foreground"
-        >
-          <i class="icon-[lucide--lock] size-2.5" aria-hidden="true" />
-          {{ t('prototype.customNodes.private') }}
-        </Badge>
-      </template>
+        {{ note }}
+      </span>
     </span>
     <span
       role="cell"
@@ -97,63 +111,27 @@
         @pick="onPick"
       />
     </span>
-    <span role="cell" class="flex flex-col items-end gap-0.5">
-      <template v-if="row.state === 'installed'">
-        <span class="flex items-center gap-1.5 text-muted-foreground">
-          <i class="icon-[lucide--check] size-3.5" aria-hidden="true" />
-          {{ t('prototype.customNodes.status.installed') }}
-        </span>
-        <span v-if="row.newer" class="text-xs text-muted-foreground">
-          {{ t('prototype.customNodes.status.newer', { version: row.newer }) }}
-        </span>
-      </template>
-      <template v-else-if="row.state === 'adding' || row.state === 'changing'">
-        <span class="flex items-center gap-1.5 text-muted-foreground">
-          <i
-            class="icon-[lucide--loader-circle] size-3.5 animate-spin"
-            aria-hidden="true"
-          />
-          {{
-            row.state === 'adding'
-              ? t('prototype.customNodes.status.adding', {
-                  release: store.rebuild?.release
-                })
-              : t('prototype.customNodes.status.changing', {
-                  release: store.rebuild?.release
-                })
-          }}
-        </span>
-        <span v-if="minutesLeft != null" class="text-xs text-muted-foreground">
-          {{ t('prototype.customNodes.status.minutes', minutesLeft) }}
-        </span>
-      </template>
-      <span
-        v-else-if="row.state === 'blocked'"
-        class="flex items-center gap-1.5 text-muted-foreground"
-      >
-        <i class="icon-[lucide--lock] size-3.5" aria-hidden="true" />
-        {{ t('prototype.customNodes.status.notAllowed') }}
-      </span>
-      <Button
-        v-else-if="store.canInstall"
-        variant="secondary"
-        :disabled="!!store.rebuild || !store.isCustom"
-        @click="store.requestInstall(row.id)"
-      >
-        {{ t('prototype.customNodes.status.install') }}
-      </Button>
-      <Button
+    <span role="cell" class="flex justify-center">
+      <i
+        v-if="row.state === 'blocked'"
+        class="icon-[lucide--lock] size-3.5 text-muted-foreground"
+        :aria-label="t('prototype.customNodes.status.notAllowed')"
+        :title="t('prototype.customNodes.status.notAllowed')"
+      />
+      <i
+        v-else-if="isInstalled"
+        class="icon-[lucide--check] size-4 text-muted-foreground"
+        :aria-label="t('prototype.customNodes.status.installed')"
+        :title="t('prototype.customNodes.status.installed')"
+      />
+      <Checkbox
         v-else
-        variant="secondary"
-        :disabled="requested || !store.isCustom"
-        @click="store.askAdmin(row.id)"
-      >
-        {{
-          requested
-            ? t('prototype.customNodes.status.requested')
-            : t('prototype.customNodes.status.askAdmin')
-        }}
-      </Button>
+        :model-value="isTicked"
+        :disabled="!selectable"
+        :aria-label="checkboxLabel"
+        :title="checkboxLabel"
+        @update:model-value="(on) => store.setSelected(row.id, on === true)"
+      />
     </span>
   </div>
 </template>
@@ -164,7 +142,7 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import Badge from '@/components/ui/badge/Badge.vue'
-import Button from '@/components/ui/button/Button.vue'
+import Checkbox from '@/components/ui/checkbox/Checkbox.vue'
 
 import { useTextT } from '../composables/useTextT'
 import { usePrototypeCustomNodesStore } from '../stores/customNodesStore'
@@ -183,10 +161,51 @@ const tText = useTextT()
 const store = usePrototypeCustomNodesStore()
 
 const dimmed = computed(() => row.state === 'blocked')
-const requested = computed(() => store.requested.includes(row.id))
-const minutesLeft = computed(() =>
-  store.progress ? Math.ceil(store.progress.remainingSeconds / 60) : undefined
+const isBuilding = computed(
+  () => row.state === 'adding' || row.state === 'changing'
 )
+const isRequested = computed(() => store.requested.includes(row.id))
+const isInstalled = computed(
+  () => row.state === 'installed' || row.state === 'changing'
+)
+const isTicked = computed(
+  () => isBuilding.value || isRequested.value || store.selected.includes(row.id)
+)
+const selectable = computed(
+  () =>
+    row.state === 'available' &&
+    !isRequested.value &&
+    !store.rebuild &&
+    store.isCustom
+)
+
+const minutesLeft = computed(() =>
+  store.progress ? Math.ceil(store.progress.remainingSeconds / 60) : 0
+)
+
+// The line under the pack's name: a newer release, the build, or a request.
+const note = computed(() => {
+  const release = store.rebuild?.release
+  if (row.state === 'adding')
+    return t('prototype.customNodes.status.adding', {
+      release,
+      minutes: t('prototype.customNodes.status.minutes', minutesLeft.value)
+    })
+  if (row.state === 'changing')
+    return t('prototype.customNodes.status.changing', {
+      release,
+      minutes: t('prototype.customNodes.status.minutes', minutesLeft.value)
+    })
+  if (isRequested.value) return t('prototype.customNodes.status.requested')
+  if (row.newer)
+    return t('prototype.customNodes.status.newer', { version: row.newer })
+  return ''
+})
+
+const checkboxLabel = computed(() => {
+  if (isRequested.value) return t('prototype.customNodes.status.requested')
+  return tText('prototype.customNodes.status.select', { pack: row.name })
+})
 
 function onPick(version: string | null) {
   if (row.state === 'installed') store.requestVersion(row.id, version)

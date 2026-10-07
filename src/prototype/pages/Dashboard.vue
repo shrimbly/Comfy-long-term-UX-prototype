@@ -87,7 +87,7 @@
               ? 'prototype.customNodes.ready.bodyAdd'
               : 'prototype.customNodes.ready.bodyChange',
             {
-              pack: customNodes.ready.packName,
+              pack: customNodes.ready.packNames.join(', '),
               version: customNodes.ready.version,
               deployment: customNodes.ready.deploymentName
             }
@@ -115,8 +115,8 @@
     <RunTargetDialog v-if="customCloud.dialogStep" />
     <CustomNodesDialog v-if="customNodes.isOpen" />
     <CustomNodesRebuildDialog
-      v-if="customNodes.pendingChange"
-      :change="customNodes.pendingChange"
+      v-if="customNodes.pendingChanges"
+      :changes="customNodes.pendingChanges"
     />
     <ProjectReloadOverlay v-if="reloadingProject" :project="reloadingProject" />
   </div>

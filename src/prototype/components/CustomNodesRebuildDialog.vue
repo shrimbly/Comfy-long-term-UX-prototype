@@ -28,7 +28,9 @@
             class="grid grid-cols-[9.5rem_minmax(0,1fr)] gap-x-3 border-border-default px-3.5 py-2.5 not-first:border-t"
           >
             <dt class="text-muted-foreground">{{ item.label }}</dt>
-            <dd class="m-0">{{ item.value }}</dd>
+            <dd class="m-0 flex flex-col gap-1">
+              <span v-for="line in item.lines" :key="line">{{ line }}</span>
+            </dd>
           </div>
         </dl>
 
@@ -101,8 +103,8 @@ import type { PackChange } from '../utils/customNodes'
 import { changeTarget } from '../utils/customNodes'
 import { nextRelease } from '../utils/deployment'
 
-const { change } = defineProps<{
-  change: PackChange
+const { changes } = defineProps<{
+  changes: PackChange[]
 }>()
 
 const { t } = useI18n()
@@ -112,50 +114,67 @@ const customCloud = usePrototypeCustomCloudStore()
 
 const deployment = computed(() => store.deployment)
 const next = computed(() => nextRelease(deployment.value.release))
-const row = computed(() => store.rows.find((r) => r.id === change.packId))
-const pack = computed(() => row.value?.name ?? change.packId)
+const isAdd = computed(() => changes[0]?.kind === 'add')
 
-const target = computed(() => {
-  const version = changeTarget(change, row.value?.latest ?? '')
-  return change.to
+function describe(change: PackChange) {
+  const row = store.rows.find((r) => r.id === change.packId)
+  const pack = row?.name ?? change.packId
+  const version = changeTarget(change, row?.latest ?? '')
+  const target = change.to
     ? t('prototype.customNodes.rebuild.pinned', { version })
     : t('prototype.customNodes.rebuild.latest', { version })
-})
-
-const title = computed(() =>
-  change.kind === 'add'
-    ? t('prototype.customNodes.rebuild.titleAdd', { pack: pack.value })
-    : t('prototype.customNodes.rebuild.titleChange', { pack: pack.value })
-)
-
-const summary = computed(() => [
-  change.kind === 'add'
+  return change.kind === 'add'
     ? {
-        label: t('prototype.customNodes.rebuild.adds'),
-        value: t('prototype.customNodes.rebuild.addValue', {
-          pack: pack.value,
-          version: target.value
+        pack,
+        line: t('prototype.customNodes.rebuild.addValue', {
+          pack,
+          version: target
         })
       }
     : {
-        label: t('prototype.customNodes.rebuild.changes'),
-        value: t('prototype.customNodes.rebuild.changeValue', {
-          pack: pack.value,
+        pack,
+        line: t('prototype.customNodes.rebuild.changeValue', {
+          pack,
           from: change.from,
-          to: target.value
+          to: target
         })
-      },
+      }
+}
+
+const described = computed(() => changes.map(describe))
+
+const title = computed(() => {
+  if (!isAdd.value)
+    return t('prototype.customNodes.rebuild.titleChange', {
+      pack: described.value[0]?.pack
+    })
+  return changes.length === 1
+    ? t('prototype.customNodes.rebuild.titleAdd', {
+        pack: described.value[0]?.pack
+      })
+    : t('prototype.customNodes.rebuild.titleAddMany', {
+        count: changes.length
+      })
+})
+
+const summary = computed(() => [
+  {
+    label: isAdd.value
+      ? t('prototype.customNodes.rebuild.adds')
+      : t('prototype.customNodes.rebuild.changes'),
+    lines: described.value.map((d) => d.line)
+  },
   {
     label: t('prototype.customNodes.rebuild.newRelease'),
-    value: `${deployment.value.release} → ${next.value}`
+    lines: [`${deployment.value.release} → ${next.value}`]
   },
   {
     label: t('prototype.customNodes.rebuild.takes'),
-    value: t('prototype.customNodes.rebuild.takesValue')
+    lines: [t('prototype.customNodes.rebuild.takesValue')]
   }
 ])
 
 function cancel() {
-  store.pendingChange = null
+  store.pendingChanges = null
 }
 </script>

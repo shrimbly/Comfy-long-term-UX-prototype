@@ -37,17 +37,22 @@ export type PackFilter = 'all' | 'installed' | 'available'
 interface Rebuild {
   deploymentId: string
   release: string
-  change: PackChange
+  changes: PackChange[]
   startedAt: number
   fixture: PersonaFixture
 }
 
+// A release adds one or more packs, or changes one pack's version.
 interface ReadyRelease {
   deploymentName: string
   release: string
   kind: PackChange['kind']
-  packName: string
+  packNames: string[]
   version: string
+}
+
+function packName(packId: string) {
+  return policyCatalog.find((item) => item.id === packId)?.name ?? packId
 }
 
 export const usePrototypeCustomNodesStore = defineStore(
@@ -66,7 +71,9 @@ export const usePrototypeCustomNodesStore = defineStore(
     )
     const drafts = ref<Record<string, string | null>>({})
     const requested = ref<string[]>([])
-    const pendingChange = ref<PackChange | null>(null)
+    // Packs ticked to install together.
+    const selected = ref<string[]>([])
+    const pendingChanges = ref<PackChange[] | null>(null)
     const rebuild = shallowRef<Rebuild | null>(null)
     const ready = ref<ReadyRelease | null>(null)
     const now = ref(Date.now())
@@ -91,7 +98,7 @@ export const usePrototypeCustomNodesStore = defineStore(
         pins: pins.value,
         drafts: drafts.value,
         isAllowed: policies.isAllowed,
-        building: rebuildHere.value?.change
+        building: rebuildHere.value?.changes
       })
     )
 
@@ -143,24 +150,32 @@ export const usePrototypeCustomNodesStore = defineStore(
       filter.value = 'all'
       query.value = ''
       showBlocked.value = false
+      selected.value = []
       isOpen.value = true
     }
 
     function close() {
       isOpen.value = false
-      pendingChange.value = null
+      pendingChanges.value = null
+    }
+
+    function setSelected(packId: string, on: boolean) {
+      selected.value = on
+        ? [...new Set([...selected.value, packId])]
+        : selected.value.filter((id) => id !== packId)
     }
 
     function pickDraftVersion(packId: string, version: string | null) {
       drafts.value = { ...drafts.value, [packId]: version }
     }
 
-    function requestInstall(packId: string) {
-      pendingChange.value = {
+    function requestInstall() {
+      if (!selected.value.length) return
+      pendingChanges.value = selected.value.map((packId) => ({
         kind: 'add',
         packId,
         to: drafts.value[packId] ?? null
-      }
+      }))
     }
 
     function requestVersion(packId: string, to: string | null) {
@@ -168,12 +183,12 @@ export const usePrototypeCustomNodesStore = defineStore(
       if (!from) return
       const isPinned = packId in pins.value
       if ((to === null && !isPinned) || to === pins.value[packId]) return
-      pendingChange.value = { kind: 'change', packId, from, to }
+      pendingChanges.value = [{ kind: 'change', packId, from, to }]
     }
 
-    function askAdmin(packId: string) {
-      if (!requested.value.includes(packId))
-        requested.value = [...requested.value, packId]
+    function askAdmin() {
+      requested.value = [...new Set([...requested.value, ...selected.value])]
+      selected.value = []
     }
 
     const ticker = useIntervalFn(tick, 200, { immediate: false })
@@ -184,17 +199,18 @@ export const usePrototypeCustomNodesStore = defineStore(
     }
 
     function confirmRebuild() {
-      const change = pendingChange.value
-      if (!change || rebuild.value || !isCustom.value) return
+      const changes = pendingChanges.value
+      if (!changes?.length || rebuild.value || !isCustom.value) return
       rebuild.value = {
         deploymentId: deployment.value.id,
         release: nextRelease(deployment.value.release),
-        change,
+        changes,
         startedAt: Date.now(),
         fixture: personaStore.fixture
       }
       now.value = Date.now()
-      pendingChange.value = null
+      pendingChanges.value = null
+      selected.value = []
       ticker.resume()
     }
 
@@ -202,16 +218,15 @@ export const usePrototypeCustomNodesStore = defineStore(
       const active = rebuild.value
       if (!active) return
       ticker.pause()
-      const { change, deploymentId, release } = active
+      const { changes, deploymentId, release } = active
+      const packIds = changes.map((change) => change.packId)
       const deployments = active.fixture.deployments ?? []
       active.fixture.deployments = deployments.map((d) =>
         d.id === deploymentId
           ? {
               ...d,
               release,
-              nodePacks: d.nodePacks.includes(change.packId)
-                ? d.nodePacks
-                : [...d.nodePacks, change.packId]
+              nodePacks: [...new Set([...d.nodePacks, ...packIds])]
             }
           : d
       )
@@ -219,20 +234,19 @@ export const usePrototypeCustomNodesStore = defineStore(
         ...pinsByDeployment.value,
         [deploymentId]: pinsAfter(
           pinsByDeployment.value[deploymentId] ?? {},
-          change
+          changes
         )
       }
+      const [first] = changes
       ready.value = {
         deploymentName:
           deployments.find((d) => d.id === deploymentId)?.name ?? '',
         release,
-        kind: change.kind,
-        packName:
-          policyCatalog.find((item) => item.id === change.packId)?.name ??
-          change.packId,
+        kind: first.kind,
+        packNames: packIds.map(packName),
         version: changeTarget(
-          change,
-          NODE_PACK_DETAILS[change.packId]?.releases[0]?.version ?? ''
+          first,
+          NODE_PACK_DETAILS[first.packId]?.releases[0]?.version ?? ''
         )
       }
       rebuild.value = null
@@ -244,7 +258,8 @@ export const usePrototypeCustomNodesStore = defineStore(
       () => {
         ticker.pause()
         isOpen.value = false
-        pendingChange.value = null
+        pendingChanges.value = null
+        selected.value = []
         rebuild.value = null
         ready.value = null
         drafts.value = {}
@@ -264,7 +279,8 @@ export const usePrototypeCustomNodesStore = defineStore(
       rows,
       visibleRows,
       requested,
-      pendingChange,
+      selected,
+      pendingChanges,
       rebuild: rebuildHere,
       rebuildChipName,
       progress,
@@ -273,6 +289,7 @@ export const usePrototypeCustomNodesStore = defineStore(
       open,
       close,
       pickDraftVersion,
+      setSelected,
       requestInstall,
       requestVersion,
       askAdmin,

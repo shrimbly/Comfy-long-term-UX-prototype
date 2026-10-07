@@ -123,7 +123,9 @@ describe('packRows', () => {
   ] satisfies { building: PackChange; id: string; state: string }[])(
     'marks the pack the next release builds as $state',
     ({ building, id, state }) => {
-      expect(rows({ building }).find((r) => r.id === id)?.state).toBe(state)
+      expect(
+        rows({ building: [building] }).find((r) => r.id === id)?.state
+      ).toBe(state)
     }
   )
 })
@@ -153,7 +155,17 @@ describe('pinsAfter', () => {
   ] satisfies { case: string; change: PackChange; expected: object }[])(
     '$case',
     ({ change, expected }) => {
-      expect(pinsAfter({ impact: '8.28.3' }, change)).toEqual(expected)
+      expect(pinsAfter({ impact: '8.28.3' }, [change])).toEqual(expected)
     }
   )
+
+  it('applies every change in one release', () => {
+    expect(
+      pinsAfter({ impact: '8.28.3' }, [
+        { kind: 'add', packId: 'kj', to: '1.4.2' },
+        { kind: 'add', packId: 'rg', to: null },
+        { kind: 'change', packId: 'impact', from: '8.28.3', to: null }
+      ])
+    ).toEqual({ kj: '1.4.2' })
+  })
 })
