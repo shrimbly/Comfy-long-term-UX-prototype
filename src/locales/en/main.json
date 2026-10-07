@@ -7459,6 +7459,28 @@
         "license": "License:",
         "sort": "Sort:",
         "all": "All"
+      },
+      "import": {
+        "open": "Import private pack",
+        "title": "Import a private pack",
+        "intro": "Add your own node pack. It joins the list, ticked, and installs like any other pack.",
+        "cancel": "Cancel",
+        "add": "Add pack",
+        "github": {
+          "tab": "GitHub repo",
+          "url": "Repository URL",
+          "urlHint": "https://github.com/acme/comfyui-matte-tools",
+          "invalid": "Enter a GitHub repository URL, like github.com/owner/repo.",
+          "ref": "Branch or tag",
+          "refHint": "main",
+          "access": "For a private repository, Comfy Cloud asks for access through GitHub the first time."
+        },
+        "zip": {
+          "tab": "Upload .zip",
+          "drop": "Drop a .zip of the pack here",
+          "browse": "or click to choose a file",
+          "invalid": "That isn’t a .zip file."
+        }
       }
     }
   },

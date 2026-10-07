@@ -1750,3 +1750,21 @@ Update (same day): **picking "Create a new deployment" offers the same two ways.
 Why: the operator, from the running prototype: users on a Comfy Cloud project who open the extensions button had no path to add custom nodes. Comfy Cloud is shared, so packs can't be added to it.
 
 Wiki link: `decisions/project-runs-on-shared-deployment.md` (a project runs on one deployment, so new packs mean a deployment that has them) and `decisions/missing-nodes-choose-where-it-runs.md` (same dialog, agent first, as in the entry above). The wiki is silent on whether the current project should move to the new deployment instead of getting a new project. Working answer: a new project, as in the incompatible-workflow flow. Promote? **no**, not yet: it depends on whether a project can change deployment.
+
+## [2026-10-08] Import a private custom node pack
+
+**Decision:** the Custom nodes modal has an **"Import private pack"** button beside the filters. It opens a small dialog with two tabs:
+
+- **GitHub repo:** a repository URL, plus a branch or tag (default `main`). A note says Comfy Cloud asks for GitHub access to a private repository the first time.
+- **Upload .zip:** drop the file, or click to choose it.
+
+What happens to an imported pack:
+
+- It joins the list with a **Private** badge, already ticked. It sorts after installed packs and before the public registry.
+- It installs the way any pack does: Install (a new release of the project's deployment) or "Create a new deployment" on Comfy Cloud. Members still ask an admin.
+- A GitHub pack is published by the repository's owner and versioned by its ref, and its name links to the repo. A .zip is published by the workspace and versioned by the day it was uploaded.
+- Imports belong to the workspace and pass the custom node policy without an allowlist entry.
+
+Why: Pablo, in Slack (2026-10-08): "can you also add here a way to import your private custom node? maybe link to github repo or drop a zip file?"
+
+Wiki link: `decisions/custom-nodes-as-configuration.md` (packs are configuration, not assets, so a private pack is a workspace config item, not a shareable asset). The wiki is silent on private pack sources, on GitHub authorisation, and on whether a workspace policy can restrict private imports. Working answers: the two sources Pablo named; GitHub access is asked for on first use; private imports bypass the allowlist. Promote? **no**: check against Platform's custom node upload (DPLAT-2345) first.

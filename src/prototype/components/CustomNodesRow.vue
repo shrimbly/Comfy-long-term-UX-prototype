@@ -39,17 +39,16 @@
           aria-hidden="true"
         />
       </a>
-      <template v-else>
-        <span class="truncate">{{ row.name }}</span>
-        <Badge
-          variant="compact"
-          severity="secondary"
-          class="text-muted-foreground"
-        >
-          <i class="icon-[lucide--lock] size-2.5" aria-hidden="true" />
-          {{ t('prototype.customNodes.private') }}
-        </Badge>
-      </template>
+      <span v-else class="truncate">{{ row.name }}</span>
+      <Badge
+        v-if="row.private"
+        variant="compact"
+        severity="secondary"
+        class="text-muted-foreground"
+      >
+        <i class="icon-[lucide--lock] size-2.5" aria-hidden="true" />
+        {{ t('prototype.customNodes.private') }}
+      </Badge>
     </span>
     <span
       role="cell"

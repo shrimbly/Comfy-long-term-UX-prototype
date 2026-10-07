@@ -9,7 +9,8 @@
   The Custom nodes modal the editor's extensions button opens, laid out
   like Platform's builder table: search with Status, License and Sort
   filters, then pack, publisher, installs, stars, version, license and an
-  Install checkbox. The footer installs every ticked pack in one release;
+  Install checkbox. A private pack can be imported from GitHub or a .zip.
+  The footer installs every ticked pack in one release;
   on Comfy Cloud, which can't add packs, it creates a new deployment with
   them instead.
 -->
@@ -84,6 +85,15 @@
               :label="t('prototype.customNodes.toolbar.sort')"
               :aria-label="t('prototype.customNodes.toolbar.sort')"
             />
+            <Button
+              variant="secondary"
+              size="md"
+              :disabled="!!store.rebuild"
+              @click="importing = true"
+            >
+              <i class="icon-[lucide--upload] size-4" />
+              {{ t('prototype.customNodes.import.open') }}
+            </Button>
           </div>
         </DialogHeader>
 
@@ -193,11 +203,12 @@
       </DialogContent>
     </DialogPortal>
   </Dialog>
+  <CustomNodesImportDialog v-if="importing" @close="importing = false" />
 </template>
 
 <script setup lang="ts">
 import { cn } from '@comfyorg/tailwind-utils'
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import Button from '@/components/ui/button/Button.vue'
@@ -216,6 +227,7 @@ import { usePrototypeCustomNodesStore } from '../stores/customNodesStore'
 import { ANY_LICENSE } from '../utils/customNodes'
 import type { PackSort, PackStatus } from '../utils/customNodes'
 
+import CustomNodesImportDialog from './CustomNodesImportDialog.vue'
 import CustomNodesRow from './CustomNodesRow.vue'
 import DeploymentStatusDot from './DeploymentStatusDot.vue'
 import ToolbarSelect from './ToolbarSelect.vue'
@@ -230,6 +242,7 @@ const tText = useTextT()
 const store = usePrototypeCustomNodesStore()
 const customCloud = usePrototypeCustomCloudStore()
 
+const importing = ref(false)
 const deployment = computed(() => store.deployment)
 const selectedCount = computed(() => store.selected.length)
 
