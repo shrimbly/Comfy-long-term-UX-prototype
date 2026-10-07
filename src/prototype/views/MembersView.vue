@@ -17,21 +17,7 @@
     Permissions  — per-role baseline delegation matrix (Admin only)
 -->
 <template>
-  <div class="mx-auto flex w-full max-w-6xl flex-col gap-6">
-    <header class="flex items-start justify-between">
-      <div v-if="!embedded">
-        <PageTitle>{{ t('prototype.views.members.title') }}</PageTitle>
-      </div>
-      <div v-else />
-      <button
-        type="button"
-        class="inline-flex h-10 cursor-pointer items-center gap-2 rounded-lg bg-base-foreground px-4 text-sm font-medium text-base-background transition-opacity hover:opacity-90"
-        @click="showInvite = true"
-      >
-        {{ t('prototype.views.members.invite') }}
-      </button>
-    </header>
-
+  <div class="flex w-full flex-col gap-6">
     <nav class="flex gap-1 border-b border-border-subtle" role="tablist">
       <button
         v-for="tab in tabs"
@@ -237,15 +223,13 @@ import { storeToRefs } from 'pinia'
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
-import PageTitle from '../components/PageTitle.vue'
-
 import InviteMemberDialog from '../components/InviteMemberDialog.vue'
 import MemberRowActions from '../components/MemberRowActions.vue'
 import PermissionsMatrix from '../components/PermissionsMatrix.vue'
 import { usePrototypePersonaStore } from '../stores/personaStore'
 import type { WorkspaceMember, WorkspaceRole } from '../types'
 
-const { embedded = false } = defineProps<{ embedded?: boolean }>()
+const showInvite = defineModel<boolean>('inviting', { default: false })
 
 const { t } = useI18n()
 const personaStore = usePrototypePersonaStore()
@@ -253,7 +237,6 @@ const { fixture, currentWorkspace } = storeToRefs(personaStore)
 
 type TabId = 'members' | 'pending' | 'permissions'
 const activeTab = ref<TabId>('members')
-const showInvite = ref(false)
 
 const viewerRole = computed<WorkspaceRole>(
   () => currentWorkspace.value?.currentUserRole ?? 'member'

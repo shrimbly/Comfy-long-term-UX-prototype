@@ -6627,7 +6627,7 @@
       "members": {
         "title": "Members",
         "subtitle": "{count} members in this workspace",
-        "invite": "+ Invite",
+        "invite": "Invite",
         "tabs": {
           "members": "Members",
           "pending": "Pending",

@@ -1,7 +1,6 @@
 <template>
-  <div class="mx-auto flex max-w-4xl flex-col gap-10">
+  <div class="flex w-full max-w-4xl flex-col gap-10">
     <SettingsPanel
-      class="max-w-4xl"
       :title="t('prototype.views.settings.general.heading')"
       :description="t('prototype.views.settings.general.description')"
     >
