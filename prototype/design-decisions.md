@@ -1744,3 +1744,11 @@ Promote? **maybe**: the impact step and the fork rule.
 - Alternatives, mocked at `/prototype/design/edit-deployment` (`pages/EditDeploymentOptions.vue`): A a three-step stepper, B one page with both cards, C "What do you want to change?" tiles first. D (segmented) is built and was picked on 2026-10-07. Notes: <https://claude.ai/code/artifact/e813e766-0bcc-4a57-9968-ff2ee122f792>.
 
 Wiki link: `decisions/project-runs-on-shared-deployment.md`. Promote? **maybe**: the review step's three ways out.
+
+---
+
+## [2026-10-07] Edit deployment on Comfy Cloud: the same modal, read-only, with the ways out
+
+- **Decision: Edit deployment on a Comfy Cloud project opens a modal (`EditCloudDialog.vue`), not the policies page.** It reads like the custom one but nothing in it rebuilds: ComfyUI is "Latest stable · Managed by Comfy", custom nodes and models show "7 of 11" / "All" from the workspace policies, GPU is "Picked for each run".
+- Its buttons are the ways out: **Edit workspace policies** (the only knobs Comfy Cloud has) and **Change environment** (the picker: an existing custom deployment or a new one).
+- Reason: the button is called Edit deployment everywhere, so it should always open a dialog; jumping to a settings page read as a broken link.

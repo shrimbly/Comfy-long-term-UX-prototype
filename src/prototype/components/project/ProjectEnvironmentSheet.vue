@@ -35,7 +35,10 @@
           </div>
           <div class="flex shrink-0 items-center gap-1">
             <Button
-              v-if="environments.canManage"
+              v-if="
+                environments.canManage &&
+                (deployment.kind === 'custom' || projectId)
+              "
               variant="secondary"
               size="sm"
               @click="onEdit"
@@ -297,11 +300,10 @@ import TabsContent from '@/components/ui/tabs/TabsContent.vue'
 import TabsList from '@/components/ui/tabs/TabsList.vue'
 import TabsTrigger from '@/components/ui/tabs/TabsTrigger.vue'
 
-import { policyCatalog } from '../../fixtures/policyCatalog'
+import { useWorkspaceAllowlist } from '../../composables/useWorkspaceAllowlist'
 import { usePrototypeCustomCloudStore } from '../../stores/customCloudStore'
 import { usePrototypeEnvironmentStore } from '../../stores/environmentStore'
 import { usePrototypePersonaStore } from '../../stores/personaStore'
-import { usePrototypePolicyStore } from '../../stores/policyStore'
 import { usePrototypeUiStore } from '../../stores/uiStore'
 import type { Deployment } from '../../types'
 import DeploymentStatusDot from '../DeploymentStatusDot.vue'
@@ -322,7 +324,6 @@ const triggerClass =
 const { t } = useI18n()
 const ui = usePrototypeUiStore()
 const personaStore = usePrototypePersonaStore()
-const policies = usePrototypePolicyStore()
 const environments = usePrototypeEnvironmentStore()
 const customCloud = usePrototypeCustomCloudStore()
 const titleId = useId()
@@ -350,27 +351,7 @@ const cloudStats = [
   }
 ]
 
-// Comfy Cloud runs everything it supports unless the workspace policies
-// narrow it: a kind is restricted when any catalog item is not allowed.
-const restrictions = computed(() =>
-  (['nodes', 'models'] as const).map((kind) => {
-    const items = policyCatalog.filter((item) => item.kind === kind)
-    const allowed = items
-      .filter((item) => policies.isAllowed(item.id))
-      .map((item) => item.name)
-    return {
-      id: kind,
-      label: t(
-        kind === 'nodes'
-          ? 'prototype.projectPage.environmentSheet.customNodes'
-          : 'prototype.projectPage.environmentSheet.models'
-      ),
-      restricted: allowed.length < items.length,
-      allowed,
-      total: items.length
-    }
-  })
-)
+const restrictions = useWorkspaceAllowlist()
 
 // A custom build pins its packs and models.
 const contents = computed(() => [
@@ -403,14 +384,12 @@ function openPolicies() {
   ui.openSettings('policies')
 }
 
-// A custom build edits through the build steps. Comfy Cloud runs whatever
-// the workspace allows, so editing it is editing the policies.
 function onEdit() {
+  emit('close')
   if (deployment.kind === 'comfy-cloud') {
-    openPolicies()
+    if (projectId) customCloud.openEditCloud(projectId)
     return
   }
-  emit('close')
   customCloud.openEditDeployment(deployment.id, projectId)
 }
 

@@ -111,6 +111,8 @@ export const usePrototypeCustomCloudStore = defineStore(
     const editingWarmMinutes = ref(WARM_MINUTES)
     const editingItemsKind = ref<'nodes' | 'models'>('nodes')
     const editStep = ref<EditStep | null>(null)
+    // Edit deployment on Comfy Cloud: read-only, for this project.
+    const editCloudProjectId = ref<string | null>(null)
     const build = shallowRef<ActiveBuild | null>(null)
     // The deployment just built: its project, once named, opens with the
     // "ready" toast.
@@ -471,6 +473,14 @@ export const usePrototypeCustomCloudStore = defineStore(
       editStep.value = 'config'
     }
 
+    function openEditCloud(projectId: string) {
+      editCloudProjectId.value = projectId
+    }
+
+    function closeEditCloud() {
+      editCloudProjectId.value = null
+    }
+
     function cancelEdit() {
       editingDeploymentId.value = null
       editingFromProjectId.value = null
@@ -660,6 +670,7 @@ export const usePrototypeCustomCloudStore = defineStore(
         editingDeploymentId.value = null
         editingFromProjectId.value = null
         editStep.value = null
+        editCloudProjectId.value = null
         tabsStore.reset()
       }
     )
@@ -689,6 +700,9 @@ export const usePrototypeCustomCloudStore = defineStore(
       editingWarmMinutes,
       editingItemsKind,
       editStep,
+      editCloudProjectId,
+      openEditCloud,
+      closeEditCloud,
       editingProjects,
       editingChanges,
       editingChangeCount,

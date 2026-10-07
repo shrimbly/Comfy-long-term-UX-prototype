@@ -7119,6 +7119,14 @@
         "changed": "Changed",
         "cloudHint": "Or run this project on Comfy Cloud. No build needed.",
         "cloudSwitch": "Switch to Comfy Cloud"
+      },
+      "editCloud": {
+        "latest": "Latest stable",
+        "managedByComfy": "Managed by Comfy",
+        "fromPolicies": "From workspace policies",
+        "managed": "Comfy Cloud has no settings of its own. Change what projects can use in Workspace policies, or move this project to a custom deployment.",
+        "policies": "Edit workspace policies",
+        "change": "Change environment"
       }
     },
     "settings": {
