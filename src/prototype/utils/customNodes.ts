@@ -12,7 +12,7 @@ import type { PolicyItem } from '../fixtures/policyCatalog'
 import type { NodePackDetails, PackRelease } from '../fixtures/nodePacks'
 import type { Deployment } from '../types'
 
-export const PRIVATE_LICENSE = 'Private'
+const PRIVATE_LICENSE = 'Private'
 
 // A version change or a new pack, made by rebuilding the deployment.
 // `to: null` follows the latest release.
