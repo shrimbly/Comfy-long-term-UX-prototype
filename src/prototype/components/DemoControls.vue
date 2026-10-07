@@ -7,7 +7,7 @@
   Presenter-only controls, folded into one small "Demo" pill so they stay out
   of the way of the editor: pick a persona, open the incompatible matte_pass
   workflow without a real file drop (as is, or as if no deployment ran it
-  yet), and reset the demo. Every prototype store is in memory, so a page
+  yet), finish the coding agent's build, and reset the demo. Every prototype store is in memory, so a page
   reload is the reset: back to the seed fixtures, whatever state the demo was
   left in.
 -->
@@ -73,6 +73,15 @@
           "
         >
           {{ t('prototype.customCloud.demo.dropNothingRuns') }}
+        </Button>
+        <Button
+          v-if="customCloud.agentWorking"
+          variant="textonly"
+          size="md"
+          class="w-full justify-start font-normal"
+          @click="run(() => customCloud.finishAgentBuild())"
+        >
+          {{ t('prototype.customCloud.demo.finishAgent') }}
         </Button>
       </template>
       <div class="my-1 h-px bg-border-subtle" />

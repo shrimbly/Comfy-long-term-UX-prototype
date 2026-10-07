@@ -196,6 +196,66 @@ describe('customCloudStore', () => {
     expect(store.readyProjectId).toBe(store.currentProject?.id)
   })
 
+  it('waits on the coding agent out of sight, then asks for a project on its new deployment', async () => {
+    const { store } = await setup()
+    openWorkflowIn(store, 'proj-marketing')
+    store.dropIncompatibleWorkflow({ nothingRuns: true })
+    store.handOffToAgent()
+    store.dialogStep = null
+
+    vi.advanceTimersByTime(DEMO_BUILD_MS - 1)
+    expect(store.dialogStep).toBeNull()
+    expect(store.buildingDeployment).toBeUndefined()
+
+    vi.advanceTimersByTime(1)
+    expect(store.agentWorking).toBe(false)
+    expect(store.dialogStep).toBe('agent-done')
+    const built = store.deploymentTargets.find(
+      (target) => target.deployment.id === store.deploymentTarget
+    )
+    expect(built).toMatchObject({
+      runs: true,
+      deployment: { name: 'Matte R&D', status: 'ready' }
+    })
+
+    store.createProjectOn(store.deploymentTarget)
+    vi.advanceTimersByTime(RELOAD_MS)
+    expect(store.currentProject?.name).toBe('Matte R&D')
+    expect(store.showsMissingNodes).toBe(false)
+  })
+
+  it('takes the next release of the project’s deployment from the coding agent, then runs the workflow there', async () => {
+    const { store } = await setup()
+    openWorkflowIn(store, 'proj-personal-rnd')
+    store.dropIncompatibleWorkflow({ nothingRuns: true })
+    expect(store.chooseMode).toBe('update')
+    store.handOffToAgent()
+    store.dialogStep = null
+
+    store.finishAgentBuild()
+
+    expect(store.dialogStep).toBeNull()
+    expect(store.currentDeployment).toMatchObject({
+      name: 'Matte tests',
+      release: 'v8'
+    })
+    expect(store.showsMissingNodes).toBe(false)
+    expect(store.readyProjectId).toBe('proj-personal-rnd')
+  })
+
+  it('drops the agent hand-off when the deployment is built here instead', async () => {
+    const { store } = await setup()
+    openWorkflowIn(store, 'proj-marketing')
+    store.dropIncompatibleWorkflow({ nothingRuns: true })
+    store.handOffToAgent()
+
+    store.buildAndDeploy(PLATFORM_GPUS[0])
+    vi.advanceTimersByTime(DEMO_BUILD_MS + 400)
+
+    expect(store.agentWorking).toBe(false)
+    expect(store.dialogStep).toBe('project')
+  })
+
   it('opens the dialog instead of running while nodes are missing', async () => {
     const { store } = await setup()
     openWorkflowIn(store, 'proj-marketing')
