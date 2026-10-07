@@ -46,10 +46,6 @@
           </p>
         </div>
         <div class="flex items-center gap-3">
-          <span
-            class="rounded-full border border-border-subtle px-3 py-1.5 text-xs text-muted-foreground"
-            >{{ t('prototype.settings.policies.allProjects') }}</span
-          >
           <Button
             v-if="kind === 'nodes' && store.canEdit"
             variant="secondary"

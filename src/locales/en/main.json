@@ -7292,7 +7292,6 @@
         "modelsHeading": "Model allowlist",
         "scope": "Only allowed items can run in {workspace}.",
         "info": "These rules apply to every project in this workspace. Removed items cannot run, even in existing workflows. Owners and admins can change these rules.",
-        "allProjects": "All projects",
         "readOnly": "Only workspace owners and admins can change policies.",
         "search": "Search by name or publisher…",
         "status": "Status",
