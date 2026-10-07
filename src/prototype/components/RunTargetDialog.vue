@@ -6,14 +6,16 @@
     flow:     ../prototype/flows/07-custom-cloud-happy-path.md
     decision: prototype/design-decisions.md — 2026-10-07 "Flow 07: the
               incompatible-workflow dialog, redesigned on a canvas"
+    decision: prototype/design-decisions.md — 2026-10-08 "Flow 07: the
+              coding agent leads 'choose where it runs'"
 
   "Choose where it runs": the positive replacement for the missing-nodes
   error toast. Step 1 picks where the workflow runs; the "New project" step
-  names the project and sets its access; a new deployment then goes on to
-  Platform's build summary and its deploy dialog, then the build's progress;
-  its project is named and opened only once the deployment is done. The
-  agent prompt is an alternative to step 3. Everything Platform owns (build
-  settings, updating a deployment) opens there.
+  names the project and sets its access. A new deployment is built by the
+  user's coding agent, from a prompt, or here: Platform's build summary and
+  its deploy dialog, then the build's progress. Either way its project is
+  named and opened only once the deployment is done. Build settings Platform
+  owns open there.
 -->
 <template>
   <Teleport to="body">
@@ -62,7 +64,15 @@
           :title-id="titleId"
           @customise="customising = $event"
         />
-        <RunTargetAgent v-else-if="step === 'agent'" :title-id="titleId" />
+        <RunTargetAgent
+          v-else-if="step === 'agent'"
+          :title-id="titleId"
+          @close="close"
+        />
+        <RunTargetAgentDone
+          v-else-if="step === 'agent-done'"
+          :title-id="titleId"
+        />
         <RunTargetBuilding
           v-else-if="step === 'building' && building"
           :title-id="titleId"
@@ -104,6 +114,7 @@ import { usePrototypeCustomCloudStore } from '../stores/customCloudStore'
 
 import PlatformConfirm from './PlatformConfirm.vue'
 import RunTargetAgent from './RunTargetAgent.vue'
+import RunTargetAgentDone from './RunTargetAgentDone.vue'
 import RunTargetBuilding from './RunTargetBuilding.vue'
 import RunTargetBuildSummary from './RunTargetBuildSummary.vue'
 import RunTargetChoose from './RunTargetChoose.vue'

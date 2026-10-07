@@ -67,6 +67,7 @@ export const DEFAULT_MAX_WORKERS = 3
 export const MAX_WORKERS = 20
 
 export const DEFAULT_BUILD_PROJECT_NAME = 'Matte R&D'
+export const DEFAULT_PACKS_BUILD_NAME = 'Node R&D'
 export const BUILD_PROJECT_COLOR = '#2f9e8f'
 export const WARM_MINUTES = 2
 

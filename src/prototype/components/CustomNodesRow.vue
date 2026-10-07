@@ -87,7 +87,10 @@
       <PackVersionSelect
         v-else
         :row
-        :disabled="!!store.rebuild || !store.isCustom || !store.canInstall"
+        :disabled="
+          !!store.rebuild ||
+          (store.isCustom ? !store.canInstall : row.state === 'installed')
+        "
         @pick="onPick"
       />
     </span>
@@ -162,9 +165,7 @@ const isInstalled = computed(
   () => row.state === 'installed' || row.state === 'changing'
 )
 const isRequested = computed(() => store.requested.includes(row.id))
-const selectable = computed(
-  () => !isRequested.value && !store.rebuild && store.isCustom
-)
+const selectable = computed(() => !isRequested.value && !store.rebuild)
 
 const buildingLabel = computed(() => {
   const params = {

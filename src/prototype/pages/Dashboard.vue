@@ -67,10 +67,15 @@
           })
         "
         :body="
-          tText('prototype.customCloud.ready.body', {
-            workflow: MATTE_PASS.name,
-            project: readyProject.name
-          })
+          customCloud.forPacks
+            ? tText('prototype.customCloud.ready.packsBody', {
+                packs: customCloud.needs.nodePacks.join(', '),
+                project: readyProject.name
+              })
+            : tText('prototype.customCloud.ready.body', {
+                workflow: MATTE_PASS.name,
+                project: readyProject.name
+              })
         "
         @dismiss="customCloud.readyProjectId = null"
       />

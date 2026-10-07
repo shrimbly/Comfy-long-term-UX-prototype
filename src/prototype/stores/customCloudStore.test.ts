@@ -196,6 +196,91 @@ describe('customCloudStore', () => {
     expect(store.readyProjectId).toBe(store.currentProject?.id)
   })
 
+  it('waits on the coding agent out of sight, then asks for a project on its new deployment', async () => {
+    const { store } = await setup()
+    openWorkflowIn(store, 'proj-marketing')
+    store.dropIncompatibleWorkflow({ nothingRuns: true })
+    store.handOffToAgent()
+    store.dialogStep = null
+
+    vi.advanceTimersByTime(DEMO_BUILD_MS - 1)
+    expect(store.dialogStep).toBeNull()
+    expect(store.buildingDeployment).toBeUndefined()
+
+    vi.advanceTimersByTime(1)
+    expect(store.agentWorking).toBe(false)
+    expect(store.dialogStep).toBe('agent-done')
+    const built = store.deploymentTargets.find(
+      (target) => target.deployment.id === store.deploymentTarget
+    )
+    expect(built).toMatchObject({
+      runs: true,
+      deployment: { name: 'Matte R&D', status: 'ready' }
+    })
+
+    store.createProjectOn(store.deploymentTarget)
+    vi.advanceTimersByTime(RELOAD_MS)
+    expect(store.currentProject?.name).toBe('Matte R&D')
+    expect(store.showsMissingNodes).toBe(false)
+  })
+
+  it('builds a new deployment for packs picked on a Comfy Cloud project, then opens a project on it', async () => {
+    const { store, tabs } = await setup()
+    openWorkflowIn(store, 'proj-marketing')
+    store.openNewDeploymentFor(['comfyui-kjnodes', 'rgthree-comfy'])
+
+    expect(store.dialogStep).toBe('choose')
+    expect(store.chooseMode).toBe('new')
+    expect(store.deploymentTarget).toBe(NEW_BUILD_TARGET)
+
+    store.handOffToAgent()
+    vi.advanceTimersByTime(DEMO_BUILD_MS)
+    expect(store.dialogStep).toBe('agent-done')
+
+    store.createProjectOn(store.deploymentTarget)
+    vi.advanceTimersByTime(RELOAD_MS)
+    expect(store.currentProject?.name).toBe('Node R&D')
+    expect(store.currentDeployment.nodePacks).toEqual([
+      'comfyui-kjnodes',
+      'rgthree-comfy'
+    ])
+    expect(tabs.openTabs.some((t) => t.workflowKey === 'matte_pass')).toBe(
+      false
+    )
+  })
+
+  it('takes the next release of the project’s deployment from the coding agent, then runs the workflow there', async () => {
+    const { store } = await setup()
+    openWorkflowIn(store, 'proj-personal-rnd')
+    store.dropIncompatibleWorkflow({ nothingRuns: true })
+    expect(store.chooseMode).toBe('update')
+    store.handOffToAgent()
+    store.dialogStep = null
+
+    store.finishAgentBuild()
+
+    expect(store.dialogStep).toBeNull()
+    expect(store.currentDeployment).toMatchObject({
+      name: 'Matte tests',
+      release: 'v8'
+    })
+    expect(store.showsMissingNodes).toBe(false)
+    expect(store.readyProjectId).toBe('proj-personal-rnd')
+  })
+
+  it('drops the agent hand-off when the deployment is built here instead', async () => {
+    const { store } = await setup()
+    openWorkflowIn(store, 'proj-marketing')
+    store.dropIncompatibleWorkflow({ nothingRuns: true })
+    store.handOffToAgent()
+
+    store.buildAndDeploy(PLATFORM_GPUS[0])
+    vi.advanceTimersByTime(DEMO_BUILD_MS + 400)
+
+    expect(store.agentWorking).toBe(false)
+    expect(store.dialogStep).toBe('project')
+  })
+
   it('opens the dialog instead of running while nodes are missing', async () => {
     const { store } = await setup()
     openWorkflowIn(store, 'proj-marketing')

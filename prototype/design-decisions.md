@@ -1722,6 +1722,37 @@ Update (same day): **the table now matches Platform's layout.** Search sits next
 
 ---
 
+## [2026-10-08] Flow 07: the coding agent leads "choose where it runs"
+
+- **Decision: when nothing runs the dropped workflow, "Use your coding agent" is the main action and "Build it here" is the alternative.** It replaces Create deployment (from a Comfy Cloud project) and Update on Platform (from a project on its own deployment). The button follows Platform's "Use your coding agent" (Comfy-Org/platform `components/AgentHandoffTrigger.vue`): the full-width primary control with the fanned Codex, Claude and OpenCode icons, then an "or" rule, then a hairline "Build it here". Not now, Update an existing deployment and Create a new deployment instead are gone.
+- **The agent path shows nothing in Comfy Cloud between the prompt and the finish.** Copy prompt hands off: the agent builds, deploys and deals with any failure on the user's machine. There is no Building chip, no lock and no progress. When it finishes, the dialog asks for a project on the new deployment ("Your agent deployed Matte R&D"), then the usual New project step. An update finishes as the next release and the ready toast. The demo stands in for the agent with an 18-second timer and a "Finish the agent's build" control.
+- **The prompt** names the workflow, what Comfy Cloud lacks, comfy-cli's build and deploy skills, and (for an update) the deployment id and the release to make. It keeps the prototype's `comfy build from-workflow` command; check it against the published comfy-cli.
+- **Build it here** keeps the existing paths: the build summary (now without "Build with your agent") for a new deployment, and the custom nodes rebuild confirmation for a new release of the project's deployment.
+- Not built: Variations B (two cards) and C (prompt snippet + split copy button) from the canvas. A deployment that already runs the workflow (1A) is unchanged, so picking "Create a new deployment" there goes straight to the build summary with no agent option.
+
+Why: Eric Sun, replying to the demo in Slack (#C0BD6BR53QX, p1791326140895409), as relayed in the design brief: builds can fail because custom nodes are complex, so for the short term the user copies a prompt into their own coding agent, which builds and deploys. Jacob Segal agreed for the MVP. The operator: "make the prompt the more prominent path for the demo", with a button like Platform's.
+
+Wiki link: **reverses** `decisions/missing-nodes-choose-where-it-runs.md` ("Secondary only: Build with your agent"; Willie, 36:53: "less people will have coding agents"). Also strains `concepts/custom-comfy-cloud.md`: its user "doesn't write software" and the experience is cloud-first. Validate with customers, as Eric asked.
+
+Canvas: <https://claude.ai/artifact/PQby9iCSzrR7WMvbsqnY11>, section "Agent-first: build with your coding agent (Eric's ask)". Promote? **yes, if customers validate it**: revise the missing-nodes decision so the agent leads for the MVP.
+
+Update (same day): **picking "Create a new deployment" offers the same two ways.** When a deployment already runs the workflow (1A) and the presenter picks a new deployment in the picker, the footer (Open in another project, Not now, Create deployment) gives way to "Use your coding agent" and "Build it here". The agent's "Your agent deployed …" step does the same if a new deployment is picked there. Operator's ask, from the running prototype.
+
+## [2026-10-08] Custom nodes on a Comfy Cloud project: pick packs, then create a new deployment
+
+**Decision:** on a project that runs on Comfy Cloud, the Custom nodes modal no longer dead-ends.
+
+- Packs can be ticked, and a version picked, the same as on a project's own deployment. Comfy Cloud's installed packs stay locked.
+- The footer button is **"Create a new deployment"**. It opens "choose where it runs" in its `new` state, titled "Create a new deployment", listing the picked packs in place of missing ones.
+- The user picks how to build it: **"Use your coding agent"** (a prompt that lists the packs and asks for a new deployment) or **"Build it here"** (Platform's build summary, then deploy).
+- When the build finishes, the usual New project step names a project on the new deployment and opens it. The current project stays on Comfy Cloud. The default name is "Node R&D".
+
+Why: the operator, from the running prototype: users on a Comfy Cloud project who open the extensions button had no path to add custom nodes. Comfy Cloud is shared, so packs can't be added to it.
+
+Wiki link: `decisions/project-runs-on-shared-deployment.md` (a project runs on one deployment, so new packs mean a deployment that has them) and `decisions/missing-nodes-choose-where-it-runs.md` (same dialog, agent first, as in the entry above). The wiki is silent on whether the current project should move to the new deployment instead of getting a new project. Working answer: a new project, as in the incompatible-workflow flow. Promote? **no**, not yet: it depends on whether a project can change deployment.
+
+---
+
 ## [2026-10-07] Edit deployment end to end: items, impact, update or fork
 
 - **Decision: models and custom nodes are edited inside the build summary.** The two rows open a list: remove with the x, add from what the workspace policies allow. Projects inherit the workspace allowlists and can only narrow them, so nothing outside them can be added. The ComfyUI version is a select in the same summary. Nothing applies until the deployment rebuilds.

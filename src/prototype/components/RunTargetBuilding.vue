@@ -106,7 +106,6 @@ import { useToastStore } from '@/platform/updates/common/toastStore'
 
 import { useTextT } from '../composables/useTextT'
 import { usePrototypeCustomCloudStore } from '../stores/customCloudStore'
-import { MATTE_PASS } from '../fixtures/customCloud'
 import type { BuildPhase, BuildStage } from '../fixtures/customCloud'
 import type { Deployment } from '../types'
 import type { BuildProgress } from '../utils/deployment'
@@ -213,8 +212,10 @@ const phases = computed(() =>
 function stageLabel(id: BuildStage['id'], state: string) {
   const [inProgress, done] = STAGE_KEYS[id]
   return t(state === 'done' ? done : inProgress, {
-    model: MATTE_PASS.localOnlyModels.join(', '),
-    packs: MATTE_PASS.nodePacks.join(', '),
+    model:
+      customCloud.needs.localOnlyModels.join(', ') ||
+      customCloud.needs.nodePacks.join(', '),
+    packs: customCloud.needs.nodePacks.join(', '),
     gpu: deployment.gpu
   })
 }

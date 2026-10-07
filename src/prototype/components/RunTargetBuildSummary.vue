@@ -8,8 +8,8 @@
 
   Step 2: the build summary card Platform shows for a workflow ("Suggested
   settings"). The name edits in place; every other setting is changed on
-  Platform, so its row asks first. The agent is the alternative to deploying
-  from here.
+  Platform, so its row asks first. The coding agent is offered a step
+  earlier, as the first way to a deployment.
 -->
 <template>
   <h2 :id="titleId" class="m-0 pr-8 text-2xl font-semibold">
@@ -84,14 +84,6 @@
       {{ t('prototype.customCloud.dialog.back') }}
     </Button>
     <Button
-      variant="outline"
-      size="lg"
-      @click="customCloud.dialogStep = 'agent'"
-    >
-      <i class="icon-[lucide--bot] size-4" />
-      {{ t('prototype.customCloud.dialog.build.withAgent') }}
-    </Button>
-    <Button
       variant="inverted"
       size="lg"
       @click="customCloud.dialogStep = 'deploy'"
@@ -107,7 +99,7 @@ import { useI18n } from 'vue-i18n'
 
 import Button from '@/components/ui/button/Button.vue'
 
-import { BUILD_DEFAULTS, MATTE_PASS } from '../fixtures/customCloud'
+import { BUILD_DEFAULTS } from '../fixtures/customCloud'
 import { usePrototypeCustomCloudStore } from '../stores/customCloudStore'
 
 const { titleId } = defineProps<{
@@ -134,11 +126,11 @@ const source = computed(() =>
         nodePacks: editing.value.nodePacks
       }
     : {
-        name: MATTE_PASS.name,
+        name: customCloud.needs.name,
         comfyVersion: BUILD_DEFAULTS.comfyVersion,
         runtime: BUILD_DEFAULTS.runtime,
-        models: MATTE_PASS.models,
-        nodePacks: MATTE_PASS.nodePacks
+        models: customCloud.needs.models,
+        nodePacks: customCloud.needs.nodePacks
       }
 )
 

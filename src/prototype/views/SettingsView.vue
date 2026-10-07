@@ -2,20 +2,33 @@
   <div
     class="mx-auto flex w-full max-w-7xl flex-col gap-8 px-6 py-8 pb-24 lg:px-12"
   >
-    <header class="border-b border-border-subtle pb-6">
-      <div class="mb-3 flex items-center gap-2 text-xs text-muted-foreground">
-        <span>{{
-          isAccount
-            ? t('prototype.settings.accountGroup')
-            : currentWorkspace?.name
-        }}</span>
-        <i class="icon-[lucide--chevron-right] size-3" />
-        <span>{{ title }}</span>
+    <header
+      class="flex items-end justify-between gap-4 border-b border-border-subtle pb-6"
+    >
+      <div>
+        <div class="mb-3 flex items-center gap-2 text-xs text-muted-foreground">
+          <span>{{
+            isAccount
+              ? t('prototype.settings.accountGroup')
+              : currentWorkspace?.name
+          }}</span>
+          <i class="icon-[lucide--chevron-right] size-3" />
+          <span>{{ title }}</span>
+        </div>
+        <h2 class="m-0 text-2xl font-semibold tracking-tight">{{ title }}</h2>
+        <p class="mt-2 mb-0 text-sm text-muted-foreground">
+          {{ t(`prototype.settings.pages.${ui.settingsPage}.description`) }}
+        </p>
       </div>
-      <h2 class="m-0 text-2xl font-semibold tracking-tight">{{ title }}</h2>
-      <p class="mt-2 mb-0 text-sm text-muted-foreground">
-        {{ t(`prototype.settings.pages.${ui.settingsPage}.description`) }}
-      </p>
+      <Button
+        v-if="ui.settingsPage === 'members'"
+        variant="inverted"
+        size="lg"
+        @click="inviting = true"
+      >
+        <i class="icon-[lucide--plus] size-4" />
+        {{ t('prototype.views.members.invite') }}
+      </Button>
     </header>
     <div v-if="isAccount" class="mx-auto flex w-full max-w-4xl flex-col gap-10">
       <template v-if="ui.settingsPage === 'account'">
@@ -91,7 +104,10 @@
       :key="currentWorkspace?.id"
     />
     <ProjectsSettings v-else-if="ui.settingsPage === 'projects'" />
-    <MembersView v-else-if="ui.settingsPage === 'members'" embedded />
+    <MembersView
+      v-else-if="ui.settingsPage === 'members'"
+      v-model:inviting="inviting"
+    />
     <WorkspaceUsage
       v-else-if="ui.settingsPage === 'usage'"
       :key="currentWorkspace?.id"
@@ -118,8 +134,11 @@
 
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+
+import Button from '@/components/ui/button/Button.vue'
+
 import { usePrototypePersonaStore } from '../stores/personaStore'
 import { usePrototypeUiStore } from '../stores/uiStore'
 import BillingSection from '../components/BillingSection.vue'
@@ -132,6 +151,7 @@ import MembersView from './MembersView.vue'
 const { t } = useI18n()
 const ui = usePrototypeUiStore()
 const { fixture, currentWorkspace } = storeToRefs(usePrototypePersonaStore())
+const inviting = ref(false)
 const isAccount = computed(() =>
   ['account', 'security'].includes(ui.settingsPage)
 )

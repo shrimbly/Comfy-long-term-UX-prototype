@@ -9,9 +9,10 @@
 // Drives the Custom Comfy Cloud demo: which project the tab strip belongs
 // to, the reload when it switches, the "choose where it runs" dialog for
 // the incompatible matte_pass workflow (where it runs, the build summary,
-// the deploy settings), and the fast demo build that locks the new
-// project. Runs go through the real editor's queue; the in-browser backend
-// reports the run state, including the cold start.
+// the deploy settings), the fast demo build that locks the new project,
+// and the hand-off to the user's own coding agent. Runs go through the real
+// editor's queue; the in-browser backend reports the run state, including
+// the cold start.
 
 import { useIntervalFn, useTimeoutFn } from '@vueuse/core'
 import { defineStore } from 'pinia'
@@ -22,12 +23,13 @@ import {
   BUILD_PROJECT_COLOR,
   COMFY_CLOUD,
   DEFAULT_BUILD_PROJECT_NAME,
+  DEFAULT_PACKS_BUILD_NAME,
   DEMO_BUILD_MS,
   MATTE_PASS,
-  WARM_MINUTES,
-  PLATFORM_GPUS
+  PLATFORM_GPUS,
+  WARM_MINUTES
 } from '../fixtures/customCloud'
-import type { PlatformGpu } from '../fixtures/customCloud'
+import type { PlatformGpu, WorkflowNeeds } from '../fixtures/customCloud'
 import { onMockRunStateChange } from '../mockBackend'
 import type { MockRunState } from '../mockBackend'
 import type {
@@ -55,6 +57,7 @@ type DialogStep =
   | 'project'
   | 'build'
   | 'agent'
+  | 'agent-done'
   | 'deploy'
   | 'building'
 
@@ -79,6 +82,16 @@ interface ActiveBuild {
   rebuild: boolean
 }
 
+// The agent builds and deploys on the user's machine, out of Comfy Cloud's
+// sight: no progress, no lock, no failures here. Only its finish arrives.
+interface AgentHandoff {
+  // The deployment it adds a release to, or null for a new deployment.
+  updatesDeploymentId: string | null
+  projectId: string | undefined
+  name: string
+  fixture: PersonaFixture
+}
+
 export const usePrototypeCustomCloudStore = defineStore(
   'prototype-custom-cloud',
   () => {
@@ -96,6 +109,9 @@ export const usePrototypeCustomCloudStore = defineStore(
     // Presenter control: hide the deployments that run matte_pass, to show
     // the dialog for a workflow nothing runs yet.
     const nothingRunsIt = ref(false)
+    // Packs picked in the Custom nodes modal of a Comfy Cloud project: the
+    // dialog then builds a new deployment for them instead of matte_pass.
+    const pickedPacks = ref<string[] | null>(null)
     const newProjectName = ref(DEFAULT_BUILD_PROJECT_NAME)
     const newProjectTier = ref<ProjectTier>('workspace-wide')
     const newProjectCollaborators = ref<string[]>([])
@@ -114,6 +130,7 @@ export const usePrototypeCustomCloudStore = defineStore(
     // Edit deployment on Comfy Cloud: read-only, for this project.
     const editCloudProjectId = ref<string | null>(null)
     const build = shallowRef<ActiveBuild | null>(null)
+    const agentHandoff = shallowRef<AgentHandoff | null>(null)
     // The deployment just built: its project, once named, opens with the
     // "ready" toast.
     const builtDeploymentId = ref<string | null>(null)
@@ -173,6 +190,22 @@ export const usePrototypeCustomCloudStore = defineStore(
       deploymentOf(currentProject.value?.id)
     )
 
+    const forPacks = computed(() => pickedPacks.value !== null)
+
+    // What the dialog builds for: matte_pass, or the picked packs.
+    const needs = computed<WorkflowNeeds>(() =>
+      pickedPacks.value
+        ? {
+            name: currentProject.value?.name ?? '',
+            nodePacks: pickedPacks.value,
+            models: [],
+            localOnlyModels: [],
+            modelsGb: 0,
+            readyMinutes: MATTE_PASS.readyMinutes
+          }
+        : MATTE_PASS
+    )
+
     const activeTab = computed(() =>
       tabsStore.openTabs.find((t) => t.id === tabsStore.activeTabId)
     )
@@ -182,8 +215,8 @@ export const usePrototypeCustomCloudStore = defineStore(
         !runsWorkflow(currentDeployment.value, MATTE_PASS)
     )
 
-    function runsMattePass(deployment: Deployment) {
-      return !nothingRunsIt.value && runsWorkflow(deployment, MATTE_PASS)
+    function runsNeeds(deployment: Deployment) {
+      return !nothingRunsIt.value && runsWorkflow(deployment, needs.value)
     }
 
     function byRunsThenCustom(
@@ -204,8 +237,8 @@ export const usePrototypeCustomCloudStore = defineStore(
         .filter((deployment) => deployment.status !== 'building')
         .map((deployment) => ({
           deployment,
-          runs: runsMattePass(deployment),
-          missing: missingFrom(deployment, MATTE_PASS)
+          runs: runsNeeds(deployment),
+          missing: missingFrom(deployment, needs.value)
         }))
         .sort(byRunsThenCustom)
     )
@@ -218,8 +251,8 @@ export const usePrototypeCustomCloudStore = defineStore(
           return {
             project,
             deployment,
-            runs: runsMattePass(deployment),
-            missing: missingFrom(deployment, MATTE_PASS)
+            runs: runsNeeds(deployment),
+            missing: missingFrom(deployment, needs.value)
           }
         })
         .sort(byRunsThenCustom)
@@ -229,6 +262,7 @@ export const usePrototypeCustomCloudStore = defineStore(
     // none does, from a Comfy Cloud project (build one) or from a project on
     // its own deployment (update that deployment).
     const chooseMode = computed(() => {
+      if (forPacks.value) return 'new'
       if (deploymentTargets.value.some((target) => target.runs)) {
         return 'existing'
       }
@@ -330,11 +364,27 @@ export const usePrototypeCustomCloudStore = defineStore(
     }
 
     function openRunTargetDialog() {
+      pickedPacks.value = null
+      resetRunTarget()
+    }
+
+    // "Create a new deployment" from the Custom nodes modal of a project on
+    // Comfy Cloud, which can't add packs: a new deployment that has them.
+    function openNewDeploymentFor(packIds: string[]) {
+      if (!packIds.length) return
+      pickedPacks.value = [...packIds]
+      resetRunTarget()
+    }
+
+    function resetRunTarget() {
       deploymentTarget.value =
         deploymentTargets.value.find((target) => target.runs)?.deployment.id ??
         NEW_BUILD_TARGET
-      newProjectName.value = DEFAULT_BUILD_PROJECT_NAME
-      newDeploymentName.value = DEFAULT_BUILD_PROJECT_NAME
+      const name = forPacks.value
+        ? DEFAULT_PACKS_BUILD_NAME
+        : DEFAULT_BUILD_PROJECT_NAME
+      newProjectName.value = name
+      newDeploymentName.value = name
       newProjectTier.value = 'workspace-wide'
       newProjectCollaborators.value = []
       dialogStep.value = 'choose'
@@ -359,6 +409,11 @@ export const usePrototypeCustomCloudStore = defineStore(
     // Move matte_pass, with its graph, out of the current project and into
     // another one.
     function openInProject(projectId: string) {
+      if (forPacks.value) {
+        dialogStep.value = null
+        switchProject(projectId)
+        return
+      }
       const tab = tabsStore.openTabs.find((t) => t.workflowKey === 'matte_pass')
       if (tab) tabsStore.close(tab.id)
       dialogStep.value = null
@@ -568,6 +623,7 @@ export const usePrototypeCustomCloudStore = defineStore(
     )
 
     function buildAndDeploy(gpu: PlatformGpu) {
+      cancelAgentHandoff()
       const fixture = personaStore.fixture
       const name = newDeploymentName.value.trim() || DEFAULT_BUILD_PROJECT_NAME
       const editing = editingDeploymentId.value
@@ -610,8 +666,8 @@ export const usePrototypeCustomCloudStore = defineStore(
           status: 'building',
           gpu: gpu.label,
           warmMinutes: WARM_MINUTES,
-          nodePacks: [...MATTE_PASS.nodePacks],
-          models: [...MATTE_PASS.models]
+          nodePacks: [...needs.value.nodePacks],
+          models: [...needs.value.models]
         }
       ]
       build.value = {
@@ -652,6 +708,78 @@ export const usePrototypeCustomCloudStore = defineStore(
       dialogStep.value = 'project'
     }
 
+    const agentTimer = useTimeoutFn(finishAgentBuild, DEMO_BUILD_MS, {
+      immediate: false
+    })
+    const agentWorking = computed(() => agentHandoff.value !== null)
+
+    // The prompt is copied: the agent takes it from here.
+    function handOffToAgent() {
+      if (agentHandoff.value) return
+      agentHandoff.value = {
+        updatesDeploymentId:
+          chooseMode.value === 'update' ? currentDeployment.value.id : null,
+        projectId: currentProject.value?.id,
+        name: newDeploymentName.value.trim() || DEFAULT_BUILD_PROJECT_NAME,
+        fixture: personaStore.fixture
+      }
+      agentTimer.start()
+    }
+
+    function cancelAgentHandoff() {
+      agentTimer.stop()
+      agentHandoff.value = null
+    }
+
+    // An update lands as the next release with what matte_pass lacked; a new
+    // deployment asks for a project to run on it.
+    function finishAgentBuild() {
+      const handoff = agentHandoff.value
+      if (!handoff) return
+      cancelAgentHandoff()
+      const { fixture } = handoff
+      const updatesId = handoff.updatesDeploymentId
+      if (updatesId) {
+        fixture.deployments = (fixture.deployments ?? []).map((d) =>
+          d.id === updatesId
+            ? {
+                ...d,
+                release: nextRelease(d.release),
+                nodePacks: [
+                  ...new Set([...d.nodePacks, ...needs.value.nodePacks])
+                ],
+                models: [...new Set([...d.models, ...needs.value.models])]
+              }
+            : d
+        )
+        readyProjectId.value = handoff.projectId ?? null
+        return
+      }
+      const deploymentId = `dep-agent-${Date.now()}`
+      fixture.deployments = [
+        ...(fixture.deployments ?? []),
+        {
+          id: deploymentId,
+          workspaceId: fixture.currentWorkspaceId,
+          name: handoff.name,
+          kind: 'custom',
+          release: 'v1',
+          status: 'ready',
+          gpu: PLATFORM_GPUS[0].label,
+          warmMinutes: WARM_MINUTES,
+          nodePacks: [...needs.value.nodePacks],
+          models: [...needs.value.models]
+        }
+      ]
+      builtDeploymentId.value = deploymentId
+      deploymentTarget.value = deploymentId
+      nothingRunsIt.value = false
+      newProjectName.value = handoff.name
+      newProjectTier.value = 'workspace-wide'
+      newProjectCollaborators.value = []
+      dialogStep.value = 'agent-done'
+    }
+
     // Run with missing nodes is another way into "choose where it runs".
     function requestRun() {
       if (showsMissingNodes.value) openRunTargetDialog()
@@ -670,12 +798,14 @@ export const usePrototypeCustomCloudStore = defineStore(
         switcherOpen.value = false
         dialogStep.value = null
         nothingRunsIt.value = false
+        pickedPacks.value = null
         readyProjectId.value = null
         builtDeploymentId.value = null
         editingDeploymentId.value = null
         editingFromProjectId.value = null
         editStep.value = null
         editCloudProjectId.value = null
+        cancelAgentHandoff()
         tabsStore.reset()
       }
     )
@@ -688,6 +818,8 @@ export const usePrototypeCustomCloudStore = defineStore(
       currentDeployment,
       deploymentOf,
       showsMissingNodes,
+      needs,
+      forPacks,
       reloadingToId,
       switcherOpen,
       dialogStep,
@@ -733,10 +865,15 @@ export const usePrototypeCustomCloudStore = defineStore(
       switchWorkspace,
       openWorkflow,
       openRunTargetDialog,
+      openNewDeploymentFor,
       dropIncompatibleWorkflow,
       openInProject,
       createProjectOn,
       buildAndDeploy,
+      agentWorking,
+      handOffToAgent,
+      cancelAgentHandoff,
+      finishAgentBuild,
       requestRun
     }
   }

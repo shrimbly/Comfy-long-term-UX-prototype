@@ -6,24 +6,27 @@
               — a new project on an existing deployment; updating a
               deployment updates every project on it
     open-q:   ../IA_Plan/wiki/open-questions.md#dropped-workflow-other-deployment
-              — working: update the project's own deployment on Platform, or
-              make a new one
+              — working: update the project's own deployment
     decision: prototype/design-decisions.md — 2026-10-07 "Flow 07: the
               incompatible-workflow dialog, redesigned on a canvas"
+    decision: prototype/design-decisions.md — 2026-10-08 "Flow 07: the
+              coding agent leads 'choose where it runs'"
 
   Step 1 of "choose where it runs", in one of three states:
     - existing: a deployment already runs the workflow. A new project on it
-      is the main action; a new deployment is in the same picker; opening it
-      in a project that runs it is the quiet option.
-    - new: nothing runs it, from a Comfy Cloud project. Create a deployment;
-      updating one on Platform is the quiet option.
-    - update: nothing runs it, from a project on its own deployment. Update
-      that deployment on Platform; a new deployment is the quiet option.
+      is the main action; a new deployment is in the same picker, and picking
+      it offers the coding agent or building it here; opening it in a project
+      that runs it is the quiet option.
+    - new: nothing runs it, from a Comfy Cloud project. A new deployment,
+      built by the user's coding agent or here. Packs picked in the Custom
+      nodes modal of a Comfy Cloud project open this state too.
+    - update: nothing runs it, from a project on its own deployment. A new
+      release of that deployment, built by the coding agent or here.
 -->
 <template>
   <h2 :id="titleId" class="m-0 pr-8 text-2xl font-semibold">{{ title }}</h2>
 
-  <MissingItemsTable :missing="missing" />
+  <MissingItemsTable :missing="missing" :picked="customCloud.forPacks" />
 
   <template v-if="mode === 'existing'">
     <div class="flex flex-col gap-2">
@@ -35,7 +38,12 @@
         :targets="customCloud.deploymentTargets"
       />
     </div>
-    <footer class="flex items-center gap-2.5">
+    <RunTargetAgentChoice
+      v-if="newDeploymentPicked"
+      @agent="customCloud.dialogStep = 'agent'"
+      @here="customCloud.dialogStep = 'build'"
+    />
+    <footer v-else class="flex items-center gap-2.5">
       <RunTargetProjectChooser
         :targets="customCloud.projectTargets"
         :current-project-id="customCloud.currentProject?.id"
@@ -45,60 +53,48 @@
       <Button variant="muted-textonly" size="lg" @click="emit('close')">
         {{ t('prototype.customCloud.dialog.notNow') }}
       </Button>
-      <Button variant="inverted" size="lg" @click="onCreate">
-        {{
-          newDeploymentPicked
-            ? t('prototype.customCloud.dialog.createDeployment')
-            : t('prototype.customCloud.dialog.createProject')
-        }}
+      <Button
+        variant="inverted"
+        size="lg"
+        @click="customCloud.dialogStep = 'project'"
+      >
+        {{ t('prototype.customCloud.dialog.createProject') }}
       </Button>
     </footer>
   </template>
 
   <template v-else-if="mode === 'new'">
-    <div class="flex flex-col gap-3">
-      <span class="text-sm text-muted-foreground">
-        {{ t('prototype.customCloud.dialog.newLabel') }}
-      </span>
-      <ul class="m-0 flex list-none flex-col gap-2.5 p-0 text-sm">
-        <li
-          v-for="benefit in benefits"
-          :key="benefit"
-          class="flex items-center gap-2.5"
-        >
-          <i
-            class="icon-[lucide--check] size-4 shrink-0 text-success-background"
-          />
-          {{ benefit }}
-        </li>
-      </ul>
+    <div class="flex flex-col gap-1.5 text-sm">
+      <template v-if="customCloud.forPacks">
+        <span class="font-medium">
+          {{ t('prototype.customCloud.dialog.packsLead') }}
+        </span>
+        <span class="text-muted-foreground">
+          {{
+            tText('prototype.customCloud.dialog.packsDetail', {
+              project: customCloud.currentProject?.name ?? ''
+            })
+          }}
+        </span>
+      </template>
+      <template v-else>
+        <span class="font-medium">
+          {{ t('prototype.customCloud.dialog.newLead') }}
+        </span>
+        <span class="text-muted-foreground">
+          {{ t('prototype.customCloud.dialog.newDetail') }}
+        </span>
+      </template>
     </div>
-    <footer class="flex items-center gap-2.5">
-      <Button
-        variant="muted-textonly"
-        size="lg"
-        class="mr-auto px-1 font-normal"
-        @click="onPlatform"
-      >
-        {{ t('prototype.customCloud.dialog.updateExisting') }}
-        <i class="icon-[lucide--external-link] size-3.5" />
-      </Button>
-      <Button variant="muted-textonly" size="lg" @click="emit('close')">
-        {{ t('prototype.customCloud.dialog.notNow') }}
-      </Button>
-      <Button
-        variant="inverted"
-        size="lg"
-        @click="customCloud.dialogStep = 'build'"
-      >
-        {{ t('prototype.customCloud.dialog.createDeployment') }}
-      </Button>
-    </footer>
+    <RunTargetAgentChoice
+      @agent="customCloud.dialogStep = 'agent'"
+      @here="customCloud.dialogStep = 'build'"
+    />
   </template>
 
   <template v-else>
     <div class="flex flex-col gap-2">
-      <span class="text-sm text-muted-foreground">
+      <span class="text-sm font-medium">
         {{ t('prototype.customCloud.dialog.updateLabel') }}
       </span>
       <div
@@ -124,23 +120,10 @@
         }}
       </span>
     </div>
-    <footer class="flex items-center gap-2.5">
-      <Button
-        variant="muted-textonly"
-        size="lg"
-        class="mr-auto px-1 font-normal"
-        @click="customCloud.dialogStep = 'build'"
-      >
-        {{ t('prototype.customCloud.dialog.createInstead') }}
-      </Button>
-      <Button variant="muted-textonly" size="lg" @click="emit('close')">
-        {{ t('prototype.customCloud.dialog.notNow') }}
-      </Button>
-      <Button variant="inverted" size="lg" @click="onPlatform">
-        {{ t('prototype.customCloud.dialog.updateOnPlatform') }}
-        <i class="icon-[lucide--external-link] size-3.5" />
-      </Button>
-    </footer>
+    <RunTargetAgentChoice
+      @agent="customCloud.dialogStep = 'agent'"
+      @here="rebuildHere"
+    />
   </template>
 </template>
 
@@ -149,18 +132,19 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import Button from '@/components/ui/button/Button.vue'
-import { useToastStore } from '@/platform/updates/common/toastStore'
 
 import { useTextT } from '../composables/useTextT'
-import { MATTE_PASS } from '../fixtures/customCloud'
 import {
   NEW_BUILD_TARGET,
   usePrototypeCustomCloudStore
 } from '../stores/customCloudStore'
+import { usePrototypeCustomNodesStore } from '../stores/customNodesStore'
+import type { PackChange } from '../utils/customNodes'
 import { missingFrom, nextRelease } from '../utils/deployment'
 
 import DeploymentStatusDot from './DeploymentStatusDot.vue'
 import MissingItemsTable from './MissingItemsTable.vue'
+import RunTargetAgentChoice from './RunTargetAgentChoice.vue'
 import RunTargetDeploymentPicker from './RunTargetDeploymentPicker.vue'
 import RunTargetProjectChooser from './RunTargetProjectChooser.vue'
 
@@ -174,38 +158,35 @@ const emit = defineEmits<{
 
 const { t } = useI18n()
 const tText = useTextT()
-const toast = useToastStore()
 const customCloud = usePrototypeCustomCloudStore()
+const customNodes = usePrototypeCustomNodesStore()
 
 const mode = computed(() => customCloud.chooseMode)
 const deployment = computed(() => customCloud.currentDeployment)
-const missing = computed(() => missingFrom(deployment.value, MATTE_PASS))
+const missing = computed(() => missingFrom(deployment.value, customCloud.needs))
 const newDeploymentPicked = computed(
   () => customCloud.deploymentTarget === NEW_BUILD_TARGET
 )
 
 const title = computed(() =>
-  tText('prototype.customCloud.dialog.cantRunOn', {
-    deployment: deployment.value.name
-  })
+  customCloud.forPacks
+    ? t('prototype.customCloud.dialog.packsTitle')
+    : tText('prototype.customCloud.dialog.cantRunOn', {
+        deployment: deployment.value.name
+      })
 )
 
-const benefits = computed(() => [
-  t('prototype.customCloud.dialog.benefits.pinned'),
-  t('prototype.customCloud.dialog.benefits.ownProject'),
-  t('prototype.customCloud.dialog.benefits.builtForYou')
-])
-
-function onCreate() {
-  customCloud.dialogStep = newDeploymentPicked.value ? 'build' : 'project'
-}
-
-function onPlatform() {
-  toast.add({
-    severity: 'info',
-    summary: t('prototype.customCloud.settings.platformToast'),
-    detail: t('prototype.customCloud.dialog.platformToastDetail'),
-    life: 3000
-  })
+// Building the new release here is the Install flow's rebuild: its
+// confirmation, then the release builds behind the Building chip.
+function rebuildHere() {
+  customCloud.cancelAgentHandoff()
+  customNodes.pendingChanges = missing.value.nodePacks.map(
+    (packId): PackChange => ({
+      kind: 'add',
+      packId,
+      to: null
+    })
+  )
+  emit('close')
 }
 </script>

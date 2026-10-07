@@ -25,8 +25,9 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 
-const { missing } = defineProps<{
+const { missing, picked = false } = defineProps<{
   missing: { nodePacks: string[]; models: string[] }
+  picked?: boolean
 }>()
 
 const { t } = useI18n()
@@ -36,7 +37,9 @@ const rows = computed(() =>
     {
       key: 'packs',
       label: t(
-        'prototype.customCloud.dialog.missingPacks',
+        picked
+          ? 'prototype.customCloud.dialog.chosenPacks'
+          : 'prototype.customCloud.dialog.missingPacks',
         missing.nodePacks.length
       ),
       items: missing.nodePacks.join(', ')
