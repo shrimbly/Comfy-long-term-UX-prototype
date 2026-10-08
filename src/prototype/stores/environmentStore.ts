@@ -1,3 +1,5 @@
+import { useHomesteadStore } from '../homestead/store'
+import { nativeDeployment } from '../homestead/nativeModel'
 import { defineStore } from 'pinia'
 import { computed } from 'vue'
 import { COMFY_CLOUD } from '../fixtures/customCloud'
@@ -8,22 +10,27 @@ export const usePrototypeEnvironmentStore = defineStore(
   'prototype-environments',
   () => {
     const personas = usePrototypePersonaStore()
+    const homestead = useHomesteadStore()
     const gpus = ['RTX 4090', 'RTX 5090']
     const canManage = computed(
       () => personas.currentWorkspace?.currentUserRole === 'admin'
     )
     const deployments = computed(() =>
-      (personas.fixture.deployments ?? []).filter((deployment) => {
-        const workspaceId =
-          deployment.workspaceId ??
-          personas.fixture.projects.find(
-            (project) => project.deploymentId === deployment.id
-          )?.workspaceId
-        return (
-          deployment.kind === 'custom' &&
-          workspaceId === personas.fixture.currentWorkspaceId
-        )
-      })
+      homestead.enabled
+        ? homestead.availableEnvironments
+            .filter((e) => e.id !== COMFY_CLOUD.id)
+            .map(nativeDeployment)
+        : (personas.fixture.deployments ?? []).filter((deployment) => {
+            const workspaceId =
+              deployment.workspaceId ??
+              personas.fixture.projects.find(
+                (project) => project.deploymentId === deployment.id
+              )?.workspaceId
+            return (
+              deployment.kind === 'custom' &&
+              workspaceId === personas.fixture.currentWorkspaceId
+            )
+          })
     )
     const projects = computed(() => [
       ...(personas.draftsProject ? [personas.draftsProject] : []),

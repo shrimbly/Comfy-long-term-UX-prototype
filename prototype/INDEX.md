@@ -20,6 +20,8 @@ When adding a new flow:
 
 | 07 | Custom Comfy Cloud happy path (Project Homestead): projects that run on their own deployment — demo script for 8 Oct 2026 | `/prototype/dashboard` (Workspace Admin) → Projects → project → Settings; + Workflow → drop a file | `src/prototype/stores/customCloudStore.ts`, `components/RealEditor.vue` (real `GraphView`) + `mockBackend/{index,nodeDefs}.ts` + `fixtures/mattePassGraph.ts`, `components/{ProjectSwitcher,RunTargetDialog,RunTargetSelect,BuildLockModal,BuildReadyToast,ProjectReloadOverlay,DemoControls}.vue`, `components/project/{ProjectPageHeader,ProjectEnvironmentChip,ProjectSettingsPanel}.vue`, `components/settings/ProjectsSettings.vue`, `fixtures/customCloud.ts`, `utils/deployment.ts`; plan `prototype/flows/07-custom-cloud-happy-path.md` | `concepts/custom-comfy-cloud.md`, `decisions/{project-runs-on-shared-deployment,project-switcher-in-tab-bar,build-locks-project-until-ready,missing-nodes-choose-where-it-runs,opinionated-roles-no-permission-matrix}.md`, `entities/project.md` §Deployment, open-qs § Custom Comfy Cloud | demo-ready |
 
+| 08 | Homestead PRD: V1 studio pilot, V2 Extension Manager, V3 Projects | `/prototype/homestead?v=1` | `src/prototype/homestead/` | [PRD](https://app.notion.com/p/3f16d73d3650819f894bed7f77313295), [walkthrough](flows/08-homestead-versions.md) | interactive |
+
 _(Add rows as flows are built. The dashboard is the anchor — every other flow gets cheap state from it via the persona toggle.)_
 
 ## Roadmap (from IA wiki review)

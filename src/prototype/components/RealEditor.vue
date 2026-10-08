@@ -29,9 +29,72 @@
     "
     :aria-hidden="!activeTab"
   >
-    <GraphView embedded :active="!!activeTab" />
+    <GraphView
+      embedded
+      :active="!!activeTab"
+      :inert="
+        homestead.enabled &&
+        (!homestead.allowed || homestead.runtime === 'starting')
+      "
+    />
     <div
-      v-if="customCloud.runState === 'starting' && coldStartAnchor"
+      v-if="homestead.enabled && activeTab && homestead.runtime === 'starting'"
+      role="status"
+      class="absolute inset-0 z-40 grid place-items-center bg-base-background/70 text-base-foreground"
+    >
+      <div
+        class="max-w-sm rounded-xl border border-border-default bg-base-background p-5 text-center shadow-lg"
+      >
+        <i
+          class="icon-[lucide--loader-circle] size-6 animate-spin text-muted-foreground"
+        />
+        <p class="mt-3 text-sm font-medium">{{ t('homestead.starting') }}</p>
+        <p class="mt-2 text-xs text-muted-foreground">
+          {{ t('homestead.startingBody') }}
+        </p>
+      </div>
+    </div>
+    <div
+      v-if="
+        homestead.enabled &&
+        activeTab &&
+        (homestead.runtime === 'sleeping' ||
+          homestead.runtime === 'failed' ||
+          (homestead.entry === 'cloud' &&
+            homestead.compatible.status !== 'compatible'))
+      "
+      class="absolute top-16 left-1/2 z-30 flex max-w-xl -translate-x-1/2 items-center gap-3 rounded-lg border border-border-default bg-base-background p-3 text-base-foreground shadow-lg"
+      role="status"
+    >
+      <span class="text-xs">{{
+        t(
+          homestead.runtime === 'failed'
+            ? 'homestead.failedBody'
+            : homestead.runtime === 'sleeping'
+              ? 'homestead.sleepingBody'
+              : 'homestead.blocked'
+        )
+      }}</span>
+      <Button
+        v-if="homestead.runtime === 'failed'"
+        size="sm"
+        @click="homestead.wake()"
+        >{{ t('homestead.retry') }}</Button
+      >
+      <Button
+        v-else-if="homestead.compatible.status !== 'compatible'"
+        size="sm"
+        @click="homestead.dialog = 'environment'"
+        >{{ t('homestead.switch') }}</Button
+      >
+    </div>
+    <HomesteadJobStatus v-if="homestead.enabled && activeTab" />
+    <div
+      v-if="
+        !homestead.enabled &&
+        customCloud.runState === 'starting' &&
+        coldStartAnchor
+      "
       role="status"
       class="fixed z-50 flex w-75 flex-col gap-1.5 rounded-lg border border-border-default bg-base-background p-3 text-base-foreground shadow-[1px_1px_8px_0_rgb(0_0_0/0.4)]"
       :style="coldStartAnchor"
@@ -50,6 +113,9 @@
 </template>
 
 <script setup lang="ts">
+import Button from '@/components/ui/button/Button.vue'
+import HomesteadJobStatus from '../homestead/HomesteadJobStatus.vue'
+import { useHomesteadStore } from '../homestead/store'
 import { cn } from '@comfyorg/tailwind-utils'
 import { until, useEventListener } from '@vueuse/core'
 import { computed, onMounted, ref, toRaw, watch } from 'vue'
@@ -79,6 +145,7 @@ const RUN_BUTTON = '[data-testid="queue-button"]'
 const QUIET_LOAD = { deferWarnings: true, silentAssetErrors: true }
 
 const { t } = useI18n()
+const homestead = useHomesteadStore()
 const customCloud = usePrototypeCustomCloudStore()
 const tabsStore = usePrototypeTabsStore()
 const policies = usePrototypePolicyStore()
@@ -103,6 +170,13 @@ const activeTab = computed(() => {
 // What the current project's deployment can run. A deployment still
 // building can't run anything yet.
 const runnable = computed(() => {
+  if (homestead.enabled && homestead.entry === 'desktop')
+    return {
+      nodePacks: homestead.active.packs,
+      models: homestead.active.models,
+      allowedModelFiles: undefined,
+      coldStart: false
+    }
   const deployment = customCloud.currentDeployment
   const usable = deployment.status !== 'building'
   return {
@@ -111,7 +185,7 @@ const runnable = computed(() => {
     allowedModelFiles: customCloud.isEnabled
       ? policies.allowedModelFiles
       : undefined,
-    coldStart: deployment.kind === 'custom'
+    coldStart: !homestead.enabled && deployment.kind === 'custom'
   }
 })
 
@@ -223,6 +297,25 @@ useEventListener(
   (event: MouseEvent) => {
     const target = event.target
     if (!(target instanceof Element) || !target.closest(RUN_BUTTON)) return
+    if (homestead.enabled) {
+      event.preventDefault()
+      event.stopImmediatePropagation()
+      if (!homestead.allowed || homestead.runtime === 'starting') return
+      if (homestead.entry === 'desktop') {
+        homestead.run()
+        return
+      }
+      if (homestead.compatible.status !== 'compatible') {
+        homestead.dialog = 'environment'
+        return
+      }
+      const run = () => {
+        if (homestead.run()) customCloud.runRequested = true
+      }
+      if (homestead.runtime !== 'ready') homestead.wake(run)
+      else run()
+      return
+    }
     if (!customCloud.showsMissingNodes) return
     event.preventDefault()
     event.stopImmediatePropagation()

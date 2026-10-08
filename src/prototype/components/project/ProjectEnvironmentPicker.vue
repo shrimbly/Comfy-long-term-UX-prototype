@@ -84,6 +84,8 @@
 </template>
 
 <script setup lang="ts">
+import { useHomesteadStore } from '../../homestead/store'
+const homestead = useHomesteadStore()
 import { cn } from '@comfyorg/tailwind-utils'
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
@@ -158,6 +160,15 @@ function onCreated() {
 }
 
 function apply() {
+  if (homestead.enabled) {
+    homestead.projectId = project.id
+    homestead.projectEnvironmentId =
+      homestead.projectEnvironments[project.id] ?? COMFY_CLOUD.id
+    homestead.dialog = 'environment'
+    homestead.switchEnvironment(selectedId.value)
+    emit('close')
+    return
+  }
   personaStore.setProjectDeployment(
     project.id,
     selectedId.value === COMFY_CLOUD.id ? undefined : selectedId.value

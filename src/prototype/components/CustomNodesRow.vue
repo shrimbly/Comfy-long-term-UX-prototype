@@ -84,6 +84,9 @@
       >
         -
       </span>
+      <span v-else-if="homestead.enabled" class="text-muted-foreground">{{
+        row.version
+      }}</span>
       <PackVersionSelect
         v-else
         :row
@@ -131,6 +134,7 @@
 </template>
 
 <script setup lang="ts">
+import { useHomesteadStore } from '../homestead/store'
 import { cn } from '@comfyorg/tailwind-utils'
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
@@ -153,6 +157,7 @@ const { row, grid } = defineProps<{
 const { t } = useI18n()
 const tText = useTextT()
 const store = usePrototypeCustomNodesStore()
+const homestead = useHomesteadStore()
 
 const dimmed = computed(() => row.state === 'blocked')
 const isBuilding = computed(
@@ -163,7 +168,11 @@ const isInstalled = computed(
 )
 const isRequested = computed(() => store.requested.includes(row.id))
 const selectable = computed(
-  () => !isRequested.value && !store.rebuild && store.isCustom
+  () =>
+    !isRequested.value &&
+    !store.rebuild &&
+    store.isCustom &&
+    (!homestead.enabled || !!row.repoUrl)
 )
 
 const buildingLabel = computed(() => {

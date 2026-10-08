@@ -23,6 +23,7 @@
         <Suspense @resolve="comfyRunButtonResolved">
           <ComfyRunButton v-coachmark="FIRST_RUN_COACH_IDS.runButton" />
         </Suspense>
+        <HomesteadCloudButton />
         <Button
           v-tooltip.bottom="cancelJobTooltipConfig"
           :variant="isExecutionIdle ? 'secondary' : 'destructive'"
@@ -112,6 +113,7 @@ import { useSidebarTabStore } from '@/stores/workspace/sidebarTabStore'
 import { cn } from '@comfyorg/tailwind-utils'
 
 import ComfyRunButton from './ComfyRunButton'
+import HomesteadCloudButton from '@/prototype/homestead/HomesteadCloudButton.vue'
 
 const { dockedProgressContainer, queueOverlayExpanded = false } = defineProps<{
   /**

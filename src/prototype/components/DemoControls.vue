@@ -27,6 +27,11 @@
         <i class="icon-[lucide--presentation] size-3.5" />
         {{ t('prototype.customCloud.demo.menu') }}
         <span class="text-base-foreground">{{ currentPersona?.label }}</span>
+        <span
+          v-if="homestead.enabled"
+          class="border-l border-border-default pl-1.5"
+          >{{ `V${homestead.version}` }}</span
+        >
       </Button>
     </PopoverTrigger>
     <PopoverContent
@@ -35,6 +40,34 @@
       :side-offset="6"
       class="w-64 rounded-xl border-border-default bg-base-background p-1 shadow-lg"
     >
+      <section
+        v-if="homestead.enabled"
+        class="space-y-2 border-b border-border-subtle p-2"
+      >
+        <p class="text-xs text-muted-foreground">
+          {{ t('homestead.version') }}
+        </p>
+        <div class="flex gap-1">
+          <Button
+            v-for="v in [1, 2, 3] as const"
+            :key="v"
+            :variant="homestead.version === v ? 'inverted' : 'textonly'"
+            class="flex-1"
+            :aria-pressed="homestead.version === v"
+            @click="homestead.setVersion(v)"
+            >{{ `V${v}` }}</Button
+          >
+        </div>
+        <p class="text-xs text-muted-foreground">
+          {{ t(`homestead.v${homestead.version}Description`) }}
+        </p>
+        <Button
+          variant="textonly"
+          class="w-full justify-start"
+          @click="configure"
+          >{{ t('homestead.openConfig') }}</Button
+        >
+      </section>
       <p class="px-2 pt-1.5 pb-1 text-xs text-muted-foreground">
         {{ t('prototype.persona.label') }}
       </p>
@@ -52,7 +85,7 @@
           class="icon-[lucide--check] size-3.5"
         />
       </Button>
-      <template v-if="customCloud.isEnabled">
+      <template v-if="customCloud.isEnabled && !homestead.enabled">
         <div class="my-1 h-px bg-border-subtle" />
         <Button
           variant="textonly"
@@ -90,6 +123,7 @@
 </template>
 
 <script setup lang="ts">
+import { useHomesteadStore } from '../homestead/store'
 import { cn } from '@comfyorg/tailwind-utils'
 import { PopoverRoot, PopoverTrigger } from 'reka-ui'
 import { computed, ref } from 'vue'
@@ -103,6 +137,11 @@ import { usePrototypePersonaStore } from '../stores/personaStore'
 import type { PersonaId } from '../types'
 
 const { t } = useI18n()
+const homestead = useHomesteadStore()
+function configure() {
+  open.value = false
+  homestead.configOpen = true
+}
 const customCloud = usePrototypeCustomCloudStore()
 const personaStore = usePrototypePersonaStore()
 const open = ref(false)

@@ -12,6 +12,7 @@ export const prototypeRoutes: RouteRecordRaw[] = [
     component: PrototypeLayout,
     children: [
       { path: '', redirect: { name: 'PrototypeDashboard' } },
+      { path: 'homestead', name: 'HomesteadPrototype', component: Dashboard },
       {
         path: 'dashboard',
         name: 'PrototypeDashboard',

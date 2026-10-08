@@ -155,6 +155,21 @@
           </div>
           <DialogFooter>
             <Button
+              v-if="homestead.enabled && deployment"
+              type="button"
+              variant="muted-textonly"
+              @click="editBuild"
+              >{{ t('homestead.editBuild') }}</Button
+            >
+            <Button
+              v-if="homestead.enabled && deployment"
+              type="button"
+              variant="inverted"
+              :disabled="deployment.status === 'building'"
+              @click="openUI"
+              >{{ t('homestead.openUI') }}</Button
+            >
+            <Button
               type="button"
               variant="muted-textonly"
               @click="emit('close')"
@@ -177,6 +192,8 @@
 </template>
 
 <script setup lang="ts">
+import { compatibility } from '../homestead/model'
+import { useHomesteadStore } from '../homestead/store'
 import { computed, ref, useId } from 'vue'
 import { useI18n } from 'vue-i18n'
 import Button from '@/components/ui/button/Button.vue'
@@ -198,6 +215,29 @@ import type { Deployment } from '../types'
 const { deployment } = defineProps<{ deployment?: Deployment }>()
 const emit = defineEmits<{ close: [] }>()
 const { t } = useI18n()
+const homestead = useHomesteadStore()
+function editBuild() {
+  if (!deployment) return
+  homestead.editBuildFor(deployment.id)
+  emit('close')
+}
+function openUI() {
+  if (!deployment) return
+  const environment = homestead.availableEnvironments.find(
+    (e) => e.id === deployment.id
+  )
+  const workflow =
+    environment &&
+    homestead.workflows.find(
+      (w) => compatibility(w, environment).status === 'compatible'
+    )
+  if (workflow && homestead.version < 3) homestead.activeId = workflow.id
+  homestead.dialog = 'environment'
+  homestead.pendingEnvironmentId = deployment.id
+  homestead.switchEnvironment(deployment.id)
+  if (homestead.version < 3) homestead.openWorkflow(homestead.activeId)
+  emit('close')
+}
 const store = usePrototypeEnvironmentStore()
 const ui = usePrototypeUiStore()
 const name = ref(deployment?.name ?? '')

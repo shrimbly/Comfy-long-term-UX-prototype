@@ -138,6 +138,7 @@
           </div>
         </div>
 
+        <HomesteadCloudBuildOptions v-if="homestead.enabled" />
         <footer
           class="flex items-center gap-4 border-t border-border-subtle px-6 py-3"
         >
@@ -146,16 +147,16 @@
           </span>
           <template v-if="store.isCustom && !store.rebuild">
             <span
-              v-if="store.selected.length"
+              v-if="selectedCount"
               class="shrink-0 text-xs text-muted-foreground"
             >
               {{ t('prototype.customNodes.actions.selected', selectedCount) }}
             </span>
             <Button
-              v-if="store.selected.length"
+              v-if="selectedCount"
               variant="muted-textonly"
               size="md"
-              @click="store.selected = []"
+              @click="store.clearSelection()"
             >
               {{ t('prototype.customNodes.actions.clear') }}
             </Button>
@@ -163,16 +164,32 @@
               v-if="store.canInstall"
               variant="inverted"
               size="lg"
-              :disabled="!selectedCount"
+              :disabled="
+                !selectedCount ||
+                (homestead.enabled &&
+                  (!store.buildName.trim() ||
+                    store.archiveError ||
+                    homestead.build.phase === 'building'))
+              "
               @click="store.requestInstall()"
             >
-              {{ t('prototype.customNodes.actions.install', selectedCount) }}
+              {{
+                homestead.enabled
+                  ? t('homestead.buildDeploy')
+                  : t('prototype.customNodes.actions.install', selectedCount)
+              }}
             </Button>
             <Button
               v-else
               variant="inverted"
               size="lg"
-              :disabled="!selectedCount"
+              :disabled="
+                !selectedCount ||
+                (homestead.enabled &&
+                  (!store.buildName.trim() ||
+                    store.archiveError ||
+                    homestead.build.phase === 'building'))
+              "
               @click="store.askAdmin()"
             >
               {{ t('prototype.customNodes.actions.askAdmin', selectedCount) }}
@@ -185,6 +202,8 @@
 </template>
 
 <script setup lang="ts">
+import HomesteadCloudBuildOptions from '../homestead/HomesteadCloudBuildOptions.vue'
+import { useHomesteadStore } from '../homestead/store'
 import { cn } from '@comfyorg/tailwind-utils'
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
@@ -217,10 +236,11 @@ const SORTS: PackSort[] = ['installs', 'stars', 'name']
 const { t } = useI18n()
 const tText = useTextT()
 const store = usePrototypeCustomNodesStore()
+const homestead = useHomesteadStore()
 const customCloud = usePrototypeCustomCloudStore()
 
 const deployment = computed(() => store.deployment)
-const selectedCount = computed(() => store.selected.length)
+const selectedCount = computed(() => store.selectedCount)
 
 const statusOptions = computed(() =>
   STATUSES.map((value) => ({
@@ -240,6 +260,8 @@ const sortOptions = computed(() =>
 )
 
 const whereLine = computed(() => {
+  if (homestead.enabled && homestead.version < 3)
+    return `${deployment.value.name} · ${deployment.value.release ?? ''}`
   const project = customCloud.currentProject?.name ?? ''
   if (!store.isCustom)
     return tText('prototype.customNodes.runsOnCloud', { project })
@@ -257,6 +279,7 @@ const whereLine = computed(() => {
 })
 
 const footer = computed(() => {
+  if (homestead.enabled) return t('homestead.managerBody')
   if (!store.isCustom) return t('prototype.customNodes.footer.cloud')
   if (store.rebuild)
     return t('prototype.customNodes.footer.building', {

@@ -23,6 +23,8 @@
     @dragleave="onFileDragLeave"
     @drop.capture="onFileDrop"
   >
+    <HomesteadToolbar v-if="homestead.enabled" />
+    <HomesteadMemoryBanner v-if="homestead.enabled && isEditorTabActive" />
     <div class="relative flex min-h-0 flex-1">
       <div v-if="isMediaAssetsTabActive" class="relative flex min-h-0 flex-1">
         <LocalMediaView v-if="isLocalMode" />
@@ -58,6 +60,7 @@
         </main>
       </div>
       <RealEditor />
+      <HomesteadPanels v-if="homestead.enabled" />
 
       <BuildReadyToast
         v-if="readyProject"
@@ -113,7 +116,7 @@
     </div>
 
     <WorkflowDragGhost />
-    <RunTargetDialog v-if="customCloud.dialogStep" />
+    <RunTargetDialog v-if="customCloud.dialogStep && !homestead.enabled" />
     <CustomNodesDialog v-if="customNodes.isOpen" />
     <CustomNodesRebuildDialog
       v-if="customNodes.pendingChanges"
@@ -127,6 +130,10 @@
 import { cn } from '@comfyorg/tailwind-utils'
 import { storeToRefs } from 'pinia'
 import { computed, ref } from 'vue'
+import HomesteadToolbar from '../homestead/HomesteadToolbar.vue'
+import HomesteadMemoryBanner from '../homestead/HomesteadMemoryBanner.vue'
+import HomesteadPanels from '../homestead/HomesteadPanels.vue'
+import { useHomesteadIntegration } from '../homestead/useHomesteadIntegration'
 import { useI18n } from 'vue-i18n'
 
 import MediaAssetsView from '@/platform/assets/components/MediaAssetsView.vue'
@@ -158,6 +165,7 @@ import SettingsView from '../views/SettingsView.vue'
 import TemplatesView from '../views/TemplatesView.vue'
 
 const { t } = useI18n()
+const homestead = useHomesteadIntegration()
 const uiStore = usePrototypeUiStore()
 const tabsStore = usePrototypeTabsStore()
 const personaStore = usePrototypePersonaStore()
@@ -219,6 +227,7 @@ function onFileDrop(event: DragEvent) {
   event.preventDefault()
   event.stopPropagation()
   isDraggingFile.value = false
-  customCloud.dropIncompatibleWorkflow()
+  if (homestead.enabled) homestead.importWorkflow()
+  else customCloud.dropIncompatibleWorkflow()
 }
 </script>

@@ -79,7 +79,11 @@
             @click="uiStore.go({ kind: 'drafts' })"
           />
           <SidebarItem
-            v-if="isCloudMode && !isSoloPersona"
+            v-if="
+              isCloudMode &&
+              !isSoloPersona &&
+              (!homestead.enabled || homestead.version === 3)
+            "
             :label="t('prototype.sidebar.projects')"
             icon="icon-[lucide--folder]"
             :active="
@@ -95,6 +99,8 @@
 </template>
 
 <script setup lang="ts">
+import { useHomesteadStore } from '../homestead/store'
+const homestead = useHomesteadStore()
 import { storeToRefs } from 'pinia'
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'

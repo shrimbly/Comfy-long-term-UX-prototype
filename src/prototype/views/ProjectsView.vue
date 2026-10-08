@@ -24,6 +24,12 @@
       </button>
     </header>
 
+    <p
+      v-if="homestead.enabled && homestead.version === 3"
+      class="text-sm text-muted-foreground"
+    >
+      {{ t('homestead.projectsBuildHint') }}
+    </p>
     <div class="flex flex-wrap items-center justify-between gap-2">
       <label
         class="flex h-8 max-w-xs min-w-48 flex-1 items-center gap-2 rounded-lg bg-secondary-background px-2.5 text-base-foreground"
@@ -127,6 +133,7 @@
 
 <script setup lang="ts">
 import { cn } from '@comfyorg/tailwind-utils'
+import { useHomesteadStore } from '../homestead/store'
 import { storeToRefs } from 'pinia'
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
@@ -142,6 +149,7 @@ type SortValue = 'last-modified' | 'oldest' | 'az' | 'za'
 type ViewMode = 'grid' | 'list'
 
 const { t } = useI18n()
+const homestead = useHomesteadStore()
 const personaStore = usePrototypePersonaStore()
 const uiStore = usePrototypeUiStore()
 const { visibleProjects, fixture } = storeToRefs(personaStore)

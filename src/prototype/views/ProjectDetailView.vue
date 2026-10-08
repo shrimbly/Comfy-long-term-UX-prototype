@@ -129,6 +129,7 @@
                   v-for="wf in publishedHere"
                   :key="wf.id"
                   :workflow="wf"
+                  :open-on-click="homestead.enabled && homestead.version === 3"
                   actions="published"
                   draggable
                   selectable
@@ -201,6 +202,7 @@
                 v-for="d in draftsWithMeta"
                 :key="d.wf.id"
                 :workflow="d.wf"
+                :open-on-click="homestead.enabled && homestead.version === 3"
                 :draft-meta="d.meta"
                 actions="draft"
                 draggable
@@ -294,6 +296,7 @@ import WorkflowCard from '../components/WorkflowCard.vue'
 import { useFolderBrowser } from '../composables/useFolderBrowser'
 import { useWorkflowDrag } from '../composables/useWorkflowDrag'
 import { useWorkflowPublish } from '../composables/useWorkflowPublish'
+import { useHomesteadStore } from '../homestead/store'
 import { usePrototypeCustomCloudStore } from '../stores/customCloudStore'
 import { usePrototypePersonaStore } from '../stores/personaStore'
 import { usePrototypeUiStore } from '../stores/uiStore'
@@ -310,6 +313,7 @@ const toast = useToast()
 const personaStore = usePrototypePersonaStore()
 const uiStore = usePrototypeUiStore()
 const customCloud = usePrototypeCustomCloudStore()
+const homestead = useHomesteadStore()
 const { fixture, currentWorkspace, draftsProject } = storeToRefs(personaStore)
 const {
   publishSourceId,

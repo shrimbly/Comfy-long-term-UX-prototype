@@ -27,6 +27,8 @@ import {
 } from '../fixtures/customCloud'
 import type { PlatformGpu } from '../fixtures/customCloud'
 import { onMockRunStateChange } from '../mockBackend'
+import { useHomesteadStore } from '../homestead/store'
+import { nativeDeployment } from '../homestead/nativeModel'
 import type { MockRunState } from '../mockBackend'
 import type {
   Deployment,
@@ -77,6 +79,7 @@ export const usePrototypeCustomCloudStore = defineStore(
   'prototype-custom-cloud',
   () => {
     const personaStore = usePrototypePersonaStore()
+    const homestead = useHomesteadStore()
     const tabsStore = usePrototypeTabsStore()
     const uiStore = usePrototypeUiStore()
 
@@ -146,6 +149,12 @@ export const usePrototypeCustomCloudStore = defineStore(
     )
 
     function deploymentOf(projectId: string | undefined): Deployment {
+      if (homestead.enabled && projectId) {
+        const environment = homestead.availableEnvironments.find(
+          (e) => e.id === homestead.projectEnvironments[projectId]
+        )
+        if (environment) return nativeDeployment(environment)
+      }
       const project = personaStore.fixture.projects.find(
         (p) => p.id === projectId
       )
@@ -153,7 +162,9 @@ export const usePrototypeCustomCloudStore = defineStore(
     }
 
     const currentDeployment = computed(() =>
-      deploymentOf(currentProject.value?.id)
+      homestead.enabled
+        ? nativeDeployment(homestead.environment)
+        : deploymentOf(currentProject.value?.id)
     )
 
     const activeTab = computed(() =>
@@ -309,10 +320,19 @@ export const usePrototypeCustomCloudStore = defineStore(
       projectId: string,
       workflow: Pick<Workflow, 'id' | 'name'>
     ) {
-      switchProject(projectId, () => tabsStore.openSaved([workflow]))
+      if (homestead.enabled && homestead.version < 3)
+        tabsStore.openSaved([workflow])
+      else {
+        if (homestead.enabled) homestead.entry = 'cloud'
+        switchProject(projectId, () => tabsStore.openSaved([workflow]))
+      }
     }
 
     function openRunTargetDialog() {
+      if (homestead.enabled) {
+        homestead.dialog = 'environment'
+        return
+      }
       deploymentTarget.value =
         deploymentTargets.value.find((target) => target.runs)?.deployment.id ??
         NEW_BUILD_TARGET

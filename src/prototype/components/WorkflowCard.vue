@@ -264,6 +264,7 @@ const {
   actions,
   draggable = false,
   selectable = false,
+  openOnClick = false,
   selectionActive = false,
   copies = []
 } = defineProps<{
@@ -279,6 +280,7 @@ const {
   // Multi-select affordances: show the checkbox and let modifier-clicks /
   // checkbox toggle selection instead of opening.
   selectable?: boolean
+  openOnClick?: boolean
   // True when 2+ cards are selected — routes right-click to the bulk menu.
   selectionActive?: boolean
   // The viewer's existing copies of this canonical (published cards only) —
@@ -302,11 +304,13 @@ const emit = defineEmits<{
 function onCardClick(event: MouseEvent) {
   if (selectable && (event.shiftKey || event.metaKey || event.ctrlKey)) {
     emit('select', event)
+  } else if (openOnClick && event.detail <= 1) {
+    emit('open', workflow.id)
   }
 }
 
 function onCardDoubleClick() {
-  if (actions === 'published') return
+  if (openOnClick || actions === 'published') return
   emit('open', workflow.id)
 }
 

@@ -23,7 +23,12 @@
   >
     <Button
       as="a"
-      :href="router.resolve({ name: 'PrototypeDashboard' }).href"
+      :href="
+        router.resolve({
+          name: homestead.enabled ? 'HomesteadPrototype' : 'PrototypeDashboard',
+          query: homestead.enabled ? { v: homestead.version } : {}
+        }).href
+      "
       variant="muted-textonly"
       size="icon"
       :class="
@@ -160,6 +165,7 @@
 </template>
 
 <script setup lang="ts">
+import { useHomesteadStore } from '../homestead/store'
 import { cn } from '@comfyorg/tailwind-utils'
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
@@ -181,6 +187,7 @@ import { HOME_TAB_ID, usePrototypeTabsStore } from '../stores/tabsStore'
 import { usePrototypeUiStore } from '../stores/uiStore'
 
 const { t } = useI18n()
+const homestead = useHomesteadStore()
 const route = useRoute()
 const router = useRouter()
 const navigationStore = usePrototypeNavigationStore()
@@ -193,7 +200,10 @@ const isHomeActive = computed(
   () => !isEditorRoute.value && tabsStore.activeTabId === HOME_TAB_ID
 )
 const showSwitcher = computed(
-  () => customCloud.isEnabled && !!customCloud.currentProject
+  () =>
+    customCloud.isEnabled &&
+    !!customCloud.currentProject &&
+    (!homestead.enabled || homestead.version === 3)
 )
 
 function isTabActive(id: string) {
@@ -212,11 +222,17 @@ async function onSelectHome(event: MouseEvent) {
   event.preventDefault()
   tabsStore.select(HOME_TAB_ID)
   uiStore.goHome()
-  await router.push({ name: 'PrototypeDashboard' })
+  await router.push({
+    name: homestead.enabled ? 'HomesteadPrototype' : 'PrototypeDashboard',
+    query: homestead.enabled ? { v: homestead.version } : {}
+  })
 }
 
 async function onSelectTab(id: string) {
   tabsStore.select(id)
-  await router.push({ name: 'PrototypeDashboard' })
+  await router.push({
+    name: homestead.enabled ? 'HomesteadPrototype' : 'PrototypeDashboard',
+    query: homestead.enabled ? { v: homestead.version } : {}
+  })
 }
 </script>

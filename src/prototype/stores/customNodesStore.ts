@@ -13,6 +13,7 @@
 // is a new release of the shared deployment: a confirm, then a background
 // build. Runs stay on the current release until the new one is ready.
 
+import { useHomesteadStore } from '../homestead/store'
 import { useIntervalFn } from '@vueuse/core'
 import { defineStore } from 'pinia'
 import { computed, ref, shallowRef, watch } from 'vue'
@@ -64,6 +65,7 @@ export const usePrototypeCustomNodesStore = defineStore(
   'prototype-custom-nodes',
   () => {
     const personaStore = usePrototypePersonaStore()
+    const homestead = useHomesteadStore()
     const customCloud = usePrototypeCustomCloudStore()
     const policies = usePrototypePolicyStore()
 
@@ -79,14 +81,49 @@ export const usePrototypeCustomNodesStore = defineStore(
     const requested = ref<string[]>([])
     // Packs ticked to install together.
     const selected = ref<string[]>([])
+    const buildMode = ref<'create' | 'update'>('update')
+    const buildName = ref('')
+    const privateArchives = ref<string[]>([])
+    const archiveError = ref(false)
+    const selectedCount = computed(
+      () => selected.value.length + privateArchives.value.length
+    )
+    function addArchives(files: File[]) {
+      archiveError.value = files.some(
+        (file) => !/\.(zip|tar\.gz)$/i.test(file.name) || file.size === 0
+      )
+      if (archiveError.value) return
+      privateArchives.value = [
+        ...new Set([
+          ...privateArchives.value,
+          ...files.map((file) => file.name)
+        ])
+      ]
+    }
+    function clearSelection() {
+      selected.value = []
+      privateArchives.value = []
+      archiveError.value = false
+    }
+    function setBuildMode(mode: 'create' | 'update') {
+      buildMode.value = mode
+      buildName.value =
+        mode === 'create'
+          ? `${homestead.active.name} Cloud`
+          : homestead.environment.name
+    }
     const pendingChanges = ref<PackChange[] | null>(null)
     const rebuild = shallowRef<Rebuild | null>(null)
     const ready = ref<ReadyRelease | null>(null)
     const now = ref(Date.now())
 
     const deployment = computed(() => customCloud.currentDeployment)
-    const isCustom = computed(() => deployment.value.kind === 'custom')
-    const canInstall = computed(() => policies.canEdit)
+    const isCustom = computed(
+      () => homestead.enabled || deployment.value.kind === 'custom'
+    )
+    const canInstall = computed(() =>
+      homestead.enabled ? homestead.editableBuild : policies.canEdit
+    )
     const pins = computed(
       () => pinsByDeployment.value[deployment.value.id] ?? {}
     )
@@ -152,11 +189,18 @@ export const usePrototypeCustomNodesStore = defineStore(
     )
 
     function open() {
+      if (homestead.enabled && homestead.version === 1) {
+        homestead.dialog = 'nodesInfo'
+        return
+      }
       query.value = ''
       status.value = 'all'
       license.value = ANY_LICENSE
       sort.value = 'installs'
-      selected.value = []
+      clearSelection()
+      setBuildMode(
+        homestead.environment.id === 'dep-comfy-cloud' ? 'create' : 'update'
+      )
       isOpen.value = true
     }
 
@@ -176,7 +220,35 @@ export const usePrototypeCustomNodesStore = defineStore(
     }
 
     function requestInstall() {
-      if (!selected.value.length) return
+      if (!selectedCount.value) return
+      if (homestead.enabled) {
+        if (
+          homestead.version === 1 ||
+          !homestead.editableBuild ||
+          !buildName.value.trim() ||
+          archiveError.value ||
+          homestead.build.phase === 'building'
+        )
+          return
+        homestead.selectedPacks = [
+          ...selected.value,
+          ...privateArchives.value.map((name) => `private:${name}`)
+        ]
+        homestead.startBuild('manager', {
+          ...(buildMode.value === 'create'
+            ? { mode: 'create' as const }
+            : { mode: 'update' as const, sourceId: homestead.environment.id }),
+          name: buildName.value.trim(),
+          gpu:
+            homestead.environment.gpu === 'Comfy Cloud'
+              ? 'RTX PRO 6000'
+              : homestead.environment.gpu,
+          instructions: ''
+        })
+        homestead.agentOpen = true
+        isOpen.value = false
+        return
+      }
       pendingChanges.value = selected.value.map((packId) => ({
         kind: 'add',
         packId,
@@ -185,6 +257,7 @@ export const usePrototypeCustomNodesStore = defineStore(
     }
 
     function requestVersion(packId: string, to: string | null) {
+      if (homestead.enabled) return
       const from = rows.value.find((row) => row.id === packId)?.version
       if (!from) return
       const isPinned = packId in pins.value
@@ -288,6 +361,14 @@ export const usePrototypeCustomNodesStore = defineStore(
       visibleRows,
       requested,
       selected,
+      selectedCount,
+      buildMode,
+      buildName,
+      privateArchives,
+      archiveError,
+      addArchives,
+      clearSelection,
+      setBuildMode,
       pendingChanges,
       rebuild: rebuildHere,
       rebuildChipName,
