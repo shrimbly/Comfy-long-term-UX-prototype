@@ -5,6 +5,7 @@ import { HOME_TAB_ID, usePrototypeTabsStore } from '../stores/tabsStore'
 import { usePrototypeCustomCloudStore } from '../stores/customCloudStore'
 import { usePrototypeUiStore } from '../stores/uiStore'
 import { nativeFixtures } from './nativeModel'
+import { compatibility } from './model'
 import { useHomesteadStore } from './store'
 
 export function useHomesteadIntegration() {
@@ -119,10 +120,20 @@ export function useHomesteadIntegration() {
       )
       if (deployment && s.allowed) {
         s.setVersion(1)
-        s.activeId = 'matte'
+        const workflow =
+          s.workflows.find(
+            (item) =>
+              item.id === 'matte' &&
+              compatibility(item, deployment).status === 'compatible'
+          ) ??
+          s.workflows.find(
+            (item) => compatibility(item, deployment).status === 'compatible'
+          )
+        if (!workflow) return
+        s.activeId = workflow.id
         s.switchEnvironment(deployment.id)
         if (s.environment.id === deployment.id) {
-          s.openWorkflow('matte', 'cloud')
+          s.openWorkflow(workflow.id, 'cloud')
           return
         }
       }

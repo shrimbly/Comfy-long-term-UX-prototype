@@ -76,6 +76,16 @@ function switchPreview(target: 'desktop' | 'cloud') {
           t('homestead.previewCloud')
         }}
       </Button>
+      <Button
+        as="a"
+        href="/prototype/homestead/deployment#builds"
+        variant="muted-textonly"
+        size="sm"
+        class="no-underline"
+      >
+        <i class="icon-[lucide--server] size-3.5" />
+        {{ t('homestead.deploymentScreen.deployment') }}
+      </Button>
     </div>
     <template v-if="editing">
       <Button
