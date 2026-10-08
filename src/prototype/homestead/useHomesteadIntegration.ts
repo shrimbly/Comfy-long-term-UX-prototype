@@ -113,6 +113,20 @@ export function useHomesteadIntegration() {
   }
   onMounted(() => {
     if (!s.enabled) return
+    if (route.query.entry === 'deployment') {
+      const deployment = s.availableEnvironments.find(
+        (environment) => environment.id === route.query.environment
+      )
+      if (deployment && s.allowed) {
+        s.setVersion(1)
+        s.activeId = 'matte'
+        s.switchEnvironment(deployment.id)
+        if (s.environment.id === deployment.id) {
+          s.openWorkflow('matte', 'cloud')
+          return
+        }
+      }
+    }
     s.restoreDeploymentLink()
     if (s.view !== 'canvas' && !s.pendingEnvironmentId) {
       if (s.version === 3) showProjects()

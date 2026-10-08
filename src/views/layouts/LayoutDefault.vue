@@ -1,6 +1,6 @@
 <template>
   <div class="flex size-full flex-col overflow-hidden bg-base-background">
-    <PrototypeTabs />
+    <PrototypeTabs v-if="route.name !== 'HomesteadDeployment'" />
     <div class="relative min-h-0 flex-1 overflow-hidden">
       <main
         v-if="editorMounted"

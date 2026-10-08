@@ -81,6 +81,15 @@ function scenario(kind: string) {
           {{ t('homestead.concept') }}
         </p>
       </section>
+      <Button
+        as="a"
+        href="/prototype/homestead/deployment"
+        variant="secondary"
+        class="h-auto min-h-10 w-full whitespace-normal"
+      >
+        <i class="icon-[lucide--external-link] size-4 shrink-0" />
+        {{ t('homestead.deploymentScreen.milestoneLink') }}
+      </Button>
       <section class="space-y-3 border-t border-interface-stroke pt-5">
         <label for="hs-access" class="block text-xs font-medium">{{
           t('homestead.access')
